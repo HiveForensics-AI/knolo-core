@@ -1,30 +1,39 @@
 
+
 # 🧠 KnoLo Core
 
-KnoLo Core is a **local-first knowledge base system** for small language models (LLMs).
+[![npm version](https://img.shields.io/npm/v/knolo-core.svg)](https://www.npmjs.com/package/knolo-core)
+[![npm downloads](https://img.shields.io/npm/dm/knolo-core.svg)](https://www.npmjs.com/package/knolo-core)
+[![License](https://img.shields.io/npm/l/knolo-core.svg)](./LICENSE)
+
+**KnoLo Core** is a **local-first knowledge base system** for small language models (LLMs).
 It lets you package your own documents into a compact `.knolo` file and query them deterministically — **no embeddings, no vector DBs, no cloud**. Perfect for **on-device LLMs**.
 
 ---
 
 ## ✨ Features
 
-* 📦 **Single-file packs** (`.knolo`) you can ship or load offline.
-* 🔎 **Deterministic lexical retrieval** (BM25L + phrase + heading boosts).
-* ⚡ **Tiny & fast** — runs in Node, browsers, and Expo.
-* 📑 **Context Patches**: structured snippets for direct LLM input.
-* 🔒 **Privacy-first**: all data stays local.
+* 📦 **Single-file packs** (`.knolo`) you can ship or load offline
+* 🔎 **Deterministic lexical retrieval** (BM25L + phrase + heading boosts)
+* ⚡ **Tiny & fast** — runs in Node, browsers, and Expo
+* 📑 **Context Patches**: structured snippets optimized for LLM prompts
+* 🔒 **Privacy-first**: all data stays local
 
 ---
 
 ## 📦 Install
 
 ```bash
-# local build
+npm install knolo-core
+```
+
+For local development (building from source):
+
+```bash
+git clone https://github.com/yourname/knolo-core.git
+cd knolo-core
 npm install
 npm run build
-
-# or if published later
-npm install @knolo/core
 ```
 
 ---
@@ -34,7 +43,7 @@ npm install @knolo/core
 ### 1. Node.js (in-memory build + query)
 
 ```js
-import { buildPack, mountPack, query, makeContextPatch } from "./dist/index.js";
+import { buildPack, mountPack, query, makeContextPatch } from "knolo-core";
 
 const docs = [
   { heading: "React Native Bridge", text: "The bridge sends messages between JS and native. You can throttle events to reduce jank." },
@@ -74,13 +83,13 @@ console.log("Context Patch:", patch);
 
 ```bash
 # writes mypack.knolo
-node bin/knolo.mjs docs.json mypack.knolo
+npx knolo docs.json mypack.knolo
 ```
 
 **Query it in a script:**
 
 ```js
-import { mountPack, query } from "./dist/index.js";
+import { mountPack, query } from "knolo-core";
 
 const kb = await mountPack({ src: "./mypack.knolo" });
 const hits = query(kb, "throttle events", { topK: 3 });
@@ -94,7 +103,7 @@ console.log(hits);
 ```ts
 import { Asset } from "expo-asset";
 import * as FileSystem from "expo-file-system";
-import { mountPack, query, makeContextPatch } from "@knolo/core";
+import { mountPack, query, makeContextPatch } from "knolo-core";
 
 async function loadKnowledge() {
   const asset = Asset.fromModule(require("./assets/mypack.knolo"));
@@ -124,18 +133,18 @@ mountPack({ src: string | Uint8Array | ArrayBuffer }) -> Promise<Pack>
 query(pack, "your query", { topK?: number, requirePhrases?: string[] }) -> Hit[]
 
 // Create LLM-friendly patch
-makeContextPatch(hits, { budget?: "mini"|"small"|"full" }) -> ContextPatch
+makeContextPatch(hits, { budget?: "mini" | "small" | "full" }) -> ContextPatch
 ```
 
 ---
 
 ## 🔮 Roadmap
 
-* Multi-resolution packs (summaries + facts).
-* Overlay store for user notes.
-* WASM core for very large packs.
+* Multi-resolution packs (summaries + facts)
+* Overlay store for user notes
+* WASM core for very large packs
 
 ---
 
-👉 With KnoLo, you can **carry knowledge with your model** — no servers, no dependencies, just a tiny portable pack.
+👉 With **KnoLo**, you can **carry knowledge with your model** — no servers, no dependencies, just a tiny portable pack.
 
