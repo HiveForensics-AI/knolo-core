@@ -1,23 +1,29 @@
 
-
 # 🧠 KnoLo Core
 
 [![npm version](https://img.shields.io/npm/v/knolo-core.svg)](https://www.npmjs.com/package/knolo-core)
 [![npm downloads](https://img.shields.io/npm/dm/knolo-core.svg)](https://www.npmjs.com/package/knolo-core)
 [![License](https://img.shields.io/npm/l/knolo-core.svg)](./LICENSE)
 
-**KnoLo Core** is a **local-first knowledge base system** for small language models (LLMs).
-It lets you package your own documents into a compact `.knolo` file and query them deterministically — **no embeddings, no vector DBs, no cloud**. Perfect for **on-device LLMs**.
+**KnoLo Core** is a **local-first knowledge base** for small LLMs.
+Package documents into a compact `.knolo` file and query them deterministically —
+**no embeddings, no vector DB, no cloud**. Ideal for **on‑device / offline** assistants.
 
 ---
 
-## ✨ Features
+## ✨ Highlights (v0.2.0)
 
-* 📦 **Single-file packs** (`.knolo`) you can ship or load offline
-* 🔎 **Deterministic lexical retrieval** (BM25L + phrase + heading boosts)
-* ⚡ **Tiny & fast** — runs in Node, browsers, and Expo
-* 📑 **Context Patches**: structured snippets optimized for LLM prompts
-* 🔒 **Privacy-first**: all data stays local
+* 🔎 **Stronger relevance:**
+
+  * **Required phrase enforcement** (quoted & `requirePhrases`)
+  * **Proximity bonus** using minimal term-span cover
+  * **Optional heading boosts** when headings are present
+* 🌀 **Duplicate-free results:** **near-duplicate suppression** + **MMR diversity**
+* 🧮 **KNS tie‑breaker:** lightweight numeric signature to stabilize close ties
+* ⚡ **Faster & leaner:** precomputed `avgBlockLen` in pack metadata
+* 📱 **Works in Expo/React Native:** safe TextEncoder/TextDecoder ponyfills
+* 📑 **Context Patches:** LLM‑friendly snippets for prompts
+* 🔒 **Local & private:** everything runs on device
 
 ---
 
@@ -27,7 +33,7 @@ It lets you package your own documents into a compact `.knolo` file and query th
 npm install knolo-core
 ```
 
-For local development (building from source):
+Dev from source:
 
 ```bash
 git clone https://github.com/yourname/knolo-core.git
@@ -38,113 +44,242 @@ npm run build
 
 ---
 
-## 🚀 Usage Examples
+## 🚀 Usage
 
-### 1. Node.js (in-memory build + query)
+### 1) Node.js (build → mount → query → patch)
 
-```js
+```ts
 import { buildPack, mountPack, query, makeContextPatch } from "knolo-core";
 
 const docs = [
-  { heading: "React Native Bridge", text: "The bridge sends messages between JS and native. You can throttle events to reduce jank." },
-  { heading: "Throttling", text: "Throttling reduces frequency of events to avoid flooding the bridge." },
-  { heading: "Debounce vs Throttle", text: "Debounce waits for silence, throttle guarantees a max rate." }
+  { id: "guide",   heading: "React Native Bridge", text: "The bridge sends messages between JS and native. You can throttle events..." },
+  { id: "throttle", heading: "Throttling",         text: "Throttling reduces frequency of events to avoid flooding the bridge." },
+  { id: "dvst",     heading: "Debounce vs Throttle", text: "Debounce waits for silence; throttle guarantees a max rate." }
 ];
 
-// Build a pack in memory
-const bytes = await buildPack(docs);
+const bytes = await buildPack(docs);              // build .knolo bytes
+const kb = await mountPack({ src: bytes });       // mount in-memory
+const hits = query(kb, '“react native” throttle', // quotes enforce phrase
+  { topK: 5, requirePhrases: ["max rate"] });
 
-// Mount it
-const kb = await mountPack({ src: bytes });
+console.log(hits);
+/*
+[
+  { blockId: 2, score: 6.73, text: "...", source: "dvst" },
+  ...
+]
+*/
 
-// Query
-const hits = query(kb, "react native bridge throttling", { topK: 5 });
-console.log("Top hits:", hits);
-
-// Turn into an LLM-friendly context patch
 const patch = makeContextPatch(hits, { budget: "small" });
-console.log("Context Patch:", patch);
+console.log(patch);
 ```
 
----
+### 2) CLI (build a `.knolo` file)
 
-### 2. CLI (build `.knolo` file)
-
-**Prepare `docs.json`:**
+Create `docs.json`:
 
 ```json
 [
-  { "heading": "Guide", "text": "Install deps.\n\n## Throttle\nLimit frequency of events." },
-  { "heading": "FAQ", "text": "What is throttling? It reduces event frequency." }
+  { "id": "guide", "heading": "Guide", "text": "Install deps...\n\n## Throttle\nLimit frequency of events." },
+  { "id": "faq",   "heading": "FAQ",   "text": "What is throttling? It reduces event frequency." }
 ]
 ```
 
-**Build the pack:**
+Build:
 
 ```bash
-# writes mypack.knolo
-npx knolo docs.json mypack.knolo
+# writes knowledge.knolo
+npx knolo docs.json knowledge.knolo
 ```
 
-**Query it in a script:**
+Then load it in your app:
 
-```js
+```ts
 import { mountPack, query } from "knolo-core";
-
-const kb = await mountPack({ src: "./mypack.knolo" });
+const kb = await mountPack({ src: "./knowledge.knolo" });
 const hits = query(kb, "throttle events", { topK: 3 });
-console.log(hits);
 ```
 
----
-
-### 3. React / Expo (load from asset)
+### 3) React / Expo
 
 ```ts
 import { Asset } from "expo-asset";
 import * as FileSystem from "expo-file-system";
-import { mountPack, query, makeContextPatch } from "knolo-core";
+import { mountPack, query } from "knolo-core";
 
-async function loadKnowledge() {
-  const asset = Asset.fromModule(require("./assets/mypack.knolo"));
+async function loadKB() {
+  const asset = Asset.fromModule(require("./assets/knowledge.knolo"));
   await asset.downloadAsync();
 
   const base64 = await FileSystem.readAsStringAsync(asset.localUri!, { encoding: FileSystem.EncodingType.Base64 });
   const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
 
   const kb = await mountPack({ src: bytes.buffer });
-  const hits = query(kb, "bridge throttling", { topK: 5 });
-  return makeContextPatch(hits, { budget: "mini" });
+  return query(kb, `“react native” throttling`, { topK: 5 });
 }
 ```
 
 ---
 
-## 📑 API Quick Reference
+## 📑 API
+
+### `buildPack(docs) -> Promise<Uint8Array>`
+
+Builds a pack from an array of documents.
 
 ```ts
-// Build a pack from docs
-buildPack([{ heading: string, text: string }[]]) -> Promise<Uint8Array>
-
-// Load a pack
-mountPack({ src: string | Uint8Array | ArrayBuffer }) -> Promise<Pack>
-
-// Query
-query(pack, "your query", { topK?: number, requirePhrases?: string[] }) -> Hit[]
-
-// Create LLM-friendly patch
-makeContextPatch(hits, { budget?: "mini" | "small" | "full" }) -> ContextPatch
+type BuildInputDoc = {
+  id?: string;          // optional doc id (exposed as hit.source)
+  heading?: string;     // optional heading (used for boosts)
+  text: string;         // raw markdown accepted (lightly stripped)
+};
 ```
 
+* Stores optional `heading` and `id` alongside each block.
+* Computes and persists `meta.stats.avgBlockLen` for faster queries.
+
+### `mountPack({ src }) -> Promise<Pack>`
+
+Loads a pack from a URL, `Uint8Array`, or `ArrayBuffer`.
+
+```ts
+type Pack = {
+  meta: { version: number; stats: { docs: number; blocks: number; terms: number; avgBlockLen?: number } };
+  lexicon: Map<string, number>;
+  postings: Uint32Array;
+  blocks: string[];
+  headings?: (string | null)[];
+  docIds?: (string | null)[];
+};
+```
+
+> **Compatibility:** v0.2.0 reads both v1 packs (string-only blocks) and v2 packs (objects with `text/heading/docId`).
+
+### `query(pack, q, opts) -> Hit[]`
+
+Deterministic lexical search with phrase enforcement, proximity, and de‑duplication.
+
+```ts
+type QueryOptions = {
+  topK?: number;                // default 10
+  requirePhrases?: string[];    // additional phrases to require (unquoted)
+};
+
+type Hit = {
+  blockId: number;
+  score: number;
+  text: string;
+  source?: string;              // docId if provided at build time
+};
+```
+
+**What happens under the hood (v0.2.0):**
+
+* Tokenize + **enforce all phrases** (quoted in `q` and `requirePhrases`)
+* Candidate generation via inverted index
+* **Proximity bonus** using minimal window covering all query terms
+* Optional **heading overlap boost** (when headings are present)
+* Tiny **KNS** numeric-signature tie‑breaker (\~±2% influence)
+* **Near-duplicate suppression** (5‑gram Jaccard) + **MMR** diversity for top‑K
+
+### `makeContextPatch(hits, { budget }) -> ContextPatch`
+
+Create structured snippets for LLM prompts.
+
+```ts
+type ContextPatch = {
+  background: string[];
+  snippets: Array<{ text: string; source?: string }>;
+  definitions: Array<{ term: string; def: string; evidence?: number[] }>;
+  facts: Array<{ s: string; p: string; o: string; evidence?: number[] }>;
+};
+```
+
+Budgets: `"mini" | "small" | "full"`.
+
 ---
 
-## 🔮 Roadmap
+## 🧠 Relevance & De‑dupe Details
+
+* **Phrases:**
+  Quoted phrases in the query (e.g., `“react native”`) and any `requirePhrases` **must appear** in results. Candidates failing this are dropped before ranking.
+
+* **Proximity:**
+  We compute the **minimum span** that covers all query terms and apply a gentle multiplier:
+  `1 + 0.15 / (1 + span)` (bounded, stable).
+
+* **Heading Boost:**
+  If you provide headings at build time, overlap with query terms boosts the score proportionally to the fraction of unique query terms present in the heading.
+
+* **Duplicate Control:**
+  We use **5‑gram Jaccard** to filter near‑duplicates and **MMR** (λ≈0.8) to promote diversity within the top‑K.
+
+* **KNS Signature (optional spice):**
+  A tiny numeric signature provides deterministic tie‑breaking without changing the overall retrieval behavior.
+
+---
+
+## 🛠 Input Format & Pack Layout
+
+**Input docs:**
+`{ id?: string, heading?: string, text: string }`
+
+**Pack layout (binary):**
+`[metaLen:u32][meta JSON][lexLen:u32][lexicon JSON][postCount:u32][postings][blocksLen:u32][blocks JSON]`
+
+* `meta.stats.avgBlockLen` is persisted (v2).
+* `blocks JSON` may be:
+
+  * **v1:** `string[]` (text only)
+  * **v2:** `{ text, heading?, docId? }[]`
+
+The runtime auto‑detects either format.
+
+---
+
+## 🔁 Migration (0.1.x → 0.2.0)
+
+* **No API breaks.** `buildPack`, `mountPack`, `query`, `makeContextPatch` unchanged.
+* Packs built with 0.1.x still load and query fine.
+* If you want heading boosts and `hit.source`, pass `heading` and `id` to `buildPack`.
+* React Native/Expo users no longer need polyfills—ponyfills are included.
+
+---
+
+## ⚡ Performance Tips
+
+* Prefer multiple smaller blocks (≈512 tokens) over giant ones for better recall + proximity.
+* Provide `heading` for each block: cheap, high‑signal boost.
+* For large corpora, consider sharding packs by domain/topic to keep per‑pack size modest.
+
+---
+
+## ❓ FAQ
+
+**Q: Does this use embeddings?**
+No. Pure lexical retrieval (index, positions, BM25L, proximity, phrases).
+
+**Q: Can I run this offline?**
+Yes. Everything is local.
+
+**Q: How do I prevent duplicates?**
+It’s built in (Jaccard + MMR). You can tune λ and similarity threshold in code if you fork.
+
+**Q: Is RN/Expo supported?**
+Yes—TextEncoder/TextDecoder ponyfills are included.
+
+---
+
+## 🗺️ Roadmap
 
 * Multi-resolution packs (summaries + facts)
-* Overlay store for user notes
-* WASM core for very large packs
+* Overlay layers (user annotations)
+* WASM core for big-browser indexing
+* Delta updates / append-only patch packs
 
 ---
 
-👉 With **KnoLo**, you can **carry knowledge with your model** — no servers, no dependencies, just a tiny portable pack.
+## 📄 License
+
+MIT — see [LICENSE](./LICENSE).
 
