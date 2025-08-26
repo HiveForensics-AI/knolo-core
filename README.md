@@ -3,7 +3,8 @@
 
 [![npm version](https://img.shields.io/npm/v/knolo-core.svg)](https://www.npmjs.com/package/knolo-core)
 [![npm downloads](https://img.shields.io/npm/dm/knolo-core.svg)](https://www.npmjs.com/package/knolo-core)
-[![License](https://img.shields.io/npm/l/knolo-core.svg)](./LICENSE)
+[![License](https://img.shields.io/npm/l/knolo-core.svg?t=20250826)](./LICENSE)
+
 
 **KnoLo Core** is a **local-first knowledge base** for small LLMs.
 Package documents into a compact `.knolo` file and query them deterministically —
