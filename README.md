@@ -40,7 +40,7 @@ npm install knolo-core
 Dev from source:
 
 ```bash
-git clone https://github.com/yourname/knolo-core.git
+git clone https://github.com/HiveForensics-AI/knolo-core.git
 cd knolo-core
 npm install
 npm run build
