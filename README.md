@@ -5,6 +5,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/knolo-core.svg)](https://www.npmjs.com/package/knolo-core)
 [![npm license](https://img.shields.io/npm/l/knolo-core.svg?cacheBust=2)](https://www.npmjs.com/package/knolo-core)
 [![GitHub license](https://img.shields.io/github/license/HiveForensics-AI/knolo-core.svg)](https://github.com/HiveForensics-AI/knolo-core/blob/main/LICENSE)
+[![Website](https://img.shields.io/badge/website-knolo.dev-2ea44f?logo=vercel)](https://www.knolo.dev/)
 
 
 
@@ -281,6 +282,13 @@ Yes—TextEncoder/TextDecoder ponyfills are included.
 * Delta updates / append-only patch packs
 
 ---
+
+## 🌐 Website
+
+For docs, news, and examples visit **[knolo.dev](https://www.knolo.dev/)**
+
+---
+
 
 ## 📄 License
 
