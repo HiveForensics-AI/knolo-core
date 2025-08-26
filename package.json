@@ -1,15 +1,29 @@
 {
   "name": "knolo-core",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "description": "Local-first knowledge packs for small LLMs.",
-  "keywords": ["llm", "knowledge-base", "rag", "local", "expo"],
+  "keywords": [
+    "llm",
+    "knowledge-base",
+    "rag",
+    "local",
+    "expo"
+  ],
   "author": "Sam Paniagua",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist", "bin", "README.md", "LICENSE", "DOCS.md"],
-  "bin": { "knolo": "./bin/knolo.mjs" },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE",
+    "DOCS.md"
+  ],
+  "bin": {
+    "knolo": "./bin/knolo.mjs"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -19,7 +33,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "prepublishOnly": "npm run build",
-     "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs"
   },
   "devDependencies": {
     "typescript": "^5.5.0",
