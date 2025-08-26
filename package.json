@@ -5,7 +5,7 @@
   "description": "Local-first knowledge packs for small LLMs.",
   "keywords": ["llm", "knowledge-base", "rag", "local", "expo"],
   "author": "Sam Paniagua",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": ["dist", "bin", "README.md", "LICENSE", "DOCS.md"],
