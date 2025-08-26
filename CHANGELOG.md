@@ -1,6 +1,14 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [0.2.1] - 2025-08-26
+
+### Changed
+- License updated from **MIT** → **Apache-2.0** for patent protection
+- Updated `README.md` and `package.json` to reflect new license
+
+[0.2.1]: https://github.com/HiveForensics-AI/knolo-core/releases/tag/v0.2.1
+
 
 ## [0.2.0] - 2025-08-26
 
