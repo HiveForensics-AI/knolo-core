@@ -3,7 +3,9 @@
 
 [![npm version](https://img.shields.io/npm/v/knolo-core.svg)](https://www.npmjs.com/package/knolo-core)
 [![npm downloads](https://img.shields.io/npm/dm/knolo-core.svg)](https://www.npmjs.com/package/knolo-core)
-[![License](https://img.shields.io/github/license/HiveForensics-AI/knolo-core)](https://github.com/HiveForensics-AI/knolo-core/blob/main/LICENSE)
+[![npm license](https://img.shields.io/npm/l/knolo-core.svg?cacheBust=2)](https://www.npmjs.com/package/knolo-core)
+[![GitHub license](https://img.shields.io/github/license/HiveForensics-AI/knolo-core.svg)](https://github.com/HiveForensics-AI/knolo-core/blob/main/LICENSE)
+
 
 
 **KnoLo Core** is a **local-first knowledge base** for small LLMs.
