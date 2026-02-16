@@ -19,6 +19,9 @@ export type RankOptions = {
 export function rankBM25L(
   candidates: Map<number, { tf: Map<number, number>; pos?: Map<number, number[]>; hasPhrase?: boolean; headingScore?: number }>,
   avgLen: number,
+  docCount: number,
+  dfs: Map<number, number>,
+  blockTokenLens?: number[],
   opts: RankOptions = {}
 ): Array<{ blockId: number; score: number }> {
   const k1 = opts.k1 ?? 1.5;
@@ -28,10 +31,11 @@ export function rankBM25L(
 
   const results: Array<{ blockId: number; score: number }> = [];
   for (const [bid, data] of candidates) {
-    const len = Array.from(data.tf.values()).reduce((sum, tf) => sum + tf, 0) || 1;
+    const len = blockTokenLens?.[bid] ?? (Array.from(data.tf.values()).reduce((sum, tf) => sum + tf, 0) || 1);
     let score = 0;
-    for (const [, tf] of data.tf) {
-      const idf = 1; // v0: no DF; can be extended later
+    for (const [tid, tf] of data.tf) {
+      const df = dfs.get(tid) ?? 0;
+      const idf = Math.log(1 + (docCount - df + 0.5) / (df + 0.5));
       const numer = tf * (k1 + 1);
       const denom = tf + k1 * (1 - b + b * (len / avgLen));
       score += idf * (numer / denom);

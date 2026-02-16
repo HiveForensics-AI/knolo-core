@@ -1,6 +1,8 @@
 # Dependencies
 node_modules/
-scripts/
+scripts/*
+!scripts/test.mjs
+!scripts/smoke.mjs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

@@ -1,6 +1,19 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [0.3.0] - 2026-02-16
+
+### Changed
+- Upgraded retrieval scoring to corpus-aware BM25L with true IDF, query-time document-frequency collection, and per-document length normalization.
+- Fixed postings encoding/decoding to store block IDs as `bid + 1`, preserving `0` as an unambiguous delimiter and restoring first-block retrieval correctness.
+- Improved pack quality by validating build input and persisting per-block token lengths (`len`) in pack blocks.
+- Mounted packs now expose `blockTokenLens` for consistent scoring across runtimes.
+- Added smart-quote phrase parsing support for `“...”` and `”...”` query phrases.
+- Context patch snippets now propagate `source` values from hits.
+- Hardened CLI docs loading with explicit JSON-shape validation and actionable error messages.
+- Added automated tests for smart-quote phrase matching, near-duplicate behavior, first-block retrieval, and context snippet source propagation.
+
 ## [0.2.2] - 2025-08-26
 
 ### Changed
@@ -26,22 +39,23 @@ All notable changes to this project will be documented in this file.
 - Introduced top-level `DOCS.md` with a full developer guide:
   - Core concepts, pack format, and end-to-end query flow
   - LLM **context patches** for structured prompt composition
-  - **Advanced retrieval** controls: phrase enforcement, proximity constraints, and MMR
-- React Native / Expo integration guide with example app and smoke test steps
-- Migration notes and examples for upgrading from `0.1.x` → `0.2.0`
+  - **Advanced retrieval** controls: phrase enforcement, proximity, and diversity
+- Added optional `heading` + `docId` persistence in pack `blocks` payload
+- Added pack metadata stat: `avgBlockLen` for stable ranking normalization
+- Added support for mounting both v1 and v2 block formats
+- Added heading overlap boost in query scoring
+- Added KNS signature tie-breaker in ranking
+- Added near-duplicate suppression + MMR diversification
+- Added Expo/RN-safe UTF-8 encoder/decoder ponyfills
 
 ### Changed
-- Default retrieval pipeline now exposes deterministic knobs (phrase/proximity/MMR) via config and code API
-- Improved logging around query flow stages (retrieval → ranking → patch application → generation)
+- Retrieval pipeline now enforces quoted phrases from query and `requirePhrases`
+- Query ranking now includes a proximity multiplier (minimal cover span)
+- API docs and examples expanded in `README.md`
 
 ### Fixed
-- Resolved edge-case token overflows when applying large context patches
-- Correct handling of multi-pack composition when shared dependencies are present
-
-### Migration
-- No API breaks — `buildPack`, `mountPack`, `query`, and `makeContextPatch` are unchanged  
-- Packs built with 0.1.x still load and query correctly  
-- For **heading boosts** and `hit.source`, pass `heading` and `id` to `buildPack`  
-- React Native/Expo apps no longer need TextEncoder/TextDecoder polyfills (ponyfills are included)  
+- Parser and phrase normalization now use tokenizer-normalized terms for consistency
+- Improved binary pack writing for alignment-safe postings serialization via `DataView`
+- Improved binary pack reading to handle non-zero byte offsets for `Uint8Array` inputs
 
 [0.2.0]: https://github.com/HiveForensics-AI/knolo-core/releases/tag/v0.2.0
