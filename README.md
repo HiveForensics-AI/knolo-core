@@ -58,15 +58,15 @@ npm run build
 import { buildPack, mountPack, query, makeContextPatch } from "knolo-core";
 
 const docs = [
-  { id: "guide",   heading: "React Native Bridge", text: "The bridge sends messages between JS and native. You can throttle events..." },
-  { id: "throttle", heading: "Throttling",         text: "Throttling reduces frequency of events to avoid flooding the bridge." },
-  { id: "dvst",     heading: "Debounce vs Throttle", text: "Debounce waits for silence; throttle guarantees a max rate." }
+  { id: "guide",   namespace: "mobile", heading: "React Native Bridge", text: "The bridge sends messages between JS and native. You can throttle events..." },
+  { id: "throttle", namespace: "mobile", heading: "Throttling",         text: "Throttling reduces frequency of events to avoid flooding the bridge." },
+  { id: "dvst",     namespace: "patterns", heading: "Debounce vs Throttle", text: "Debounce waits for silence; throttle guarantees a max rate." }
 ];
 
 const bytes = await buildPack(docs);              // build .knolo bytes
 const kb = await mountPack({ src: bytes });       // mount in-memory
 const hits = query(kb, '“react native” throttle', // quotes enforce phrase
-  { topK: 5, requirePhrases: ["max rate"] });
+  { topK: 5, requirePhrases: ["max rate"], namespace: "mobile" });
 
 console.log(hits);
 /*
@@ -137,6 +137,7 @@ Builds a pack from an array of documents.
 type BuildInputDoc = {
   id?: string;          // optional doc id (exposed as hit.source)
   heading?: string;     // optional heading (used for boosts)
+  namespace?: string;   // optional namespace for scoped retrieval
   text: string;         // raw markdown accepted (lightly stripped)
 };
 ```
@@ -157,6 +158,7 @@ type Pack = {
   blocks: string[];
   headings?: (string | null)[];
   docIds?: (string | null)[];
+  namespaces?: (string | null)[];
   blockTokenLens?: number[];
 };
 ```
@@ -171,6 +173,7 @@ Deterministic lexical search with phrase enforcement, proximity, and de‑duplic
 type QueryOptions = {
   topK?: number;                // default 10
   requirePhrases?: string[];    // additional phrases to require (unquoted)
+  namespace?: string | string[];// optional namespace filter(s)
 };
 
 type Hit = {
@@ -178,12 +181,14 @@ type Hit = {
   score: number;
   text: string;
   source?: string;              // docId if provided at build time
+  namespace?: string;           // namespace if provided at build time
 };
 ```
 
 **What happens under the hood (v0.3.0):**
 
 * Tokenize + **enforce all phrases** (quoted in `q` and `requirePhrases`)
+* Optional **namespace scoping** via `query(..., { namespace })`
 * Candidate generation via inverted index + query-time DF collection
 * Corpus-aware BM25L (true IDF + length normalization from persisted block lengths)
 * **Proximity bonus** using minimal window covering all query terms
@@ -231,7 +236,7 @@ Budgets: `"mini" | "small" | "full"`.
 ## 🛠 Input Format & Pack Layout
 
 **Input docs:**
-`{ id?: string, heading?: string, text: string }`
+`{ id?: string, heading?: string, namespace?: string, text: string }`
 
 **Pack layout (binary):**
 `[metaLen:u32][meta JSON][lexLen:u32][lexicon JSON][postCount:u32][postings][blocksLen:u32][blocks JSON]`
@@ -240,7 +245,7 @@ Budgets: `"mini" | "small" | "full"`.
 * `blocks JSON` may be:
 
   * **v1:** `string[]` (text only)
-  * **v2:** `{ text, heading?, docId? }[]`
+  * **v2/v3:** `{ text, heading?, docId?, namespace?, len? }[]`
 
 The runtime auto‑detects either format.
 

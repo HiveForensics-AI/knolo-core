@@ -51,8 +51,8 @@ npm install knolo-core
 import { buildPack, mountPack, query, makeContextPatch } from "knolo-core";
 
 const docs = [
-  { id: "guide", heading: "React Native Bridge", text: "The bridge sends messages between JS and native. You can throttle events..." },
-  { id: "throttle", heading: "Throttling", text: "Throttling reduces frequency of events..." }
+  { id: "guide", namespace: "mobile", heading: "React Native Bridge", text: "The bridge sends messages between JS and native. You can throttle events..." },
+  { id: "throttle", namespace: "mobile", heading: "Throttling", text: "Throttling reduces frequency of events..." }
 ];
 
 const bytes = await buildPack(docs);
@@ -90,6 +90,7 @@ npx knolo docs.json knowledge.knolo
 type BuildInputDoc = {
   id?: string;          // exposed later as hit.source
   heading?: string;     // boosts relevance when overlapping query terms
+  namespace?: string;   // optional namespace for scoped retrieval
   text: string;         // raw markdown accepted (lightly stripped)
 };
 ```
@@ -116,6 +117,7 @@ const bytes: Uint8Array = await buildPack(docs: BuildInputDoc[]);
 type QueryOptions = {
   topK?: number;               // default 10
   requirePhrases?: string[];   // phrases that must appear verbatim
+  namespace?: string | string[]; // optional namespace filter(s)
 };
 
 type Hit = {
@@ -123,11 +125,13 @@ type Hit = {
   score: number;
   text: string;
   source?: string;             // docId if provided
+  namespace?: string;          // namespace if provided
 };
 
 const hits: Hit[] = query(pack, '“react native bridge” throttling', {
   topK: 5,
-  requirePhrases: ["maximum rate"] // hard constraint
+  requirePhrases: ["maximum rate"], // hard constraint
+  namespace: "mobile"
 });
 ```
 
@@ -176,6 +180,12 @@ const patch = makeContextPatch(hits, { budget: "mini" | "small" | "full" });
 
 ```ts
 query(pack, "throttling", { requirePhrases: ["react native bridge"] });
+```
+
+### Namespace-scoped retrieval
+
+```ts
+query(pack, "bridge events", { namespace: ["mobile", "sdk"] });
 ```
 
 ### Tight vs. scattered matches
@@ -237,7 +247,7 @@ Top-K results apply near-duplicate suppression (5-gram Jaccard) and MMR (λ≈0.
 
 * **v1**: `string[]` (text only)
 * **v2**: `{ text, heading?, docId? }[]`
-* **v3**: `{ text, heading?, docId?, len }[]` (`len` is block token length for stable ranking)
+* **v3**: `{ text, heading?, docId?, namespace?, len }[]` (`len` is block token length for stable ranking)
 
 Runtime auto-detects and exposes:
 
@@ -246,6 +256,7 @@ type Pack = {
   meta, lexicon, postings, blocks: string[],
   headings?: (string|null)[],
   docIds?: (string|null)[],
+  namespaces?: (string|null)[],
   blockTokenLens?: number[]
 }
 ```

@@ -34,6 +34,25 @@ async function testNearDuplicateDedupe() {
   assert.equal(sources.filter((s) => s === 'd1' || s === 'd2').length, 1, 'expected one near-duplicate to be removed');
 }
 
+
+async function testNamespaceFiltering() {
+  const docs = [
+    { id: 'mobile-1', namespace: 'mobile', text: 'Bridge events use throttle controls for performance.' },
+    { id: 'backend-1', namespace: 'backend', text: 'API gateways also throttle traffic bursts.' },
+    { id: 'none-1', text: 'General throttling information without explicit namespace.' },
+  ];
+  const pack = await mountPack({ src: await buildPack(docs) });
+
+  const mobileHits = query(pack, 'throttle', { topK: 5, namespace: 'mobile' });
+  assert.ok(mobileHits.length > 0, 'expected namespace query to return results');
+  assert.ok(mobileHits.every((h) => h.namespace === 'mobile'), 'expected only mobile namespace hits');
+
+  const multiHits = query(pack, 'throttle', { topK: 5, namespace: ['mobile', 'backend'] });
+  const namespaces = new Set(multiHits.map((h) => h.namespace));
+  assert.ok(namespaces.has('mobile') || namespaces.has('backend'), 'expected namespaced hits in multi-namespace query');
+  assert.ok(!namespaces.has(undefined), 'expected namespace filter to exclude unscoped docs');
+}
+
 async function testContextPatchSourcePropagation() {
   const docs = [{ id: 'src-doc', text: 'Knowledge packs can carry source ids for citations.' }];
   const pack = await mountPack({ src: await buildPack(docs) });
@@ -45,6 +64,7 @@ async function testContextPatchSourcePropagation() {
 await testSmartQuotePhrase();
 await testFirstBlockRetrieval();
 await testNearDuplicateDedupe();
+await testNamespaceFiltering();
 await testContextPatchSourcePropagation();
 
 console.log('All tests passed.');
