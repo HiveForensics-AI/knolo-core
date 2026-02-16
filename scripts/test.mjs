@@ -53,6 +53,35 @@ async function testNamespaceFiltering() {
   assert.ok(!namespaces.has(undefined), 'expected namespace filter to exclude unscoped docs');
 }
 
+async function testQueryExpansionRecall() {
+  const docs = [
+    { id: 'seed', text: 'Throttling controls event bursts and smooths bridge pressure in React Native apps.' },
+    { id: 'related', text: 'Rate limiting is used to cap request bursts and protect systems under load.' },
+    { id: 'offtopic', text: 'Image caching accelerates rendering and reduces repeated network fetches.' },
+  ];
+  const pack = await mountPack({ src: await buildPack(docs) });
+
+  const withExpansion = query(pack, 'throttling bridge pressure', {
+    topK: 3,
+    queryExpansion: { enabled: true, docs: 2, terms: 4, weight: 0.4 },
+  });
+
+  const withoutExpansion = query(pack, 'throttling bridge pressure', {
+    topK: 3,
+    queryExpansion: { enabled: false },
+  });
+
+  assert.ok(
+    withExpansion.some((h) => h.source === 'related'),
+    'expected deterministic query expansion to pull in lexical neighbor content'
+  );
+
+  assert.ok(
+    !withoutExpansion.some((h) => h.source === 'related'),
+    'expected disabling query expansion to keep strict lexical matching behavior'
+  );
+}
+
 async function testContextPatchSourcePropagation() {
   const docs = [{ id: 'src-doc', text: 'Knowledge packs can carry source ids for citations.' }];
   const pack = await mountPack({ src: await buildPack(docs) });
@@ -65,6 +94,7 @@ await testSmartQuotePhrase();
 await testFirstBlockRetrieval();
 await testNearDuplicateDedupe();
 await testNamespaceFiltering();
+await testQueryExpansionRecall();
 await testContextPatchSourcePropagation();
 
 console.log('All tests passed.');

@@ -20,6 +20,7 @@ Package documents into a compact `.knolo` file and query them deterministically 
 * 🔎 **Stronger relevance:**
 
   * **Required phrase enforcement** (quoted & `requirePhrases`)
+  * **Pseudo-relevance query expansion** (deterministic, lightweight, lexical-only)
   * **Proximity bonus** using minimal term-span cover
   * **Optional heading boosts** when headings are present
 * 🌀 **Duplicate-free results:** **near-duplicate suppression** + **MMR diversity**
@@ -174,6 +175,13 @@ type QueryOptions = {
   topK?: number;                // default 10
   requirePhrases?: string[];    // additional phrases to require (unquoted)
   namespace?: string | string[];// optional namespace filter(s)
+  queryExpansion?: {
+    enabled?: boolean;          // default true
+    docs?: number;              // top seed docs, default 3
+    terms?: number;             // added lexical terms, default 4
+    weight?: number;            // BM25 tf scaling, default 0.35
+    minTermLength?: number;     // ignore tiny tokens, default 3
+  };
 };
 
 type Hit = {
@@ -191,6 +199,7 @@ type Hit = {
 * Optional **namespace scoping** via `query(..., { namespace })`
 * Candidate generation via inverted index + query-time DF collection
 * Corpus-aware BM25L (true IDF + length normalization from persisted block lengths)
+* Deterministic pseudo-relevance **query expansion** from top lexical hits
 * **Proximity bonus** using minimal window covering all query terms
 * Optional **heading overlap boost** (when headings are present)
 * Tiny **KNS** numeric-signature tie‑breaker (\~±2% influence)

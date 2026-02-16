@@ -20,6 +20,13 @@ export type QueryOptions = {
   topK?: number;
   requirePhrases?: string[];
   namespace?: string | string[];
+  queryExpansion?: {
+    enabled?: boolean;
+    docs?: number;
+    terms?: number;
+    weight?: number;
+    minTermLength?: number;
+  };
 };
 
 export type Hit = {
@@ -32,6 +39,13 @@ export type Hit = {
 
 export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
   const topK = opts.topK ?? 10;
+  const expansionOpts = {
+    enabled: opts.queryExpansion?.enabled ?? true,
+    docs: Math.max(1, opts.queryExpansion?.docs ?? 3),
+    terms: Math.max(1, opts.queryExpansion?.terms ?? 4),
+    weight: Math.max(0, opts.queryExpansion?.weight ?? 0.35),
+    minTermLength: Math.max(2, opts.queryExpansion?.minTermLength ?? 3),
+  };
 
   // --- Query parsing
   const normTokens = tokenize(q).map((t) => t.term);
@@ -69,13 +83,17 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
   const usesOffsetBlockIds = (pack.meta?.version ?? 1) >= 3;
 
   // Helper to harvest postings for a given set of termIds into candidates
-  function scanForTermIds(idSet: Set<number>) {
+  function scanForTermIds(
+    idWeights: Map<number, number>,
+    cfg: { collectPositions?: boolean; createCandidates?: boolean } = { collectPositions: true, createCandidates: true }
+  ) {
     const p = pack.postings;
     let i = 0;
     while (i < p.length) {
       const tid = p[i++];
       if (tid === 0) continue;
-      const relevant = idSet.has(tid);
+      const weight = idWeights.get(tid) ?? 0;
+      const relevant = weight > 0;
       let termDf = 0;
       let encodedBid = p[i++];
       while (encodedBid !== 0) {
@@ -89,12 +107,17 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
         termDf++;
         if (relevant && bid >= 0) {
           let entry = candidates.get(bid);
-          if (!entry) {
+          if (!entry && cfg.createCandidates !== false) {
             entry = { tf: new Map(), pos: new Map() };
             candidates.set(bid, entry);
           }
-          entry.tf.set(tid, positions.length);
-          entry.pos.set(tid, positions);
+          if (entry) {
+            const prevTf = entry.tf.get(tid) ?? 0;
+            entry.tf.set(tid, prevTf + positions.length * weight);
+            if (cfg.collectPositions !== false) {
+              entry.pos.set(tid, positions);
+            }
+          }
         }
         encodedBid = p[i++];
       }
@@ -104,7 +127,7 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
 
   // 1) Scan using tokens from q (if any)
   if (termSet.size > 0) {
-    scanForTermIds(termSet);
+    scanForTermIds(new Map(Array.from(termSet.values(), (tid) => [tid, 1])));
   }
 
   // 2) Phrase-first rescue:
@@ -119,7 +142,7 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
       }
     }
     if (phraseTokenIds.size > 0) {
-      scanForTermIds(phraseTokenIds);
+      scanForTermIds(new Map(Array.from(phraseTokenIds.values(), (tid) => [tid, 1])));
     }
   }
 
@@ -173,9 +196,19 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
 
   const docCount = pack.meta?.stats?.blocks ?? pack.blocks.length;
 
-  const prelim = rankBM25L(candidates, avgLen, docCount, dfs, pack.blockTokenLens, {
+  let prelim = rankBM25L(candidates, avgLen, docCount, dfs, pack.blockTokenLens, {
     proximityBonus: (cand) => proximityMultiplier(minCoverSpan(cand.pos)),
   });
+
+  if (expansionOpts.enabled && prelim.length > 0) {
+    const expansionWeights = deriveExpansionTerms(pack, prelim, termSet, requiredPhrases, expansionOpts);
+    if (expansionWeights.size > 0) {
+      scanForTermIds(expansionWeights, { collectPositions: false, createCandidates: true });
+      prelim = rankBM25L(candidates, avgLen, docCount, dfs, pack.blockTokenLens, {
+        proximityBonus: (cand) => proximityMultiplier(minCoverSpan(cand.pos)),
+      });
+    }
+  }
 
   if (prelim.length === 0) return [];
 
@@ -195,6 +228,52 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
 
   const finalHits = diversifyAndDedupe(pool, { k: topK });
   return finalHits;
+}
+
+function deriveExpansionTerms(
+  pack: Pack,
+  prelim: Array<{ blockId: number; score: number }>,
+  baseTermSet: Set<number>,
+  requiredPhrases: string[][],
+  opts: { docs: number; terms: number; weight: number; minTermLength: number }
+): Map<number, number> {
+  if (prelim.length === 0 || opts.weight <= 0) return new Map();
+
+  const forbidden = new Set(baseTermSet);
+  for (const seq of requiredPhrases) {
+    for (const term of seq) {
+      const tid = pack.lexicon.get(term);
+      if (tid !== undefined) forbidden.add(tid);
+    }
+  }
+
+  const cap = Math.min(opts.docs, prelim.length);
+  const bestScore = Math.max(prelim[0]?.score ?? 0, 1e-6);
+  const termScores = new Map<number, number>();
+
+  for (let i = 0; i < cap; i++) {
+    const item = prelim[i];
+    const text = pack.blocks[item.blockId] ?? "";
+    const docWeight = Math.max(item.score / bestScore, 0.2);
+    const localTfs = new Map<number, number>();
+
+    for (const tok of tokenize(text)) {
+      if (tok.term.length < opts.minTermLength) continue;
+      const tid = pack.lexicon.get(tok.term);
+      if (tid === undefined || forbidden.has(tid)) continue;
+      localTfs.set(tid, (localTfs.get(tid) ?? 0) + 1);
+    }
+
+    for (const [tid, tf] of localTfs) {
+      termScores.set(tid, (termScores.get(tid) ?? 0) + tf * docWeight);
+    }
+  }
+
+  const selected = [...termScores.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, opts.terms);
+
+  return new Map(selected.map(([tid, score]) => [tid, opts.weight * Math.max(0.5, Math.min(1.5, score))]));
 }
 
 /** Ordered phrase check using the SAME tokenizer/normalizer path as the index. */
