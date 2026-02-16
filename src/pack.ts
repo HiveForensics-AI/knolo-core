@@ -2,7 +2,7 @@
  * pack.ts
  *
  * Mount `.knolo` packs across Node, browsers, and RN/Expo. Tolerant of:
- *  - blocks as string[] (v1) or object[] with { text, heading?, docId?, len? }
+ *  - blocks as string[] (v1) or object[] with { text, heading?, docId?, namespace?, len? }
  *  - meta.stats.avgBlockLen (optional)
  * Includes RN/Expo-safe TextDecoder via ponyfill.
  */
@@ -23,6 +23,7 @@ export type Pack = {
   blocks: string[];
   headings?: (string | null)[];
   docIds?: (string | null)[];
+  namespaces?: (string | null)[];
   blockTokenLens?: number[];
 };
 
@@ -51,7 +52,7 @@ export async function mountPack(opts: MountOptions): Promise<Pack> {
     offset += 4;
   }
 
-  // blocks (v1: string[]; v2/v3: {text, heading?, docId?, len?}[])
+  // blocks (v1: string[]; v2/v3: {text, heading?, docId?, namespace?, len?}[])
   const blocksLen = dv.getUint32(offset, true); offset += 4;
   const blocksJson = dec.decode(new Uint8Array(buf, offset, blocksLen));
   const parsed = JSON.parse(blocksJson);
@@ -59,6 +60,7 @@ export async function mountPack(opts: MountOptions): Promise<Pack> {
   let blocks: string[] = [];
   let headings: (string | null)[] | undefined;
   let docIds: (string | null)[] | undefined;
+  let namespaces: (string | null)[] | undefined;
   let blockTokenLens: number[] | undefined;
 
   if (Array.isArray(parsed) && parsed.length && typeof parsed[0] === 'string') {
@@ -68,17 +70,20 @@ export async function mountPack(opts: MountOptions): Promise<Pack> {
     blocks = [];
     headings = [];
     docIds = [];
+    namespaces = [];
     blockTokenLens = [];
     for (const it of parsed) {
       if (it && typeof it === 'object') {
         blocks.push(String(it.text ?? ''));
         headings.push(it.heading ?? null);
         docIds.push(it.docId ?? null);
+        namespaces.push(it.namespace ?? null);
         blockTokenLens.push(typeof it.len === 'number' ? it.len : 0);
       } else {
         blocks.push(String(it ?? ''));
         headings.push(null);
         docIds.push(null);
+        namespaces.push(null);
         blockTokenLens.push(0);
       }
     }
@@ -86,7 +91,7 @@ export async function mountPack(opts: MountOptions): Promise<Pack> {
     blocks = [];
   }
 
-  return { meta, lexicon, postings, blocks, headings, docIds, blockTokenLens };
+  return { meta, lexicon, postings, blocks, headings, docIds, namespaces, blockTokenLens };
 }
 
 async function resolveToBuffer(src: MountOptions['src']): Promise<ArrayBuffer> {

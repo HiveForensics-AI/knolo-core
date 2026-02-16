@@ -19,6 +19,7 @@ import { knsSignature, knsDistance } from "./quality/signature.js";
 export type QueryOptions = {
   topK?: number;
   requirePhrases?: string[];
+  namespace?: string | string[];
 };
 
 export type Hit = {
@@ -26,6 +27,7 @@ export type Hit = {
   score: number;
   text: string;
   source?: string;
+  namespace?: string;
 };
 
 export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
@@ -44,6 +46,8 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
     .filter((arr) => arr.length > 0);
 
   const requiredPhrases: string[][] = [...quoted, ...extraReq];
+
+  const namespaceFilter = normalizeNamespaceFilter(opts.namespace);
 
   // --- Term ids for the free (unquoted) tokens in q
   const termIds = normTokens
@@ -119,6 +123,17 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
     }
   }
 
+  // --- Namespace filtering
+  if (namespaceFilter.size > 0) {
+    for (const bid of [...candidates.keys()]) {
+      const ns = pack.namespaces?.[bid];
+      const normalizedNs = typeof ns === "string" ? normalize(ns) : "";
+      if (!normalizedNs || !namespaceFilter.has(normalizedNs)) {
+        candidates.delete(bid);
+      }
+    }
+  }
+
   // --- Phrase enforcement (now that we have some candidates)
   if (requiredPhrases.length > 0) {
     for (const [bid, data] of [...candidates]) {
@@ -174,6 +189,7 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
       score: r.score * boost,
       text,
       source: pack.docIds?.[r.blockId] ?? undefined,
+      namespace: pack.namespaces?.[r.blockId] ?? undefined,
     };
   });
 
@@ -193,4 +209,11 @@ function containsPhrase(text: string, seq: string[]): boolean {
     return true;
   }
   return false;
+}
+
+
+function normalizeNamespaceFilter(input?: string | string[]): Set<string> {
+  if (input === undefined) return new Set();
+  const values = Array.isArray(input) ? input : [input];
+  return new Set(values.map((v) => normalize(v)).filter(Boolean));
 }

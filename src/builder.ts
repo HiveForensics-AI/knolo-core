@@ -10,7 +10,7 @@ import type { Block } from './indexer.js';
 import { tokenize } from './tokenize.js';
 import { getTextEncoder } from './utils/utf8.js';
 
-export type BuildInputDoc = { id?: string; heading?: string; text: string };
+export type BuildInputDoc = { id?: string; heading?: string; namespace?: string; text: string };
 
 export async function buildPack(docs: BuildInputDoc[]): Promise<Uint8Array> {
   const normalizedDocs = validateDocs(docs);
@@ -44,6 +44,7 @@ export async function buildPack(docs: BuildInputDoc[]): Promise<Uint8Array> {
     text: b.text,
     heading: b.heading ?? null,
     docId: normalizedDocs[i]?.id ?? null,
+    namespace: normalizedDocs[i]?.namespace ?? null,
     len: blockTokenLens[i] ?? 0,
   }));
 
@@ -87,7 +88,7 @@ export async function buildPack(docs: BuildInputDoc[]): Promise<Uint8Array> {
 
 function validateDocs(docs: BuildInputDoc[]): BuildInputDoc[] {
   if (!Array.isArray(docs)) {
-    throw new Error('buildPack expects an array of docs: [{ text, id?, heading? }, ...]');
+    throw new Error('buildPack expects an array of docs: [{ text, id?, heading?, namespace? }, ...]');
   }
 
   return docs.map((doc, i) => {
@@ -102,6 +103,9 @@ function validateDocs(docs: BuildInputDoc[]): BuildInputDoc[] {
     }
     if (doc.heading !== undefined && typeof doc.heading !== 'string') {
       throw new Error(`Invalid doc at index ${i}: "heading" must be a string when provided.`);
+    }
+    if (doc.namespace !== undefined && typeof doc.namespace !== 'string') {
+      throw new Error(`Invalid doc at index ${i}: "namespace" must be a string when provided.`);
     }
     return doc;
   });
