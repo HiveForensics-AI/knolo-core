@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Hardened CLI docs loading with explicit JSON-shape validation and actionable error messages.
 - Added automated tests for smart-quote phrase matching, near-duplicate behavior, first-block retrieval, and context snippet source propagation.
 - Added namespace-aware packs and query-time namespace filtering (`query(..., { namespace })`) while preserving existing API defaults and version number.
+- Added deterministic pseudo-relevance query expansion (`queryExpansion`) to improve lexical recall without embeddings or non-deterministic rerankers.
 
 ## [0.2.2] - 2025-08-26
 

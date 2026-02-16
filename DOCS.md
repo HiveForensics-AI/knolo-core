@@ -118,6 +118,13 @@ type QueryOptions = {
   topK?: number;               // default 10
   requirePhrases?: string[];   // phrases that must appear verbatim
   namespace?: string | string[]; // optional namespace filter(s)
+  queryExpansion?: {
+    enabled?: boolean;         // default true
+    docs?: number;             // top seed docs, default 3
+    terms?: number;            // expanded lexical terms, default 4
+    weight?: number;           // tf scaling for expansion terms, default 0.35
+    minTermLength?: number;    // default 3
+  };
 };
 
 type Hit = {
@@ -141,8 +148,9 @@ const hits: Hit[] = query(pack, '“react native bridge” throttling', {
 2. Corpus-aware BM25L with true IDF, query-time DF collection, and per-block length normalization
 3. **Proximity bonus** (minimal span cover)
 4. **Heading overlap** boost
-5. **KNS** tie-breaker (small, deterministic)
-6. **De-dupe + MMR** diversity for final top-K
+5. Deterministic **pseudo-relevance query expansion** from top lexical seeds
+6. **KNS** tie-breaker (small, deterministic)
+7. **De-dupe + MMR** diversity for final top-K
 
 ---
 
@@ -187,6 +195,16 @@ query(pack, "throttling", { requirePhrases: ["react native bridge"] });
 ```ts
 query(pack, "bridge events", { namespace: ["mobile", "sdk"] });
 ```
+
+### Query expansion controls
+
+```ts
+query(pack, "throttle bridge", {
+  queryExpansion: { enabled: true, docs: 4, terms: 6, weight: 0.3 }
+});
+```
+
+This keeps retrieval lexical/deterministic while increasing recall for related vocabulary found in top-ranked seed blocks.
 
 ### Tight vs. scattered matches
 
