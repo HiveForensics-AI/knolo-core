@@ -13,10 +13,14 @@ import { getTextEncoder } from './utils/utf8.js';
 export type BuildInputDoc = { id?: string; heading?: string; text: string };
 
 export async function buildPack(docs: BuildInputDoc[]): Promise<Uint8Array> {
+  if (!Array.isArray(docs)) {
+    throw new TypeError('buildPack(docs) expects an array of documents.');
+  }
+
   // Prepare blocks (strip MD) and carry heading/docId for optional boosts.
   const blocks: Block[] = docs.map((d, i) => ({
     id: i,
-    text: stripMd(d.text),
+    text: stripMd(typeof d?.text === 'string' ? d.text : ''),
     heading: d.heading,
   }));
 
@@ -24,7 +28,8 @@ export async function buildPack(docs: BuildInputDoc[]): Promise<Uint8Array> {
   const { lexicon, postings } = buildIndex(blocks);
 
   // Compute avg token length once (store in meta)
-  const totalTokens = blocks.reduce((sum, b) => sum + tokenize(b.text).length, 0);
+  const blockTokenLens = blocks.map((b) => tokenize(b.text).length || 1);
+  const totalTokens = blockTokenLens.reduce((sum, n) => sum + n, 0);
   const avgBlockLen = blocks.length ? totalTokens / blocks.length : 1;
 
   const meta = {
@@ -42,6 +47,7 @@ export async function buildPack(docs: BuildInputDoc[]): Promise<Uint8Array> {
     text: b.text,
     heading: b.heading ?? null,
     docId: docs[i]?.id ?? null,
+    len: blockTokenLens[i],
   }));
 
   // Encode sections

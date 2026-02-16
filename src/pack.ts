@@ -23,6 +23,7 @@ export type Pack = {
   blocks: string[];
   headings?: (string | null)[];
   docIds?: (string | null)[];
+  blockTokenLens?: number[];
 };
 
 export async function mountPack(opts: MountOptions): Promise<Pack> {
@@ -58,6 +59,7 @@ export async function mountPack(opts: MountOptions): Promise<Pack> {
   let blocks: string[] = [];
   let headings: (string | null)[] | undefined;
   let docIds: (string | null)[] | undefined;
+  let blockTokenLens: number[] | undefined;
 
   if (Array.isArray(parsed) && parsed.length && typeof parsed[0] === 'string') {
     // v1
@@ -66,22 +68,25 @@ export async function mountPack(opts: MountOptions): Promise<Pack> {
     blocks = [];
     headings = [];
     docIds = [];
+    blockTokenLens = [];
     for (const it of parsed) {
       if (it && typeof it === 'object') {
         blocks.push(String(it.text ?? ''));
         headings.push(it.heading ?? null);
         docIds.push(it.docId ?? null);
+        blockTokenLens.push(typeof it.len === 'number' && Number.isFinite(it.len) && it.len > 0 ? Math.floor(it.len) : 1);
       } else {
         blocks.push(String(it ?? ''));
         headings.push(null);
         docIds.push(null);
+        blockTokenLens.push(1);
       }
     }
   } else {
     blocks = [];
   }
 
-  return { meta, lexicon, postings, blocks, headings, docIds };
+  return { meta, lexicon, postings, blocks, headings, docIds, blockTokenLens };
 }
 
 async function resolveToBuffer(src: MountOptions['src']): Promise<ArrayBuffer> {

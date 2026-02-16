@@ -30,7 +30,7 @@ KnoLo Core packages your corpus into a single `.knolo` file and performs **deter
 
 **Key properties**
 
-* **Deterministic**: phrase enforcement, proximity scoring, heading boosts
+* **Deterministic**: phrase enforcement (including smart quotes), BM25L+IDF, proximity scoring, heading boosts
 * **Duplicate-free**: near-duplicate suppression + MMR diversity
 * **Portable**: single-pack file; Node, browsers, Expo
 * **LLM-ready**: outputs structured **Context Patches**
@@ -134,7 +134,7 @@ const hits: Hit[] = query(pack, '“react native bridge” throttling', {
 **What the ranker does**
 
 1. Enforces quoted/required phrases (hard filter)
-2. BM25L with precomputed avg block length
+2. BM25L with corpus-aware IDF and true per-block length normalization
 3. **Proximity bonus** (minimal span cover)
 4. **Heading overlap** boost
 5. **KNS** tie-breaker (small, deterministic)
@@ -236,7 +236,7 @@ Top-K results apply near-duplicate suppression (5-gram Jaccard) and MMR (λ≈0.
 **Blocks JSON (v1 / v2)**
 
 * **v1**: `string[]` (text only)
-* **v2**: `{ text, heading?, docId? }[]`
+* **v2**: `{ text, heading?, docId?, len? }[]`
 
 Runtime auto-detects and exposes:
 
@@ -244,7 +244,8 @@ Runtime auto-detects and exposes:
 type Pack = {
   meta, lexicon, postings, blocks: string[],
   headings?: (string|null)[],
-  docIds?: (string|null)[]
+  docIds?: (string|null)[],
+  blockTokenLens?: number[]
 }
 ```
 

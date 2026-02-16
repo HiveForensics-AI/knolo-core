@@ -72,7 +72,7 @@ export function buildIndex(blocks: Block[]): IndexBuildResult {
   for (const [tid, blockMap] of termBlockPositions) {
     postings.push(tid);
     for (const [bid, positions] of blockMap) {
-      postings.push(bid, ...positions, 0);
+      postings.push(bid + 1, ...positions, 0);
     }
     postings.push(0); // end of term
   }

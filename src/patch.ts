@@ -36,6 +36,7 @@ export function makeContextPatch(
   const limit = limits[budget];
   const snippets = hits.slice(0, limit.snippets).map((h) => ({
     text: truncate(h.text, limit.chars),
+    source: h.source,
   }));
   // Build background summary from first two snippets by extracting first sentence
   const background = snippets.slice(0, 2).map((s) => firstSentence(s.text));

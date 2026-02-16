@@ -1,6 +1,23 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [0.2.3] - 2026-02-16
+
+### Added
+- Added automated retrieval tests covering smart-quote phrase parsing, de-duplication behavior, and context patch source attribution.
+
+### Changed
+- Improved ranking accuracy with corpus-aware BM25L IDF and per-block length normalization.
+- Pack builder now persists per-block token length metadata (`len`) for consistent scoring at query-time.
+- Context patches now preserve snippet `source` values for better citation workflows.
+- CLI now validates input shape and reports actionable document-format errors.
+
+### Fixed
+- Quoted phrase parsing now supports smart quotes (`“...”`) in addition to standard double quotes.
+
+[0.2.3]: https://github.com/HiveForensics-AI/knolo-core/releases/tag/v0.2.3
+
+---
 ## [0.2.2] - 2025-08-26
 
 ### Changed

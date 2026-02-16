@@ -64,6 +64,14 @@ if (!inFile) {
 }
 
 const docs = JSON.parse(readFileSync(inFile, "utf8"));
+if (!Array.isArray(docs)) {
+  throw new Error("Input JSON must be an array of documents.");
+}
+for (const [i, d] of docs.entries()) {
+  if (!d || typeof d.text !== "string") {
+    throw new Error(`Invalid document at index ${i}: expected { text: string, id?: string, heading?: string }`);
+  }
+}
 const bytes = await buildPack(docs);
 writeFileSync(outFile, Buffer.from(bytes));
 console.log(`wrote ${outFile}`);

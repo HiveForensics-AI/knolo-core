@@ -35,17 +35,17 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
   const normTokens = tokenize(q).map((t) => t.term);
 
   // Normalize quoted phrases from q
-  const quotedRaw = parsePhrases(q); // arrays of raw terms
-  const quoted = quotedRaw.map(seq => seq.map(t => normalize(t)).flatMap(s => s.split(/\s+/)).filter(Boolean));
+  const quotedRaw = parsePhrases(q);
+  const quoted = quotedRaw.map((seq) => seq.map((t) => normalize(t)).flatMap((s) => s.split(/\s+/)).filter(Boolean));
 
   // Normalize requirePhrases the same way
   const extraReq = (opts.requirePhrases ?? [])
-    .map(s => tokenize(s).map(t => t.term)) // <<< normalize via tokenizer
-    .filter(arr => arr.length > 0);
+    .map((s) => tokenize(s).map((t) => t.term))
+    .filter((arr) => arr.length > 0);
 
   const requiredPhrases: string[][] = [...quoted, ...extraReq];
 
-  // --- Term ids for the free (unquoted) tokens in q
+  // --- Term ids for free tokens in q
   const termIds = normTokens
     .map((t) => pack.lexicon.get(t))
     .filter((id): id is number => id !== undefined);
@@ -56,8 +56,10 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
   // --- Candidate map
   const candidates = new Map<
     number,
-    { tf: Map<number, number>; pos: Map<number, number[]>; hasPhrase?: boolean; headingScore?: number }
+    { tf: Map<number, number>; pos: Map<number, number[]>; hasPhrase?: boolean; headingScore?: number; docLen?: number }
   >();
+
+  const termDocFreq = new Map<number, number>();
 
   // Helper to harvest postings for a given set of termIds into candidates
   function scanForTermIds(idSet: Set<number>) {
@@ -67,8 +69,10 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
       const tid = p[i++];
       if (tid === 0) continue;
       const relevant = idSet.has(tid);
-      let bid = p[i++];
-      while (bid !== 0) {
+      let df = 0;
+      let packedBid = p[i++];
+      while (packedBid !== 0) {
+        const bid = packedBid - 1;
         let pos = p[i++];
         const positions: number[] = [];
         while (pos !== 0) {
@@ -76,16 +80,22 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
           pos = p[i++];
         }
         if (relevant) {
+          df++;
           let entry = candidates.get(bid);
           if (!entry) {
-            entry = { tf: new Map(), pos: new Map() };
+            entry = {
+              tf: new Map(),
+              pos: new Map(),
+              docLen: pack.blockTokenLens?.[bid] ?? (tokenize(pack.blocks[bid] || '').length || 1),
+            };
             candidates.set(bid, entry);
           }
           entry.tf.set(tid, positions.length);
           entry.pos.set(tid, positions);
         }
-        bid = p[i++];
+        packedBid = p[i++];
       }
+      if (relevant) termDocFreq.set(tid, df);
     }
   }
 
@@ -94,9 +104,7 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
     scanForTermIds(termSet);
   }
 
-  // 2) Phrase-first rescue:
-  // If nothing matched the free tokens, but we do have required phrases,
-  // build a fallback term set from ALL tokens that appear in those phrases and scan again.
+  // 2) Phrase-first rescue
   if (candidates.size === 0 && requiredPhrases.length > 0) {
     const phraseTokenIds = new Set<number>();
     for (const seq of requiredPhrases) {
@@ -110,7 +118,7 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
     }
   }
 
-  // --- Phrase enforcement (now that we have some candidates)
+  // --- Phrase enforcement
   if (requiredPhrases.length > 0) {
     for (const [bid, data] of [...candidates]) {
       const text = pack.blocks[bid] || "";
@@ -125,7 +133,6 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
     }
   }
 
-  // If still nothing, bail early
   if (candidates.size === 0) return [];
 
   // --- Heading overlap
@@ -140,14 +147,13 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
     }
   }
 
-  // --- Rank with proximity bonus
+  // --- Rank with proximity bonus + true BM25 idf/doc length
   const avgLen =
     pack.meta?.stats?.avgBlockLen ??
-    (pack.blocks.length
-      ? pack.blocks.reduce((s, b) => s + tokenize(b).length, 0) / pack.blocks.length
-      : 1);
+    (pack.blocks.length ? pack.blocks.reduce((s, b) => s + tokenize(b).length, 0) / pack.blocks.length : 1);
 
-  const prelim = rankBM25L(candidates, avgLen, {
+  const prelim = rankBM25L(candidates, avgLen, termDocFreq, {
+    docCount: pack.meta?.stats?.blocks ?? pack.blocks.length,
     proximityBonus: (cand) => proximityMultiplier(minCoverSpan(cand.pos)),
   });
 
@@ -166,15 +172,13 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
     };
   });
 
-  const finalHits = diversifyAndDedupe(pool, { k: topK });
-  return finalHits;
+  return diversifyAndDedupe(pool, { k: topK });
 }
 
 /** Ordered phrase check using the SAME tokenizer/normalizer path as the index. */
 function containsPhrase(text: string, seq: string[]): boolean {
   if (seq.length === 0) return false;
-  // normalize seq via tokenizer to be extra safe (handles diacritics/case)
-  const seqNorm = tokenize(seq.join(" ")).map(t => t.term);
+  const seqNorm = tokenize(seq.join(" ")).map((t) => t.term);
   const toks = tokenize(text).map((t) => t.term);
   outer: for (let i = 0; i <= toks.length - seqNorm.length; i++) {
     for (let j = 0; j < seqNorm.length; j++) {

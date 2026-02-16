@@ -15,7 +15,7 @@ Package documents into a compact `.knolo` file and query them deterministically 
 
 ---
 
-## ✨ Highlights (v0.2.0)
+## ✨ Highlights (v0.3.0-ready)
 
 * 🔎 **Stronger relevance:**
 
@@ -24,9 +24,10 @@ Package documents into a compact `.knolo` file and query them deterministically 
   * **Optional heading boosts** when headings are present
 * 🌀 **Duplicate-free results:** **near-duplicate suppression** + **MMR diversity**
 * 🧮 **KNS tie‑breaker:** lightweight numeric signature to stabilize close ties
-* ⚡ **Faster & leaner:** precomputed `avgBlockLen` in pack metadata
+* 🎯 **More accurate ranking:** real BM25L IDF + per-block length normalization
+* ⚡ **Faster & leaner:** precomputed `avgBlockLen` + per-block token lengths in pack metadata
 * 📱 **Works in Expo/React Native:** safe TextEncoder/TextDecoder ponyfills
-* 📑 **Context Patches:** LLM‑friendly snippets for prompts
+* 📑 **Context Patches:** LLM‑friendly snippets for prompts (with source attribution)
 * 🔒 **Local & private:** everything runs on device
 
 ---
@@ -140,7 +141,7 @@ type BuildInputDoc = {
 ```
 
 * Stores optional `heading` and `id` alongside each block.
-* Computes and persists `meta.stats.avgBlockLen` for faster queries.
+* Computes and persists `meta.stats.avgBlockLen` and per-block token lengths for more accurate BM25L normalization.
 
 ### `mountPack({ src }) -> Promise<Pack>`
 
@@ -154,6 +155,7 @@ type Pack = {
   blocks: string[];
   headings?: (string | null)[];
   docIds?: (string | null)[];
+  blockTokenLens?: number[];
 };
 ```
 
@@ -179,8 +181,9 @@ type Hit = {
 
 **What happens under the hood (v0.2.0):**
 
-* Tokenize + **enforce all phrases** (quoted in `q` and `requirePhrases`)
+* Tokenize + **enforce all phrases** (quoted in `q` and `requirePhrases`, including smart quotes “ ”)
 * Candidate generation via inverted index
+* **Real BM25L** with corpus-aware IDF and per-block length normalization
 * **Proximity bonus** using minimal window covering all query terms
 * Optional **heading overlap boost** (when headings are present)
 * Tiny **KNS** numeric-signature tie‑breaker (\~±2% influence)
@@ -231,11 +234,11 @@ Budgets: `"mini" | "small" | "full"`.
 **Pack layout (binary):**
 `[metaLen:u32][meta JSON][lexLen:u32][lexicon JSON][postCount:u32][postings][blocksLen:u32][blocks JSON]`
 
-* `meta.stats.avgBlockLen` is persisted (v2).
+* `meta.stats.avgBlockLen` is persisted (v2+).
 * `blocks JSON` may be:
 
   * **v1:** `string[]` (text only)
-  * **v2:** `{ text, heading?, docId? }[]`
+  * **v2:** `{ text, heading?, docId?, len? }[]`
 
 The runtime auto‑detects either format.
 

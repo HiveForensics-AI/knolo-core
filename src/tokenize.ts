@@ -47,7 +47,7 @@ export function tokenize(text: string): Token[] {
  */
 export function parsePhrases(q: string): string[][] {
   const parts: string[][] = [];
-  const regex = /"([^\"]+)"/g;
+  const regex = /["“”]([^"“”]+)["“”]/g;
   let match: RegExpExecArray | null;
   while ((match = regex.exec(q)) !== null) {
     const phrase = match[1].trim().split(/\s+/);
