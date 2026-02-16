@@ -15,7 +15,7 @@ Package documents into a compact `.knolo` file and query them deterministically 
 
 ---
 
-## ✨ Highlights (v0.2.0)
+## ✨ Highlights (v0.3.0)
 
 * 🔎 **Stronger relevance:**
 
@@ -24,7 +24,9 @@ Package documents into a compact `.knolo` file and query them deterministically 
   * **Optional heading boosts** when headings are present
 * 🌀 **Duplicate-free results:** **near-duplicate suppression** + **MMR diversity**
 * 🧮 **KNS tie‑breaker:** lightweight numeric signature to stabilize close ties
-* ⚡ **Faster & leaner:** precomputed `avgBlockLen` in pack metadata
+* ⚡ **Faster & leaner:** precomputed `avgBlockLen` and per-block token lengths in pack metadata
+* 📈 **More accurate ranking:** corpus-aware BM25L with true IDF + document-length normalization
+* 🧷 **Correct postings decoding:** block IDs are encoded as `bid + 1` so delimiter `0` remains unambiguous
 * 📱 **Works in Expo/React Native:** safe TextEncoder/TextDecoder ponyfills
 * 📑 **Context Patches:** LLM‑friendly snippets for prompts
 * 🔒 **Local & private:** everything runs on device
@@ -140,7 +142,8 @@ type BuildInputDoc = {
 ```
 
 * Stores optional `heading` and `id` alongside each block.
-* Computes and persists `meta.stats.avgBlockLen` for faster queries.
+* Validates builder input shape and throws actionable errors for malformed docs.
+* Computes and persists `meta.stats.avgBlockLen` plus per-block token length (`len`) for stable scoring.
 
 ### `mountPack({ src }) -> Promise<Pack>`
 
@@ -154,6 +157,7 @@ type Pack = {
   blocks: string[];
   headings?: (string | null)[];
   docIds?: (string | null)[];
+  blockTokenLens?: number[];
 };
 ```
 
@@ -177,10 +181,11 @@ type Hit = {
 };
 ```
 
-**What happens under the hood (v0.2.0):**
+**What happens under the hood (v0.3.0):**
 
 * Tokenize + **enforce all phrases** (quoted in `q` and `requirePhrases`)
-* Candidate generation via inverted index
+* Candidate generation via inverted index + query-time DF collection
+* Corpus-aware BM25L (true IDF + length normalization from persisted block lengths)
 * **Proximity bonus** using minimal window covering all query terms
 * Optional **heading overlap boost** (when headings are present)
 * Tiny **KNS** numeric-signature tie‑breaker (\~±2% influence)

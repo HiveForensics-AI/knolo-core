@@ -10,12 +10,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 
 async function tryImport(filePath) {
-  // 1) ESM via file URL
   try {
     const url = pathToFileURL(filePath).href;
     return await import(url);
   } catch (_) {}
-  // 2) CJS via require
   try {
     return require(filePath);
   } catch (_) {}
@@ -24,14 +22,11 @@ async function tryImport(filePath) {
 
 function getBuildPack(mod) {
   if (!mod) return undefined;
-  // Named export (ESM)
   if (typeof mod.buildPack === "function") return mod.buildPack;
-  // CJS default export object: { buildPack } or function
   if (mod.default) {
     if (typeof mod.default === "function") return mod.default;
     if (typeof mod.default.buildPack === "function") return mod.default.buildPack;
   }
-  // Some CJS setups export { buildPack } directly
   if (typeof mod === "function") return mod;
   if (typeof mod.buildPack === "function") return mod.buildPack;
   return undefined;
@@ -41,7 +36,6 @@ async function loadBuildPack() {
   const candidates = [
     path.resolve(__dirname, "../dist/index.js"),
     path.resolve(__dirname, "../dist/builder.js"),
-    // Also try .cjs just in case someone built CJS
     path.resolve(__dirname, "../dist/index.cjs"),
     path.resolve(__dirname, "../dist/builder.cjs"),
   ];
@@ -51,6 +45,22 @@ async function loadBuildPack() {
     if (buildPack) return buildPack;
   }
   throw new Error("Could not locate a buildPack function in dist/");
+}
+
+function validateCliDocs(raw) {
+  if (!Array.isArray(raw)) {
+    throw new Error('Input JSON must be an array of docs: [{ "text": "...", "id"?: "...", "heading"?: "..." }]');
+  }
+  for (let i = 0; i < raw.length; i++) {
+    const doc = raw[i];
+    if (!doc || typeof doc !== "object") {
+      throw new Error(`Invalid doc at index ${i}: expected an object.`);
+    }
+    if (typeof doc.text !== "string" || !doc.text.trim()) {
+      throw new Error(`Invalid doc at index ${i}: "text" must be a non-empty string.`);
+    }
+  }
+  return raw;
 }
 
 const buildPack = await loadBuildPack();
@@ -63,7 +73,15 @@ if (!inFile) {
   process.exit(1);
 }
 
-const docs = JSON.parse(readFileSync(inFile, "utf8"));
-const bytes = await buildPack(docs);
-writeFileSync(outFile, Buffer.from(bytes));
-console.log(`wrote ${outFile}`);
+try {
+  const rawText = readFileSync(inFile, "utf8");
+  const parsed = JSON.parse(rawText);
+  const docs = validateCliDocs(parsed);
+  const bytes = await buildPack(docs);
+  writeFileSync(outFile, Buffer.from(bytes));
+  console.log(`wrote ${outFile}`);
+} catch (err) {
+  const message = err instanceof Error ? err.message : String(err);
+  console.error(`knolo: ${message}`);
+  process.exit(1);
+}

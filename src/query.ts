@@ -35,13 +35,13 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
   const normTokens = tokenize(q).map((t) => t.term);
 
   // Normalize quoted phrases from q
-  const quotedRaw = parsePhrases(q); // arrays of raw terms
-  const quoted = quotedRaw.map(seq => seq.map(t => normalize(t)).flatMap(s => s.split(/\s+/)).filter(Boolean));
+  const quotedRaw = parsePhrases(q);
+  const quoted = quotedRaw.map((seq) => seq.map((t) => normalize(t)).flatMap((s) => s.split(/\s+/)).filter(Boolean));
 
   // Normalize requirePhrases the same way
   const extraReq = (opts.requirePhrases ?? [])
-    .map(s => tokenize(s).map(t => t.term)) // <<< normalize via tokenizer
-    .filter(arr => arr.length > 0);
+    .map((s) => tokenize(s).map((t) => t.term))
+    .filter((arr) => arr.length > 0);
 
   const requiredPhrases: string[][] = [...quoted, ...extraReq];
 
@@ -59,6 +59,11 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
     { tf: Map<number, number>; pos: Map<number, number[]>; hasPhrase?: boolean; headingScore?: number }
   >();
 
+  // Query-time document frequency collection for BM25 IDF.
+  const dfs = new Map<number, number>();
+
+  const usesOffsetBlockIds = (pack.meta?.version ?? 1) >= 3;
+
   // Helper to harvest postings for a given set of termIds into candidates
   function scanForTermIds(idSet: Set<number>) {
     const p = pack.postings;
@@ -67,15 +72,18 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
       const tid = p[i++];
       if (tid === 0) continue;
       const relevant = idSet.has(tid);
-      let bid = p[i++];
-      while (bid !== 0) {
+      let termDf = 0;
+      let encodedBid = p[i++];
+      while (encodedBid !== 0) {
+        const bid = usesOffsetBlockIds ? encodedBid - 1 : encodedBid;
         let pos = p[i++];
         const positions: number[] = [];
         while (pos !== 0) {
           positions.push(pos);
           pos = p[i++];
         }
-        if (relevant) {
+        termDf++;
+        if (relevant && bid >= 0) {
           let entry = candidates.get(bid);
           if (!entry) {
             entry = { tf: new Map(), pos: new Map() };
@@ -84,8 +92,9 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
           entry.tf.set(tid, positions.length);
           entry.pos.set(tid, positions);
         }
-        bid = p[i++];
+        encodedBid = p[i++];
       }
+      if (relevant) dfs.set(tid, termDf);
     }
   }
 
@@ -133,7 +142,7 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
     const qset = new Set(normTokens);
     const qUniqueCount = new Set(normTokens).size || 1;
     for (const [bid, data] of candidates) {
-      const h = pack.headings![bid] ?? "";
+      const h = pack.headings[bid] ?? "";
       const hTerms = tokenize(h || "").map((t) => t.term);
       const overlap = new Set(hTerms.filter((t) => qset.has(t))).size;
       data.headingScore = overlap / qUniqueCount;
@@ -147,7 +156,9 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
       ? pack.blocks.reduce((s, b) => s + tokenize(b).length, 0) / pack.blocks.length
       : 1);
 
-  const prelim = rankBM25L(candidates, avgLen, {
+  const docCount = pack.meta?.stats?.blocks ?? pack.blocks.length;
+
+  const prelim = rankBM25L(candidates, avgLen, docCount, dfs, pack.blockTokenLens, {
     proximityBonus: (cand) => proximityMultiplier(minCoverSpan(cand.pos)),
   });
 
@@ -173,8 +184,7 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
 /** Ordered phrase check using the SAME tokenizer/normalizer path as the index. */
 function containsPhrase(text: string, seq: string[]): boolean {
   if (seq.length === 0) return false;
-  // normalize seq via tokenizer to be extra safe (handles diacritics/case)
-  const seqNorm = tokenize(seq.join(" ")).map(t => t.term);
+  const seqNorm = tokenize(seq.join(" ")).map((t) => t.term);
   const toks = tokenize(text).map((t) => t.term);
   outer: for (let i = 0; i <= toks.length - seqNorm.length; i++) {
     for (let j = 0; j < seqNorm.length; j++) {

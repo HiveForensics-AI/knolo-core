@@ -134,7 +134,7 @@ const hits: Hit[] = query(pack, '“react native bridge” throttling', {
 **What the ranker does**
 
 1. Enforces quoted/required phrases (hard filter)
-2. BM25L with precomputed avg block length
+2. Corpus-aware BM25L with true IDF, query-time DF collection, and per-block length normalization
 3. **Proximity bonus** (minimal span cover)
 4. **Heading overlap** boost
 5. **KNS** tie-breaker (small, deterministic)
@@ -209,7 +209,7 @@ Top-K results apply near-duplicate suppression (5-gram Jaccard) and MMR (λ≈0.
 
 ```json
 {
-  "version": 2,
+  "version": 3,
   "stats": {
     "docs": <number>,
     "blocks": <number>,
@@ -228,15 +228,16 @@ Top-K results apply near-duplicate suppression (5-gram Jaccard) and MMR (λ≈0.
 * Flattened `Uint32Array`:
 
   ```
-  termId, blockId, pos, pos, …, 0, blockId, …, 0, 0, termId, ...
+  termId, blockId+1, pos, pos, …, 0, blockId+1, …, 0, 0, termId, ...
   ```
 
-  Each block section ends with `0`, each term section ends with `0`.
+  Block IDs are encoded as `bid + 1` so `0` is reserved as the delimiter. Each block section ends with `0`, each term section ends with `0`.
 
 **Blocks JSON (v1 / v2)**
 
 * **v1**: `string[]` (text only)
 * **v2**: `{ text, heading?, docId? }[]`
+* **v3**: `{ text, heading?, docId?, len }[]` (`len` is block token length for stable ranking)
 
 Runtime auto-detects and exposes:
 
@@ -244,7 +245,8 @@ Runtime auto-detects and exposes:
 type Pack = {
   meta, lexicon, postings, blocks: string[],
   headings?: (string|null)[],
-  docIds?: (string|null)[]
+  docIds?: (string|null)[],
+  blockTokenLens?: number[]
 }
 ```
 

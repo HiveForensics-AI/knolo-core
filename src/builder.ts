@@ -1,8 +1,8 @@
 /*
  * builder.ts
  *
- * Build `.knolo` packs from input docs. Now persists optional headings/docIds
- * and stores avgBlockLen in meta for faster/easier normalization at query-time.
+ * Build `.knolo` packs from input docs. Persists headings/docIds/token lengths
+ * and stores avgBlockLen in meta for stable query-time normalization.
  */
 
 import { buildIndex } from './indexer.js';
@@ -13,8 +13,10 @@ import { getTextEncoder } from './utils/utf8.js';
 export type BuildInputDoc = { id?: string; heading?: string; text: string };
 
 export async function buildPack(docs: BuildInputDoc[]): Promise<Uint8Array> {
+  const normalizedDocs = validateDocs(docs);
+
   // Prepare blocks (strip MD) and carry heading/docId for optional boosts.
-  const blocks: Block[] = docs.map((d, i) => ({
+  const blocks: Block[] = normalizedDocs.map((d, i) => ({
     id: i,
     text: stripMd(d.text),
     heading: d.heading,
@@ -23,25 +25,26 @@ export async function buildPack(docs: BuildInputDoc[]): Promise<Uint8Array> {
   // Build index
   const { lexicon, postings } = buildIndex(blocks);
 
-  // Compute avg token length once (store in meta)
-  const totalTokens = blocks.reduce((sum, b) => sum + tokenize(b.text).length, 0);
+  const blockTokenLens = blocks.map((b) => tokenize(b.text).length);
+  const totalTokens = blockTokenLens.reduce((sum, len) => sum + len, 0);
   const avgBlockLen = blocks.length ? totalTokens / blocks.length : 1;
 
   const meta = {
-    version: 2,
+    version: 3,
     stats: {
-      docs: docs.length,
+      docs: normalizedDocs.length,
       blocks: blocks.length,
       terms: lexicon.length,
       avgBlockLen,
     },
   };
 
-  // Persist blocks as objects to optionally carry heading/docId
+  // Persist blocks as objects to optionally carry heading/docId/token length.
   const blocksPayload = blocks.map((b, i) => ({
     text: b.text,
     heading: b.heading ?? null,
-    docId: docs[i]?.id ?? null,
+    docId: normalizedDocs[i]?.id ?? null,
+    len: blockTokenLens[i] ?? 0,
   }));
 
   // Encode sections
@@ -80,6 +83,28 @@ export async function buildPack(docs: BuildInputDoc[]): Promise<Uint8Array> {
   out.set(blocksBytes, offset);
 
   return out;
+}
+
+function validateDocs(docs: BuildInputDoc[]): BuildInputDoc[] {
+  if (!Array.isArray(docs)) {
+    throw new Error('buildPack expects an array of docs: [{ text, id?, heading? }, ...]');
+  }
+
+  return docs.map((doc, i) => {
+    if (!doc || typeof doc !== 'object') {
+      throw new Error(`Invalid doc at index ${i}: expected an object with a string "text" field.`);
+    }
+    if (typeof doc.text !== 'string' || !doc.text.trim()) {
+      throw new Error(`Invalid doc at index ${i}: "text" must be a non-empty string.`);
+    }
+    if (doc.id !== undefined && typeof doc.id !== 'string') {
+      throw new Error(`Invalid doc at index ${i}: "id" must be a string when provided.`);
+    }
+    if (doc.heading !== undefined && typeof doc.heading !== 'string') {
+      throw new Error(`Invalid doc at index ${i}: "heading" must be a string when provided.`);
+    }
+    return doc;
+  });
 }
 
 /** Strip Markdown syntax with lightweight regexes (no deps). */
