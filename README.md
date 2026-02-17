@@ -1,4 +1,3 @@
-
 # 🧠 KnoLo Core
 
 [![npm version](https://img.shields.io/npm/v/knolo-core.svg)](https://www.npmjs.com/package/knolo-core)
@@ -7,30 +6,34 @@
 [![GitHub license](https://img.shields.io/github/license/HiveForensics-AI/knolo-core.svg)](https://github.com/HiveForensics-AI/knolo-core/blob/main/LICENSE)
 [![Website](https://img.shields.io/badge/website-knolo.dev-2ea44f?logo=vercel)](https://www.knolo.dev/)
 
+**KnoLo Core** is a **local-first knowledge retrieval engine** for LLM apps.
+Build a portable `.knolo` pack and run deterministic lexical retrieval with optional semantic reranking using quantized embeddings.
 
-
-**KnoLo Core** is a **local-first knowledge base** for small LLMs.
-Package documents into a compact `.knolo` file and query them deterministically —
-**no embeddings, no vector DB, no cloud**. Ideal for **on‑device / offline** assistants.
+- ✅ Local/offline-first runtime
+- ✅ Deterministic lexical ranking and filtering
+- ✅ Optional embedding-aware hybrid retrieval (no external vector DB required)
+- ✅ Node.js + browser + React Native / Expo support
 
 ---
 
-## ✨ Highlights (v0.3.0)
+## ✨ What’s in v0.3.0
 
-* 🔎 **Stronger relevance:**
-
-  * **Required phrase enforcement** (quoted & `requirePhrases`)
-  * **Pseudo-relevance query expansion** (deterministic, lightweight, lexical-only)
-  * **Proximity bonus** using minimal term-span cover
-  * **Optional heading boosts** when headings are present
-* 🌀 **Duplicate-free results:** **near-duplicate suppression** + **MMR diversity**
-* 🧮 **KNS tie‑breaker:** lightweight numeric signature to stabilize close ties
-* ⚡ **Faster & leaner:** precomputed `avgBlockLen` and per-block token lengths in pack metadata
-* 📈 **More accurate ranking:** corpus-aware BM25L with true IDF + document-length normalization
-* 🧷 **Correct postings decoding:** block IDs are encoded as `bid + 1` so delimiter `0` remains unambiguous
-* 📱 **Works in Expo/React Native:** safe TextEncoder/TextDecoder ponyfills
-* 📑 **Context Patches:** LLM‑friendly snippets for prompts
-* 🔒 **Local & private:** everything runs on device
+- **Deterministic lexical quality upgrades**
+  - required phrase enforcement (quoted + `requirePhrases`)
+  - corpus-aware BM25L with true IDF and block-length normalization
+  - proximity bonus via minimal term-span cover
+  - optional heading overlap boosts
+  - deterministic pseudo-relevance query expansion
+- **Hybrid retrieval support**
+  - optional semantic rerank over top lexical candidates
+  - int8 L2-normalized embedding quantization with per-vector float16 scales
+  - weighted lexical/semantic score blending controls
+- **Stability & diversity**
+  - near-duplicate suppression + MMR diversity
+  - KNS tie-break signal for stable close-score ordering
+- **Portable packs**
+  - single `.knolo` artifact
+  - semantic payload embedded directly in pack when enabled
 
 ---
 
@@ -40,7 +43,7 @@ Package documents into a compact `.knolo` file and query them deterministically 
 npm install knolo-core
 ```
 
-Dev from source:
+Build from source:
 
 ```bash
 git clone https://github.com/HiveForensics-AI/knolo-core.git
@@ -51,121 +54,160 @@ npm run build
 
 ---
 
-## 🚀 Usage
+## 🚀 Quickstart
 
-### 1) Node.js (build → mount → query → patch)
+### 1) Build + mount + query
 
 ```ts
 import { buildPack, mountPack, query, makeContextPatch } from "knolo-core";
 
 const docs = [
-  { id: "guide",   namespace: "mobile", heading: "React Native Bridge", text: "The bridge sends messages between JS and native. You can throttle events..." },
-  { id: "throttle", namespace: "mobile", heading: "Throttling",         text: "Throttling reduces frequency of events to avoid flooding the bridge." },
-  { id: "dvst",     namespace: "patterns", heading: "Debounce vs Throttle", text: "Debounce waits for silence; throttle guarantees a max rate." }
+  {
+    id: "bridge-guide",
+    namespace: "mobile",
+    heading: "React Native Bridge",
+    text: "The bridge sends messages between JS and native modules. Throttling limits event frequency."
+  },
+  {
+    id: "perf-notes",
+    namespace: "mobile",
+    heading: "Debounce vs Throttle",
+    text: "Debounce waits for silence; throttle enforces a maximum trigger rate."
+  }
 ];
 
-const bytes = await buildPack(docs);              // build .knolo bytes
-const kb = await mountPack({ src: bytes });       // mount in-memory
-const hits = query(kb, '“react native” throttle', // quotes enforce phrase
-  { topK: 5, requirePhrases: ["max rate"], namespace: "mobile" });
+const bytes = await buildPack(docs);
+const kb = await mountPack({ src: bytes });
 
-console.log(hits);
-/*
-[
-  { blockId: 2, score: 6.73, text: "...", source: "dvst" },
-  ...
-]
-*/
+const hits = query(kb, '"react native" throttle', {
+  topK: 5,
+  requirePhrases: ["maximum trigger rate"],
+  namespace: "mobile"
+});
 
 const patch = makeContextPatch(hits, { budget: "small" });
-console.log(patch);
+console.log(hits, patch);
 ```
 
-### 2) CLI (build a `.knolo` file)
+### 2) CLI pack build
 
-Create `docs.json`:
+`docs.json`:
 
 ```json
 [
-  { "id": "guide", "heading": "Guide", "text": "Install deps...\n\n## Throttle\nLimit frequency of events." },
-  { "id": "faq",   "heading": "FAQ",   "text": "What is throttling? It reduces event frequency." }
+  { "id": "guide", "heading": "Guide", "text": "Install deps.\n\n## Throttle\nLimit event frequency." },
+  { "id": "faq", "heading": "FAQ", "text": "What is throttling? It reduces event frequency." }
 ]
 ```
 
-Build:
-
 ```bash
-# writes knowledge.knolo
 npx knolo docs.json knowledge.knolo
 ```
 
-Then load it in your app:
+Then query in app:
 
 ```ts
 import { mountPack, query } from "knolo-core";
+
 const kb = await mountPack({ src: "./knowledge.knolo" });
 const hits = query(kb, "throttle events", { topK: 3 });
-
-// Optional hybrid rerank (lexical first, semantic rerank of top lexical candidates)
-const hybridHits = query(kb, "throttle events", {
-  topK: 5,
-  semantic: {
-    enabled: true,
-    queryEmbedding, // Float32Array from your embedding model
-    topN: 50,
-    minLexConfidence: 0.35,
-    blend: { enabled: true, wLex: 0.75, wSem: 0.25 },
-  },
-});
-```
-
-### 3) React / Expo
-
-```ts
-import { Asset } from "expo-asset";
-import * as FileSystem from "expo-file-system";
-import { mountPack, query } from "knolo-core";
-
-async function loadKB() {
-  const asset = Asset.fromModule(require("./assets/knowledge.knolo"));
-  await asset.downloadAsync();
-
-  const base64 = await FileSystem.readAsStringAsync(asset.localUri!, { encoding: FileSystem.EncodingType.Base64 });
-  const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-
-  const kb = await mountPack({ src: bytes.buffer });
-  return query(kb, `“react native” throttling`, { topK: 5 });
-}
 ```
 
 ---
 
-## 📑 API
+## 🔀 Hybrid retrieval with embeddings (recommended direction)
 
-### `buildPack(docs) -> Promise<Uint8Array>`
+KnoLo’s core retrieval remains lexical-first and deterministic. Semantic signals are added as an **optional rerank stage** when lexical confidence is low (or forced).
 
-Builds a pack from an array of documents.
+### Build a semantic-enabled pack
+
+```ts
+import { buildPack } from "knolo-core";
+
+// embeddings must align 1:1 with docs/block order
+const embeddings: Float32Array[] = await embedDocumentsInOrder(docs);
+
+const bytes = await buildPack(docs, {
+  semantic: {
+    enabled: true,
+    modelId: "text-embedding-3-small",
+    embeddings,
+    quantization: { type: "int8_l2norm", perVectorScale: true }
+  }
+});
+```
+
+### Query with semantic rerank
+
+```ts
+import { mountPack, query, hasSemantic } from "knolo-core";
+
+const kb = await mountPack({ src: bytes });
+const queryEmbedding = await embedQuery("react native bridge throttling");
+
+const hits = query(kb, "react native bridge throttling", {
+  topK: 8,
+  semantic: {
+    enabled: hasSemantic(kb),
+    mode: "rerank",
+    topN: 50,
+    minLexConfidence: 0.35,
+    blend: { enabled: true, wLex: 0.75, wSem: 0.25 },
+    queryEmbedding,
+    force: false
+  }
+});
+```
+
+### Semantic helper utilities
+
+```ts
+import {
+  quantizeEmbeddingInt8L2Norm,
+  encodeScaleF16,
+  decodeScaleF16
+} from "knolo-core";
+
+const { q, scale } = quantizeEmbeddingInt8L2Norm(queryEmbedding);
+const packed = encodeScaleF16(scale);
+const restored = decodeScaleF16(packed);
+```
+
+---
+
+## 🧩 API
+
+### `buildPack(docs, opts?) => Promise<Uint8Array>`
 
 ```ts
 type BuildInputDoc = {
-  id?: string;          // optional doc id (exposed as hit.source)
-  heading?: string;     // optional heading (used for boosts)
-  namespace?: string;   // optional namespace for scoped retrieval
-  text: string;         // raw markdown accepted (lightly stripped)
+  id?: string;
+  heading?: string;
+  namespace?: string;
+  text: string;
+};
+
+type BuildPackOptions = {
+  semantic?: {
+    enabled: boolean;
+    modelId: string;
+    embeddings: Float32Array[];
+    quantization?: {
+      type: "int8_l2norm";
+      perVectorScale?: true;
+    };
+  };
 };
 ```
 
-* Stores optional `heading` and `id` alongside each block.
-* Validates builder input shape and throws actionable errors for malformed docs.
-* Computes and persists `meta.stats.avgBlockLen` plus per-block token length (`len`) for stable scoring.
-
-### `mountPack({ src }) -> Promise<Pack>`
-
-Loads a pack from a URL, local filesystem path (`Node.js`), `Uint8Array`, or `ArrayBuffer`.
+### `mountPack({ src }) => Promise<Pack>`
 
 ```ts
 type Pack = {
-  meta: { version: number; stats: { docs: number; blocks: number; terms: number; avgBlockLen?: number } };
+  meta: {
+    version: number;
+    stats: { docs: number; blocks: number; terms: number; avgBlockLen?: number };
+  };
   lexicon: Map<string, number>;
   postings: Uint32Array;
   blocks: string[];
@@ -173,41 +215,46 @@ type Pack = {
   docIds?: (string | null)[];
   namespaces?: (string | null)[];
   blockTokenLens?: number[];
+  semantic?: {
+    version: 1;
+    modelId: string;
+    dims: number;
+    encoding: "int8_l2norm";
+    perVectorScale: boolean;
+    vecs: Int8Array;
+    scales?: Uint16Array;
+  };
 };
 ```
 
-> **Compatibility:** v0.2.0 reads both v1 packs (string-only blocks) and v2 packs (objects with `text/heading/docId`).
-
-### `query(pack, q, opts) -> Hit[]`
-
-Deterministic lexical search with phrase enforcement, proximity, and de‑duplication.
+### `query(pack, queryText, opts?) => Hit[]`
 
 ```ts
 type QueryOptions = {
-  topK?: number;                // default 10
-  minScore?: number;            // optional absolute score floor
-  requirePhrases?: string[];    // additional phrases to require (unquoted)
-  namespace?: string | string[];// optional namespace filter(s)
-  source?: string | string[];   // optional doc id/source filter(s)
+  topK?: number;
+  minScore?: number;
+  requirePhrases?: string[];
+  namespace?: string | string[];
+  source?: string | string[];
   queryExpansion?: {
-    enabled?: boolean;          // default true
-    docs?: number;              // top seed docs, default 3
-    terms?: number;             // added lexical terms, default 4
-    weight?: number;            // BM25 tf scaling, default 0.35
-    minTermLength?: number;     // ignore tiny tokens, default 3
+    enabled?: boolean;
+    docs?: number;
+    terms?: number;
+    weight?: number;
+    minTermLength?: number;
   };
   semantic?: {
-    enabled?: boolean;          // default false
-    mode?: "rerank";            // default "rerank"
-    topN?: number;              // default 50
-    minLexConfidence?: number;  // default 0.35
+    enabled?: boolean;
+    mode?: "rerank";
+    topN?: number;
+    minLexConfidence?: number;
     blend?: {
-      enabled?: boolean;        // default true
-      wLex?: number;            // default 0.75
-      wSem?: number;            // default 0.25
+      enabled?: boolean;
+      wLex?: number;
+      wSem?: number;
     };
-    queryEmbedding?: Float32Array; // required when enabled=true
-    force?: boolean;            // rerank even when lexical confidence is high
+    queryEmbedding?: Float32Array;
+    force?: boolean;
   };
 };
 
@@ -215,132 +262,113 @@ type Hit = {
   blockId: number;
   score: number;
   text: string;
-  source?: string;              // docId if provided at build time
-  namespace?: string;           // namespace if provided at build time
+  source?: string;
+  namespace?: string;
 };
 ```
 
-**What happens under the hood (v0.3.0):**
+### `makeContextPatch(hits, { budget }) => ContextPatch`
 
-* Tokenize + **enforce all phrases** (quoted in `q` and `requirePhrases`)
-* Optional **namespace scoping** via `query(..., { namespace })`
-* Optional **source/docId scoping** via `query(..., { source })`
-* Candidate generation via inverted index + query-time DF collection
-* Corpus-aware BM25L (true IDF + length normalization from persisted block lengths)
-* Deterministic pseudo-relevance **query expansion** from top lexical hits
-* Optional semantic **rerank of top lexical hits** when lexical confidence is low
-  * Requires `pack.semantic` + `semantic.queryEmbedding`
-  * Runs before de-dupe/MMR so existing diversity still applies
-* **Proximity bonus** using minimal window covering all query terms
-* Optional **heading overlap boost** (when headings are present)
-* Tiny **KNS** numeric-signature tie‑breaker (\~±2% influence)
-* **Near-duplicate suppression** (5‑gram Jaccard) + **MMR** diversity for top‑K
+Budgets: `"mini" | "small" | "full"`
 
-### `makeContextPatch(hits, { budget }) -> ContextPatch`
+---
 
-Create structured snippets for LLM prompts.
+## 📚 More usage examples
+
+### Namespace + source filtering
 
 ```ts
-type ContextPatch = {
-  background: string[];
-  snippets: Array<{ text: string; source?: string }>;
-  definitions: Array<{ term: string; def: string; evidence?: number[] }>;
-  facts: Array<{ s: string; p: string; o: string; evidence?: number[] }>;
-};
+const hits = query(kb, "retry backoff", {
+  namespace: ["sdk", "api"],
+  source: ["errors-guide", "http-reference"],
+  topK: 6
+});
 ```
 
-Budgets: `"mini" | "small" | "full"`.
+### Phrase-only retrieval fallback behavior
+
+If your query has no free tokens but includes required phrases, KnoLo still forms candidates from phrase tokens and enforces phrase presence.
+
+```ts
+const hits = query(kb, '"event loop"', { requirePhrases: ["single thread"] });
+```
+
+### Precision mode with minimum score
+
+```ts
+const strictHits = query(kb, "jwt refresh token rotation", {
+  topK: 5,
+  minScore: 2.5
+});
+```
+
+### Validate semantic query options early
+
+```ts
+import { validateSemanticQueryOptions } from "knolo-core";
+
+validateSemanticQueryOptions({
+  enabled: true,
+  topN: 40,
+  minLexConfidence: 0.3,
+  blend: { enabled: true, wLex: 0.8, wSem: 0.2 },
+  queryEmbedding
+});
+```
 
 ---
 
-## 🧠 Relevance & De‑dupe Details
+## 🛠 Pack format and compatibility
 
-* **Phrases:**
-  Quoted phrases in the query (e.g., `“react native”`) and any `requirePhrases` **must appear** in results. Candidates failing this are dropped before ranking.
+Binary layout:
 
-* **Proximity:**
-  We compute the **minimum span** that covers all query terms and apply a gentle multiplier:
-  `1 + 0.15 / (1 + span)` (bounded, stable).
+`[metaLen:u32][meta JSON][lexLen:u32][lexicon JSON][postCount:u32][postings][blocksLen:u32][blocks JSON][semLen:u32?][sem JSON?][semBlobLen:u32?][semBlob?]`
 
-* **Heading Boost:**
-  If you provide headings at build time, overlap with query terms boosts the score proportionally to the fraction of unique query terms present in the heading.
-
-* **Duplicate Control:**
-  We use **5‑gram Jaccard** to filter near‑duplicates and **MMR** (λ≈0.8) to promote diversity within the top‑K.
-
-* **KNS Signature (optional spice):**
-  A tiny numeric signature provides deterministic tie‑breaking without changing the overall retrieval behavior.
+- Supports legacy block payloads (`string[]`) and richer block objects (`{ text, heading, docId, namespace, len }`).
+- Semantic section is optional and only present when built with `semantic.enabled = true`.
+- `mountPack` auto-detects available sections.
 
 ---
 
-## 🛠 Input Format & Pack Layout
+## ⚡ Practical tuning guidance
 
-**Input docs:**
-`{ id?: string, heading?: string, namespace?: string, text: string }`
-
-**Pack layout (binary):**
-`[metaLen:u32][meta JSON][lexLen:u32][lexicon JSON][postCount:u32][postings][blocksLen:u32][blocks JSON]`
-
-* `meta.stats.avgBlockLen` is persisted (v2).
-* `blocks JSON` may be:
-
-  * **v1:** `string[]` (text only)
-  * **v2/v3:** `{ text, heading?, docId?, namespace?, len? }[]`
-
-The runtime auto‑detects either format.
-
----
-
-## 🔁 Migration (0.1.x → 0.2.0)
-
-* **No API breaks.** `buildPack`, `mountPack`, `query`, `makeContextPatch` unchanged.
-* Packs built with 0.1.x still load and query fine.
-* If you want heading boosts and `hit.source`, pass `heading` and `id` to `buildPack`.
-* React Native/Expo users no longer need polyfills—ponyfills are included.
-
----
-
-## ⚡ Performance Tips
-
-* Prefer multiple smaller blocks (≈512 tokens) over giant ones for better recall + proximity.
-* Provide `heading` for each block: cheap, high‑signal boost.
-* For large corpora, consider sharding packs by domain/topic to keep per‑pack size modest.
+- Keep blocks reasonably small (~300–700 tokens) for better lexical recall and proximity precision.
+- Include strong headings to increase cheap relevance gains.
+- Use `namespace` to reduce candidate noise in multi-domain corpora.
+- Start semantic blend near `wLex: 0.75 / wSem: 0.25`, then tune by offline eval.
+- Keep embedding model consistent between build and query (`modelId` should match your query embedding source).
 
 ---
 
 ## ❓ FAQ
 
-**Q: Does this use embeddings?**
-No. Pure lexical retrieval (index, positions, BM25L, proximity, phrases).
+**Does KnoLo require a vector database?**
+No. Semantic vectors (when used) are stored in the `.knolo` pack and used for in-process reranking.
 
-**Q: Can I run this offline?**
-Yes. Everything is local.
+**Is retrieval deterministic?**
+Lexical retrieval and post-processing are deterministic. Semantic rerank is deterministic for fixed pack bytes and fixed embedding vectors.
 
-**Q: How do I prevent duplicates?**
-It’s built in (Jaccard + MMR). You can tune λ and similarity threshold in code if you fork.
+**Can I run fully offline?**
+Yes. Query-time needs no network. Build-time embeddings can also be offline if your embedding pipeline is local.
 
-**Q: Is RN/Expo supported?**
-Yes—TextEncoder/TextDecoder ponyfills are included.
+**Is React Native / Expo supported?**
+Yes. Runtime text encoder/decoder compatibility is included.
 
 ---
 
-## 🗺️ Roadmap
+## 🗺️ Direction / roadmap
 
-* Multi-resolution packs (summaries + facts)
-* Overlay layers (user annotations)
-* WASM core for big-browser indexing
-* Delta updates / append-only patch packs
+- stronger hybrid retrieval evaluation tooling
+- richer pack introspection and diagnostics
+- incremental pack update workflows
+- continued local-first performance optimization
 
 ---
 
 ## 🌐 Website
 
-For docs, news, and examples visit **[knolo.dev](https://www.knolo.dev/)**
-
----
-
+For docs, release updates, and examples: **[knolo.dev](https://www.knolo.dev/)**
 
 ## 📄 License
 
 Apache-2.0 — see [LICENSE](./LICENSE).
-
