@@ -11,8 +11,17 @@ import { tokenize } from './tokenize.js';
 import { getTextEncoder } from './utils/utf8.js';
 
 export type BuildInputDoc = { id?: string; heading?: string; namespace?: string; text: string };
+export type BuildPackOptions = {
+  semantic?: {
+    enabled: boolean;
+    modelId: string;
+    dims: number;
+    semJson: object;
+    semBlob: Uint8Array;
+  };
+};
 
-export async function buildPack(docs: BuildInputDoc[]): Promise<Uint8Array> {
+export async function buildPack(docs: BuildInputDoc[], opts: BuildPackOptions = {}): Promise<Uint8Array> {
   const normalizedDocs = validateDocs(docs);
 
   // Prepare blocks (strip MD) and carry heading/docId for optional boosts.
@@ -54,11 +63,18 @@ export async function buildPack(docs: BuildInputDoc[]): Promise<Uint8Array> {
   const lexBytes = enc.encode(JSON.stringify(lexicon));
   const blocksBytes = enc.encode(JSON.stringify(blocksPayload));
 
+  const semanticEnabled = Boolean(opts.semantic?.enabled);
+  const semBytes = semanticEnabled ? enc.encode(JSON.stringify(opts.semantic?.semJson ?? {})) : undefined;
+  const semBlob = semanticEnabled ? (opts.semantic?.semBlob ?? new Uint8Array()) : undefined;
+
   const totalLength =
     4 + metaBytes.length +
     4 + lexBytes.length +
     4 + postings.length * 4 +
-    4 + blocksBytes.length;
+    4 + blocksBytes.length +
+    (semanticEnabled && semBytes && semBlob
+      ? 4 + semBytes.length + 4 + semBlob.length
+      : 0);
 
   const out = new Uint8Array(totalLength);
   const dv = new DataView(out.buffer);
@@ -81,7 +97,14 @@ export async function buildPack(docs: BuildInputDoc[]): Promise<Uint8Array> {
 
   // blocks
   dv.setUint32(offset, blocksBytes.length, true); offset += 4;
-  out.set(blocksBytes, offset);
+  out.set(blocksBytes, offset); offset += blocksBytes.length;
+
+  if (semanticEnabled && semBytes && semBlob) {
+    dv.setUint32(offset, semBytes.length, true); offset += 4;
+    out.set(semBytes, offset); offset += semBytes.length;
+    dv.setUint32(offset, semBlob.length, true); offset += 4;
+    out.set(semBlob, offset);
+  }
 
   return out;
 }
