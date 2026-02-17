@@ -9,15 +9,15 @@ import { buildIndex } from './indexer.js';
 import type { Block } from './indexer.js';
 import { tokenize } from './tokenize.js';
 import { getTextEncoder } from './utils/utf8.js';
+import { encodeScaleF16, quantizeEmbeddingInt8L2Norm } from './semantic.js';
 
 export type BuildInputDoc = { id?: string; heading?: string; namespace?: string; text: string };
 export type BuildPackOptions = {
   semantic?: {
     enabled: boolean;
     modelId: string;
-    dims: number;
-    semJson: object;
-    semBlob: Uint8Array;
+    embeddings: Float32Array[];
+    quantization?: { type: 'int8_l2norm'; perVectorScale?: true };
   };
 };
 
@@ -64,8 +64,11 @@ export async function buildPack(docs: BuildInputDoc[], opts: BuildPackOptions = 
   const blocksBytes = enc.encode(JSON.stringify(blocksPayload));
 
   const semanticEnabled = Boolean(opts.semantic?.enabled);
-  const semBytes = semanticEnabled ? enc.encode(JSON.stringify(opts.semantic?.semJson ?? {})) : undefined;
-  const semBlob = semanticEnabled ? (opts.semantic?.semBlob ?? new Uint8Array()) : undefined;
+  const semanticSection = semanticEnabled && opts.semantic
+    ? buildSemanticSection(blocks.length, opts.semantic)
+    : undefined;
+  const semBytes = semanticSection ? enc.encode(JSON.stringify(semanticSection.semJson)) : undefined;
+  const semBlob = semanticSection?.semBlob;
 
   const totalLength =
     4 + metaBytes.length +
@@ -107,6 +110,63 @@ export async function buildPack(docs: BuildInputDoc[], opts: BuildPackOptions = 
   }
 
   return out;
+}
+
+function buildSemanticSection(
+  blockCount: number,
+  semantic: NonNullable<BuildPackOptions['semantic']>
+): { semJson: object; semBlob: Uint8Array } {
+  const { embeddings } = semantic;
+  if (!Array.isArray(embeddings) || embeddings.length !== blockCount) {
+    throw new Error(`semantic.embeddings must be provided with one embedding per block (expected ${blockCount}).`);
+  }
+
+  const quantizationType = semantic.quantization?.type ?? 'int8_l2norm';
+  if (quantizationType !== 'int8_l2norm') {
+    throw new Error(`Unsupported semantic quantization type: ${quantizationType}`);
+  }
+
+  const dims = embeddings[0]?.length ?? 0;
+  if (!dims) throw new Error('semantic.embeddings must contain vectors with non-zero dimensions.');
+
+  const vecs = new Int8Array(embeddings.length * dims);
+  const scales = new Uint16Array(embeddings.length);
+
+  for (let i = 0; i < embeddings.length; i++) {
+    const embedding = embeddings[i];
+    if (!(embedding instanceof Float32Array)) {
+      throw new Error(`semantic.embeddings[${i}] must be a Float32Array.`);
+    }
+    if (embedding.length !== dims) {
+      throw new Error(`semantic.embeddings[${i}] dims mismatch: expected ${dims}, got ${embedding.length}.`);
+    }
+
+    const { q, scale } = quantizeEmbeddingInt8L2Norm(embedding);
+    vecs.set(q, i * dims);
+    scales[i] = encodeScaleF16(scale);
+  }
+
+  const vecByteOffset = 0;
+  const vecByteLength = vecs.byteLength;
+  const scalesByteOffset = vecByteLength;
+  const scalesByteLength = scales.byteLength;
+
+  const semBlob = new Uint8Array(vecByteLength + scalesByteLength);
+  semBlob.set(new Uint8Array(vecs.buffer, vecs.byteOffset, vecByteLength), vecByteOffset);
+  semBlob.set(new Uint8Array(scales.buffer, scales.byteOffset, scalesByteLength), scalesByteOffset);
+
+  const semJson = {
+    modelId: semantic.modelId,
+    dims,
+    encoding: 'int8_l2norm',
+    perVectorScale: true,
+    blocks: {
+      vectors: { byteOffset: vecByteOffset, length: vecs.length },
+      scales: { byteOffset: scalesByteOffset, length: scales.length, encoding: 'float16' },
+    },
+  };
+
+  return { semJson, semBlob };
 }
 
 function validateDocs(docs: BuildInputDoc[]): BuildInputDoc[] {

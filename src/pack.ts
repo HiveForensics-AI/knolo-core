@@ -126,11 +126,13 @@ function parseSemanticSection(sem: any, blob: Uint8Array): Pack['semantic'] {
 
   let scaleView: Uint16Array | undefined;
   if (scales) {
-    scaleView = new Uint16Array(
-      blob.buffer,
-      blob.byteOffset + Number(scales.byteOffset ?? 0),
-      Number(scales.length ?? 0)
-    );
+    const scaleLen = Number(scales.length ?? 0);
+    const scaleOffset = Number(scales.byteOffset ?? 0);
+    const dv = new DataView(blob.buffer, blob.byteOffset + scaleOffset, scaleLen * 2);
+    scaleView = new Uint16Array(scaleLen);
+    for (let i = 0; i < scaleLen; i++) {
+      scaleView[i] = dv.getUint16(i * 2, true);
+    }
   }
 
   return {

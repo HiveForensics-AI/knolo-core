@@ -3,7 +3,7 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { buildPack, mountPack, query, makeContextPatch } from '../dist/index.js';
+import { buildPack, mountPack, query, makeContextPatch, decodeScaleF16 } from '../dist/index.js';
 
 
 
@@ -36,30 +36,24 @@ async function testPackWithoutSemanticTail() {
 }
 
 async function testPackWithSemanticTail() {
-  const docs = [{ id: 'sem', text: 'pack with semantic metadata and blob' }];
-  const semBlob = new Uint8Array(14);
-  semBlob.set([1, -2, 3, -4, 5, -6, 7, -8].map((n) => (n + 256) % 256), 0);
-  semBlob.set([0x20, 0x03, 0x40, 0x06, 0x60, 0x09], 8);
-
-  const semJson = {
-    modelId: 'test-model',
-    dims: 4,
-    encoding: 'int8_l2norm',
-    perVectorScale: true,
-    blocks: {
-      vectors: { byteOffset: 0, length: 8 },
-      scales: { byteOffset: 8, length: 3 },
-    },
-  };
+  const docs = [
+    { id: 'sem-1', text: 'pack with semantic vectors one' },
+    { id: 'sem-2', text: 'pack with semantic vectors two' },
+    { id: 'sem-3', text: 'pack with semantic vectors three' },
+  ];
+  const embeddings = [
+    new Float32Array([1, 0, 0, 0]),
+    new Float32Array([0, 2, 0, 0]),
+    new Float32Array([-1, -1, 0, 0]),
+  ];
 
   const pack = await mountPack({
     src: await buildPack(docs, {
       semantic: {
         enabled: true,
         modelId: 'test-model',
-        dims: 4,
-        semJson,
-        semBlob,
+        embeddings,
+        quantization: { type: 'int8_l2norm', perVectorScale: true },
       },
     }),
   });
@@ -67,8 +61,18 @@ async function testPackWithSemanticTail() {
   assert.ok(pack.semantic, 'expected semantic section to mount');
   assert.equal(pack.semantic?.modelId, 'test-model');
   assert.equal(pack.semantic?.dims, 4);
-  assert.equal(pack.semantic?.vecs.length, 8, 'expected int8 vector view length to match semantic JSON');
-  assert.equal(pack.semantic?.scales?.length, 3, 'expected uint16 scale view length to match semantic JSON');
+  assert.equal(pack.semantic?.vecs.length, 12, 'expected concatenated int8 vectors for 3 blocks');
+  assert.equal(pack.semantic?.scales?.length, 3, 'expected one uint16 scale per block');
+
+  const expectedVecs = [127, 0, 0, 0, 0, 127, 0, 0, -127, -127, 0, 0];
+  assert.deepEqual(Array.from(pack.semantic?.vecs ?? []), expectedVecs, 'expected quantized int8 vectors');
+  assert.ok((pack.semantic?.vecs ?? new Int8Array()).every((n) => n >= -127 && n <= 127), 'expected int8 clamp range');
+
+  const expectedScales = [1 / 127, 1 / 127, 0.7071067811865475 / 127];
+  const decodedScales = Array.from(pack.semantic?.scales ?? []).map((v) => decodeScaleF16(v));
+  decodedScales.forEach((value, i) => {
+    assert.ok(Math.abs(value - expectedScales[i]) < 1e-5, `expected decoded scale at index ${i} to be close`);
+  });
 }
 
 async function testMountLegacyPackWithoutSemanticTail() {

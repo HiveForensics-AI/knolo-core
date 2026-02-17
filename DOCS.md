@@ -98,7 +98,17 @@ type BuildInputDoc = {
 ### API
 
 ```ts
-const bytes: Uint8Array = await buildPack(docs: BuildInputDoc[]);
+const bytes: Uint8Array = await buildPack(docs: BuildInputDoc[], {
+  semantic?: {
+    enabled: boolean;
+    modelId: string;
+    embeddings: Float32Array[]; // same length/order as blocks
+    quantization?: {
+      type: 'int8_l2norm';
+      perVectorScale?: true;
+    };
+  };
+});
 ```
 
 **Tips**
@@ -268,10 +278,32 @@ Top-K results apply near-duplicate suppression (5-gram Jaccard) and MMR (λ≈0.
 **Optional semantic tail**
 
 * Fully backward compatible: if EOF is reached immediately after `blocks JSON`, no semantic data is present.
-* When present, `semantic JSON` describes typed-array slices into the semantic blob:
-  * `blocks.vectors` → `Int8Array`
-  * `blocks.scales` (optional) → `Uint16Array`
+* `buildPack(..., { semantic })` can now generate this section from provided `Float32Array` embeddings (no model inference at build time).
+* Quantization is deterministic `int8_l2norm` per vector:
+  1. L2-normalize the input embedding.
+  2. Compute `scale = max(abs(e_i)) / 127`.
+  3. Quantize `q_i = clamp(round(e_i / scale), -127..127)`.
+  4. Store scale in `Uint16Array` using float16 encoding.
+* Blob layout is **vectors first, scales second**:
+  * `blocks.vectors.byteOffset = 0`
+  * `blocks.vectors.length = blockCount * dims` (Int8 elements)
+  * `blocks.scales.byteOffset = vectors.byteLength`
+  * `blocks.scales.length = blockCount` (Uint16 elements)
 
+Semantic JSON schema (stored verbatim in `[semantic JSON]`):
+
+```json
+{
+  "modelId": "string",
+  "dims": 384,
+  "encoding": "int8_l2norm",
+  "perVectorScale": true,
+  "blocks": {
+    "vectors": { "byteOffset": 0, "length": 1152 },
+    "scales": { "byteOffset": 1152, "length": 3, "encoding": "float16" }
+  }
+}
+```
 
 **Lexicon JSON**
 
