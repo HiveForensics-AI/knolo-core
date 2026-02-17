@@ -15,6 +15,7 @@ import type { Pack } from "./pack.js";
 import { minCoverSpan, proximityMultiplier } from "./quality/proximity.js";
 import { diversifyAndDedupe } from "./quality/diversify.js";
 import { knsSignature, knsDistance } from "./quality/signature.js";
+import { decodeScaleF16, quantizeEmbeddingInt8L2Norm } from "./semantic.js";
 
 export type QueryOptions = {
   topK?: number;
@@ -28,6 +29,19 @@ export type QueryOptions = {
     terms?: number;
     weight?: number;
     minTermLength?: number;
+  };
+  semantic?: {
+    enabled?: boolean;
+    mode?: "rerank";
+    topN?: number;
+    minLexConfidence?: number;
+    blend?: {
+      enabled?: boolean;
+      wLex?: number;
+      wSem?: number;
+    };
+    queryEmbedding?: Float32Array;
+    force?: boolean;
   };
 };
 
@@ -48,6 +62,19 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
     terms: Math.max(1, opts.queryExpansion?.terms ?? 4),
     weight: Math.max(0, opts.queryExpansion?.weight ?? 0.35),
     minTermLength: Math.max(2, opts.queryExpansion?.minTermLength ?? 3),
+  };
+  const semanticOpts = {
+    enabled: opts.semantic?.enabled ?? false,
+    mode: opts.semantic?.mode ?? "rerank",
+    topN: Math.max(1, opts.semantic?.topN ?? 50),
+    minLexConfidence: clamp01(opts.semantic?.minLexConfidence ?? 0.35),
+    blend: {
+      enabled: opts.semantic?.blend?.enabled ?? true,
+      wLex: Math.max(0, opts.semantic?.blend?.wLex ?? 0.75),
+      wSem: Math.max(0, opts.semantic?.blend?.wSem ?? 0.25),
+    },
+    queryEmbedding: opts.semantic?.queryEmbedding,
+    force: opts.semantic?.force ?? false,
   };
 
   // --- Query parsing
@@ -232,6 +259,11 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
     if (prelim.length === 0) return [];
   }
 
+  const confidence = lexConfidence(prelim);
+  if (shouldRerankWithSemantic(pack, semanticOpts, confidence)) {
+    prelim = rerankLexicalHitsWithSemantic(pack, prelim, semanticOpts);
+  }
+
   // --- KNS tie-breaker + de-dup/MMR
   const qSig = knsSignature(normalize(q));
   const pool = prelim.slice(0, topK * 5).map((r) => {
@@ -248,6 +280,112 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
 
   const finalHits = diversifyAndDedupe(pool, { k: topK });
   return finalHits;
+}
+
+export function lexConfidence(hits: Array<{ score: number }>): number {
+  if (hits.length === 0) return 0;
+  const top1 = Math.max(0, hits[0]?.score ?? 0);
+  const top2 = Math.max(0, hits[1]?.score ?? 0);
+  const gapRatio = top1 > 0 ? clamp01((top1 - top2) / top1) : 0;
+  const strength = top1 > 0 ? top1 / (top1 + 1) : 0;
+  return clamp01(0.65 * gapRatio + 0.35 * strength);
+}
+
+type ResolvedSemanticOpts = {
+  enabled: boolean;
+  mode: "rerank";
+  topN: number;
+  minLexConfidence: number;
+  blend: { enabled: boolean; wLex: number; wSem: number };
+  queryEmbedding?: Float32Array;
+  force: boolean;
+};
+
+function shouldRerankWithSemantic(pack: Pack, opts: ResolvedSemanticOpts, confidence: number): boolean {
+  if (!opts.enabled || opts.mode !== "rerank") return false;
+  if (!pack.semantic) return false;
+  if (!opts.queryEmbedding) {
+    throw new Error("query(...): semantic.queryEmbedding (Float32Array) is required when semantic.enabled=true.");
+  }
+  return opts.force || confidence < opts.minLexConfidence;
+}
+
+function rerankLexicalHitsWithSemantic(
+  pack: Pack,
+  prelim: Array<{ blockId: number; score: number }>,
+  opts: ResolvedSemanticOpts
+): Array<{ blockId: number; score: number }> {
+  const sem = pack.semantic;
+  if (!sem || !opts.queryEmbedding) return prelim;
+  if (sem.dims <= 0 || sem.vecs.length === 0 || sem.dims !== opts.queryEmbedding.length) return prelim;
+
+  const topN = Math.min(opts.topN, prelim.length);
+  const rerankSlice = prelim.slice(0, topN);
+  const tail = prelim.slice(topN);
+  const lexScores = rerankSlice.map((h) => h.score);
+  const normLex = minMaxNormalize(lexScores);
+  const quantizedQuery = quantizeEmbeddingInt8L2Norm(opts.queryEmbedding);
+  const semScores = rerankSlice.map((h) => semanticSimilarityInt8(quantizedQuery, sem, h.blockId));
+  const normSem = minMaxNormalize(semScores);
+
+  const denom = opts.blend.wLex + opts.blend.wSem;
+  const wLex = denom > 0 ? opts.blend.wLex / denom : 0.5;
+  const wSem = denom > 0 ? opts.blend.wSem / denom : 0.5;
+
+  const reranked = rerankSlice
+    .map((hit, idx) => {
+      const score = opts.blend.enabled
+        ? wLex * normLex[idx] + wSem * normSem[idx]
+        : semScores[idx];
+      return { blockId: hit.blockId, score };
+    })
+    .sort((a, b) => b.score - a.score || a.blockId - b.blockId);
+
+  return [...reranked, ...tail];
+}
+
+function semanticSimilarityInt8(
+  quantizedQuery: { q: Int8Array; scale: number },
+  semantic: NonNullable<Pack["semantic"]>,
+  blockId: number
+): number {
+  const dims = semantic.dims;
+  if (quantizedQuery.q.length !== dims || blockId < 0) return 0;
+  const base = blockId * dims;
+  if (base + dims > semantic.vecs.length) return 0;
+  if (quantizedQuery.scale === 0) return 0;
+
+  let dot = 0;
+  for (let i = 0; i < dims; i++) {
+    dot += quantizedQuery.q[i] * semantic.vecs[base + i];
+  }
+
+  const blockScale = semantic.scales?.[blockId] !== undefined
+    ? decodeScaleF16(semantic.scales[blockId])
+    : (1 / 127);
+  return dot * quantizedQuery.scale * blockScale;
+}
+
+function minMaxNormalize(values: number[]): number[] {
+  if (values.length === 0) return [];
+  let min = Infinity;
+  let max = -Infinity;
+  for (const v of values) {
+    if (v < min) min = v;
+    if (v > max) max = v;
+  }
+  if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) {
+    return values.map(() => 1);
+  }
+  const span = max - min;
+  return values.map((v) => clamp01((v - min) / span));
+}
+
+function clamp01(v: number): number {
+  if (!Number.isFinite(v)) return 0;
+  if (v < 0) return 0;
+  if (v > 1) return 1;
+  return v;
 }
 
 function deriveExpansionTerms(

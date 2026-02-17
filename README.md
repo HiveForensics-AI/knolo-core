@@ -105,6 +105,18 @@ Then load it in your app:
 import { mountPack, query } from "knolo-core";
 const kb = await mountPack({ src: "./knowledge.knolo" });
 const hits = query(kb, "throttle events", { topK: 3 });
+
+// Optional hybrid rerank (lexical first, semantic rerank of top lexical candidates)
+const hybridHits = query(kb, "throttle events", {
+  topK: 5,
+  semantic: {
+    enabled: true,
+    queryEmbedding, // Float32Array from your embedding model
+    topN: 50,
+    minLexConfidence: 0.35,
+    blend: { enabled: true, wLex: 0.75, wSem: 0.25 },
+  },
+});
 ```
 
 ### 3) React / Expo
@@ -184,6 +196,19 @@ type QueryOptions = {
     weight?: number;            // BM25 tf scaling, default 0.35
     minTermLength?: number;     // ignore tiny tokens, default 3
   };
+  semantic?: {
+    enabled?: boolean;          // default false
+    mode?: "rerank";            // default "rerank"
+    topN?: number;              // default 50
+    minLexConfidence?: number;  // default 0.35
+    blend?: {
+      enabled?: boolean;        // default true
+      wLex?: number;            // default 0.75
+      wSem?: number;            // default 0.25
+    };
+    queryEmbedding?: Float32Array; // required when enabled=true
+    force?: boolean;            // rerank even when lexical confidence is high
+  };
 };
 
 type Hit = {
@@ -203,6 +228,9 @@ type Hit = {
 * Candidate generation via inverted index + query-time DF collection
 * Corpus-aware BM25L (true IDF + length normalization from persisted block lengths)
 * Deterministic pseudo-relevance **query expansion** from top lexical hits
+* Optional semantic **rerank of top lexical hits** when lexical confidence is low
+  * Requires `pack.semantic` + `semantic.queryEmbedding`
+  * Runs before de-dupe/MMR so existing diversity still applies
 * **Proximity bonus** using minimal window covering all query terms
 * Optional **heading overlap boost** (when headings are present)
 * Tiny **KNS** numeric-signature tie‑breaker (\~±2% influence)
