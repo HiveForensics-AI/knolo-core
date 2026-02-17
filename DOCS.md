@@ -137,6 +137,19 @@ type QueryOptions = {
     weight?: number;           // tf scaling for expansion terms, default 0.35
     minTermLength?: number;    // default 3
   };
+  semantic?: {
+    enabled?: boolean;         // default false
+    mode?: "rerank";           // default "rerank"
+    topN?: number;             // default 50
+    minLexConfidence?: number; // default 0.35
+    blend?: {
+      enabled?: boolean;       // default true
+      wLex?: number;           // default 0.75
+      wSem?: number;           // default 0.25
+    };
+    queryEmbedding?: Float32Array; // required if enabled=true
+    force?: boolean;           // rerank even when lexical confidence is high
+  };
 };
 
 type Hit = {
@@ -163,7 +176,8 @@ const hits: Hit[] = query(pack, '“react native bridge” throttling', {
 4. **Heading overlap** boost
 5. Deterministic **pseudo-relevance query expansion** from top lexical seeds
 6. **KNS** tie-breaker (small, deterministic)
-7. **De-dupe + MMR** diversity for final top-K
+7. Optional semantic rerank over lexical top-N when confidence is low
+8. **De-dupe + MMR** diversity for final top-K
 
 ---
 
@@ -232,6 +246,24 @@ query(pack, "throttle bridge", {
 ```
 
 This keeps retrieval lexical/deterministic while increasing recall for related vocabulary found in top-ranked seed blocks.
+
+### Optional semantic rerank (hybrid MVP)
+
+```ts
+query(pack, "throttle bridge", {
+  topK: 5,
+  semantic: {
+    enabled: true,
+    queryEmbedding, // Float32Array from your embedding model (required)
+    topN: 50,
+    minLexConfidence: 0.35,
+    force: false,
+    blend: { enabled: true, wLex: 0.75, wSem: 0.25 },
+  },
+});
+```
+
+Lexical retrieval still runs first. Semantic rerank only touches top-N lexical candidates, and runs before de-dupe/MMR. If `pack.semantic` is missing, rerank is skipped silently; if `queryEmbedding` is omitted while enabled, `query(...)` throws.
 
 ### Tight vs. scattered matches
 

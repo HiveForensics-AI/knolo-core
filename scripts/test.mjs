@@ -3,7 +3,7 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { buildPack, mountPack, query, makeContextPatch, decodeScaleF16 } from '../dist/index.js';
+import { buildPack, mountPack, query, makeContextPatch, decodeScaleF16, lexConfidence } from '../dist/index.js';
 
 
 
@@ -228,6 +228,119 @@ async function testMountPackFromLocalPathAndFileUrl() {
   }
 }
 
+async function testLexConfidenceDeterministic() {
+  const high = lexConfidence([{ score: 4 }, { score: 1 }]);
+  const low = lexConfidence([{ score: 1 }, { score: 0.95 }]);
+  assert.ok(high > low, 'expected larger top1/top2 gap to yield higher confidence');
+  assert.equal(lexConfidence([]), 0, 'expected empty hits to have zero confidence');
+  assert.equal(lexConfidence([{ score: 2 }, { score: 2 }]), lexConfidence([{ score: 2 }, { score: 2 }]), 'expected determinism');
+}
+
+async function testSemanticRerankLowConfidence() {
+  const docs = [
+    { id: 'lex-a', text: 'alpha beta river stone' },
+    { id: 'lex-b', text: 'alpha beta solar wind' },
+  ];
+  const pack = await mountPack({
+    src: await buildPack(docs, {
+      semantic: {
+        enabled: true,
+        modelId: 'test-model',
+        embeddings: [new Float32Array([1, 0]), new Float32Array([0, 1])],
+        quantization: { type: 'int8_l2norm', perVectorScale: true },
+      },
+    }),
+  });
+
+  const lexical = query(pack, 'alpha beta', { topK: 2, queryExpansion: { enabled: false } });
+  const preferB = lexical[0]?.source === 'lex-a';
+  const reranked = query(pack, 'alpha beta', {
+    topK: 2,
+    queryExpansion: { enabled: false },
+    semantic: { enabled: true, queryEmbedding: preferB ? new Float32Array([0, 1]) : new Float32Array([1, 0]), minLexConfidence: 1, blend: { enabled: false } },
+  });
+
+  assert.ok(lexical.length === 2 && reranked.length === 2, 'expected both lexical and reranked results');
+  assert.notEqual(reranked[0]?.source, lexical[0]?.source, 'expected semantic rerank to change ordering under low confidence');
+}
+
+async function testSemanticRerankRespectsConfidenceAndForce() {
+  const docs = [
+    { id: 'strong-lex', text: 'alpha omega alpha omega alpha omega' },
+    { id: 'weak-lex', text: 'alpha' },
+  ];
+  const pack = await mountPack({
+    src: await buildPack(docs, {
+      semantic: {
+        enabled: true,
+        modelId: 'test-model',
+        embeddings: [new Float32Array([1, 0]), new Float32Array([0, 1])],
+        quantization: { type: 'int8_l2norm', perVectorScale: true },
+      },
+    }),
+  });
+
+  const lexical = query(pack, 'alpha omega', { topK: 2, queryExpansion: { enabled: false } });
+  const gated = query(pack, 'alpha omega', {
+    topK: 2,
+    queryExpansion: { enabled: false },
+    semantic: { enabled: true, queryEmbedding: new Float32Array([0, 1]), minLexConfidence: 0.01 },
+  });
+  const forced = query(pack, 'alpha omega', {
+    topK: 2,
+    queryExpansion: { enabled: false },
+    semantic: { enabled: true, queryEmbedding: new Float32Array([0, 1]), force: true, blend: { enabled: false } },
+  });
+
+  assert.equal(lexical[0]?.source, 'strong-lex', 'expected lexical baseline to prefer stronger term frequency');
+  assert.equal(gated[0]?.source, 'strong-lex', 'expected confidence gate to skip semantic rerank');
+  assert.equal(forced[0]?.source, 'weak-lex', 'expected force=true to apply semantic rerank regardless of confidence');
+}
+
+async function testSemanticRerankErrorAndDefaults() {
+  const docs = [
+    { id: 'a', text: 'alpha beta gamma' },
+    { id: 'b', text: 'alpha beta delta' },
+  ];
+  const noSemanticPack = await mountPack({ src: await buildPack(docs) });
+  const withSemanticPack = await mountPack({
+    src: await buildPack(docs, {
+      semantic: {
+        enabled: true,
+        modelId: 'test-model',
+        embeddings: [new Float32Array([1, 0]), new Float32Array([0, 1])],
+        quantization: { type: 'int8_l2norm', perVectorScale: true },
+      },
+    }),
+  });
+
+  const baseline = query(noSemanticPack, 'alpha beta', { topK: 2, queryExpansion: { enabled: false } });
+  const semanticMissing = query(noSemanticPack, 'alpha beta', {
+    topK: 2,
+    queryExpansion: { enabled: false },
+    semantic: { enabled: true, queryEmbedding: new Float32Array([1, 0]) },
+  });
+  assert.deepEqual(semanticMissing, baseline, 'expected semantic-enabled query to no-op when pack.semantic is absent');
+
+  const defaultOpts = query(withSemanticPack, 'alpha beta', { topK: 2, queryExpansion: { enabled: false } });
+  const explicitDisabled = query(withSemanticPack, 'alpha beta', {
+    topK: 2,
+    queryExpansion: { enabled: false },
+    semantic: { enabled: false },
+  });
+  assert.deepEqual(explicitDisabled, defaultOpts, 'expected default query behavior to remain unchanged');
+
+  assert.throws(
+    () => query(withSemanticPack, 'alpha beta', { semantic: { enabled: true } }),
+    /semantic\.queryEmbedding/,
+    'expected clear error when semantic rerank is enabled without a query embedding'
+  );
+}
+
+await testLexConfidenceDeterministic();
+await testSemanticRerankLowConfidence();
+await testSemanticRerankRespectsConfidenceAndForce();
+await testSemanticRerankErrorAndDefaults();
 await testSmartQuotePhrase();
 await testFirstBlockRetrieval();
 await testNearDuplicateDedupe();
