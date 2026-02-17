@@ -173,6 +173,7 @@ Deterministic lexical search with phrase enforcement, proximity, and de‑duplic
 ```ts
 type QueryOptions = {
   topK?: number;                // default 10
+  minScore?: number;            // optional absolute score floor
   requirePhrases?: string[];    // additional phrases to require (unquoted)
   namespace?: string | string[];// optional namespace filter(s)
   source?: string | string[];   // optional doc id/source filter(s)

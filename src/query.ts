@@ -18,6 +18,7 @@ import { knsSignature, knsDistance } from "./quality/signature.js";
 
 export type QueryOptions = {
   topK?: number;
+  minScore?: number;
   requirePhrases?: string[];
   namespace?: string | string[];
   source?: string | string[];
@@ -40,6 +41,7 @@ export type Hit = {
 
 export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
   const topK = opts.topK ?? 10;
+  const minScore = Number.isFinite(opts.minScore) ? Math.max(0, opts.minScore as number) : 0;
   const expansionOpts = {
     enabled: opts.queryExpansion?.enabled ?? true,
     docs: Math.max(1, opts.queryExpansion?.docs ?? 3),
@@ -224,6 +226,11 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
   }
 
   if (prelim.length === 0) return [];
+
+  if (minScore > 0) {
+    prelim = prelim.filter((item) => item.score >= minScore);
+    if (prelim.length === 0) return [];
+  }
 
   // --- KNS tie-breaker + de-dup/MMR
   const qSig = knsSignature(normalize(q));

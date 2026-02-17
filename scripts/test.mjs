@@ -86,6 +86,21 @@ async function testQueryExpansionRecall() {
   );
 }
 
+
+async function testMinScoreFiltering() {
+  const docs = [
+    { id: 'hi', text: 'Throttle bridge events to keep UI smooth and responsive.' },
+    { id: 'lo', text: 'Backend workers should throttle background jobs during peak load.' },
+  ];
+  const pack = await mountPack({ src: await buildPack(docs) });
+
+  const baseline = query(pack, 'throttle bridge ui', { topK: 5 });
+  assert.ok(baseline.length >= 1, 'expected baseline query to return at least one hit');
+
+  const filtered = query(pack, 'throttle bridge ui', { topK: 5, minScore: baseline[0].score + 1 });
+  assert.equal(filtered.length, 0, 'expected minScore to remove hits below the threshold');
+}
+
 async function testSourceFiltering() {
   const docs = [
     { id: 'mobile-guide', namespace: 'mobile', text: 'Bridge throttling improves app responsiveness.' },
@@ -142,6 +157,7 @@ await testNearDuplicateDedupe();
 await testNamespaceFiltering();
 await testQueryExpansionRecall();
 await testSourceFiltering();
+await testMinScoreFiltering();
 await testContextPatchSourcePropagation();
 await testMountPackFromLocalPathAndFileUrl();
 

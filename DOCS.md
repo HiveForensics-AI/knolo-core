@@ -116,6 +116,7 @@ const bytes: Uint8Array = await buildPack(docs: BuildInputDoc[]);
 ```ts
 type QueryOptions = {
   topK?: number;               // default 10
+  minScore?: number;           // optional absolute score floor
   requirePhrases?: string[];   // phrases that must appear verbatim
   namespace?: string | string[]; // optional namespace filter(s)
   source?: string | string[];    // optional source/docId filter(s)
@@ -203,6 +204,14 @@ query(pack, "bridge events", { namespace: ["mobile", "sdk"] });
 ```ts
 query(pack, "throttling", { source: ["guide", "faq"] });
 ```
+
+### Minimum score threshold
+
+```ts
+query(pack, "throttle bridge", { minScore: 2.5 });
+```
+
+Use this when you prefer precision over recall and only want confident lexical matches.
 
 ### Query expansion controls
 
