@@ -1,4 +1,8 @@
 import assert from 'node:assert/strict';
+import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { buildPack, mountPack, query, makeContextPatch } from '../dist/index.js';
 
 async function testSmartQuotePhrase() {
@@ -111,6 +115,27 @@ async function testContextPatchSourcePropagation() {
   assert.equal(patch.snippets[0]?.source, 'src-doc');
 }
 
+async function testMountPackFromLocalPathAndFileUrl() {
+  const docs = [{ id: 'local-doc', text: 'local path loading should work in Node runtimes.' }];
+  const bytes = await buildPack(docs);
+  const tmpDir = await mkdtemp(path.join(os.tmpdir(), 'knolo-pack-'));
+  const packPath = path.join(tmpDir, 'knowledge.knolo');
+
+  try {
+    await writeFile(packPath, bytes);
+
+    const fromPath = await mountPack({ src: packPath });
+    const pathHits = query(fromPath, 'local path loading', { topK: 1 });
+    assert.equal(pathHits[0]?.source, 'local-doc', 'expected mountPack to load plain filesystem paths');
+
+    const fromFileUrl = await mountPack({ src: pathToFileURL(packPath).href });
+    const fileUrlHits = query(fromFileUrl, 'local path loading', { topK: 1 });
+    assert.equal(fileUrlHits[0]?.source, 'local-doc', 'expected mountPack to load file:// URLs');
+  } finally {
+    await rm(tmpDir, { recursive: true, force: true });
+  }
+}
+
 await testSmartQuotePhrase();
 await testFirstBlockRetrieval();
 await testNearDuplicateDedupe();
@@ -118,5 +143,6 @@ await testNamespaceFiltering();
 await testQueryExpansionRecall();
 await testSourceFiltering();
 await testContextPatchSourcePropagation();
+await testMountPackFromLocalPathAndFileUrl();
 
 console.log('All tests passed.');

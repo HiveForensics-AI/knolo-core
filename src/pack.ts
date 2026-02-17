@@ -96,6 +96,9 @@ export async function mountPack(opts: MountOptions): Promise<Pack> {
 
 async function resolveToBuffer(src: MountOptions['src']): Promise<ArrayBuffer> {
   if (typeof src === 'string') {
+    if (isNodeRuntime() && isLikelyLocalPath(src)) {
+      return await readLocalFileAsBuffer(src);
+    }
     const res = await fetch(src);
     return await res.arrayBuffer();
   }
@@ -107,4 +110,25 @@ async function resolveToBuffer(src: MountOptions['src']): Promise<ArrayBuffer> {
     return copy.buffer as ArrayBuffer;
   }
   return src as ArrayBuffer;
+}
+
+function isNodeRuntime(): boolean {
+  return typeof process !== 'undefined' && !!process.versions?.node;
+}
+
+function isLikelyLocalPath(value: string): boolean {
+  if (value.startsWith('file://')) return true;
+  if (value.startsWith('./') || value.startsWith('../') || value.startsWith('/') || value.startsWith('~')) return true;
+  if (/^[A-Za-z]:[\\/]/.test(value)) return true; // Windows absolute path
+  if (/^[A-Za-z][A-Za-z\d+.-]*:/.test(value)) return false; // URL scheme
+  return true; // plain relative path like "knowledge.knolo"
+}
+
+async function readLocalFileAsBuffer(pathOrFileUrl: string): Promise<ArrayBuffer> {
+  const { readFile } = await import('node:fs/promises');
+  const filePath = pathOrFileUrl.startsWith('file://')
+    ? decodeURIComponent(new URL(pathOrFileUrl).pathname)
+    : pathOrFileUrl;
+  const data = await readFile(filePath);
+  return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
 }

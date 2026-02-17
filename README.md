@@ -149,7 +149,7 @@ type BuildInputDoc = {
 
 ### `mountPack({ src }) -> Promise<Pack>`
 
-Loads a pack from a URL, `Uint8Array`, or `ArrayBuffer`.
+Loads a pack from a URL, local filesystem path (`Node.js`), `Uint8Array`, or `ArrayBuffer`.
 
 ```ts
 type Pack = {
