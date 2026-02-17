@@ -1,7 +1,9 @@
 
 # DOCS.md — KnoLo Core
 
-> Deterministic, embedding-free retrieval and portable knowledge packs.
+> Deterministic, embedding-first optional hybrid retrieval and portable knowledge packs.
+
+Determinism note: lexical retrieval is deterministic, and semantic rerank is deterministic given the same `.knolo` pack bytes, query embedding model, and embedding provider outputs.
 
 ## Table of Contents
 
@@ -64,8 +66,11 @@ const patch = makeContextPatch(hits, { budget: "small" });
 ### CLI build
 
 ```bash
-# input docs.json -> output knowledge.knolo
+# lexical-only
 npx knolo docs.json knowledge.knolo
+
+# semantic-enabled build (embeddings JSON + model id)
+npx knolo docs.json knowledge.knolo --embeddings embeddings.json --model-id text-embedding-3-small
 ```
 
 ---
@@ -168,6 +173,23 @@ const hits: Hit[] = query(pack, '“react native bridge” throttling', {
 });
 ```
 
+### Semantic helper ergonomics
+
+```ts
+import { hasSemantic, validateSemanticQueryOptions } from "knolo-core";
+
+if (hasSemantic(pack)) {
+  validateSemanticQueryOptions({
+    enabled: true,
+    topN: 40,
+    minLexConfidence: 0.35,
+    queryEmbedding,
+  });
+}
+```
+
+`validateSemanticQueryOptions(...)` throws useful errors for invalid option types/ranges (`topN`, `minLexConfidence`, blend weights, missing `Float32Array` embedding type).
+
 **What the ranker does**
 
 1. Enforces quoted/required phrases (hard filter)
@@ -265,6 +287,27 @@ query(pack, "throttle bridge", {
 
 Lexical retrieval still runs first. Semantic rerank only touches top-N lexical candidates, and runs before de-dupe/MMR. If `pack.semantic` is missing, rerank is skipped silently; if `queryEmbedding` is omitted while enabled, `query(...)` throws.
 
+Example with explicit validation:
+
+```ts
+validateSemanticQueryOptions({
+  enabled: true,
+  topN: 64,
+  minLexConfidence: 0.25,
+  blend: { enabled: true, wLex: 0.7, wSem: 0.3 },
+  queryEmbedding,
+});
+
+const hits = query(pack, userQuery, {
+  semantic: {
+    enabled: true,
+    queryEmbedding,
+    topN: 64,
+    minLexConfidence: 0.25,
+  },
+});
+```
+
 ### Tight vs. scattered matches
 
 Proximity bonus favors blocks where all query terms co-occur in a small span.
@@ -310,6 +353,7 @@ Top-K results apply near-duplicate suppression (5-gram Jaccard) and MMR (λ≈0.
 **Optional semantic tail**
 
 * Fully backward compatible: if EOF is reached immediately after `blocks JSON`, no semantic data is present.
+* Semantic tail schema version is `1` (`semantic.version = 1`).
 * `buildPack(..., { semantic })` can now generate this section from provided `Float32Array` embeddings (no model inference at build time).
 * Quantization is deterministic `int8_l2norm` per vector:
   1. L2-normalize the input embedding.
@@ -326,6 +370,7 @@ Semantic JSON schema (stored verbatim in `[semantic JSON]`):
 
 ```json
 {
+  "version": 1,
   "modelId": "string",
   "dims": 384,
   "encoding": "int8_l2norm",
@@ -335,6 +380,45 @@ Semantic JSON schema (stored verbatim in `[semantic JSON]`):
     "scales": { "byteOffset": 1152, "length": 3, "encoding": "float16" }
   }
 }
+```
+
+### Building packs with embeddings (library usage)
+
+```ts
+const embeddings: Float32Array[] = await Promise.all(
+  docs.map(async (doc) => embedText(doc.text))
+);
+
+const bytes = await buildPack(docs, {
+  semantic: {
+    enabled: true,
+    modelId: "text-embedding-3-small",
+    embeddings,
+    quantization: { type: "int8_l2norm", perVectorScale: true },
+  },
+});
+```
+
+Embedding validation rules:
+
+* `embeddings.length` must match block count exactly.
+* every embedding must be `Float32Array`.
+* every vector must have identical `dims`.
+
+### Querying with semantic rerank
+
+```ts
+const queryEmbedding = await embedText(userQuestion);
+const hits = query(pack, userQuestion, {
+  topK: 8,
+  semantic: {
+    enabled: true,
+    queryEmbedding,
+    topN: 64,
+    minLexConfidence: 0.35,
+    blend: { enabled: true, wLex: 0.75, wSem: 0.25 },
+  },
+});
 ```
 
 **Lexicon JSON**
@@ -367,6 +451,7 @@ type Pack = {
   namespaces?: (string|null)[],
   blockTokenLens?: number[],
   semantic?: {
+    version: 1,
     modelId: string,
     dims: number,
     encoding: "int8_l2norm",
@@ -448,7 +533,7 @@ npm run smoke
 ## FAQ
 
 **Q: Does this use embeddings or a vector DB?**
-A: No—pure lexical retrieval with positions and structural cues.
+A: Default retrieval is lexical. Optional semantic hybrid rerank is supported when packs are built with embeddings; no external vector DB is required.
 
 **Q: Why am I still seeing similar results?**
 A: De-dup suppresses near-duplicates but allows related passages. Increase Jaccard threshold or tune λ (if forking).

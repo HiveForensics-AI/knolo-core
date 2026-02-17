@@ -156,6 +156,7 @@ function buildSemanticSection(
   semBlob.set(new Uint8Array(scales.buffer, scales.byteOffset, scalesByteLength), scalesByteOffset);
 
   const semJson = {
+    version: 1,
     modelId: semantic.modelId,
     dims,
     encoding: 'int8_l2norm',

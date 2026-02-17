@@ -1,11 +1,27 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm, readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { buildPack, mountPack, query, makeContextPatch, decodeScaleF16, lexConfidence } from '../dist/index.js';
+import { buildPack, mountPack, query, makeContextPatch, decodeScaleF16, lexConfidence, hasSemantic, validateSemanticQueryOptions } from '../dist/index.js';
 
 
+
+
+async function buildSemanticFixturePack() {
+  const fixture = JSON.parse(await readFile(new URL('../fixtures/semantic-enabled.knolo.fixture.json', import.meta.url), 'utf8'));
+  const docs = fixture.docs;
+  const embeddings = fixture.embeddings.map((vec) => Float32Array.from(vec));
+  const bytes = await buildPack(docs, {
+    semantic: {
+      enabled: true,
+      modelId: fixture.modelId,
+      embeddings,
+      quantization: { type: 'int8_l2norm', perVectorScale: true },
+    },
+  });
+  return mountPack({ src: bytes });
+}
 
 function buildLegacyV1PackBytes() {
   const enc = new TextEncoder();
@@ -337,6 +353,70 @@ async function testSemanticRerankErrorAndDefaults() {
   );
 }
 
+
+async function testSemanticFixtureAndHelpers() {
+  const pack = await buildSemanticFixturePack();
+  assert.ok(hasSemantic(pack), 'expected semantic-enabled fixture pack to report semantic availability');
+
+  const noSemantic = await mountPack({ src: await buildPack([{ text: 'no semantic section' }]) });
+  assert.equal(hasSemantic(noSemantic), false, 'expected hasSemantic=false when semantic section is absent');
+}
+
+async function testValidateSemanticQueryOptions() {
+  assert.doesNotThrow(() => validateSemanticQueryOptions({ enabled: true, mode: 'rerank', topN: 5, queryEmbedding: new Float32Array([1, 2]) }));
+  assert.throws(() => validateSemanticQueryOptions({ topN: 0 }), /semantic\.topN/);
+  assert.throws(() => validateSemanticQueryOptions({ minLexConfidence: 2 }), /semantic\.minLexConfidence/);
+  assert.throws(() => validateSemanticQueryOptions({ queryEmbedding: [1, 2] }), /Float32Array/);
+}
+
+async function testSemanticTopNMicroBenchmark() {
+  const docCount = 400;
+  const dims = 32;
+  const docs = Array.from({ length: docCount }, (_, i) => ({ id: `bench-${i}`, text: `alpha beta benchmark block ${i}` }));
+  const embeddings = Array.from({ length: docCount }, (_, i) => {
+    const vec = new Float32Array(dims);
+    vec[i % dims] = 1;
+    vec[(i * 7) % dims] += 0.5;
+    return vec;
+  });
+
+  const pack = await mountPack({
+    src: await buildPack(docs, {
+      semantic: {
+        enabled: true,
+        modelId: 'bench-model',
+        embeddings,
+        quantization: { type: 'int8_l2norm', perVectorScale: true },
+      },
+    }),
+  });
+
+  const lexicalStart = Date.now();
+  for (let i = 0; i < 20; i++) {
+    query(pack, 'alpha beta benchmark', { topK: 20, queryExpansion: { enabled: false } });
+  }
+  const lexicalElapsedMs = Date.now() - lexicalStart;
+
+  const semanticStart = Date.now();
+  for (let i = 0; i < 20; i++) {
+    const q = new Float32Array(dims);
+    q[i % dims] = 1;
+    const hits = query(pack, 'alpha beta benchmark', {
+      topK: 20,
+      queryExpansion: { enabled: false },
+      semantic: { enabled: true, queryEmbedding: q, topN: 200 },
+    });
+    assert.ok(hits.length > 0, 'expected semantic rerank benchmark query to return hits');
+  }
+  const semanticElapsedMs = Date.now() - semanticStart;
+
+  assert.ok(semanticElapsedMs < 20000, `semantic rerank benchmark exceeded expected runtime budget: ${semanticElapsedMs}ms`);
+  assert.ok(
+    semanticElapsedMs <= Math.max(lexicalElapsedMs * 8, 500),
+    `semantic rerank benchmark regressed badly (lexical=${lexicalElapsedMs}ms, semantic=${semanticElapsedMs}ms)`
+  );
+}
+
 await testLexConfidenceDeterministic();
 await testSemanticRerankLowConfidence();
 await testSemanticRerankRespectsConfidenceAndForce();
@@ -351,6 +431,9 @@ await testMinScoreFiltering();
 await testContextPatchSourcePropagation();
 await testMountPackFromLocalPathAndFileUrl();
 await testPackWithoutSemanticTail();
+await testSemanticFixtureAndHelpers();
+await testValidateSemanticQueryOptions();
+await testSemanticTopNMicroBenchmark();
 await testPackWithSemanticTail();
 await testMountLegacyPackWithoutSemanticTail();
 
