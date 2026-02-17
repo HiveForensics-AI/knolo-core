@@ -20,6 +20,7 @@ export type QueryOptions = {
   topK?: number;
   requirePhrases?: string[];
   namespace?: string | string[];
+  source?: string | string[];
   queryExpansion?: {
     enabled?: boolean;
     docs?: number;
@@ -62,6 +63,7 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
   const requiredPhrases: string[][] = [...quoted, ...extraReq];
 
   const namespaceFilter = normalizeNamespaceFilter(opts.namespace);
+  const sourceFilter = normalizeSourceFilter(opts.source);
 
   // --- Term ids for the free (unquoted) tokens in q
   const termIds = normTokens
@@ -152,6 +154,17 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
       const ns = pack.namespaces?.[bid];
       const normalizedNs = typeof ns === "string" ? normalize(ns) : "";
       if (!normalizedNs || !namespaceFilter.has(normalizedNs)) {
+        candidates.delete(bid);
+      }
+    }
+  }
+
+  // --- Source/docId filtering
+  if (sourceFilter.size > 0) {
+    for (const bid of [...candidates.keys()]) {
+      const source = pack.docIds?.[bid];
+      const normalizedSource = typeof source === "string" ? normalize(source) : "";
+      if (!normalizedSource || !sourceFilter.has(normalizedSource)) {
         candidates.delete(bid);
       }
     }
@@ -292,6 +305,12 @@ function containsPhrase(text: string, seq: string[]): boolean {
 
 
 function normalizeNamespaceFilter(input?: string | string[]): Set<string> {
+  if (input === undefined) return new Set();
+  const values = Array.isArray(input) ? input : [input];
+  return new Set(values.map((v) => normalize(v)).filter(Boolean));
+}
+
+function normalizeSourceFilter(input?: string | string[]): Set<string> {
   if (input === undefined) return new Set();
   const values = Array.isArray(input) ? input : [input];
   return new Set(values.map((v) => normalize(v)).filter(Boolean));
