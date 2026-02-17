@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "docs": [
+    { "id": "sem-fixture-a", "text": "semantic fixture block alpha" },
+    { "id": "sem-fixture-b", "text": "semantic fixture block beta" }
+  ],
+  "modelId": "fixture-mini",
+  "embeddings": [
+    [1, 0, 0],
+    [0, 1, 0]
+  ]
+}

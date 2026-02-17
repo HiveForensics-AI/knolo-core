@@ -26,6 +26,7 @@ export type Pack = {
   namespaces?: (string | null)[];
   blockTokenLens?: number[];
   semantic?: {
+    version: 1;
     modelId: string;
     dims: number;
     encoding: 'int8_l2norm';
@@ -34,6 +35,10 @@ export type Pack = {
     scales?: Uint16Array;
   };
 };
+
+export function hasSemantic(pack: Pack): boolean {
+  return Boolean(pack.semantic && pack.semantic.dims > 0 && pack.semantic.vecs.length > 0);
+}
 
 export async function mountPack(opts: MountOptions): Promise<Pack> {
   const buf = await resolveToBuffer(opts.src);
@@ -136,6 +141,7 @@ function parseSemanticSection(sem: any, blob: Uint8Array): Pack['semantic'] {
   }
 
   return {
+    version: 1,
     modelId: String(sem?.modelId ?? ''),
     dims: Number(sem?.dims ?? 0),
     encoding: 'int8_l2norm',

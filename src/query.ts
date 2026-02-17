@@ -45,6 +45,39 @@ export type QueryOptions = {
   };
 };
 
+export function validateSemanticQueryOptions(options?: QueryOptions["semantic"]): void {
+  if (!options) return;
+  if (options.enabled !== undefined && typeof options.enabled !== "boolean") {
+    throw new Error("query(...): semantic.enabled must be a boolean when provided.");
+  }
+  if (options.mode !== undefined && options.mode !== "rerank") {
+    throw new Error('query(...): semantic.mode currently only supports "rerank".');
+  }
+  if (options.topN !== undefined && (!Number.isInteger(options.topN) || options.topN < 1)) {
+    throw new Error("query(...): semantic.topN must be a positive integer.");
+  }
+  if (options.minLexConfidence !== undefined && (!Number.isFinite(options.minLexConfidence) || options.minLexConfidence < 0 || options.minLexConfidence > 1)) {
+    throw new Error("query(...): semantic.minLexConfidence must be a finite number between 0 and 1.");
+  }
+  if (options.queryEmbedding !== undefined && !(options.queryEmbedding instanceof Float32Array)) {
+    throw new Error("query(...): semantic.queryEmbedding must be a Float32Array.");
+  }
+  if (options.blend) {
+    if (options.blend.enabled !== undefined && typeof options.blend.enabled !== "boolean") {
+      throw new Error("query(...): semantic.blend.enabled must be a boolean when provided.");
+    }
+    if (options.blend.wLex !== undefined && (!Number.isFinite(options.blend.wLex) || options.blend.wLex < 0)) {
+      throw new Error("query(...): semantic.blend.wLex must be a finite number >= 0.");
+    }
+    if (options.blend.wSem !== undefined && (!Number.isFinite(options.blend.wSem) || options.blend.wSem < 0)) {
+      throw new Error("query(...): semantic.blend.wSem must be a finite number >= 0.");
+    }
+  }
+  if (options.force !== undefined && typeof options.force !== "boolean") {
+    throw new Error("query(...): semantic.force must be a boolean when provided.");
+  }
+}
+
 export type Hit = {
   blockId: number;
   score: number;
@@ -54,6 +87,7 @@ export type Hit = {
 };
 
 export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
+  validateSemanticQueryOptions(opts.semantic);
   const topK = opts.topK ?? 10;
   const minScore = Number.isFinite(opts.minScore) ? Math.max(0, opts.minScore as number) : 0;
   const expansionOpts = {
@@ -322,63 +356,79 @@ function rerankLexicalHitsWithSemantic(
   const topN = Math.min(opts.topN, prelim.length);
   const rerankSlice = prelim.slice(0, topN);
   const tail = prelim.slice(topN);
-  const lexScores = rerankSlice.map((h) => h.score);
-  const normLex = minMaxNormalize(lexScores);
+  const lexScores = new Float64Array(topN);
+  for (let i = 0; i < topN; i++) lexScores[i] = rerankSlice[i].score;
+  const normLex = minMaxNormalizeTyped(lexScores);
   const quantizedQuery = quantizeEmbeddingInt8L2Norm(opts.queryEmbedding);
-  const semScores = rerankSlice.map((h) => semanticSimilarityInt8(quantizedQuery, sem, h.blockId));
-  const normSem = minMaxNormalize(semScores);
+  const semScores = scoreSemanticInt8(quantizedQuery.q, quantizedQuery.scale, sem, rerankSlice);
+  const normSem = minMaxNormalizeTyped(semScores);
 
   const denom = opts.blend.wLex + opts.blend.wSem;
   const wLex = denom > 0 ? opts.blend.wLex / denom : 0.5;
   const wSem = denom > 0 ? opts.blend.wSem / denom : 0.5;
 
-  const reranked = rerankSlice
-    .map((hit, idx) => {
-      const score = opts.blend.enabled
-        ? wLex * normLex[idx] + wSem * normSem[idx]
-        : semScores[idx];
-      return { blockId: hit.blockId, score };
-    })
-    .sort((a, b) => b.score - a.score || a.blockId - b.blockId);
+  const reranked = new Array<{ blockId: number; score: number }>(topN);
+  for (let i = 0; i < topN; i++) {
+    const hit = rerankSlice[i];
+    reranked[i] = {
+      blockId: hit.blockId,
+      score: opts.blend.enabled ? wLex * normLex[i] + wSem * normSem[i] : semScores[i],
+    };
+  }
+  reranked.sort((a, b) => b.score - a.score || a.blockId - b.blockId);
 
   return [...reranked, ...tail];
 }
 
-function semanticSimilarityInt8(
-  quantizedQuery: { q: Int8Array; scale: number },
+function scoreSemanticInt8(
+  queryQ: Int8Array,
+  queryScale: number,
   semantic: NonNullable<Pack["semantic"]>,
-  blockId: number
-): number {
+  hits: Array<{ blockId: number }>
+): Float64Array {
+  const scores = new Float64Array(hits.length);
   const dims = semantic.dims;
-  if (quantizedQuery.q.length !== dims || blockId < 0) return 0;
-  const base = blockId * dims;
-  if (base + dims > semantic.vecs.length) return 0;
-  if (quantizedQuery.scale === 0) return 0;
+  if (queryQ.length !== dims || queryScale === 0) return scores;
 
-  let dot = 0;
-  for (let i = 0; i < dims; i++) {
-    dot += quantizedQuery.q[i] * semantic.vecs[base + i];
+  const vecs = semantic.vecs;
+  const scales = semantic.scales;
+  for (let h = 0; h < hits.length; h++) {
+    const blockId = hits[h].blockId;
+    if (blockId < 0) continue;
+    const base = blockId * dims;
+    if (base + dims > vecs.length) continue;
+
+    let dot = 0;
+    for (let i = 0; i < dims; i++) {
+      dot += queryQ[i] * vecs[base + i];
+    }
+
+    const blockScale = scales?.[blockId] !== undefined ? decodeScaleF16(scales[blockId]) : (1 / 127);
+    scores[h] = dot * queryScale * blockScale;
   }
-
-  const blockScale = semantic.scales?.[blockId] !== undefined
-    ? decodeScaleF16(semantic.scales[blockId])
-    : (1 / 127);
-  return dot * quantizedQuery.scale * blockScale;
+  return scores;
 }
 
-function minMaxNormalize(values: number[]): number[] {
-  if (values.length === 0) return [];
+function minMaxNormalizeTyped(values: Float64Array): Float64Array {
+  if (values.length === 0) return values;
   let min = Infinity;
   let max = -Infinity;
-  for (const v of values) {
+  for (let i = 0; i < values.length; i++) {
+    const v = values[i];
     if (v < min) min = v;
     if (v > max) max = v;
   }
   if (!Number.isFinite(min) || !Number.isFinite(max) || max <= min) {
-    return values.map(() => 1);
+    const out = new Float64Array(values.length);
+    out.fill(1);
+    return out;
   }
+  const out = new Float64Array(values.length);
   const span = max - min;
-  return values.map((v) => clamp01((v - min) / span));
+  for (let i = 0; i < values.length; i++) {
+    out[i] = clamp01((values[i] - min) / span);
+  }
+  return out;
 }
 
 function clamp01(v: number): number {
