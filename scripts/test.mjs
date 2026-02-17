@@ -5,6 +5,79 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { buildPack, mountPack, query, makeContextPatch } from '../dist/index.js';
 
+
+
+function buildLegacyV1PackBytes() {
+  const enc = new TextEncoder();
+  const meta = enc.encode(JSON.stringify({ version: 1, stats: { docs: 1, blocks: 1, terms: 0 } }));
+  const lexicon = enc.encode(JSON.stringify([]));
+  const blocks = enc.encode(JSON.stringify(['legacy fixture block text']));
+
+  const total = 4 + meta.length + 4 + lexicon.length + 4 + 0 + 4 + blocks.length;
+  const out = new Uint8Array(total);
+  const dv = new DataView(out.buffer);
+  let offset = 0;
+
+  dv.setUint32(offset, meta.length, true); offset += 4;
+  out.set(meta, offset); offset += meta.length;
+  dv.setUint32(offset, lexicon.length, true); offset += 4;
+  out.set(lexicon, offset); offset += lexicon.length;
+  dv.setUint32(offset, 0, true); offset += 4;
+  dv.setUint32(offset, blocks.length, true); offset += 4;
+  out.set(blocks, offset);
+
+  return out;
+}
+
+async function testPackWithoutSemanticTail() {
+  const docs = [{ id: 'plain', text: 'packs without semantic tails should mount normally' }];
+  const pack = await mountPack({ src: await buildPack(docs) });
+  assert.equal(pack.semantic, undefined, 'expected semantic section to be absent by default');
+}
+
+async function testPackWithSemanticTail() {
+  const docs = [{ id: 'sem', text: 'pack with semantic metadata and blob' }];
+  const semBlob = new Uint8Array(14);
+  semBlob.set([1, -2, 3, -4, 5, -6, 7, -8].map((n) => (n + 256) % 256), 0);
+  semBlob.set([0x20, 0x03, 0x40, 0x06, 0x60, 0x09], 8);
+
+  const semJson = {
+    modelId: 'test-model',
+    dims: 4,
+    encoding: 'int8_l2norm',
+    perVectorScale: true,
+    blocks: {
+      vectors: { byteOffset: 0, length: 8 },
+      scales: { byteOffset: 8, length: 3 },
+    },
+  };
+
+  const pack = await mountPack({
+    src: await buildPack(docs, {
+      semantic: {
+        enabled: true,
+        modelId: 'test-model',
+        dims: 4,
+        semJson,
+        semBlob,
+      },
+    }),
+  });
+
+  assert.ok(pack.semantic, 'expected semantic section to mount');
+  assert.equal(pack.semantic?.modelId, 'test-model');
+  assert.equal(pack.semantic?.dims, 4);
+  assert.equal(pack.semantic?.vecs.length, 8, 'expected int8 vector view length to match semantic JSON');
+  assert.equal(pack.semantic?.scales?.length, 3, 'expected uint16 scale view length to match semantic JSON');
+}
+
+async function testMountLegacyPackWithoutSemanticTail() {
+  const legacy = buildLegacyV1PackBytes();
+  const pack = await mountPack({ src: legacy });
+  assert.equal(pack.blocks[0], 'legacy fixture block text', 'expected legacy pack block to mount');
+  assert.equal(pack.semantic, undefined, 'expected legacy pack to mount without semantic section');
+}
+
 async function testSmartQuotePhrase() {
   const docs = [
     { id: 'a', text: 'React native bridge throttling improves app stability.' },
@@ -160,5 +233,8 @@ await testSourceFiltering();
 await testMinScoreFiltering();
 await testContextPatchSourcePropagation();
 await testMountPackFromLocalPathAndFileUrl();
+await testPackWithoutSemanticTail();
+await testPackWithSemanticTail();
+await testMountLegacyPackWithoutSemanticTail();
 
 console.log('All tests passed.');

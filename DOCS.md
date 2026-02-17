@@ -248,6 +248,7 @@ Top-K results apply near-duplicate suppression (5-gram Jaccard) and MMR (λ≈0.
 [lexLen:u32][lexicon JSON]
 [postCount:u32][postings u32[]]
 [blocksLen:u32][blocks JSON]
+[semLen:u32][semantic JSON][semBlobLen:u32][semantic blob] // optional tail at EOF
 ```
 
 **Meta JSON**
@@ -263,6 +264,14 @@ Top-K results apply near-duplicate suppression (5-gram Jaccard) and MMR (λ≈0.
   }
 }
 ```
+
+**Optional semantic tail**
+
+* Fully backward compatible: if EOF is reached immediately after `blocks JSON`, no semantic data is present.
+* When present, `semantic JSON` describes typed-array slices into the semantic blob:
+  * `blocks.vectors` → `Int8Array`
+  * `blocks.scales` (optional) → `Uint16Array`
+
 
 **Lexicon JSON**
 
@@ -292,7 +301,15 @@ type Pack = {
   headings?: (string|null)[],
   docIds?: (string|null)[],
   namespaces?: (string|null)[],
-  blockTokenLens?: number[]
+  blockTokenLens?: number[],
+  semantic?: {
+    modelId: string,
+    dims: number,
+    encoding: "int8_l2norm",
+    perVectorScale: boolean,
+    vecs: Int8Array,
+    scales?: Uint16Array
+  }
 }
 ```
 

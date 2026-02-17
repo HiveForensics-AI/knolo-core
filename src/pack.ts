@@ -25,6 +25,14 @@ export type Pack = {
   docIds?: (string | null)[];
   namespaces?: (string | null)[];
   blockTokenLens?: number[];
+  semantic?: {
+    modelId: string;
+    dims: number;
+    encoding: 'int8_l2norm';
+    perVectorScale: boolean;
+    vecs: Int8Array;
+    scales?: Uint16Array;
+  };
 };
 
 export async function mountPack(opts: MountOptions): Promise<Pack> {
@@ -55,6 +63,7 @@ export async function mountPack(opts: MountOptions): Promise<Pack> {
   // blocks (v1: string[]; v2/v3: {text, heading?, docId?, namespace?, len?}[])
   const blocksLen = dv.getUint32(offset, true); offset += 4;
   const blocksJson = dec.decode(new Uint8Array(buf, offset, blocksLen));
+  offset += blocksLen;
   const parsed = JSON.parse(blocksJson);
 
   let blocks: string[] = [];
@@ -91,7 +100,47 @@ export async function mountPack(opts: MountOptions): Promise<Pack> {
     blocks = [];
   }
 
-  return { meta, lexicon, postings, blocks, headings, docIds, namespaces, blockTokenLens };
+  let semantic: Pack['semantic'];
+  if (offset < buf.byteLength) {
+    const semLen = dv.getUint32(offset, true); offset += 4;
+    const semJson = dec.decode(new Uint8Array(buf, offset, semLen)); offset += semLen;
+    const sem = JSON.parse(semJson);
+
+    const semBlobLen = dv.getUint32(offset, true); offset += 4;
+    const semBlob = new Uint8Array(buf, offset, semBlobLen);
+    semantic = parseSemanticSection(sem, semBlob);
+  }
+
+  return { meta, lexicon, postings, blocks, headings, docIds, namespaces, blockTokenLens, semantic };
+}
+
+function parseSemanticSection(sem: any, blob: Uint8Array): Pack['semantic'] {
+  const vectors = sem?.blocks?.vectors;
+  const scales = sem?.blocks?.scales;
+
+  const vecs = new Int8Array(
+    blob.buffer,
+    blob.byteOffset + Number(vectors?.byteOffset ?? 0),
+    Number(vectors?.length ?? 0)
+  );
+
+  let scaleView: Uint16Array | undefined;
+  if (scales) {
+    scaleView = new Uint16Array(
+      blob.buffer,
+      blob.byteOffset + Number(scales.byteOffset ?? 0),
+      Number(scales.length ?? 0)
+    );
+  }
+
+  return {
+    modelId: String(sem?.modelId ?? ''),
+    dims: Number(sem?.dims ?? 0),
+    encoding: 'int8_l2norm',
+    perVectorScale: Boolean(sem?.perVectorScale),
+    vecs,
+    scales: scaleView,
+  };
 }
 
 async function resolveToBuffer(src: MountOptions['src']): Promise<ArrayBuffer> {
