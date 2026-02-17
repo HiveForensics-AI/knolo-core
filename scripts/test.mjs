@@ -82,6 +82,27 @@ async function testQueryExpansionRecall() {
   );
 }
 
+async function testSourceFiltering() {
+  const docs = [
+    { id: 'mobile-guide', namespace: 'mobile', text: 'Bridge throttling improves app responsiveness.' },
+    { id: 'backend-guide', namespace: 'backend', text: 'Traffic throttling protects API availability.' },
+    { text: 'Unnamed notes about throttling behavior.' },
+  ];
+  const pack = await mountPack({ src: await buildPack(docs) });
+
+  const singleSourceHits = query(pack, 'throttling', { topK: 5, source: 'mobile-guide' });
+  assert.ok(singleSourceHits.length > 0, 'expected single source filter to return hits');
+  assert.ok(singleSourceHits.every((h) => h.source === 'mobile-guide'), 'expected only the requested source id');
+
+  const scopedSourcesHits = query(pack, 'throttling', {
+    topK: 5,
+    source: ['mobile-guide', 'backend-guide'],
+  });
+  const sources = new Set(scopedSourcesHits.map((h) => h.source));
+  assert.ok(sources.has('mobile-guide') || sources.has('backend-guide'), 'expected requested source ids in results');
+  assert.ok(!sources.has(undefined), 'expected source filter to exclude blocks without source ids');
+}
+
 async function testContextPatchSourcePropagation() {
   const docs = [{ id: 'src-doc', text: 'Knowledge packs can carry source ids for citations.' }];
   const pack = await mountPack({ src: await buildPack(docs) });
@@ -95,6 +116,7 @@ await testFirstBlockRetrieval();
 await testNearDuplicateDedupe();
 await testNamespaceFiltering();
 await testQueryExpansionRecall();
+await testSourceFiltering();
 await testContextPatchSourcePropagation();
 
 console.log('All tests passed.');

@@ -118,6 +118,7 @@ type QueryOptions = {
   topK?: number;               // default 10
   requirePhrases?: string[];   // phrases that must appear verbatim
   namespace?: string | string[]; // optional namespace filter(s)
+  source?: string | string[];    // optional source/docId filter(s)
   queryExpansion?: {
     enabled?: boolean;         // default true
     docs?: number;             // top seed docs, default 3
@@ -138,7 +139,8 @@ type Hit = {
 const hits: Hit[] = query(pack, '“react native bridge” throttling', {
   topK: 5,
   requirePhrases: ["maximum rate"], // hard constraint
-  namespace: "mobile"
+  namespace: "mobile",
+  source: ["guide", "faq"]
 });
 ```
 
@@ -194,6 +196,12 @@ query(pack, "throttling", { requirePhrases: ["react native bridge"] });
 
 ```ts
 query(pack, "bridge events", { namespace: ["mobile", "sdk"] });
+```
+
+### Source/docId-scoped retrieval
+
+```ts
+query(pack, "throttling", { source: ["guide", "faq"] });
 ```
 
 ### Query expansion controls

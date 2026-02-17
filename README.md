@@ -175,6 +175,7 @@ type QueryOptions = {
   topK?: number;                // default 10
   requirePhrases?: string[];    // additional phrases to require (unquoted)
   namespace?: string | string[];// optional namespace filter(s)
+  source?: string | string[];   // optional doc id/source filter(s)
   queryExpansion?: {
     enabled?: boolean;          // default true
     docs?: number;              // top seed docs, default 3
@@ -197,6 +198,7 @@ type Hit = {
 
 * Tokenize + **enforce all phrases** (quoted in `q` and `requirePhrases`)
 * Optional **namespace scoping** via `query(..., { namespace })`
+* Optional **source/docId scoping** via `query(..., { source })`
 * Candidate generation via inverted index + query-time DF collection
 * Corpus-aware BM25L (true IDF + length normalization from persisted block lengths)
 * Deterministic pseudo-relevance **query expansion** from top lexical hits
