@@ -1,6 +1,6 @@
 // src/index.ts
 export { mountPack, hasSemantic } from './pack.js';
-export { query, lexConfidence, validateSemanticQueryOptions } from './query.js';
+export { query, lexConfidence, validateQueryOptions, validateSemanticQueryOptions } from './query.js';
 export { makeContextPatch } from './patch.js';
 export { buildPack } from './builder.js';
 export { quantizeEmbeddingInt8L2Norm, encodeScaleF16, decodeScaleF16 } from './semantic.js';

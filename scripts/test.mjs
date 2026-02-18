@@ -3,7 +3,7 @@ import { mkdtemp, writeFile, rm, readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { buildPack, mountPack, query, makeContextPatch, decodeScaleF16, lexConfidence, hasSemantic, validateSemanticQueryOptions } from '../dist/index.js';
+import { buildPack, mountPack, query, makeContextPatch, decodeScaleF16, lexConfidence, hasSemantic, validateQueryOptions, validateSemanticQueryOptions } from '../dist/index.js';
 
 
 
@@ -369,6 +369,26 @@ async function testValidateSemanticQueryOptions() {
   assert.throws(() => validateSemanticQueryOptions({ queryEmbedding: [1, 2] }), /Float32Array/);
 }
 
+
+async function testValidateQueryOptions() {
+  assert.doesNotThrow(() => validateQueryOptions({
+    topK: 5,
+    minScore: 0,
+    requirePhrases: ['bridge throttling'],
+    namespace: ['mobile', 'backend'],
+    source: 'mobile-guide',
+    queryExpansion: { enabled: true, docs: 3, terms: 4, weight: 0.2, minTermLength: 3 },
+    semantic: { enabled: false },
+  }));
+
+  assert.throws(() => validateQueryOptions({ topK: 0 }), /topK/);
+  assert.throws(() => validateQueryOptions({ minScore: -1 }), /minScore/);
+  assert.throws(() => validateQueryOptions({ requirePhrases: [123] }), /requirePhrases/);
+  assert.throws(() => validateQueryOptions({ namespace: ['mobile', 42] }), /namespace/);
+  assert.throws(() => validateQueryOptions({ source: ['guide', 42] }), /source/);
+  assert.throws(() => validateQueryOptions({ queryExpansion: { docs: 0 } }), /queryExpansion\.docs/);
+}
+
 async function testSemanticTopNMicroBenchmark() {
   const docCount = 400;
   const dims = 32;
@@ -433,6 +453,7 @@ await testMountPackFromLocalPathAndFileUrl();
 await testPackWithoutSemanticTail();
 await testSemanticFixtureAndHelpers();
 await testValidateSemanticQueryOptions();
+await testValidateQueryOptions();
 await testSemanticTopNMicroBenchmark();
 await testPackWithSemanticTail();
 await testMountLegacyPackWithoutSemanticTail();

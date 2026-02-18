@@ -176,9 +176,15 @@ const hits: Hit[] = query(pack, '“react native bridge” throttling', {
 ### Semantic helper ergonomics
 
 ```ts
-import { hasSemantic, validateSemanticQueryOptions } from "knolo-core";
+import { hasSemantic, validateQueryOptions, validateSemanticQueryOptions } from "knolo-core";
 
 if (hasSemantic(pack)) {
+  validateQueryOptions({
+    topK: 10,
+    namespace: "mobile",
+    queryExpansion: { enabled: true, docs: 3, terms: 4 },
+  });
+
   validateSemanticQueryOptions({
     enabled: true,
     topN: 40,
@@ -188,7 +194,7 @@ if (hasSemantic(pack)) {
 }
 ```
 
-`validateSemanticQueryOptions(...)` throws useful errors for invalid option types/ranges (`topN`, `minLexConfidence`, blend weights, missing `Float32Array` embedding type).
+`validateQueryOptions(...)` and `validateSemanticQueryOptions(...)` throw useful errors for invalid option types/ranges (for example `topK`, `queryExpansion.docs`, `topN`, `minLexConfidence`, blend weights, and missing `Float32Array` embedding types).
 
 **What the ranker does**
 
