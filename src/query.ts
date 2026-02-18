@@ -45,6 +45,40 @@ export type QueryOptions = {
   };
 };
 
+export function validateQueryOptions(opts?: QueryOptions): void {
+  if (!opts) return;
+  if (opts.topK !== undefined && (!Number.isInteger(opts.topK) || opts.topK < 1)) {
+    throw new Error("query(...): topK must be a positive integer.");
+  }
+  if (opts.minScore !== undefined && (!Number.isFinite(opts.minScore) || opts.minScore < 0)) {
+    throw new Error("query(...): minScore must be a finite number >= 0.");
+  }
+  if (opts.requirePhrases !== undefined && (!Array.isArray(opts.requirePhrases) || opts.requirePhrases.some((p) => typeof p !== "string"))) {
+    throw new Error("query(...): requirePhrases must be an array of strings when provided.");
+  }
+  validateStringOrStringArrayOption("namespace", opts.namespace);
+  validateStringOrStringArrayOption("source", opts.source);
+  if (opts.queryExpansion) {
+    const qe = opts.queryExpansion;
+    if (qe.enabled !== undefined && typeof qe.enabled !== "boolean") {
+      throw new Error("query(...): queryExpansion.enabled must be a boolean when provided.");
+    }
+    if (qe.docs !== undefined && (!Number.isInteger(qe.docs) || qe.docs < 1)) {
+      throw new Error("query(...): queryExpansion.docs must be a positive integer.");
+    }
+    if (qe.terms !== undefined && (!Number.isInteger(qe.terms) || qe.terms < 1)) {
+      throw new Error("query(...): queryExpansion.terms must be a positive integer.");
+    }
+    if (qe.weight !== undefined && (!Number.isFinite(qe.weight) || qe.weight < 0)) {
+      throw new Error("query(...): queryExpansion.weight must be a finite number >= 0.");
+    }
+    if (qe.minTermLength !== undefined && (!Number.isInteger(qe.minTermLength) || qe.minTermLength < 1)) {
+      throw new Error("query(...): queryExpansion.minTermLength must be a positive integer.");
+    }
+  }
+  validateSemanticQueryOptions(opts.semantic);
+}
+
 export function validateSemanticQueryOptions(options?: QueryOptions["semantic"]): void {
   if (!options) return;
   if (options.enabled !== undefined && typeof options.enabled !== "boolean") {
@@ -87,7 +121,7 @@ export type Hit = {
 };
 
 export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
-  validateSemanticQueryOptions(opts.semantic);
+  validateQueryOptions(opts);
   const topK = opts.topK ?? 10;
   const minScore = Number.isFinite(opts.minScore) ? Math.max(0, opts.minScore as number) : 0;
   const expansionOpts = {
@@ -509,4 +543,12 @@ function normalizeSourceFilter(input?: string | string[]): Set<string> {
   if (input === undefined) return new Set();
   const values = Array.isArray(input) ? input : [input];
   return new Set(values.map((v) => normalize(v)).filter(Boolean));
+}
+
+function validateStringOrStringArrayOption(name: string, value?: string | string[]): void {
+  if (value === undefined) return;
+  const valid = typeof value === "string" || (Array.isArray(value) && value.every((entry) => typeof entry === "string"));
+  if (!valid) {
+    throw new Error(`query(...): ${name} must be a string or an array of strings when provided.`);
+  }
 }
