@@ -59,21 +59,21 @@ npm run build
 ### 1) Build + mount + query
 
 ```ts
-import { buildPack, mountPack, query, makeContextPatch } from "knolo-core";
+import { buildPack, mountPack, query, makeContextPatch } from 'knolo-core';
 
 const docs = [
   {
-    id: "bridge-guide",
-    namespace: "mobile",
-    heading: "React Native Bridge",
-    text: "The bridge sends messages between JS and native modules. Throttling limits event frequency."
+    id: 'bridge-guide',
+    namespace: 'mobile',
+    heading: 'React Native Bridge',
+    text: 'The bridge sends messages between JS and native modules. Throttling limits event frequency.',
   },
   {
-    id: "perf-notes",
-    namespace: "mobile",
-    heading: "Debounce vs Throttle",
-    text: "Debounce waits for silence; throttle enforces a maximum trigger rate."
-  }
+    id: 'perf-notes',
+    namespace: 'mobile',
+    heading: 'Debounce vs Throttle',
+    text: 'Debounce waits for silence; throttle enforces a maximum trigger rate.',
+  },
 ];
 
 const bytes = await buildPack(docs);
@@ -81,11 +81,11 @@ const kb = await mountPack({ src: bytes });
 
 const hits = query(kb, '"react native" throttle', {
   topK: 5,
-  requirePhrases: ["maximum trigger rate"],
-  namespace: "mobile"
+  requirePhrases: ['maximum trigger rate'],
+  namespace: 'mobile',
 });
 
-const patch = makeContextPatch(hits, { budget: "small" });
+const patch = makeContextPatch(hits, { budget: 'small' });
 console.log(hits, patch);
 ```
 
@@ -95,8 +95,16 @@ console.log(hits, patch);
 
 ```json
 [
-  { "id": "guide", "heading": "Guide", "text": "Install deps.\n\n## Throttle\nLimit event frequency." },
-  { "id": "faq", "heading": "FAQ", "text": "What is throttling? It reduces event frequency." }
+  {
+    "id": "guide",
+    "heading": "Guide",
+    "text": "Install deps.\n\n## Throttle\nLimit event frequency."
+  },
+  {
+    "id": "faq",
+    "heading": "FAQ",
+    "text": "What is throttling? It reduces event frequency."
+  }
 ]
 ```
 
@@ -107,10 +115,10 @@ npx knolo docs.json knowledge.knolo
 Then query in app:
 
 ```ts
-import { mountPack, query } from "knolo-core";
+import { mountPack, query } from 'knolo-core';
 
-const kb = await mountPack({ src: "./knowledge.knolo" });
-const hits = query(kb, "throttle events", { topK: 3 });
+const kb = await mountPack({ src: './knowledge.knolo' });
+const hits = query(kb, 'throttle events', { topK: 3 });
 ```
 
 ---
@@ -122,7 +130,7 @@ KnoLo’s core retrieval remains lexical-first and deterministic. Semantic signa
 ### Build a semantic-enabled pack
 
 ```ts
-import { buildPack } from "knolo-core";
+import { buildPack } from 'knolo-core';
 
 // embeddings must align 1:1 with docs/block order
 const embeddings: Float32Array[] = await embedDocumentsInOrder(docs);
@@ -130,32 +138,32 @@ const embeddings: Float32Array[] = await embedDocumentsInOrder(docs);
 const bytes = await buildPack(docs, {
   semantic: {
     enabled: true,
-    modelId: "text-embedding-3-small",
+    modelId: 'text-embedding-3-small',
     embeddings,
-    quantization: { type: "int8_l2norm", perVectorScale: true }
-  }
+    quantization: { type: 'int8_l2norm', perVectorScale: true },
+  },
 });
 ```
 
 ### Query with semantic rerank
 
 ```ts
-import { mountPack, query, hasSemantic } from "knolo-core";
+import { mountPack, query, hasSemantic } from 'knolo-core';
 
 const kb = await mountPack({ src: bytes });
-const queryEmbedding = await embedQuery("react native bridge throttling");
+const queryEmbedding = await embedQuery('react native bridge throttling');
 
-const hits = query(kb, "react native bridge throttling", {
+const hits = query(kb, 'react native bridge throttling', {
   topK: 8,
   semantic: {
     enabled: hasSemantic(kb),
-    mode: "rerank",
+    mode: 'rerank',
     topN: 50,
     minLexConfidence: 0.35,
     blend: { enabled: true, wLex: 0.75, wSem: 0.25 },
     queryEmbedding,
-    force: false
-  }
+    force: false,
+  },
 });
 ```
 
@@ -165,8 +173,8 @@ const hits = query(kb, "react native bridge throttling", {
 import {
   quantizeEmbeddingInt8L2Norm,
   encodeScaleF16,
-  decodeScaleF16
-} from "knolo-core";
+  decodeScaleF16,
+} from 'knolo-core';
 
 const { q, scale } = quantizeEmbeddingInt8L2Norm(queryEmbedding);
 const packed = encodeScaleF16(scale);
@@ -194,7 +202,7 @@ type BuildPackOptions = {
     modelId: string;
     embeddings: Float32Array[];
     quantization?: {
-      type: "int8_l2norm";
+      type: 'int8_l2norm';
       perVectorScale?: true;
     };
   };
@@ -203,10 +211,10 @@ type BuildPackOptions = {
 
 ### Agents in pack metadata
 
-Agents are optional and embedded in `meta.agents` so a single `.knolo` artifact can ship retrieval behavior + prompt defaults on-prem.
+Agents are optional and embedded in `meta.agents` so a single `.knolo` artifact can ship retrieval behavior + prompt defaults on-prem. Agent registries are validated once at `mountPack()` time, so invalid embedded registries fail fast during mount.
 
 ```ts
-type AgentPromptTemplate = string[] | { format: "markdown"; template: string };
+type AgentPromptTemplate = string[] | { format: 'markdown'; template: string };
 
 type AgentDefinitionV1 = {
   id: string;
@@ -217,13 +225,16 @@ type AgentDefinitionV1 = {
   retrievalDefaults: {
     namespace: string[]; // required
     topK?: number;
-    queryExpansion?: QueryOptions["queryExpansion"];
-    semantic?: Omit<NonNullable<QueryOptions["semantic"]>, "queryEmbedding" | "enabled" | "force"> & { enabled?: boolean };
+    queryExpansion?: QueryOptions['queryExpansion'];
+    semantic?: Omit<
+      NonNullable<QueryOptions['semantic']>,
+      'queryEmbedding' | 'enabled' | 'force'
+    > & { enabled?: boolean };
     minScore?: number;
     requirePhrases?: string[];
     source?: string[];
   };
-  toolPolicy?: { mode: "allow" | "deny"; tools: string[] };
+  toolPolicy?: { mode: 'allow' | 'deny'; tools: string[] };
   metadata?: Record<string, string | number | boolean | null>;
 };
 ```
@@ -234,7 +245,12 @@ type AgentDefinitionV1 = {
 type Pack = {
   meta: {
     version: number;
-    stats: { docs: number; blocks: number; terms: number; avgBlockLen?: number };
+    stats: {
+      docs: number;
+      blocks: number;
+      terms: number;
+      avgBlockLen?: number;
+    };
   };
   lexicon: Map<string, number>;
   postings: Uint32Array;
@@ -247,7 +263,7 @@ type Pack = {
     version: 1;
     modelId: string;
     dims: number;
-    encoding: "int8_l2norm";
+    encoding: 'int8_l2norm';
     perVectorScale: boolean;
     vecs: Int8Array;
     scales?: Uint16Array;
@@ -273,7 +289,7 @@ type QueryOptions = {
   };
   semantic?: {
     enabled?: boolean;
-    mode?: "rerank";
+    mode?: 'rerank';
     topN?: number;
     minLexConfidence?: number;
     blend?: {
@@ -299,33 +315,51 @@ type Hit = {
 
 - `listAgents(pack) => string[]`
 - `getAgent(pack, agentId) => AgentDefinitionV1 | undefined`
-- `resolveAgent(pack, { agentId, query? }) => { agent, systemPrompt, retrievalOptions }`
+- `resolveAgent(pack, { agentId, query?, patch? }) => { agent, systemPrompt, retrievalOptions }`
 - `buildSystemPrompt(agent, patch?) => string`
+- `isToolAllowed(agent, toolId) => boolean` (defaults to allow-all when no `toolPolicy`)
+- `assertToolAllowed(agent, toolId) => void` (throws deterministic error when blocked)
 
 ### Build a pack with agents and resolve at runtime
 
 ```ts
-import { buildPack, mountPack, resolveAgent, query } from "knolo-core";
+import {
+  buildPack,
+  mountPack,
+  resolveAgent,
+  query,
+  isToolAllowed,
+  assertToolAllowed,
+} from 'knolo-core';
 
 const bytes = await buildPack(docs, {
   agents: [
     {
-      id: "mobile.agent",
+      id: 'mobile.agent',
       version: 1,
-      systemPrompt: { format: "markdown", template: "You are {{team}} support." },
-      retrievalDefaults: { namespace: ["mobile"], topK: 5 },
-      toolPolicy: { mode: "allow", tools: ["search_docs"] },
+      systemPrompt: {
+        format: 'markdown',
+        template: 'You are {{team}} support.',
+      },
+      retrievalDefaults: { namespace: ['mobile'], topK: 5 },
+      toolPolicy: { mode: 'allow', tools: ['search_docs'] },
     },
   ],
 });
 
 const pack = await mountPack({ src: bytes });
 const resolved = resolveAgent(pack, {
-  agentId: "mobile.agent",
+  agentId: 'mobile.agent',
+  patch: { team: 'mobile' },
   query: { topK: 8 },
 });
 
-const hits = query(pack, "bridge throttle", resolved.retrievalOptions);
+if (isToolAllowed(resolved.agent, 'search_docs')) {
+  // invoke search_docs
+}
+assertToolAllowed(resolved.agent, 'search_docs');
+
+const hits = query(pack, 'bridge throttle', resolved.retrievalOptions);
 ```
 
 ### `makeContextPatch(hits, { budget }) => ContextPatch`
@@ -339,10 +373,10 @@ Budgets: `"mini" | "small" | "full"`
 ### Namespace + source filtering
 
 ```ts
-const hits = query(kb, "retry backoff", {
-  namespace: ["sdk", "api"],
-  source: ["errors-guide", "http-reference"],
-  topK: 6
+const hits = query(kb, 'retry backoff', {
+  namespace: ['sdk', 'api'],
+  source: ['errors-guide', 'http-reference'],
+  topK: 6,
 });
 ```
 
@@ -351,29 +385,29 @@ const hits = query(kb, "retry backoff", {
 If your query has no free tokens but includes required phrases, KnoLo still forms candidates from phrase tokens and enforces phrase presence.
 
 ```ts
-const hits = query(kb, '"event loop"', { requirePhrases: ["single thread"] });
+const hits = query(kb, '"event loop"', { requirePhrases: ['single thread'] });
 ```
 
 ### Precision mode with minimum score
 
 ```ts
-const strictHits = query(kb, "jwt refresh token rotation", {
+const strictHits = query(kb, 'jwt refresh token rotation', {
   topK: 5,
-  minScore: 2.5
+  minScore: 2.5,
 });
 ```
 
 ### Validate semantic query options early
 
 ```ts
-import { validateSemanticQueryOptions } from "knolo-core";
+import { validateSemanticQueryOptions } from 'knolo-core';
 
 validateSemanticQueryOptions({
   enabled: true,
   topN: 40,
   minLexConfidence: 0.3,
   blend: { enabled: true, wLex: 0.8, wSem: 0.2 },
-  queryEmbedding
+  queryEmbedding,
 });
 ```
 

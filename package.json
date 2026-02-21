@@ -34,7 +34,9 @@
     "build": "tsc -p tsconfig.json",
     "prepublishOnly": "npm run build",
     "smoke": "node scripts/smoke.mjs",
-    "test": "npm run build && node scripts/test.mjs"
+    "test": "npm run build && node scripts/test.mjs",
+    "format": "prettier --write src/agent.ts src/pack.ts src/builder.ts src/index.ts scripts/test.mjs README.md",
+    "format:check": "prettier --check src/agent.ts src/pack.ts src/builder.ts src/index.ts scripts/test.mjs README.md"
   },
   "devDependencies": {
     "typescript": "^5.5.0",

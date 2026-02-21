@@ -18,7 +18,10 @@ export type AgentRetrievalDefaults = {
   namespace: string[];
   topK?: number;
   queryExpansion?: QueryOptions['queryExpansion'];
-  semantic?: Omit<NonNullable<QueryOptions['semantic']>, 'queryEmbedding' | 'enabled' | 'force'> & {
+  semantic?: Omit<
+    NonNullable<QueryOptions['semantic']>,
+    'queryEmbedding' | 'enabled' | 'force'
+  > & {
     enabled?: boolean;
   };
   minScore?: number;
@@ -45,6 +48,7 @@ export type AgentRegistry = {
 export type ResolveAgentInput = {
   agentId: string;
   query?: QueryOptions;
+  patch?: Record<string, string | number | boolean>;
 };
 
 export type ResolvedAgent = {
@@ -94,23 +98,43 @@ export function validateAgentDefinition(agent: AgentDefinitionV1): void {
   if (!defaults || typeof defaults !== 'object') {
     throw new Error(`agent ${agent.id} retrievalDefaults must be an object.`);
   }
-  if (!Array.isArray(defaults.namespace) || defaults.namespace.length === 0 || defaults.namespace.some((ns) => typeof ns !== 'string' || !ns.trim())) {
-    throw new Error(`agent ${agent.id} retrievalDefaults.namespace must be a non-empty string array.`);
+  if (
+    !Array.isArray(defaults.namespace) ||
+    defaults.namespace.length === 0 ||
+    defaults.namespace.some((ns) => typeof ns !== 'string' || !ns.trim())
+  ) {
+    throw new Error(
+      `agent ${agent.id} retrievalDefaults.namespace must be a non-empty string array.`
+    );
   }
-  if (defaults.topK !== undefined && (!Number.isInteger(defaults.topK) || defaults.topK < 1)) {
-    throw new Error(`agent ${agent.id} retrievalDefaults.topK must be a positive integer.`);
+  if (
+    defaults.topK !== undefined &&
+    (!Number.isInteger(defaults.topK) || defaults.topK < 1)
+  ) {
+    throw new Error(
+      `agent ${agent.id} retrievalDefaults.topK must be a positive integer.`
+    );
   }
 
   if (agent.toolPolicy) {
     const { mode, tools } = agent.toolPolicy;
     if (mode !== 'allow' && mode !== 'deny') {
-      throw new Error(`agent ${agent.id} toolPolicy.mode must be "allow" or "deny".`);
+      throw new Error(
+        `agent ${agent.id} toolPolicy.mode must be "allow" or "deny".`
+      );
     }
-    if (!Array.isArray(tools) || tools.some((tool) => typeof tool !== 'string' || !tool.trim())) {
-      throw new Error(`agent ${agent.id} toolPolicy.tools must be a string array.`);
+    if (
+      !Array.isArray(tools) ||
+      tools.some((tool) => typeof tool !== 'string' || !tool.trim())
+    ) {
+      throw new Error(
+        `agent ${agent.id} toolPolicy.tools must be a string array.`
+      );
     }
     if (new Set(tools).size !== tools.length) {
-      throw new Error(`agent ${agent.id} toolPolicy.tools must contain unique values.`);
+      throw new Error(
+        `agent ${agent.id} toolPolicy.tools must contain unique values.`
+      );
     }
   }
 
@@ -132,7 +156,10 @@ export function listAgents(pack: Pack): string[] {
   return reg.agents.map((agent) => agent.id);
 }
 
-export function getAgent(pack: Pack, agentId: string): AgentDefinitionV1 | undefined {
+export function getAgent(
+  pack: Pack,
+  agentId: string
+): AgentDefinitionV1 | undefined {
   return pack.meta.agents?.agents.find((agent) => agent.id === agentId);
 }
 
@@ -146,23 +173,30 @@ export function buildSystemPrompt(
   }
 
   const source = template.template;
-  const placeholders = Array.from(source.matchAll(/\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/g)).map((m) => m[1]);
+  const placeholders = Array.from(
+    source.matchAll(/\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/g)
+  ).map((m) => m[1]);
   for (const key of placeholders) {
     if (!(key in patch)) {
-      throw new Error(`agent ${agent.id} system prompt contains unknown placeholder: ${key}`);
+      throw new Error(
+        `agent ${agent.id} system prompt contains unknown placeholder: ${key}`
+      );
     }
   }
 
-  return source.replace(/\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/g, (_match, key) => String(patch[key]));
+  return source.replace(/\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/g, (_match, key) =>
+    String(patch[key])
+  );
 }
 
-export function resolveAgent(pack: Pack, input: ResolveAgentInput): ResolvedAgent {
+export function resolveAgent(
+  pack: Pack,
+  input: ResolveAgentInput
+): ResolvedAgent {
   const agent = getAgent(pack, input.agentId);
   if (!agent) {
     throw new Error(`agent not found: ${input.agentId}`);
   }
-
-  validateAgentDefinition(agent);
 
   const defaults: QueryOptions = {
     namespace: agent.retrievalDefaults.namespace,
@@ -192,7 +226,8 @@ export function resolveAgent(pack: Pack, input: ResolveAgentInput): ResolvedAgen
     },
   };
 
-  if (!defaults.queryExpansion && !caller.queryExpansion) delete retrievalOptions.queryExpansion;
+  if (!defaults.queryExpansion && !caller.queryExpansion)
+    delete retrievalOptions.queryExpansion;
   if (!defaults.semantic && !caller.semantic) delete retrievalOptions.semantic;
   if (
     retrievalOptions.semantic &&
@@ -206,16 +241,41 @@ export function resolveAgent(pack: Pack, input: ResolveAgentInput): ResolvedAgen
 
   return {
     agent,
-    systemPrompt: buildSystemPrompt(agent),
+    systemPrompt: buildSystemPrompt(agent, input.patch),
     retrievalOptions,
   };
+}
+
+export function isToolAllowed(
+  agent: AgentDefinitionV1,
+  toolId: string
+): boolean {
+  const policy = agent.toolPolicy;
+  if (!policy) return true;
+
+  const hasTool = policy.tools.includes(toolId);
+  if (policy.mode === 'allow') {
+    return hasTool;
+  }
+  return !hasTool;
+}
+
+export function assertToolAllowed(
+  agent: AgentDefinitionV1,
+  toolId: string
+): void {
+  if (!isToolAllowed(agent, toolId)) {
+    throw new Error(`agent ${agent.id} does not allow tool: ${toolId}`);
+  }
 }
 
 function validateSystemPrompt(agent: AgentDefinitionV1): void {
   const prompt = agent.systemPrompt;
   if (Array.isArray(prompt)) {
     if (!prompt.length || prompt.some((line) => typeof line !== 'string')) {
-      throw new Error(`agent ${agent.id} systemPrompt must be a non-empty string array.`);
+      throw new Error(
+        `agent ${agent.id} systemPrompt must be a non-empty string array.`
+      );
     }
     if (!prompt.join('').trim()) {
       throw new Error(`agent ${agent.id} systemPrompt must not be empty.`);
@@ -223,7 +283,14 @@ function validateSystemPrompt(agent: AgentDefinitionV1): void {
     return;
   }
 
-  if (!prompt || prompt.format !== 'markdown' || typeof prompt.template !== 'string' || !prompt.template.trim()) {
-    throw new Error(`agent ${agent.id} systemPrompt markdown template must be a non-empty string.`);
+  if (
+    !prompt ||
+    prompt.format !== 'markdown' ||
+    typeof prompt.template !== 'string' ||
+    !prompt.template.trim()
+  ) {
+    throw new Error(
+      `agent ${agent.id} systemPrompt markdown template must be a non-empty string.`
+    );
   }
 }
