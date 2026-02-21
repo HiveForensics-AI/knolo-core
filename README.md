@@ -229,7 +229,6 @@ Agent namespace binding is **strict**: when `resolveAgent()` composes retrieval 
 ```ts
 type AgentPromptTemplate = string[] | { format: 'markdown'; template: string };
 
-
 type AgentRegistry = {
   version: 1;
   agents: AgentDefinitionV1[];
@@ -344,6 +343,88 @@ type Hit = {
 - `buildSystemPrompt(agent, patch?) => string`
 - `isToolAllowed(agent, toolId) => boolean` (defaults to allow-all when no `toolPolicy`)
 - `assertToolAllowed(agent, toolId) => void` (throws deterministic error when blocked)
+- `parseToolCallV1FromText(text) => ToolCallV1 | null` (safe parser for model outputs)
+- `assertToolCallAllowed(agent, call) => void` (policy gate for parsed calls)
+- `isToolCallV1(value) / isToolResultV1(value)` (runtime-safe type guards)
+
+### Tool call + result contracts (Phase 1)
+
+```ts
+type ToolCallV1 = {
+  type: 'tool_call';
+  callId: string;
+  tool: string;
+  args: Record<string, unknown>;
+};
+
+type ToolResultV1 = {
+  type: 'tool_result';
+  callId: string;
+  tool: string;
+  ok: boolean;
+  output?: unknown; // when ok=true
+  error?: { message: string; code?: string; details?: unknown }; // when ok=false
+};
+```
+
+JSON examples:
+
+```json
+{
+  "type": "tool_call",
+  "callId": "call-42",
+  "tool": "search_docs",
+  "args": { "query": "bridge throttle" }
+}
+```
+
+```json
+{
+  "type": "tool_result",
+  "callId": "call-42",
+  "tool": "search_docs",
+  "ok": true,
+  "output": { "hits": [{ "id": "mobile-doc" }] }
+}
+```
+
+### Runtime loop shape (model-agnostic)
+
+1. Run model with current conversation state.
+2. Parse text output with `parseToolCallV1FromText(...)`.
+3. If parsed: gate with `assertToolCallAllowed(resolved.agent, call)`.
+4. Runtime executes the tool and creates `ToolResultV1`.
+5. Feed the tool result back into the conversation and continue until completion.
+
+### Trace events for timeline UIs
+
+```ts
+type TraceEventV1 =
+  | { type: 'agent.selected'; ts: string; agentId: string; namespace?: string }
+  | {
+      type: 'prompt.resolved';
+      ts: string;
+      agentId: string;
+      promptHash?: string;
+      patchKeys?: string[];
+    }
+  | { type: 'tool.requested'; ts: string; agentId: string; call: ToolCallV1 }
+  | {
+      type: 'tool.executed';
+      ts: string;
+      agentId: string;
+      result: ToolResultV1;
+      durationMs?: number;
+    }
+  | {
+      type: 'run.completed';
+      ts: string;
+      agentId: string;
+      status: 'ok' | 'error';
+    };
+```
+
+Helpers: `nowIso()` for timestamps and `createTrace()` for lightweight trace collection.
 
 ### Build a pack with agents and resolve at runtime
 

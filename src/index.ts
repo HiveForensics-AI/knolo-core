@@ -36,3 +36,16 @@ export type {
   ResolveAgentInput,
   ResolvedAgent,
 } from './agent.js';
+
+export { parseToolCallV1FromText } from './tool_parse.js';
+export { nowIso, createTrace } from './trace.js';
+export { assertToolCallAllowed } from './tool_gate.js';
+export { isToolCallV1, isToolResultV1 } from './tools.js';
+export type {
+  ToolId,
+  ToolCallV1,
+  ToolResultErrorV1,
+  ToolResultV1,
+  ToolSpecV1,
+} from './tools.js';
+export type { TraceEventV1 } from './trace.js';
