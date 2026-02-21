@@ -8,7 +8,7 @@ const bytes = await buildPack([
 const pack = await mountPack({ src: bytes });
 const retriever = new KnoLoRetriever({ pack, topK: 2 });
 
-const docs = await retriever.getRelevantDocuments('What adapter does KnoLo expose for LangChain?');
+const docs = await retriever.getRelevantDocuments('What adapter does KnoLo expose for LangChain-style integration?');
 console.log('Retrieved docs:');
 for (const doc of docs) {
   console.log('-', doc.pageContent, doc.metadata);

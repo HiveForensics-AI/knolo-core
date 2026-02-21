@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { buildPack, mountPack } from '@knolo/core';
 import { KnoLoRetriever } from '../src/index.js';
 
-test('KnoLoRetriever returns llamaindex-like nodes', async () => {
+test('KnoLoRetriever returns LlamaIndex-style nodes', async () => {
   const bytes = await buildPack([
     { id: 'doc-2', namespace: 'guides', text: 'LlamaIndex can consume retrieval nodes and scores.' },
   ]);

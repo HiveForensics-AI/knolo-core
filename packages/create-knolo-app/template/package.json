@@ -17,7 +17,7 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@knolo/cli": "^0.0.0"
+    "@knolo/cli": "^0.3.1"
   },
   "engines": {
     "node": ">=20"

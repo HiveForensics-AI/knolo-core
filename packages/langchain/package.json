@@ -13,5 +13,6 @@
   },
   "dependencies": {
     "@knolo/core": "file:../core"
-  }
+  },
+  "description": "LangChain-style retriever interface for KnoLo."
 }
