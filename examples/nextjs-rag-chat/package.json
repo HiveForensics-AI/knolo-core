@@ -1,0 +1,11 @@
+{
+  "name": "nextjs-rag-chat-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "create-knolo-app": "file:../../packages/create-knolo-app"
+  }
+}

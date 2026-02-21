@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
+
 const cliPath = path.resolve(process.cwd(), 'bin/index.mjs');
 
 test('scaffolder creates next starter files', () => {
@@ -20,4 +21,10 @@ test('scaffolder creates next starter files', () => {
   const packageJson = JSON.parse(readFileSync(path.join(target, 'package.json'), 'utf8'));
   assert.equal(packageJson.name, 'my-kb-chat');
   assert.equal(packageJson.scripts['knolo:build'], 'knolo build');
+  const knoloCliPath = path.resolve(process.cwd(), '../cli/bin/knolo.mjs');
+  const buildOutput = execFileSync(process.execPath, [knoloCliPath, 'build'], {
+    cwd: target,
+    encoding: 'utf8',
+  });
+  assert.match(buildOutput, /indexed 2 files/);
 });
