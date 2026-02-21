@@ -21,6 +21,10 @@ import {
   buildSystemPrompt,
   isToolAllowed,
   assertToolAllowed,
+  isToolCallV1,
+  isToolResultV1,
+  parseToolCallV1FromText,
+  assertToolCallAllowed,
 } from '../dist/index.js';
 
 const execFileAsync = promisify(execFile);
@@ -890,6 +894,156 @@ async function testToolPolicyHelpers() {
   );
 }
 
+async function testParseToolCallV1FromText() {
+  const wholeText = JSON.stringify({
+    type: 'tool_call',
+    callId: 'call-1',
+    tool: 'search_docs',
+    args: { q: 'throttle' },
+  });
+  const parsedWhole = parseToolCallV1FromText(wholeText);
+  assert.deepEqual(parsedWhole, {
+    type: 'tool_call',
+    callId: 'call-1',
+    tool: 'search_docs',
+    args: { q: 'throttle' },
+  });
+
+  const fencedText = [
+    'The runtime should execute this call:',
+    '```json',
+    '{"type":"tool_call","callId":"call-2","tool":"lookup","args":{"id":"abc"}}',
+    '```',
+  ].join('\n');
+  const parsedFenced = parseToolCallV1FromText(fencedText);
+  assert.deepEqual(parsedFenced, {
+    type: 'tool_call',
+    callId: 'call-2',
+    tool: 'lookup',
+    args: { id: 'abc' },
+  });
+
+  const embeddedText =
+    'Start of response\nTOOL_CALL: {"type":"tool_call","callId":"call-3","tool":"read_data","args":{"path":"/tmp/file"}}\nEnd';
+  const parsedEmbedded = parseToolCallV1FromText(embeddedText);
+  assert.deepEqual(parsedEmbedded, {
+    type: 'tool_call',
+    callId: 'call-3',
+    tool: 'read_data',
+    args: { path: '/tmp/file' },
+  });
+}
+
+async function testParseToolCallV1FromTextInvalidInputs() {
+  assert.equal(
+    parseToolCallV1FromText('{not json}'),
+    null,
+    'expected invalid JSON to return null'
+  );
+
+  assert.equal(
+    parseToolCallV1FromText(
+      JSON.stringify({ type: 'tool_call', callId: 'x', tool: 'search_docs' })
+    ),
+    null,
+    'expected missing args to return null'
+  );
+
+  assert.equal(
+    parseToolCallV1FromText(
+      JSON.stringify({
+        type: 'tool_result',
+        callId: 'x',
+        tool: 'search_docs',
+        ok: true,
+      })
+    ),
+    null,
+    'expected wrong type to return null'
+  );
+}
+
+async function testToolTypeGuards() {
+  assert.equal(
+    isToolCallV1({
+      type: 'tool_call',
+      callId: 'call-guard',
+      tool: 'search_docs',
+      args: {},
+    }),
+    true,
+    'expected valid ToolCallV1 to pass type guard'
+  );
+  assert.equal(
+    isToolCallV1({
+      type: 'tool_call',
+      callId: '',
+      tool: 'search_docs',
+      args: {},
+    }),
+    false,
+    'expected empty callId to fail type guard'
+  );
+
+  assert.equal(
+    isToolResultV1({
+      type: 'tool_result',
+      callId: 'call-guard',
+      tool: 'search_docs',
+      ok: true,
+      output: { hits: [] },
+    }),
+    true,
+    'expected success ToolResultV1 to pass type guard'
+  );
+  assert.equal(
+    isToolResultV1({
+      type: 'tool_result',
+      callId: 'call-guard',
+      tool: 'search_docs',
+      ok: false,
+    }),
+    false,
+    'expected failed ToolResultV1 without error details to fail'
+  );
+}
+
+async function testAssertToolCallAllowed() {
+  const noPolicyAgent = {
+    id: 'no.policy.agent',
+    version: 1,
+    systemPrompt: ['No policy'],
+    retrievalDefaults: { namespace: ['mobile'] },
+  };
+  assert.doesNotThrow(() =>
+    assertToolCallAllowed(noPolicyAgent, {
+      type: 'tool_call',
+      callId: 'call-allow',
+      tool: 'delete_data',
+      args: {},
+    })
+  );
+
+  const allowPolicy = {
+    id: 'allow.policy.agent',
+    version: 1,
+    systemPrompt: ['Allow policy'],
+    retrievalDefaults: { namespace: ['mobile'] },
+    toolPolicy: { mode: 'allow', tools: ['read_data'] },
+  };
+  assert.throws(
+    () =>
+      assertToolCallAllowed(allowPolicy, {
+        type: 'tool_call',
+        callId: 'call-deny',
+        tool: 'delete_data',
+        args: {},
+      }),
+    /agent allow\.policy\.agent does not allow tool: delete_data/,
+    'expected deny behavior to match assertToolAllowed deterministic message'
+  );
+}
+
 async function testMountTimeAgentValidationAndNoRevalidationOnResolve() {
   const enc = new TextEncoder();
   const invalidMeta = enc.encode(
@@ -1035,8 +1189,6 @@ async function testAgentValidationAndPromptDeterminism() {
   );
 }
 
-
-
 async function testCliEmbedsAgentsFromDirectory() {
   const tmpDir = await mkdtemp(path.join(os.tmpdir(), 'knolo-cli-agents-'));
   try {
@@ -1046,8 +1198,16 @@ async function testCliEmbedsAgentsFromDirectory() {
     await writeFile(
       docsPath,
       JSON.stringify([
-        { id: 'mobile-doc', namespace: 'mobile', text: 'mobile troubleshooting notes' },
-        { id: 'backend-doc', namespace: 'backend', text: 'backend reliability notes' },
+        {
+          id: 'mobile-doc',
+          namespace: 'mobile',
+          text: 'mobile troubleshooting notes',
+        },
+        {
+          id: 'backend-doc',
+          namespace: 'backend',
+          text: 'backend reliability notes',
+        },
       ])
     );
     await mkdir(agentsDir);
@@ -1181,6 +1341,10 @@ await testAgentsBackwardCompatibility();
 await testAgentEmbeddingAndLookup();
 await testResolveAgentDefaultsAndOverrides();
 await testToolPolicyHelpers();
+await testParseToolCallV1FromText();
+await testParseToolCallV1FromTextInvalidInputs();
+await testToolTypeGuards();
+await testAssertToolCallAllowed();
 await testMountTimeAgentValidationAndNoRevalidationOnResolve();
 await testAgentValidationAndPromptDeterminism();
 await testCliEmbedsAgentsFromDirectory();
