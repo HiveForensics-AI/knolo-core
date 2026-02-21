@@ -1,12 +1,8 @@
 # 🧠 KnoLo Monorepo
 
-KnoLo is moving toward **adoption-frictionless retrieval tooling**: you should be able to try the core experience in **under 10 minutes**, with a **~5 minute quickstart** from clone to first query.
+KnoLo is an ecosystem-ready, local-first retrieval stack: `@knolo/core` for packs and querying, `@knolo/cli` for workflows, plus adapters for LangChain and LlamaIndex.
 
-> Status today: `@knolo/core` and `@knolo/cli` are production-ready, plus a runnable `create-knolo-app` scaffold for a minimal Next.js starter.
-
-## ⚡ 5-minute quickstart
-
-From a clean folder, generate a starter app:
+## ⚡ 5-minute quickstart (create-knolo-app)
 
 ```bash
 npx create-knolo-app@latest my-kb-chat
@@ -16,97 +12,79 @@ npm run knolo:build
 npm run dev
 ```
 
-Then open `http://localhost:3000` and ask questions about the sample docs in `/docs`. Each assistant response includes source snippets/citations.
+Ask questions at `http://localhost:3000` against the generated `/docs` folder.
 
-> If your pack is missing, run: `npm run knolo:build`.
+## 🚀 10-minute ecosystem path
 
-## ✅ Implemented now
-
-- `@knolo/core` package in `packages/core`
-- `@knolo/cli` package in `packages/cli` with subcommands: `init`, `add`, `build`, `query`, `dev`
-- `create-knolo-app` package in `packages/create-knolo-app` for a Next.js starter with docs + citations UI
-- Build + test workflow wired through root workspace scripts
-
-## 🚧 Coming soon
-
-- `@knolo/langchain` adapter (scaffold exists)
-- `@knolo/llamaindex` adapter (scaffold exists)
-- Example apps under `examples/`
-
-## 📦 Install
+From this repository:
 
 ```bash
-git clone https://github.com/HiveForensics-AI/knolo-core.git
-cd knolo-core
 npm install
 npm run build
 ```
 
-## 🚀 10-minute try (local docs)
-
-From the repo root:
+Then run one of the adapters/examples:
 
 ```bash
-npm run knolo -- init
-npm run knolo -- add docs ./docs
-npm run knolo -- build
-npm run knolo -- query "What is this project?"
+cd examples/langchain-basic && npm install && npm run start
+cd ../llamaindex-basic && npm install && npm run start
 ```
 
-What this does:
+## Using KnoLo with LangChain
 
-1. `init` creates `knolo.config.json`, `docs/`, and `docs/hello.md` if needed.
-2. `add` registers a source namespace/path in config (updates existing names deterministically).
-3. `build` ingests `.md`, `.txt`, `.json` files and writes `dist/knowledge.knolo`.
-4. `query` loads the pack and prints top hits with source, score, and snippets.
+```ts
+import { mountPack } from '@knolo/core';
+import { KnoLoRetriever } from '@knolo/langchain';
 
-### Watch mode
+const pack = await mountPack({ src: './dist/knowledge.knolo' });
+const retriever = new KnoLoRetriever({ pack, topK: 5 });
 
-```bash
-npm run knolo -- dev
-```
-
-`dev` watches `knolo.config.json` and configured source paths, then rebuilds automatically.
-
-### CLI config (`knolo.config.json`)
-
-```json
-{
-  "version": 1,
-  "sources": [{ "name": "docs", "path": "./docs" }],
-  "output": { "path": "./dist/knowledge.knolo" },
-  "query": { "topK": 5 }
+const docs = await retriever.getRelevantDocuments('How do I configure KnoLo?');
+for (const doc of docs) {
+  console.log(doc.pageContent);
+  console.log(doc.metadata); // { score, source, namespace, id }
 }
 ```
 
-### Backward-compatible direct build mode
+## Using KnoLo with LlamaIndex
 
-```bash
-npm run knolo -- docs.json knowledge.knolo
+```ts
+import { mountPack } from '@knolo/core';
+import { KnoLoRetriever } from '@knolo/llamaindex';
+
+const pack = await mountPack({ src: './dist/knowledge.knolo' });
+const retriever = new KnoLoRetriever({ pack, topK: 5 });
+
+const nodes = await retriever.retrieve('Show me API usage examples');
+for (const hit of nodes) {
+  console.log(hit.node.text);
+  console.log(hit.node.metadata); // { score, source, namespace, id }
+}
 ```
 
-This positional mode is still supported for compatibility.
+## 📚 Examples
+
+- `examples/langchain-basic` — minimal LangChain retriever usage.
+- `examples/llamaindex-basic` — minimal LlamaIndex-style retriever usage.
+- `examples/node-cli-rag` — CLI-first local RAG flow.
+- `examples/nextjs-rag-chat` — scaffolding helper around `create-knolo-app`.
 
 ## 🗂️ Repo structure
 
 ```text
 .
 ├── packages/
-│   ├── core                  # @knolo/core (implemented)
-│   ├── cli                   # @knolo/cli (implemented)
-│   ├── adapter-langchain     # @knolo/langchain (scaffold)
-│   ├── adapter-llamaindex    # @knolo/llamaindex (scaffold)
-│   └── create-knolo-app      # create-knolo-app scaffold package
+│   ├── core                  # @knolo/core
+│   ├── cli                   # @knolo/cli
+│   ├── langchain             # @knolo/langchain
+│   ├── llamaindex            # @knolo/llamaindex
+│   └── create-knolo-app      # create-knolo-app
 └── examples/
-    ├── nextjs-rag-chat       # placeholder
-    └── node-cli-rag          # placeholder
+    ├── langchain-basic
+    ├── llamaindex-basic
+    ├── node-cli-rag
+    └── nextjs-rag-chat
 ```
-
-## 🧭 Planned adapters & examples
-
-- LangChain adapter (**coming soon**)
-- LlamaIndex adapter (**coming soon**)
-- Example apps (**coming soon**)
 
 ## 🔀 Hybrid retrieval with embeddings (optional)
 
