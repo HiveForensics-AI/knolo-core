@@ -110,6 +110,9 @@ console.log(hits, patch);
 
 ```bash
 npx knolo docs.json knowledge.knolo
+
+# embed agents from a local directory (.json/.yml/.yaml)
+npx knolo docs.json knowledge.knolo --agents ./examples/agents
 ```
 
 Then query in app:
@@ -213,8 +216,22 @@ type BuildPackOptions = {
 
 Agents are optional and embedded in `meta.agents` so a single `.knolo` artifact can ship retrieval behavior + prompt defaults on-prem. Agent registries are validated once at `mountPack()` time, so invalid embedded registries fail fast during mount.
 
+Agent namespace binding is **strict**: when `resolveAgent()` composes retrieval options, `retrievalDefaults.namespace` is always enforced and caller-provided `query.namespace` is ignored.
+
 ```ts
 type AgentPromptTemplate = string[] | { format: 'markdown'; template: string };
+
+
+type AgentRegistry = {
+  version: 1;
+  agents: AgentDefinitionV1[];
+};
+
+type PackMeta = {
+  version: number;
+  stats: { docs: number; blocks: number; terms: number; avgBlockLen?: number };
+  agents?: AgentRegistry;
+};
 
 type AgentDefinitionV1 = {
   id: string;
@@ -351,8 +368,10 @@ const pack = await mountPack({ src: bytes });
 const resolved = resolveAgent(pack, {
   agentId: 'mobile.agent',
   patch: { team: 'mobile' },
-  query: { topK: 8 },
+  query: { namespace: ['backend'], topK: 8 },
 });
+
+console.log(resolved.retrievalOptions.namespace); // ['mobile'] (strict binding)
 
 if (isToolAllowed(resolved.agent, 'search_docs')) {
   // invoke search_docs

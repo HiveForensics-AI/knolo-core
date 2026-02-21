@@ -201,7 +201,9 @@ async function resolveToBuffer(src: MountOptions['src']): Promise<ArrayBuffer> {
 }
 
 function isNodeRuntime(): boolean {
-  return typeof process !== 'undefined' && !!process.versions?.node;
+  const p = (globalThis as { process?: { versions?: { node?: unknown } } })
+    .process;
+  return !!p?.versions?.node;
 }
 
 function isLikelyLocalPath(value: string): boolean {

@@ -71,7 +71,15 @@ npx knolo docs.json knowledge.knolo
 
 # semantic-enabled build (embeddings JSON + model id)
 npx knolo docs.json knowledge.knolo --embeddings embeddings.json --model-id text-embedding-3-small
+
+# embed agents from a local directory (.json/.yml/.yaml)
+npx knolo docs.json knowledge.knolo --agents ./examples/agents
 ```
+
+
+### Agents and namespace binding
+
+When agent definitions are embedded into `meta.agents`, `resolveAgent(pack, { agentId, query, patch })` enforces **strict namespace binding**: `retrievalDefaults.namespace` always wins over caller `query.namespace`. This keeps retrieval deterministic and on-policy for each agent.
 
 ---
 

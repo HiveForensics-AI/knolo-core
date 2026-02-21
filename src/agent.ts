@@ -179,7 +179,7 @@ export function buildSystemPrompt(
   for (const key of placeholders) {
     if (!(key in patch)) {
       throw new Error(
-        `agent ${agent.id} system prompt contains unknown placeholder: ${key}`
+        `agent ${agent.id} system prompt missing patch value for placeholder: ${key}`
       );
     }
   }
@@ -212,6 +212,7 @@ export function resolveAgent(
   const retrievalOptions: QueryOptions = {
     ...defaults,
     ...caller,
+    namespace: defaults.namespace,
     queryExpansion: {
       ...(defaults.queryExpansion ?? {}),
       ...(caller.queryExpansion ?? {}),

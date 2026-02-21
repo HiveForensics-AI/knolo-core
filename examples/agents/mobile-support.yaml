@@ -1,0 +1,16 @@
+id: mobile.support
+version: 1
+name: Mobile Support Agent
+systemPrompt:
+  format: markdown
+  template: |
+    You are {{team}} support.
+    Answer with practical, deterministic troubleshooting steps.
+retrievalDefaults:
+  namespace:
+    - mobile
+  topK: 5
+toolPolicy:
+  mode: allow
+  tools:
+    - search_docs
