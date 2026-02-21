@@ -7,10 +7,10 @@
     "knolo": "./bin/knolo.mjs"
   },
   "scripts": {
-    "build": "node -e \"console.log('cli build placeholder')\"",
-    "test": "node -e \"console.log('cli test placeholder')\""
+    "build": "node -e \"console.log('cli is executable via bin/knolo.mjs')\"",
+    "test": "npm run build --prefix ../core && node --test test/cli.test.mjs"
   },
   "dependencies": {
-    "@knolo/core": "0.3.1"
+    "@knolo/core": "file:../core"
   }
 }

@@ -7,12 +7,11 @@ KnoLo is moving toward **adoption-frictionless retrieval tooling**: you should b
 ## ✅ Implemented now
 
 - `@knolo/core` package in `packages/core`
+- `@knolo/cli` package in `packages/cli` with subcommands: `init`, `add`, `build`, `query`, `dev`
 - Build + test workflow wired through root workspace scripts
-- Existing core engine and test suite preserved
 
 ## 🚧 Coming soon
 
-- `@knolo/cli` package implementation (package scaffold exists)
 - `@knolo/langchain` adapter (scaffold exists)
 - `@knolo/llamaindex` adapter (scaffold exists)
 - Example apps under `examples/`
@@ -21,45 +20,56 @@ KnoLo is moving toward **adoption-frictionless retrieval tooling**: you should b
 ## 📦 Install
 
 ```bash
-npm install @knolo/core
-```
-
-Build from source:
-
-```bash
 git clone https://github.com/HiveForensics-AI/knolo-core.git
 cd knolo-core
 npm install
 npm run build
 ```
 
-## 🚀 5-minute quickstart
+## 🚀 10-minute try (local docs)
 
-```ts
-import { buildPack, mountPack, query, makeContextPatch } from '@knolo/core';
+From the repo root:
 
-const docs = [
-  {
-    id: 'bridge-guide',
-    namespace: 'mobile',
-    heading: 'React Native Bridge',
-    text: 'The bridge sends messages between JS and native modules. Throttling limits event frequency.',
-  },
-  {
-    id: 'perf-notes',
-    namespace: 'mobile',
-    heading: 'Debounce vs Throttle',
-    text: 'Debounce waits for silence; throttle enforces a maximum trigger rate.',
-  },
-];
-
-const bytes = await buildPack(docs);
-const kb = await mountPack({ src: bytes });
-const hits = query(kb, '"react native" throttle', { topK: 5, namespace: 'mobile' });
-const patch = makeContextPatch(hits, { budget: 'small' });
-
-console.log(hits, patch);
+```bash
+npm run knolo -- init
+npm run knolo -- add docs ./docs
+npm run knolo -- build
+npm run knolo -- query "What is this project?"
 ```
+
+What this does:
+
+1. `init` creates `knolo.config.json`, `docs/`, and `docs/hello.md` if needed.
+2. `add` registers a source namespace/path in config (updates existing names deterministically).
+3. `build` ingests `.md`, `.txt`, `.json` files and writes `dist/knowledge.knolo`.
+4. `query` loads the pack and prints top hits with source, score, and snippets.
+
+### Watch mode
+
+```bash
+npm run knolo -- dev
+```
+
+`dev` watches `knolo.config.json` and configured source paths, then rebuilds automatically.
+
+### CLI config (`knolo.config.json`)
+
+```json
+{
+  "version": 1,
+  "sources": [{ "name": "docs", "path": "./docs" }],
+  "output": { "path": "./dist/knowledge.knolo" },
+  "query": { "topK": 5 }
+}
+```
+
+### Backward-compatible direct build mode
+
+```bash
+npm run knolo -- docs.json knowledge.knolo
+```
+
+This positional mode is still supported for compatibility.
 
 ## 🗂️ Repo structure
 
@@ -67,7 +77,7 @@ console.log(hits, patch);
 .
 ├── packages/
 │   ├── core                  # @knolo/core (implemented)
-│   ├── cli                   # @knolo/cli (scaffold)
+│   ├── cli                   # @knolo/cli (implemented)
 │   ├── adapter-langchain     # @knolo/langchain (scaffold)
 │   └── adapter-llamaindex    # @knolo/llamaindex (scaffold)
 ├── examples/
