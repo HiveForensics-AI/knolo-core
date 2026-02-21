@@ -1,6 +1,6 @@
 # 🧠 KnoLo Monorepo
 
-KnoLo is an ecosystem-ready, local-first retrieval stack: `@knolo/core` for packs and querying, `@knolo/cli` for workflows, plus adapters for LangChain and LlamaIndex.
+KnoLo is a local-first retrieval stack: `@knolo/core` for packs and querying, `@knolo/cli` for workflows, plus LangChain-style and LlamaIndex-style adapter packages.
 
 ## ⚡ 5-minute quickstart (create-knolo-app)
 
@@ -30,7 +30,7 @@ cd examples/langchain-basic && npm install && npm run start
 cd ../llamaindex-basic && npm install && npm run start
 ```
 
-## Using KnoLo with LangChain
+## Using KnoLo with LangChain-style interfaces
 
 ```ts
 import { mountPack } from '@knolo/core';
@@ -46,7 +46,7 @@ for (const doc of docs) {
 }
 ```
 
-## Using KnoLo with LlamaIndex
+## Using KnoLo with LlamaIndex-style interfaces
 
 ```ts
 import { mountPack } from '@knolo/core';
@@ -62,9 +62,16 @@ for (const hit of nodes) {
 }
 ```
 
+
+## Compatibility
+
+- `@knolo/cli` exposes the CLI entrypoint via the `bin` field and includes required runtime files in the published package.
+- `@knolo/cli` declares `@knolo/core` as a runtime semver dependency (`^0.3.1`).
+- Compatibility note: The LangChain-style and LlamaIndex-style packages provide interface-compatible retrieval shapes inspired by those frameworks. They do not depend on or subclass the official framework classes.
+
 ## 📚 Examples
 
-- `examples/langchain-basic` — minimal LangChain retriever usage.
+- `examples/langchain-basic` — minimal LangChain-style retriever usage.
 - `examples/llamaindex-basic` — minimal LlamaIndex-style retriever usage.
 - `examples/node-cli-rag` — CLI-first local RAG flow.
 - `examples/nextjs-rag-chat` — scaffolding helper around `create-knolo-app`.

@@ -8,7 +8,7 @@ const bytes = await buildPack([
 const pack = await mountPack({ src: bytes });
 const retriever = new KnoLoRetriever({ pack, topK: 2 });
 
-const nodes = await retriever.retrieve('How does KnoLo integrate with LlamaIndex?');
+const nodes = await retriever.retrieve('How does KnoLo integrate with LlamaIndex-style integration?');
 console.log('Retrieved nodes:');
 for (const nodeWithScore of nodes) {
   console.log('-', nodeWithScore.node.text, nodeWithScore);

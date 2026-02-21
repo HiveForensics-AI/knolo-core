@@ -14,6 +14,38 @@ function runCli(args, cwd) {
   });
 }
 
+function npmPack(workdir, destination) {
+  const out = execFileSync('npm', ['pack', '--json', '--pack-destination', destination], {
+    cwd: workdir,
+    encoding: 'utf8',
+  });
+  const [result] = JSON.parse(out);
+  return path.join(destination, result.filename);
+}
+
+test('packed @knolo/cli tarball includes expected runtime files only', () => {
+  const packDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-pack-'));
+  const cliDir = process.cwd();
+  const tarballPath = npmPack(cliDir, packDir);
+
+  const entries = execFileSync('tar', ['-tzf', tarballPath], { encoding: 'utf8' })
+    .trim()
+    .split('\n')
+    .filter(Boolean);
+
+  assert.ok(entries.includes('package/bin/knolo.mjs'));
+  assert.ok(entries.includes('package/package.json'));
+  assert.equal(entries.some((entry) => entry.startsWith('package/test/')), false);
+  assert.equal(entries.some((entry) => entry.startsWith('package/src/')), false);
+
+  const packedPackageJson = JSON.parse(
+    execFileSync('tar', ['-xOf', tarballPath, 'package/package.json'], { encoding: 'utf8' })
+  );
+  assert.equal(packedPackageJson.private, false);
+  assert.equal(packedPackageJson.bin.knolo, 'bin/knolo.mjs');
+  assert.equal(packedPackageJson.dependencies['@knolo/core'], '^0.3.1');
+});
+
 test('init creates config and sample docs', () => {
   const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-init-'));
   const output = runCli(['init'], cwd);

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { buildPack, mountPack } from '@knolo/core';
 import { KnoLoRetriever } from '../src/index.js';
 
-test('KnoLoRetriever returns LangChain Document metadata', async () => {
+test('KnoLoRetriever returns LangChain-style document metadata', async () => {
   const bytes = await buildPack([
     { id: 'doc-1', namespace: 'docs', text: 'KnoLo adapters integrate with LangChain retrievers.' },
   ]);
