@@ -10,9 +10,12 @@ import type { Block } from './indexer.js';
 import { tokenize } from './tokenize.js';
 import { getTextEncoder } from './utils/utf8.js';
 import { encodeScaleF16, quantizeEmbeddingInt8L2Norm } from './semantic.js';
+import type { AgentDefinitionV1, AgentRegistry } from './agent.js';
+import { validateAgentRegistry } from './agent.js';
 
 export type BuildInputDoc = { id?: string; heading?: string; namespace?: string; text: string };
 export type BuildPackOptions = {
+  agents?: AgentRegistry | AgentDefinitionV1[];
   semantic?: {
     enabled: boolean;
     modelId: string;
@@ -38,6 +41,8 @@ export async function buildPack(docs: BuildInputDoc[], opts: BuildPackOptions = 
   const totalTokens = blockTokenLens.reduce((sum, len) => sum + len, 0);
   const avgBlockLen = blocks.length ? totalTokens / blocks.length : 1;
 
+  const agents = normalizeAgents(opts.agents);
+
   const meta = {
     version: 3,
     stats: {
@@ -46,6 +51,7 @@ export async function buildPack(docs: BuildInputDoc[], opts: BuildPackOptions = 
       terms: lexicon.length,
       avgBlockLen,
     },
+    ...(agents ? { agents } : {}),
   };
 
   // Persist blocks as objects to optionally carry heading/docId/token length.
@@ -110,6 +116,15 @@ export async function buildPack(docs: BuildInputDoc[], opts: BuildPackOptions = 
   }
 
   return out;
+}
+
+function normalizeAgents(input?: BuildPackOptions['agents']): AgentRegistry | undefined {
+  if (!input) return undefined;
+  const registry = Array.isArray(input)
+    ? { version: 1 as const, agents: input }
+    : input;
+  validateAgentRegistry(registry);
+  return registry;
 }
 
 function buildSemanticSection(

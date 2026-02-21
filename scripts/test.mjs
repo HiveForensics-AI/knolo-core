@@ -3,7 +3,7 @@ import { mkdtemp, writeFile, rm, readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { buildPack, mountPack, query, makeContextPatch, decodeScaleF16, lexConfidence, hasSemantic, validateQueryOptions, validateSemanticQueryOptions } from '../dist/index.js';
+import { buildPack, mountPack, query, makeContextPatch, decodeScaleF16, lexConfidence, hasSemantic, validateQueryOptions, validateSemanticQueryOptions, listAgents, getAgent, resolveAgent, buildSystemPrompt } from '../dist/index.js';
 
 
 
@@ -389,6 +389,129 @@ async function testValidateQueryOptions() {
   assert.throws(() => validateQueryOptions({ queryExpansion: { docs: 0 } }), /queryExpansion\.docs/);
 }
 
+
+
+async function testAgentsBackwardCompatibility() {
+  const docs = [
+    { id: 'mobile-doc', namespace: 'mobile', text: 'mobile bridge throttling notes' },
+    { id: 'backend-doc', namespace: 'backend', text: 'backend throttle policy notes' },
+  ];
+  const pack = await mountPack({ src: await buildPack(docs) });
+  assert.deepEqual(listAgents(pack), [], 'expected packs without agents to expose no agents');
+
+  const hits = query(pack, 'throttling', { namespace: 'mobile', topK: 5, queryExpansion: { enabled: false } });
+  assert.ok(hits.length > 0, 'expected existing namespace query behavior unchanged without agents');
+  assert.ok(hits.every((h) => h.namespace === 'mobile'), 'expected namespace filtering to remain unchanged');
+}
+
+async function testAgentEmbeddingAndLookup() {
+  const docs = [
+    { id: 'mobile-doc', namespace: 'mobile', text: 'mobile bridge throttling notes' },
+    { id: 'backend-doc', namespace: 'backend', text: 'backend throttle policy notes' },
+  ];
+
+  const agents = [
+    {
+      id: 'mobile.agent',
+      version: 1,
+      systemPrompt: ['You are the mobile support agent.', 'Use only mobile knowledge.'],
+      retrievalDefaults: { namespace: ['mobile'], topK: 2 },
+      toolPolicy: { mode: 'allow', tools: ['search_docs'] },
+    },
+    {
+      id: 'backend.agent',
+      version: 1,
+      systemPrompt: { format: 'markdown', template: 'You are backend helper for {{team}}.' },
+      retrievalDefaults: { namespace: ['backend'], topK: 3 },
+      toolPolicy: { mode: 'deny', tools: ['delete_data'] },
+    },
+  ];
+
+  const pack = await mountPack({ src: await buildPack(docs, { agents }) });
+  assert.deepEqual(listAgents(pack), ['mobile.agent', 'backend.agent'], 'expected stable registry order from listAgents');
+
+  const known = getAgent(pack, 'mobile.agent');
+  assert.equal(known?.id, 'mobile.agent', 'expected known agent to resolve');
+  assert.equal(getAgent(pack, 'missing.agent'), undefined, 'expected unknown agent to return undefined');
+}
+
+async function testResolveAgentDefaultsAndOverrides() {
+  const docs = [
+    { id: 'mobile-doc', namespace: 'mobile', text: 'mobile bridge throttling notes' },
+    { id: 'backend-doc', namespace: 'backend', text: 'backend throttle policy notes' },
+  ];
+
+  const agents = [{
+    id: 'mobile.agent',
+    version: 1,
+    systemPrompt: ['You are the mobile support agent.'],
+    retrievalDefaults: { namespace: ['mobile'], topK: 1, queryExpansion: { enabled: false } },
+  }];
+
+  const pack = await mountPack({ src: await buildPack(docs, { agents }) });
+
+  const resolvedDefaults = resolveAgent(pack, { agentId: 'mobile.agent' });
+  const defaultHits = query(pack, 'throttling', resolvedDefaults.retrievalOptions);
+  assert.ok(defaultHits.length > 0, 'expected resolved defaults to produce hits');
+  assert.ok(defaultHits.every((h) => h.namespace === 'mobile'), 'expected resolved defaults to enforce agent namespace');
+
+  const resolvedOverride = resolveAgent(pack, {
+    agentId: 'mobile.agent',
+    query: { namespace: ['backend'], topK: 5 },
+  });
+  assert.deepEqual(resolvedOverride.retrievalOptions.namespace, ['backend'], 'expected caller namespace override precedence');
+  assert.equal(resolvedOverride.retrievalOptions.topK, 5, 'expected caller topK override precedence');
+}
+
+async function testAgentValidationAndPromptDeterminism() {
+  const docs = [{ id: 'mobile-doc', namespace: 'mobile', text: 'mobile bridge throttling notes' }];
+
+  await assert.rejects(
+    () => buildPack(docs, {
+      agents: [{
+        id: 'invalid.agent',
+        version: 1,
+        systemPrompt: ['invalid topk'],
+        retrievalDefaults: { namespace: ['mobile'], topK: 0 },
+      }],
+    }),
+    /topK/,
+    'expected invalid retrievalDefaults.topK to fail via query validation'
+  );
+
+  const pack = await mountPack({
+    src: await buildPack(docs, {
+      agents: [{
+        id: 'prompt.agent',
+        version: 1,
+        systemPrompt: ['Line 1', 'Line 2'],
+        retrievalDefaults: { namespace: ['mobile'] },
+      }],
+    }),
+  });
+
+  const promptAgent = getAgent(pack, 'prompt.agent');
+  assert.ok(promptAgent, 'expected prompt.agent to be retrievable');
+  assert.equal(buildSystemPrompt(promptAgent), 'Line 1\nLine 2', 'expected string[] system prompt joining to be deterministic');
+
+  const markdownAgent = {
+    id: 'markdown.agent',
+    version: 1,
+    systemPrompt: { format: 'markdown', template: 'Hello {{name}} from {{team}}.' },
+    retrievalDefaults: { namespace: ['mobile'] },
+  };
+  assert.equal(
+    buildSystemPrompt(markdownAgent, { name: 'Ava', team: 'Ops' }),
+    'Hello Ava from Ops.',
+    'expected deterministic template replacement'
+  );
+  assert.throws(
+    () => buildSystemPrompt(markdownAgent, { name: 'Ava' }),
+    /unknown placeholder: team/,
+    'expected unknown placeholders to throw for auditability'
+  );
+}
+
 async function testSemanticTopNMicroBenchmark() {
   const docCount = 400;
   const dims = 32;
@@ -454,6 +577,10 @@ await testPackWithoutSemanticTail();
 await testSemanticFixtureAndHelpers();
 await testValidateSemanticQueryOptions();
 await testValidateQueryOptions();
+await testAgentsBackwardCompatibility();
+await testAgentEmbeddingAndLookup();
+await testResolveAgentDefaultsAndOverrides();
+await testAgentValidationAndPromptDeterminism();
 await testSemanticTopNMicroBenchmark();
 await testPackWithSemanticTail();
 await testMountLegacyPackWithoutSemanticTail();

@@ -188,6 +188,7 @@ type BuildInputDoc = {
 };
 
 type BuildPackOptions = {
+  agents?: AgentRegistry | AgentDefinitionV1[];
   semantic?: {
     enabled: boolean;
     modelId: string;
@@ -197,6 +198,33 @@ type BuildPackOptions = {
       perVectorScale?: true;
     };
   };
+};
+```
+
+### Agents in pack metadata
+
+Agents are optional and embedded in `meta.agents` so a single `.knolo` artifact can ship retrieval behavior + prompt defaults on-prem.
+
+```ts
+type AgentPromptTemplate = string[] | { format: "markdown"; template: string };
+
+type AgentDefinitionV1 = {
+  id: string;
+  version: 1;
+  name?: string;
+  description?: string;
+  systemPrompt: AgentPromptTemplate;
+  retrievalDefaults: {
+    namespace: string[]; // required
+    topK?: number;
+    queryExpansion?: QueryOptions["queryExpansion"];
+    semantic?: Omit<NonNullable<QueryOptions["semantic"]>, "queryEmbedding" | "enabled" | "force"> & { enabled?: boolean };
+    minScore?: number;
+    requirePhrases?: string[];
+    source?: string[];
+  };
+  toolPolicy?: { mode: "allow" | "deny"; tools: string[] };
+  metadata?: Record<string, string | number | boolean | null>;
 };
 ```
 
@@ -265,6 +293,39 @@ type Hit = {
   source?: string;
   namespace?: string;
 };
+```
+
+### Agent runtime helpers
+
+- `listAgents(pack) => string[]`
+- `getAgent(pack, agentId) => AgentDefinitionV1 | undefined`
+- `resolveAgent(pack, { agentId, query? }) => { agent, systemPrompt, retrievalOptions }`
+- `buildSystemPrompt(agent, patch?) => string`
+
+### Build a pack with agents and resolve at runtime
+
+```ts
+import { buildPack, mountPack, resolveAgent, query } from "knolo-core";
+
+const bytes = await buildPack(docs, {
+  agents: [
+    {
+      id: "mobile.agent",
+      version: 1,
+      systemPrompt: { format: "markdown", template: "You are {{team}} support." },
+      retrievalDefaults: { namespace: ["mobile"], topK: 5 },
+      toolPolicy: { mode: "allow", tools: ["search_docs"] },
+    },
+  ],
+});
+
+const pack = await mountPack({ src: bytes });
+const resolved = resolveAgent(pack, {
+  agentId: "mobile.agent",
+  query: { topK: 8 },
+});
+
+const hits = query(pack, "bridge throttle", resolved.retrievalOptions);
 ```
 
 ### `makeContextPatch(hits, { budget }) => ContextPatch`
