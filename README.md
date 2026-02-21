@@ -1,50 +1,27 @@
-# 🧠 KnoLo Core
+# 🧠 KnoLo Monorepo
 
-[![npm version](https://img.shields.io/npm/v/knolo-core.svg)](https://www.npmjs.com/package/knolo-core)
-[![npm downloads](https://img.shields.io/npm/dm/knolo-core.svg)](https://www.npmjs.com/package/knolo-core)
-[![npm license](https://img.shields.io/npm/l/knolo-core.svg?cacheBust=2)](https://www.npmjs.com/package/knolo-core)
-[![GitHub license](https://img.shields.io/github/license/HiveForensics-AI/knolo-core.svg)](https://github.com/HiveForensics-AI/knolo-core/blob/main/LICENSE)
-[![Website](https://img.shields.io/badge/website-knolo.dev-2ea44f?logo=vercel)](https://www.knolo.dev/)
+KnoLo is moving toward **adoption-frictionless retrieval tooling**: you should be able to try the core experience in **under 10 minutes**, with a **~5 minute quickstart** from clone to first query.
 
-**KnoLo Core** is a **local-first knowledge retrieval engine** for LLM apps.
-Build a portable `.knolo` pack and run deterministic lexical retrieval with optional semantic reranking using quantized embeddings.
+> Status today: the monorepo scaffolding is in place and `@knolo/core` is production code. CLI/adapters/examples/templates are present as placeholders for upcoming phases.
 
-- ✅ Local/offline-first runtime
-- ✅ Deterministic lexical ranking and filtering
-- ✅ Optional embedding-aware hybrid retrieval (no external vector DB required)
-- ✅ Node.js + browser + React Native / Expo support
+## ✅ Implemented now
 
----
+- `@knolo/core` package in `packages/core`
+- Build + test workflow wired through root workspace scripts
+- Existing core engine and test suite preserved
 
-## ✨ What’s in v0.3.1
+## 🚧 Coming soon
 
-- **Deterministic lexical quality upgrades**
-  - required phrase enforcement (quoted + `requirePhrases`)
-  - corpus-aware BM25L with true IDF and block-length normalization
-  - proximity bonus via minimal term-span cover
-  - optional heading overlap boosts
-  - deterministic pseudo-relevance query expansion
-- **Hybrid retrieval support**
-  - optional semantic rerank over top lexical candidates
-  - int8 L2-normalized embedding quantization with per-vector float16 scales
-  - weighted lexical/semantic score blending controls
-- **Stability & diversity**
-  - near-duplicate suppression + MMR diversity
-  - KNS tie-break signal for stable close-score ordering
-- **Agent/runtime utilities**
-  - embedded agent registries with strict namespace binding
-  - tool call parsing + policy gating helpers
-  - provider-agnostic routing profile + route decision validators
-- **Portable packs**
-  - single `.knolo` artifact
-  - semantic payload embedded directly in pack when enabled
-
----
+- `@knolo/cli` package implementation (package scaffold exists)
+- `@knolo/langchain` adapter (scaffold exists)
+- `@knolo/llamaindex` adapter (scaffold exists)
+- Example apps under `examples/`
+- `templates/create-knolo-app`
 
 ## 📦 Install
 
 ```bash
-npm install knolo-core
+npm install @knolo/core
 ```
 
 Build from source:
@@ -56,22 +33,10 @@ npm install
 npm run build
 ```
 
----
-
-## 🧪 Playground
-
-Try KnoLo Core directly in your browser with the hosted playground:
-
-- https://playgrounds.knolo.dev
-
----
-
-## 🚀 Quickstart
-
-### 1) Build + mount + query
+## 🚀 5-minute quickstart
 
 ```ts
-import { buildPack, mountPack, query, makeContextPatch } from 'knolo-core';
+import { buildPack, mountPack, query, makeContextPatch } from '@knolo/core';
 
 const docs = [
   {
@@ -90,53 +55,34 @@ const docs = [
 
 const bytes = await buildPack(docs);
 const kb = await mountPack({ src: bytes });
-
-const hits = query(kb, '"react native" throttle', {
-  topK: 5,
-  requirePhrases: ['maximum trigger rate'],
-  namespace: 'mobile',
-});
-
+const hits = query(kb, '"react native" throttle', { topK: 5, namespace: 'mobile' });
 const patch = makeContextPatch(hits, { budget: 'small' });
+
 console.log(hits, patch);
 ```
 
-### 2) CLI pack build
+## 🗂️ Repo structure
 
-`docs.json`:
-
-```json
-[
-  {
-    "id": "guide",
-    "heading": "Guide",
-    "text": "Install deps.\n\n## Throttle\nLimit event frequency."
-  },
-  {
-    "id": "faq",
-    "heading": "FAQ",
-    "text": "What is throttling? It reduces event frequency."
-  }
-]
+```text
+.
+├── packages/
+│   ├── core                  # @knolo/core (implemented)
+│   ├── cli                   # @knolo/cli (scaffold)
+│   ├── adapter-langchain     # @knolo/langchain (scaffold)
+│   └── adapter-llamaindex    # @knolo/llamaindex (scaffold)
+├── examples/
+│   ├── nextjs-rag-chat       # placeholder
+│   └── node-cli-rag          # placeholder
+└── templates/
+    └── create-knolo-app      # placeholder
 ```
 
-```bash
-npx knolo docs.json knowledge.knolo
+## 🧭 Planned adapters & examples
 
-# embed agents from a local directory (.json/.yml/.yaml)
-npx knolo docs.json knowledge.knolo --agents ./examples/agents
-```
-
-Then query in app:
-
-```ts
-import { mountPack, query } from 'knolo-core';
-
-const kb = await mountPack({ src: './knowledge.knolo' });
-const hits = query(kb, 'throttle events', { topK: 3 });
-```
-
----
+- LangChain adapter (**coming soon**)
+- LlamaIndex adapter (**coming soon**)
+- Example apps (**coming soon**)
+- `create-knolo-app` template (**coming soon**)
 
 ## 🔀 Hybrid retrieval with embeddings (optional)
 
@@ -145,7 +91,7 @@ KnoLo’s core retrieval remains lexical-first and deterministic. Semantic signa
 ### Build a semantic-enabled pack
 
 ```ts
-import { buildPack } from 'knolo-core';
+import { buildPack } from '@knolo/core';
 
 // embeddings must align 1:1 with docs/block order
 const embeddings: Float32Array[] = await embedDocumentsInOrder(docs);
@@ -163,7 +109,7 @@ const bytes = await buildPack(docs, {
 ### Query with semantic rerank
 
 ```ts
-import { mountPack, query, hasSemantic } from 'knolo-core';
+import { mountPack, query, hasSemantic } from '@knolo/core';
 
 const kb = await mountPack({ src: bytes });
 const queryEmbedding = await embedQuery('react native bridge throttling');
@@ -189,14 +135,12 @@ import {
   quantizeEmbeddingInt8L2Norm,
   encodeScaleF16,
   decodeScaleF16,
-} from 'knolo-core';
+} from '@knolo/core';
 
 const { q, scale } = quantizeEmbeddingInt8L2Norm(queryEmbedding);
 const packed = encodeScaleF16(scale);
 const restored = decodeScaleF16(packed);
 ```
-
----
 
 ## 🧩 API
 
@@ -365,7 +309,7 @@ To make an agent easier to route, use these optional `metadata` keys on `AgentDe
 - `capabilities`: comma-separated, newline-separated, or JSON array string
 - `heading`: short UI heading shown in routing cards
 
-`knolo-core` parses these into a compact routing profile with trimming + dedupe + caps and never throws on bad metadata formats.
+`@knolo/core` parses these into a compact routing profile with trimming + dedupe + caps and never throws on bad metadata formats.
 
 ```ts
 type AgentRoutingProfileV1 = {
@@ -405,7 +349,7 @@ Example profile payload:
 
 ### Route decision contract
 
-`knolo-core` does not call Ollama (or any model provider). A runtime can call any router model, then validate the output with this contract:
+`@knolo/core` does not call Ollama (or any model provider). A runtime can call any router model, then validate the output with this contract:
 
 ```ts
 type RouteCandidateV1 = {
@@ -456,7 +400,7 @@ Validation and selection notes:
 
 1. Receive user input text.
 2. Build routing profiles from mounted pack agents via `getPackRoutingProfilesV1(pack)`.
-3. Send input + profiles to your router model (Ollama or any provider) outside `knolo-core`.
+3. Send input + profiles to your router model (Ollama or any provider) outside `@knolo/core`.
 4. Parse model output JSON and gate with `isRouteDecisionV1`.
 5. Validate against mounted registry with `validateRouteDecisionV1`.
 6. Pick final agent using `selectAgentIdFromRouteDecisionV1`.
@@ -563,7 +507,7 @@ import {
   query,
   isToolAllowed,
   assertToolAllowed,
-} from 'knolo-core';
+} from '@knolo/core';
 
 const bytes = await buildPack(docs, {
   agents: [
@@ -635,7 +579,7 @@ const strictHits = query(kb, 'jwt refresh token rotation', {
 ### Validate semantic query options early
 
 ```ts
-import { validateSemanticQueryOptions } from 'knolo-core';
+import { validateSemanticQueryOptions } from '@knolo/core';
 
 validateSemanticQueryOptions({
   enabled: true,

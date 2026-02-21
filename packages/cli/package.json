@@ -1,0 +1,16 @@
+{
+  "name": "@knolo/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "knolo": "./bin/knolo.mjs"
+  },
+  "scripts": {
+    "build": "node -e \"console.log('cli build placeholder')\"",
+    "test": "node -e \"console.log('cli test placeholder')\""
+  },
+  "dependencies": {
+    "@knolo/core": "0.3.1"
+  }
+}

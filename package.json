@@ -1,45 +1,13 @@
 {
-  "name": "knolo-core",
-  "version": "0.3.1",
-  "type": "module",
-  "description": "Local-first knowledge packs for small LLMs.",
-  "keywords": [
-    "llm",
-    "knowledge-base",
-    "rag",
-    "local",
-    "expo"
+  "name": "knolo-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
   ],
-  "author": "Sam Paniagua",
-  "license": "Apache-2.0",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "files": [
-    "dist",
-    "bin",
-    "README.md",
-    "LICENSE",
-    "DOCS.md"
-  ],
-  "bin": {
-    "knolo": "./bin/knolo.mjs"
-  },
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "prepublishOnly": "npm run build",
-    "smoke": "node scripts/smoke.mjs",
-    "test": "npm run build && node scripts/test.mjs",
-    "format": "prettier --write src/agent.ts src/pack.ts src/builder.ts src/index.ts scripts/test.mjs README.md",
-    "format:check": "prettier --check src/agent.ts src/pack.ts src/builder.ts src/index.ts scripts/test.mjs README.md"
-  },
-  "devDependencies": {
-    "typescript": "^5.5.0",
-    "@types/node": "^20.11.0"
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "format": "npm run format --workspace @knolo/core",
+    "format:check": "npm run format:check --workspace @knolo/core"
   }
 }

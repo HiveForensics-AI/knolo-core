@@ -107,10 +107,17 @@ function parseSimpleYaml(content) {
 }
 
 async function tryImport(filePath) {
-  try {
-    const url = pathToFileURL(filePath).href;
-    return await import(url);
-  } catch (_) {}
+  const isPathLike = filePath.startsWith('.') || filePath.startsWith('/') || /^[A-Za-z]:[\/]/.test(filePath);
+  if (isPathLike) {
+    try {
+      const url = pathToFileURL(filePath).href;
+      return await import(url);
+    } catch (_) {}
+  } else {
+    try {
+      return await import(filePath);
+    } catch (_) {}
+  }
   try {
     return require(filePath);
   } catch (_) {}
@@ -142,18 +149,22 @@ function pickBuildExports(mod) {
 }
 
 async function loadBuildExports() {
+  const pkg = await tryImport('@knolo/core');
+  const pkgExports = pickBuildExports(pkg);
+  if (pkgExports) return pkgExports;
+
   const candidates = [
-    path.resolve(__dirname, '../dist/index.js'),
-    path.resolve(__dirname, '../dist/builder.js'),
-    path.resolve(__dirname, '../dist/index.cjs'),
-    path.resolve(__dirname, '../dist/builder.cjs'),
+    path.resolve(__dirname, '../../core/dist/index.js'),
+    path.resolve(__dirname, '../../core/dist/builder.js'),
+    path.resolve(__dirname, '../../core/dist/index.cjs'),
+    path.resolve(__dirname, '../../core/dist/builder.cjs'),
   ];
   for (const p of candidates) {
     const mod = await tryImport(p);
     const exports = pickBuildExports(mod);
     if (exports) return exports;
   }
-  throw new Error('Could not locate a buildPack function in dist/');
+  throw new Error('Could not locate a buildPack function in @knolo/core or packages/core/dist');
 }
 
 function validateCliDocs(raw) {
