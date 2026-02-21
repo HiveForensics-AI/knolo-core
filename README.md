@@ -54,6 +54,14 @@ npm run build
 
 ---
 
+## 🧪 Playground
+
+Try KnoLo Core directly in your browser with the hosted playground:
+
+- https://playgrounds.knolo.dev
+
+---
+
 ## 🚀 Quickstart
 
 ### 1) Build + mount + query
