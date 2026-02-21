@@ -1,0 +1,20 @@
+{
+  "name": "create-knolo-app",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Scaffold a minimal KnoLo + Next.js starter app",
+  "bin": {
+    "create-knolo-app": "./bin/index.mjs"
+  },
+  "files": [
+    "bin",
+    "template"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node -e \"console.log('create-knolo-app has no build step')\"",
+    "test": "node --test test/create-knolo-app.test.mjs"
+  }
+}

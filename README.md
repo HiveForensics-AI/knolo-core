@@ -2,12 +2,29 @@
 
 KnoLo is moving toward **adoption-frictionless retrieval tooling**: you should be able to try the core experience in **under 10 minutes**, with a **~5 minute quickstart** from clone to first query.
 
-> Status today: the monorepo scaffolding is in place and `@knolo/core` is production code. CLI/adapters/examples/templates are present as placeholders for upcoming phases.
+> Status today: `@knolo/core` and `@knolo/cli` are production-ready, plus a runnable `create-knolo-app` scaffold for a minimal Next.js starter.
+
+## ⚡ 5-minute quickstart
+
+From a clean folder, generate a starter app:
+
+```bash
+npx create-knolo-app@latest my-kb-chat
+cd my-kb-chat
+npm install
+npm run knolo:build
+npm run dev
+```
+
+Then open `http://localhost:3000` and ask questions about the sample docs in `/docs`. Each assistant response includes source snippets/citations.
+
+> If your pack is missing, run: `npm run knolo:build`.
 
 ## ✅ Implemented now
 
 - `@knolo/core` package in `packages/core`
 - `@knolo/cli` package in `packages/cli` with subcommands: `init`, `add`, `build`, `query`, `dev`
+- `create-knolo-app` package in `packages/create-knolo-app` for a Next.js starter with docs + citations UI
 - Build + test workflow wired through root workspace scripts
 
 ## 🚧 Coming soon
@@ -15,7 +32,6 @@ KnoLo is moving toward **adoption-frictionless retrieval tooling**: you should b
 - `@knolo/langchain` adapter (scaffold exists)
 - `@knolo/llamaindex` adapter (scaffold exists)
 - Example apps under `examples/`
-- `templates/create-knolo-app`
 
 ## 📦 Install
 
@@ -79,12 +95,11 @@ This positional mode is still supported for compatibility.
 │   ├── core                  # @knolo/core (implemented)
 │   ├── cli                   # @knolo/cli (implemented)
 │   ├── adapter-langchain     # @knolo/langchain (scaffold)
-│   └── adapter-llamaindex    # @knolo/llamaindex (scaffold)
-├── examples/
-│   ├── nextjs-rag-chat       # placeholder
-│   └── node-cli-rag          # placeholder
-└── templates/
-    └── create-knolo-app      # placeholder
+│   ├── adapter-llamaindex    # @knolo/llamaindex (scaffold)
+│   └── create-knolo-app      # create-knolo-app scaffold package
+└── examples/
+    ├── nextjs-rag-chat       # placeholder
+    └── node-cli-rag          # placeholder
 ```
 
 ## 🧭 Planned adapters & examples
@@ -92,7 +107,6 @@ This positional mode is still supported for compatibility.
 - LangChain adapter (**coming soon**)
 - LlamaIndex adapter (**coming soon**)
 - Example apps (**coming soon**)
-- `create-knolo-app` template (**coming soon**)
 
 ## 🔀 Hybrid retrieval with embeddings (optional)
 
