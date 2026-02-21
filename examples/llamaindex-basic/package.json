@@ -1,0 +1,12 @@
+{
+  "name": "llamaindex-basic-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "@knolo/core": "file:../../packages/core",
+    "@knolo/llamaindex": "file:../../packages/llamaindex"
+  }
+}

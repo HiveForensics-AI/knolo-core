@@ -1,0 +1,39 @@
+{
+  "name": "@knolo/core",
+  "version": "0.3.1",
+  "type": "module",
+  "description": "Local-first knowledge packs for small LLMs.",
+  "keywords": [
+    "llm",
+    "knowledge-base",
+    "rag",
+    "local",
+    "expo"
+  ],
+  "author": "Sam Paniagua",
+  "license": "Apache-2.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "npm run build",
+    "smoke": "node scripts/smoke.mjs",
+    "test": "npm run build && node scripts/test.mjs",
+    "format": "prettier --write src/agent.ts src/pack.ts src/builder.ts src/index.ts scripts/test.mjs ../../README.md",
+    "format:check": "prettier --check src/agent.ts src/pack.ts src/builder.ts src/index.ts scripts/test.mjs ../../README.md"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.5.0"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "langchain-basic-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "@knolo/core": "file:../../packages/core",
+    "@knolo/langchain": "file:../../packages/langchain"
+  }
+}

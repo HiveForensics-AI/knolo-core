@@ -1244,7 +1244,7 @@ async function testCliEmbedsAgentsFromDirectory() {
     );
 
     await execFileAsync('node', [
-      path.join(process.cwd(), 'bin/knolo.mjs'),
+      path.join(process.cwd(), '../cli/bin/knolo.mjs'),
       docsPath,
       outPath,
       '--agents',

@@ -1,0 +1,19 @@
+{
+  "name": "@knolo/cli",
+  "version": "0.3.1",
+  "type": "module",
+  "bin": {
+    "knolo": "bin/knolo.mjs"
+  },
+  "files": [
+    "bin/"
+  ],
+  "scripts": {
+    "build": "node -e \"console.log('cli is executable via bin/knolo.mjs')\"",
+    "test": "npm run build --prefix ../core && node --test test/cli.test.mjs"
+  },
+  "dependencies": {
+    "@knolo/core": "^0.3.1"
+  },
+  "private": false
+}

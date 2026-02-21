@@ -1,0 +1,12 @@
+{
+  "name": "node-cli-rag-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build-pack": "knolo build",
+    "query": "knolo query \"What is KnoLo?\""
+  },
+  "devDependencies": {
+    "@knolo/cli": "file:../../packages/cli"
+  }
+}
