@@ -13,7 +13,12 @@ import { encodeScaleF16, quantizeEmbeddingInt8L2Norm } from './semantic.js';
 import type { AgentDefinitionV1, AgentRegistry } from './agent.js';
 import { validateAgentRegistry } from './agent.js';
 
-export type BuildInputDoc = { id?: string; heading?: string; namespace?: string; text: string };
+export type BuildInputDoc = {
+  id?: string;
+  heading?: string;
+  namespace?: string;
+  text: string;
+};
 export type BuildPackOptions = {
   agents?: AgentRegistry | AgentDefinitionV1[];
   semantic?: {
@@ -24,7 +29,10 @@ export type BuildPackOptions = {
   };
 };
 
-export async function buildPack(docs: BuildInputDoc[], opts: BuildPackOptions = {}): Promise<Uint8Array> {
+export async function buildPack(
+  docs: BuildInputDoc[],
+  opts: BuildPackOptions = {}
+): Promise<Uint8Array> {
   const normalizedDocs = validateDocs(docs);
 
   // Prepare blocks (strip MD) and carry heading/docId for optional boosts.
@@ -70,17 +78,24 @@ export async function buildPack(docs: BuildInputDoc[], opts: BuildPackOptions = 
   const blocksBytes = enc.encode(JSON.stringify(blocksPayload));
 
   const semanticEnabled = Boolean(opts.semantic?.enabled);
-  const semanticSection = semanticEnabled && opts.semantic
-    ? buildSemanticSection(blocks.length, opts.semantic)
+  const semanticSection =
+    semanticEnabled && opts.semantic
+      ? buildSemanticSection(blocks.length, opts.semantic)
+      : undefined;
+  const semBytes = semanticSection
+    ? enc.encode(JSON.stringify(semanticSection.semJson))
     : undefined;
-  const semBytes = semanticSection ? enc.encode(JSON.stringify(semanticSection.semJson)) : undefined;
   const semBlob = semanticSection?.semBlob;
 
   const totalLength =
-    4 + metaBytes.length +
-    4 + lexBytes.length +
-    4 + postings.length * 4 +
-    4 + blocksBytes.length +
+    4 +
+    metaBytes.length +
+    4 +
+    lexBytes.length +
+    4 +
+    postings.length * 4 +
+    4 +
+    blocksBytes.length +
     (semanticEnabled && semBytes && semBlob
       ? 4 + semBytes.length + 4 + semBlob.length
       : 0);
@@ -90,35 +105,47 @@ export async function buildPack(docs: BuildInputDoc[], opts: BuildPackOptions = 
   let offset = 0;
 
   // meta
-  dv.setUint32(offset, metaBytes.length, true); offset += 4;
-  out.set(metaBytes, offset); offset += metaBytes.length;
+  dv.setUint32(offset, metaBytes.length, true);
+  offset += 4;
+  out.set(metaBytes, offset);
+  offset += metaBytes.length;
 
   // lexicon
-  dv.setUint32(offset, lexBytes.length, true); offset += 4;
-  out.set(lexBytes, offset); offset += lexBytes.length;
+  dv.setUint32(offset, lexBytes.length, true);
+  offset += 4;
+  out.set(lexBytes, offset);
+  offset += lexBytes.length;
 
   // postings (alignment-safe via DataView)
-  dv.setUint32(offset, postings.length, true); offset += 4;
+  dv.setUint32(offset, postings.length, true);
+  offset += 4;
   for (let i = 0; i < postings.length; i++) {
     dv.setUint32(offset, postings[i], true);
     offset += 4;
   }
 
   // blocks
-  dv.setUint32(offset, blocksBytes.length, true); offset += 4;
-  out.set(blocksBytes, offset); offset += blocksBytes.length;
+  dv.setUint32(offset, blocksBytes.length, true);
+  offset += 4;
+  out.set(blocksBytes, offset);
+  offset += blocksBytes.length;
 
   if (semanticEnabled && semBytes && semBlob) {
-    dv.setUint32(offset, semBytes.length, true); offset += 4;
-    out.set(semBytes, offset); offset += semBytes.length;
-    dv.setUint32(offset, semBlob.length, true); offset += 4;
+    dv.setUint32(offset, semBytes.length, true);
+    offset += 4;
+    out.set(semBytes, offset);
+    offset += semBytes.length;
+    dv.setUint32(offset, semBlob.length, true);
+    offset += 4;
     out.set(semBlob, offset);
   }
 
   return out;
 }
 
-function normalizeAgents(input?: BuildPackOptions['agents']): AgentRegistry | undefined {
+function normalizeAgents(
+  input?: BuildPackOptions['agents']
+): AgentRegistry | undefined {
   if (!input) return undefined;
   const registry = Array.isArray(input)
     ? { version: 1 as const, agents: input }
@@ -133,16 +160,23 @@ function buildSemanticSection(
 ): { semJson: object; semBlob: Uint8Array } {
   const { embeddings } = semantic;
   if (!Array.isArray(embeddings) || embeddings.length !== blockCount) {
-    throw new Error(`semantic.embeddings must be provided with one embedding per block (expected ${blockCount}).`);
+    throw new Error(
+      `semantic.embeddings must be provided with one embedding per block (expected ${blockCount}).`
+    );
   }
 
   const quantizationType = semantic.quantization?.type ?? 'int8_l2norm';
   if (quantizationType !== 'int8_l2norm') {
-    throw new Error(`Unsupported semantic quantization type: ${quantizationType}`);
+    throw new Error(
+      `Unsupported semantic quantization type: ${quantizationType}`
+    );
   }
 
   const dims = embeddings[0]?.length ?? 0;
-  if (!dims) throw new Error('semantic.embeddings must contain vectors with non-zero dimensions.');
+  if (!dims)
+    throw new Error(
+      'semantic.embeddings must contain vectors with non-zero dimensions.'
+    );
 
   const vecs = new Int8Array(embeddings.length * dims);
   const scales = new Uint16Array(embeddings.length);
@@ -153,7 +187,9 @@ function buildSemanticSection(
       throw new Error(`semantic.embeddings[${i}] must be a Float32Array.`);
     }
     if (embedding.length !== dims) {
-      throw new Error(`semantic.embeddings[${i}] dims mismatch: expected ${dims}, got ${embedding.length}.`);
+      throw new Error(
+        `semantic.embeddings[${i}] dims mismatch: expected ${dims}, got ${embedding.length}.`
+      );
     }
 
     const { q, scale } = quantizeEmbeddingInt8L2Norm(embedding);
@@ -167,8 +203,14 @@ function buildSemanticSection(
   const scalesByteLength = scales.byteLength;
 
   const semBlob = new Uint8Array(vecByteLength + scalesByteLength);
-  semBlob.set(new Uint8Array(vecs.buffer, vecs.byteOffset, vecByteLength), vecByteOffset);
-  semBlob.set(new Uint8Array(scales.buffer, scales.byteOffset, scalesByteLength), scalesByteOffset);
+  semBlob.set(
+    new Uint8Array(vecs.buffer, vecs.byteOffset, vecByteLength),
+    vecByteOffset
+  );
+  semBlob.set(
+    new Uint8Array(scales.buffer, scales.byteOffset, scalesByteLength),
+    scalesByteOffset
+  );
 
   const semJson = {
     version: 1,
@@ -178,7 +220,11 @@ function buildSemanticSection(
     perVectorScale: true,
     blocks: {
       vectors: { byteOffset: vecByteOffset, length: vecs.length },
-      scales: { byteOffset: scalesByteOffset, length: scales.length, encoding: 'float16' },
+      scales: {
+        byteOffset: scalesByteOffset,
+        length: scales.length,
+        encoding: 'float16',
+      },
     },
   };
 
@@ -187,24 +233,36 @@ function buildSemanticSection(
 
 function validateDocs(docs: BuildInputDoc[]): BuildInputDoc[] {
   if (!Array.isArray(docs)) {
-    throw new Error('buildPack expects an array of docs: [{ text, id?, heading?, namespace? }, ...]');
+    throw new Error(
+      'buildPack expects an array of docs: [{ text, id?, heading?, namespace? }, ...]'
+    );
   }
 
   return docs.map((doc, i) => {
     if (!doc || typeof doc !== 'object') {
-      throw new Error(`Invalid doc at index ${i}: expected an object with a string "text" field.`);
+      throw new Error(
+        `Invalid doc at index ${i}: expected an object with a string "text" field.`
+      );
     }
     if (typeof doc.text !== 'string' || !doc.text.trim()) {
-      throw new Error(`Invalid doc at index ${i}: "text" must be a non-empty string.`);
+      throw new Error(
+        `Invalid doc at index ${i}: "text" must be a non-empty string.`
+      );
     }
     if (doc.id !== undefined && typeof doc.id !== 'string') {
-      throw new Error(`Invalid doc at index ${i}: "id" must be a string when provided.`);
+      throw new Error(
+        `Invalid doc at index ${i}: "id" must be a string when provided.`
+      );
     }
     if (doc.heading !== undefined && typeof doc.heading !== 'string') {
-      throw new Error(`Invalid doc at index ${i}: "heading" must be a string when provided.`);
+      throw new Error(
+        `Invalid doc at index ${i}: "heading" must be a string when provided.`
+      );
     }
     if (doc.namespace !== undefined && typeof doc.namespace !== 'string') {
-      throw new Error(`Invalid doc at index ${i}: "namespace" must be a string when provided.`);
+      throw new Error(
+        `Invalid doc at index ${i}: "namespace" must be a string when provided.`
+      );
     }
     return doc;
   });

@@ -9,6 +9,7 @@
 
 import { getTextDecoder } from './utils/utf8.js';
 import type { AgentRegistry } from './agent.js';
+import { validateAgentRegistry } from './agent.js';
 
 export type MountOptions = { src: string | ArrayBufferLike | Uint8Array };
 
@@ -39,7 +40,9 @@ export type Pack = {
 };
 
 export function hasSemantic(pack: Pack): boolean {
-  return Boolean(pack.semantic && pack.semantic.dims > 0 && pack.semantic.vecs.length > 0);
+  return Boolean(
+    pack.semantic && pack.semantic.dims > 0 && pack.semantic.vecs.length > 0
+  );
 }
 
 export async function mountPack(opts: MountOptions): Promise<Pack> {
@@ -49,18 +52,26 @@ export async function mountPack(opts: MountOptions): Promise<Pack> {
   let offset = 0;
 
   // meta
-  const metaLen = dv.getUint32(offset, true); offset += 4;
-  const metaJson = dec.decode(new Uint8Array(buf, offset, metaLen)); offset += metaLen;
+  const metaLen = dv.getUint32(offset, true);
+  offset += 4;
+  const metaJson = dec.decode(new Uint8Array(buf, offset, metaLen));
+  offset += metaLen;
   const meta: PackMeta = JSON.parse(metaJson);
+  if (meta.agents) {
+    validateAgentRegistry(meta.agents);
+  }
 
   // lexicon
-  const lexLen = dv.getUint32(offset, true); offset += 4;
-  const lexJson = dec.decode(new Uint8Array(buf, offset, lexLen)); offset += lexLen;
+  const lexLen = dv.getUint32(offset, true);
+  offset += 4;
+  const lexJson = dec.decode(new Uint8Array(buf, offset, lexLen));
+  offset += lexLen;
   const lexEntries: Array<[string, number]> = JSON.parse(lexJson);
   const lexicon = new Map<string, number>(lexEntries);
 
   // postings
-  const postCount = dv.getUint32(offset, true); offset += 4;
+  const postCount = dv.getUint32(offset, true);
+  offset += 4;
   const postings = new Uint32Array(postCount);
   for (let i = 0; i < postCount; i++) {
     postings[i] = dv.getUint32(offset, true);
@@ -68,7 +79,8 @@ export async function mountPack(opts: MountOptions): Promise<Pack> {
   }
 
   // blocks (v1: string[]; v2/v3: {text, heading?, docId?, namespace?, len?}[])
-  const blocksLen = dv.getUint32(offset, true); offset += 4;
+  const blocksLen = dv.getUint32(offset, true);
+  offset += 4;
   const blocksJson = dec.decode(new Uint8Array(buf, offset, blocksLen));
   offset += blocksLen;
   const parsed = JSON.parse(blocksJson);
@@ -109,16 +121,29 @@ export async function mountPack(opts: MountOptions): Promise<Pack> {
 
   let semantic: Pack['semantic'];
   if (offset < buf.byteLength) {
-    const semLen = dv.getUint32(offset, true); offset += 4;
-    const semJson = dec.decode(new Uint8Array(buf, offset, semLen)); offset += semLen;
+    const semLen = dv.getUint32(offset, true);
+    offset += 4;
+    const semJson = dec.decode(new Uint8Array(buf, offset, semLen));
+    offset += semLen;
     const sem = JSON.parse(semJson);
 
-    const semBlobLen = dv.getUint32(offset, true); offset += 4;
+    const semBlobLen = dv.getUint32(offset, true);
+    offset += 4;
     const semBlob = new Uint8Array(buf, offset, semBlobLen);
     semantic = parseSemanticSection(sem, semBlob);
   }
 
-  return { meta, lexicon, postings, blocks, headings, docIds, namespaces, blockTokenLens, semantic };
+  return {
+    meta,
+    lexicon,
+    postings,
+    blocks,
+    headings,
+    docIds,
+    namespaces,
+    blockTokenLens,
+    semantic,
+  };
 }
 
 function parseSemanticSection(sem: any, blob: Uint8Array): Pack['semantic'] {
@@ -135,7 +160,11 @@ function parseSemanticSection(sem: any, blob: Uint8Array): Pack['semantic'] {
   if (scales) {
     const scaleLen = Number(scales.length ?? 0);
     const scaleOffset = Number(scales.byteOffset ?? 0);
-    const dv = new DataView(blob.buffer, blob.byteOffset + scaleOffset, scaleLen * 2);
+    const dv = new DataView(
+      blob.buffer,
+      blob.byteOffset + scaleOffset,
+      scaleLen * 2
+    );
     scaleView = new Uint16Array(scaleLen);
     for (let i = 0; i < scaleLen; i++) {
       scaleView[i] = dv.getUint16(i * 2, true);
@@ -177,13 +206,21 @@ function isNodeRuntime(): boolean {
 
 function isLikelyLocalPath(value: string): boolean {
   if (value.startsWith('file://')) return true;
-  if (value.startsWith('./') || value.startsWith('../') || value.startsWith('/') || value.startsWith('~')) return true;
+  if (
+    value.startsWith('./') ||
+    value.startsWith('../') ||
+    value.startsWith('/') ||
+    value.startsWith('~')
+  )
+    return true;
   if (/^[A-Za-z]:[\\/]/.test(value)) return true; // Windows absolute path
   if (/^[A-Za-z][A-Za-z\d+.-]*:/.test(value)) return false; // URL scheme
   return true; // plain relative path like "knowledge.knolo"
 }
 
-async function readLocalFileAsBuffer(pathOrFileUrl: string): Promise<ArrayBuffer> {
+async function readLocalFileAsBuffer(
+  pathOrFileUrl: string
+): Promise<ArrayBuffer> {
   const { readFile } = await import('node:fs/promises');
   const filePath = pathOrFileUrl.startsWith('file://')
     ? decodeURIComponent(new URL(pathOrFileUrl).pathname)
