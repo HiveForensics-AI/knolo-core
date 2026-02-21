@@ -16,7 +16,7 @@ Build a portable `.knolo` pack and run deterministic lexical retrieval with opti
 
 ---
 
-## ✨ What’s in v0.3.0
+## ✨ What’s in v0.3.1
 
 - **Deterministic lexical quality upgrades**
   - required phrase enforcement (quoted + `requirePhrases`)
