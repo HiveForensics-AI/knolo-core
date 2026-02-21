@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, rm, readFile } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm, readFile, mkdir } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -20,6 +22,8 @@ import {
   isToolAllowed,
   assertToolAllowed,
 } from '../dist/index.js';
+
+const execFileAsync = promisify(execFile);
 
 async function buildSemanticFixturePack() {
   const fixture = JSON.parse(
@@ -821,8 +825,8 @@ async function testResolveAgentDefaultsAndOverrides() {
   });
   assert.deepEqual(
     resolvedOverride.retrievalOptions.namespace,
-    ['backend'],
-    'expected caller namespace override precedence'
+    ['mobile'],
+    'expected agent namespace binding to remain strict even when caller passes namespace override'
   );
   assert.equal(
     resolvedOverride.retrievalOptions.topK,
@@ -1026,9 +1030,74 @@ async function testAgentValidationAndPromptDeterminism() {
   );
   assert.throws(
     () => buildSystemPrompt(markdownAgent, { name: 'Ava' }),
-    /unknown placeholder: team/,
-    'expected unknown placeholders to throw for auditability'
+    /missing patch value for placeholder: team/,
+    'expected missing placeholder values to throw for auditability'
   );
+}
+
+
+
+async function testCliEmbedsAgentsFromDirectory() {
+  const tmpDir = await mkdtemp(path.join(os.tmpdir(), 'knolo-cli-agents-'));
+  try {
+    const docsPath = path.join(tmpDir, 'docs.json');
+    const outPath = path.join(tmpDir, 'out.knolo');
+    const agentsDir = path.join(tmpDir, 'agents');
+    await writeFile(
+      docsPath,
+      JSON.stringify([
+        { id: 'mobile-doc', namespace: 'mobile', text: 'mobile troubleshooting notes' },
+        { id: 'backend-doc', namespace: 'backend', text: 'backend reliability notes' },
+      ])
+    );
+    await mkdir(agentsDir);
+
+    await writeFile(
+      path.join(agentsDir, 'z-backend.json'),
+      JSON.stringify({
+        id: 'backend.agent',
+        version: 1,
+        systemPrompt: ['Backend helper'],
+        retrievalDefaults: { namespace: ['backend'], topK: 1 },
+      })
+    );
+
+    await writeFile(
+      path.join(agentsDir, 'a-mobile.yaml'),
+      [
+        'id: mobile.agent',
+        'version: 1',
+        'name: Mobile Agent',
+        'systemPrompt:',
+        '  - Mobile helper line one',
+        '  - Mobile helper line two',
+        'retrievalDefaults:',
+        '  namespace:',
+        '    - mobile',
+        '  topK: 2',
+      ].join('\n')
+    );
+
+    await execFileAsync('node', [
+      path.join(process.cwd(), 'bin/knolo.mjs'),
+      docsPath,
+      outPath,
+      '--agents',
+      agentsDir,
+    ]);
+
+    const pack = await mountPack({ src: outPath });
+    assert.deepEqual(
+      listAgents(pack),
+      ['backend.agent', 'mobile.agent'],
+      'expected CLI-loaded agents to be sorted deterministically by id'
+    );
+    const mobile = getAgent(pack, 'mobile.agent');
+    assert.ok(mobile, 'expected YAML agent to be embedded and retrievable');
+    assert.deepEqual(mobile?.retrievalDefaults.namespace, ['mobile']);
+  } finally {
+    await rm(tmpDir, { recursive: true, force: true });
+  }
 }
 
 async function testSemanticTopNMicroBenchmark() {
@@ -1114,6 +1183,7 @@ await testResolveAgentDefaultsAndOverrides();
 await testToolPolicyHelpers();
 await testMountTimeAgentValidationAndNoRevalidationOnResolve();
 await testAgentValidationAndPromptDeterminism();
+await testCliEmbedsAgentsFromDirectory();
 await testSemanticTopNMicroBenchmark();
 await testPackWithSemanticTail();
 await testMountLegacyPackWithoutSemanticTail();
