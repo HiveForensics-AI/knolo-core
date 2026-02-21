@@ -25,6 +25,11 @@ import {
   isToolResultV1,
   parseToolCallV1FromText,
   assertToolCallAllowed,
+  getAgentRoutingProfileV1,
+  getPackRoutingProfilesV1,
+  isRouteDecisionV1,
+  validateRouteDecisionV1,
+  selectAgentIdFromRouteDecisionV1,
 } from '../dist/index.js';
 
 const execFileAsync = promisify(execFile);
@@ -1320,6 +1325,203 @@ async function testSemanticTopNMicroBenchmark() {
   );
 }
 
+
+async function testAgentRoutingProfileParsing() {
+  const agent = {
+    id: 'routing.agent',
+    version: 1,
+    description: 'Routes shopping tasks',
+    systemPrompt: ['routing agent'],
+    retrievalDefaults: { namespace: ['shopping', 'billing'] },
+    toolPolicy: { mode: 'allow', tools: ['search_docs', 'search_docs', 'lookup'] },
+    metadata: {
+      heading: 'Shopping Router',
+      tags: 'checkout, shopping , checkout',
+      examples: 'buy shoes\ntrack order\n buy shoes ',
+      capabilities: '["order_lookup","refunds"]',
+    },
+  };
+
+  const profile = getAgentRoutingProfileV1(agent);
+  assert.equal(profile.agentId, 'routing.agent');
+  assert.equal(profile.namespace, 'shopping');
+  assert.equal(profile.heading, 'Shopping Router');
+  assert.deepEqual(profile.tags, ['checkout', 'shopping']);
+  assert.deepEqual(profile.examples, ['buy shoes', 'track order']);
+  assert.deepEqual(profile.capabilities, ['order_lookup', 'refunds']);
+  assert.equal(profile.toolPolicySummary?.mode, 'mixed');
+  assert.deepEqual(profile.toolPolicySummary?.allowed, ['search_docs', 'search_docs', 'lookup']);
+
+  const jsonTagsAgent = {
+    ...agent,
+    metadata: { ...agent.metadata, tags: '["a","b"]', examples: '[oops]', capabilities: 'a,b,a' },
+  };
+  const jsonTags = getAgentRoutingProfileV1(jsonTagsAgent);
+  assert.deepEqual(jsonTags.tags, ['a', 'b']);
+  assert.deepEqual(jsonTags.examples, []);
+  assert.deepEqual(jsonTags.capabilities, ['a', 'b']);
+}
+
+async function testPackRoutingProfilesExtraction() {
+  const docs = [{ id: 'doc', namespace: 'mobile', text: 'routing profile pack' }];
+  const pack = await mountPack({
+    src: await buildPack(docs, {
+      agents: [
+        {
+          id: 'one.agent',
+          version: 1,
+          systemPrompt: ['one'],
+          retrievalDefaults: { namespace: ['mobile'] },
+          metadata: { tags: 'one' },
+        },
+        {
+          id: 'two.agent',
+          version: 1,
+          systemPrompt: ['two'],
+          retrievalDefaults: { namespace: ['backend'] },
+          metadata: { tags: 'two' },
+        },
+      ],
+    }),
+  });
+
+  const profiles = getPackRoutingProfilesV1(pack);
+  assert.equal(profiles.length, 2);
+  assert.deepEqual(profiles.map((p) => p.agentId), ['one.agent', 'two.agent']);
+}
+
+async function testRouteDecisionTypeGuardAndValidation() {
+  const decision = {
+    type: 'route_decision',
+    candidates: [
+      { agentId: 'one.agent', score: 0.9, why: 'best match' },
+      { agentId: 'two.agent', score: 0.6 },
+    ],
+    selected: 'one.agent',
+    needsTools: ['search_docs'],
+    risk: 'low',
+  };
+  assert.equal(isRouteDecisionV1(decision), true);
+
+  assert.equal(
+    isRouteDecisionV1({ type: 'route_decision', selected: 'one.agent', candidates: [] }),
+    false,
+    'expected missing candidates to fail'
+  );
+  assert.equal(
+    isRouteDecisionV1({
+      type: 'route_decision',
+      selected: 'one.agent',
+      candidates: [{ agentId: 'one.agent', score: 1.1 }],
+    }),
+    false,
+    'expected out-of-range score to fail'
+  );
+
+  const registry = {
+    'one.agent': {
+      id: 'one.agent',
+      version: 1,
+      systemPrompt: ['one'],
+      retrievalDefaults: { namespace: ['mobile'] },
+    },
+    'two.agent': {
+      id: 'two.agent',
+      version: 1,
+      systemPrompt: ['two'],
+      retrievalDefaults: { namespace: ['backend'] },
+    },
+  };
+
+  assert.deepEqual(validateRouteDecisionV1(decision, registry), { ok: true });
+
+  const unknownSelected = validateRouteDecisionV1(
+    { ...decision, selected: 'missing.agent' },
+    registry
+  );
+  assert.equal(unknownSelected.ok, false);
+
+  const dup = validateRouteDecisionV1(
+    {
+      ...decision,
+      candidates: [
+        { agentId: 'one.agent', score: 0.9 },
+        { agentId: 'one.agent', score: 0.8 },
+      ],
+    },
+    registry
+  );
+  assert.equal(dup.ok, false);
+}
+
+async function testRouteDecisionSelectionHelper() {
+  const registry = {
+    'a.agent': {
+      id: 'a.agent',
+      version: 1,
+      systemPrompt: ['a'],
+      retrievalDefaults: { namespace: ['a'] },
+    },
+    'b.agent': {
+      id: 'b.agent',
+      version: 1,
+      systemPrompt: ['b'],
+      retrievalDefaults: { namespace: ['b'] },
+    },
+    'c.agent': {
+      id: 'c.agent',
+      version: 1,
+      systemPrompt: ['c'],
+      retrievalDefaults: { namespace: ['c'] },
+    },
+  };
+
+  const selected = selectAgentIdFromRouteDecisionV1(
+    {
+      type: 'route_decision',
+      candidates: [{ agentId: 'b.agent', score: 0.7 }],
+      selected: 'b.agent',
+    },
+    registry
+  );
+  assert.deepEqual(selected, { agentId: 'b.agent', reason: 'selected' });
+
+  const topCandidate = selectAgentIdFromRouteDecisionV1(
+    {
+      type: 'route_decision',
+      candidates: [
+        { agentId: 'missing.agent', score: 0.95 },
+        { agentId: 'c.agent', score: 0.6 },
+        { agentId: 'a.agent', score: 0.5 },
+      ],
+      selected: 'missing.agent',
+    },
+    registry
+  );
+  assert.deepEqual(topCandidate, { agentId: 'c.agent', reason: 'top_candidate' });
+
+  const fallback = selectAgentIdFromRouteDecisionV1(
+    {
+      type: 'route_decision',
+      candidates: [{ agentId: 'missing.agent', score: 0.2 }],
+      selected: 'also-missing.agent',
+    },
+    registry,
+    { fallbackAgentId: 'b.agent' }
+  );
+  assert.deepEqual(fallback, { agentId: 'b.agent', reason: 'fallback' });
+
+  const deterministicDefault = selectAgentIdFromRouteDecisionV1(
+    {
+      type: 'route_decision',
+      candidates: [{ agentId: 'missing.agent', score: 0.2 }],
+      selected: 'also-missing.agent',
+    },
+    registry
+  );
+  assert.deepEqual(deterministicDefault, { agentId: 'a.agent', reason: 'fallback' });
+}
+
 await testLexConfidenceDeterministic();
 await testSemanticRerankLowConfidence();
 await testSemanticRerankRespectsConfidenceAndForce();
@@ -1348,6 +1550,10 @@ await testAssertToolCallAllowed();
 await testMountTimeAgentValidationAndNoRevalidationOnResolve();
 await testAgentValidationAndPromptDeterminism();
 await testCliEmbedsAgentsFromDirectory();
+await testAgentRoutingProfileParsing();
+await testPackRoutingProfilesExtraction();
+await testRouteDecisionTypeGuardAndValidation();
+await testRouteDecisionSelectionHelper();
 await testSemanticTopNMicroBenchmark();
 await testPackWithSemanticTail();
 await testMountLegacyPackWithoutSemanticTail();

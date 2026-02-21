@@ -346,6 +346,117 @@ type Hit = {
 - `parseToolCallV1FromText(text) => ToolCallV1 | null` (safe parser for model outputs)
 - `assertToolCallAllowed(agent, call) => void` (policy gate for parsed calls)
 - `isToolCallV1(value) / isToolResultV1(value)` (runtime-safe type guards)
+- `getAgentRoutingProfileV1(agent) => AgentRoutingProfileV1`
+- `getPackRoutingProfilesV1(pack) => AgentRoutingProfileV1[]`
+- `isRouteDecisionV1(value) => boolean` (strict contract guard for router output)
+- `validateRouteDecisionV1(decision, registryById) => { ok: true } | { ok: false; error: string }`
+- `selectAgentIdFromRouteDecisionV1(decision, registryById, { fallbackAgentId? }) => { agentId, reason }`
+
+### Routing discoverability conventions (Phase 2)
+
+To make an agent easier to route, use these optional `metadata` keys on `AgentDefinitionV1`:
+
+- `tags`: comma-separated (`"shopping,checkout"`) or JSON array string (`"[\"shopping\",\"checkout\"]"`)
+- `examples`: comma-separated, newline-separated, or JSON array string
+- `capabilities`: comma-separated, newline-separated, or JSON array string
+- `heading`: short UI heading shown in routing cards
+
+`knolo-core` parses these into a compact routing profile with trimming + dedupe + caps and never throws on bad metadata formats.
+
+```ts
+type AgentRoutingProfileV1 = {
+  agentId: string;
+  namespace?: string;
+  heading?: string;
+  description?: string;
+  tags: string[];
+  examples: string[];
+  capabilities: string[];
+  toolPolicy?: unknown;
+  toolPolicySummary?: {
+    mode: 'allow_all' | 'deny_all' | 'mixed' | 'unknown';
+    allowed?: string[];
+    denied?: string[];
+  };
+};
+```
+
+Example profile payload:
+
+```json
+{
+  "agentId": "shopping.agent",
+  "namespace": "shopping",
+  "heading": "Shopping Assistant",
+  "description": "Handles product lookup, checkout help, and order tracking.",
+  "tags": ["shopping", "checkout", "order-status"],
+  "examples": ["track my order", "find running shoes under $120"],
+  "capabilities": ["catalog_search", "order_lookup"],
+  "toolPolicySummary": {
+    "mode": "mixed",
+    "allowed": ["search_docs", "order_lookup"]
+  }
+}
+```
+
+### Route decision contract (Phase 2)
+
+`knolo-core` does not call Ollama (or any model provider). A runtime can call any router model, then validate the output with this contract:
+
+```ts
+type RouteCandidateV1 = {
+  agentId: string;
+  score: number; // 0..1
+  why?: string;
+};
+
+type RouteDecisionV1 = {
+  type: 'route_decision';
+  intent?: string;
+  entities?: Record<string, unknown>;
+  candidates: RouteCandidateV1[];
+  selected: string;
+  needsTools?: string[];
+  risk?: 'low' | 'med' | 'high';
+};
+```
+
+JSON example:
+
+```json
+{
+  "type": "route_decision",
+  "intent": "order_tracking",
+  "entities": { "orderId": "A-1023" },
+  "candidates": [
+    { "agentId": "shopping.agent", "score": 0.91, "why": "Order-related intent" },
+    { "agentId": "returns.agent", "score": 0.37 }
+  ],
+  "selected": "shopping.agent",
+  "needsTools": ["order_lookup"],
+  "risk": "low"
+}
+```
+
+Validation and selection notes:
+
+- `isRouteDecisionV1(...)` is strict and rejects malformed payloads.
+- `validateRouteDecisionV1(...)` requires `selected` and every candidate `agentId` to exist in the mounted registry and rejects duplicate candidate ids.
+- `selectAgentIdFromRouteDecisionV1(...)` is deterministic and never throws:
+  1. use `selected` if registered,
+  2. else highest-score registered candidate,
+  3. else caller `fallbackAgentId` if valid,
+  4. else lexicographically first registered agent id.
+
+### Router runtime flow (provider-agnostic)
+
+1. Receive user input text.
+2. Build routing profiles from mounted pack agents via `getPackRoutingProfilesV1(pack)`.
+3. Send input + profiles to your router model (Ollama or any provider) outside `knolo-core`.
+4. Parse model output JSON and gate with `isRouteDecisionV1`.
+5. Validate against mounted registry with `validateRouteDecisionV1`.
+6. Pick final agent using `selectAgentIdFromRouteDecisionV1`.
+7. Call `resolveAgent(pack, { agentId, ... })` and run your existing loop.
 
 ### Tool call + result contracts (Phase 1)
 
@@ -400,6 +511,18 @@ JSON examples:
 
 ```ts
 type TraceEventV1 =
+  | {
+      type: 'route.requested';
+      ts: string;
+      text: string;
+      agentCount: number;
+    }
+  | {
+      type: 'route.decided';
+      ts: string;
+      decision: RouteDecisionV1;
+      selectedAgentId: string;
+    }
   | { type: 'agent.selected'; ts: string; agentId: string; namespace?: string }
   | {
       type: 'prompt.resolved';

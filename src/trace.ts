@@ -1,6 +1,19 @@
 import type { ToolCallV1, ToolResultV1 } from './tools.js';
+import type { RouteDecisionV1 } from './router.js';
 
 export type TraceEventV1 =
+  | {
+      type: 'route.requested';
+      ts: string;
+      text: string;
+      agentCount: number;
+    }
+  | {
+      type: 'route.decided';
+      ts: string;
+      decision: RouteDecisionV1;
+      selectedAgentId: string;
+    }
   | { type: 'agent.selected'; ts: string; agentId: string; namespace?: string }
   | {
       type: 'prompt.resolved';

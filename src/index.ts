@@ -40,6 +40,15 @@ export type {
 export { parseToolCallV1FromText } from './tool_parse.js';
 export { nowIso, createTrace } from './trace.js';
 export { assertToolCallAllowed } from './tool_gate.js';
+export {
+  getAgentRoutingProfileV1,
+  getPackRoutingProfilesV1,
+} from './routing_profile.js';
+export {
+  isRouteDecisionV1,
+  validateRouteDecisionV1,
+  selectAgentIdFromRouteDecisionV1,
+} from './router.js';
 export { isToolCallV1, isToolResultV1 } from './tools.js';
 export type {
   ToolId,
@@ -49,3 +58,5 @@ export type {
   ToolSpecV1,
 } from './tools.js';
 export type { TraceEventV1 } from './trace.js';
+export type { AgentRoutingProfileV1 } from './routing_profile.js';
+export type { RouteCandidateV1, RouteDecisionV1 } from './router.js';
