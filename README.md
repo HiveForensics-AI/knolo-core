@@ -31,6 +31,10 @@ Build a portable `.knolo` pack and run deterministic lexical retrieval with opti
 - **Stability & diversity**
   - near-duplicate suppression + MMR diversity
   - KNS tie-break signal for stable close-score ordering
+- **Agent/runtime utilities**
+  - embedded agent registries with strict namespace binding
+  - tool call parsing + policy gating helpers
+  - provider-agnostic routing profile + route decision validators
 - **Portable packs**
   - single `.knolo` artifact
   - semantic payload embedded directly in pack when enabled
@@ -134,7 +138,7 @@ const hits = query(kb, 'throttle events', { topK: 3 });
 
 ---
 
-## 🔀 Hybrid retrieval with embeddings (recommended direction)
+## 🔀 Hybrid retrieval with embeddings (optional)
 
 KnoLo’s core retrieval remains lexical-first and deterministic. Semantic signals are added as an **optional rerank stage** when lexical confidence is low (or forced).
 
@@ -352,7 +356,7 @@ type Hit = {
 - `validateRouteDecisionV1(decision, registryById) => { ok: true } | { ok: false; error: string }`
 - `selectAgentIdFromRouteDecisionV1(decision, registryById, { fallbackAgentId? }) => { agentId, reason }`
 
-### Routing discoverability conventions (Phase 2)
+### Routing discoverability conventions
 
 To make an agent easier to route, use these optional `metadata` keys on `AgentDefinitionV1`:
 
@@ -399,7 +403,7 @@ Example profile payload:
 }
 ```
 
-### Route decision contract (Phase 2)
+### Route decision contract
 
 `knolo-core` does not call Ollama (or any model provider). A runtime can call any router model, then validate the output with this contract:
 
@@ -458,7 +462,7 @@ Validation and selection notes:
 6. Pick final agent using `selectAgentIdFromRouteDecisionV1`.
 7. Call `resolveAgent(pack, { agentId, ... })` and run your existing loop.
 
-### Tool call + result contracts (Phase 1)
+### Tool call + result contracts
 
 ```ts
 type ToolCallV1 = {
@@ -682,7 +686,7 @@ Yes. Runtime text encoder/decoder compatibility is included.
 
 ---
 
-## 🗺️ Direction / roadmap
+## 🗺️ Roadmap
 
 - stronger hybrid retrieval evaluation tooling
 - richer pack introspection and diagnostics
