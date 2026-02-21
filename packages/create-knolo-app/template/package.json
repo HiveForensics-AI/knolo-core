@@ -11,13 +11,13 @@
     "knolo:dev": "knolo dev"
   },
   "dependencies": {
-    "@knolo/core": "^0.3.1",
+    "@knolo/core": "^3.1.2",
     "next": "^14.2.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@knolo/cli": "^0.3.1"
+    "@knolo/cli": "^3.1.2"
   },
   "engines": {
     "node": ">=20"
