@@ -8,12 +8,14 @@
  */
 
 import { getTextDecoder } from './utils/utf8.js';
+import type { AgentRegistry } from './agent.js';
 
 export type MountOptions = { src: string | ArrayBufferLike | Uint8Array };
 
 export type PackMeta = {
   version: number;
   stats: { docs: number; blocks: number; terms: number; avgBlockLen?: number };
+  agents?: AgentRegistry;
 };
 
 export type Pack = {
