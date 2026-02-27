@@ -1,4 +1,4 @@
-# 🧠 KnoLo Monorepo
+# 🧠 KnoLo
 
 KnoLo is a **local-first retrieval and agent runtime stack**.
 
