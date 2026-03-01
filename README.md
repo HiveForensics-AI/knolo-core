@@ -1,35 +1,23 @@
-# 🧠 KnoLo
+# 🧠 Knolo
 
-KnoLo is a **local-first retrieval and agent runtime stack**.
+Knolo is a **local-first knowledge base engine** built around deterministic retrieval and portable `.knolo` packs.
 
 It provides:
 
-* `@knolo/core` — deterministic pack format + retrieval engine
-* `@knolo/cli` — build workflows for `.knolo` packs
-* `create-knolo-app` — instant Next.js starter
+* `@knolo/core` — pack format + deterministic retrieval engine
+* `@knolo/cli` — build workflows for `.knolo` artifacts
+* `create-knolo-app` — instant Next.js starter with playground
 * `@knolo/langchain` — LangChain-style retriever adapter
 * `@knolo/llamaindex` — LlamaIndex-style retriever adapter
 
-KnoLo prioritizes:
+Knolo prioritizes:
 
 * Deterministic lexical retrieval
 * Optional hybrid semantic reranking
-* Agent-native pack metadata
-* Tool-safe runtime contracts
 * Zero vector database requirement
-* Local-first execution
-
----
-
-## 📦 Packages
-
-| Package             | Description                                                |
-| ------------------- | ---------------------------------------------------------- |
-| `@knolo/core`       | Pack builder, pack loader, retrieval engine, agent runtime |
-| `@knolo/cli`        | CLI for building `.knolo` artifacts                        |
-| `create-knolo-app`  | Next.js scaffolding with playground                        |
-| `@knolo/langchain`  | LangChain-style retriever interface                        |
-| `@knolo/llamaindex` | LlamaIndex-style retriever interface                       |
+* Local-first execution (offline capable)
+* Portable binary knowledge packs
+* Strict runtime contracts (optional advanced features)
 
 > ⚠️ `knolo-core` (unscoped) on npm is deprecated. Use `@knolo/core`.
 
@@ -55,6 +43,39 @@ Ask questions against the generated `/docs` corpus.
 
 ---
 
+# 🔍 What Knolo Actually Is
+
+Knolo is **not a vector database wrapper**.
+It is **not a hosted retrieval service**.
+
+Knolo is:
+
+* A structured, versioned binary pack format
+* A deterministic lexical retrieval engine
+* An optional hybrid rerank layer
+* A portable knowledge artifact you can ship anywhere
+
+You build `.knolo` packs once.
+You mount them anywhere — Node, web, React Native, offline.
+
+Retrieval is lexical-first and deterministic by default.
+
+Hybrid semantic reranking is optional and **never replaces lexical grounding**.
+
+---
+
+# 📦 Packages
+
+| Package             | Description                                               |
+| ------------------- | --------------------------------------------------------- |
+| `@knolo/core`       | Pack builder, pack loader, deterministic retrieval engine |
+| `@knolo/cli`        | CLI for building `.knolo` artifacts                       |
+| `create-knolo-app`  | Next.js scaffolding with playground                       |
+| `@knolo/langchain`  | LangChain-style retriever interface                       |
+| `@knolo/llamaindex` | LlamaIndex-style retriever interface                      |
+
+---
+
 # 🚀 10-Minute Ecosystem Path
 
 From this repository:
@@ -73,22 +94,6 @@ cd ../llamaindex-basic && npm install && npm run start
 
 ---
 
-# 🔍 Core Philosophy
-
-KnoLo is not a vector database wrapper.
-
-It is:
-
-* A structured binary pack format
-* A deterministic lexical retrieval engine
-* An optional hybrid rerank layer
-* An embedded agent registry
-* A strict routing + tool contract runtime
-
-Hybrid semantic retrieval is optional and **never replaces lexical grounding**.
-
----
-
 # 🔌 LangChain-Style Usage
 
 ```ts
@@ -99,7 +104,7 @@ const pack = await mountPack({ src: './dist/knowledge.knolo' });
 const retriever = new KnoLoRetriever({ pack, topK: 5 });
 
 const docs = await retriever.getRelevantDocuments(
-  'How do I configure KnoLo?'
+  'How do I configure Knolo?'
 );
 
 for (const doc of docs) {
@@ -173,29 +178,30 @@ const hits = query(kb, 'react native bridge throttling', {
 
 ---
 
-# 🤖 Agents Inside Packs
+# 🧠 Optional: Agent Metadata & Routing
 
-Agents are embedded into pack metadata (`meta.agents`).
+Knolo is a knowledge base first.
 
-This allows a single `.knolo` artifact to ship:
+However, packs may optionally embed structured metadata for:
 
-* Retrieval behavior
-* System prompt defaults
+* System prompts
 * Namespace restrictions
 * Tool policies
-* Routing metadata
+* Routing hints
 
 Agent registries are validated once at `mountPack()` time.
 
-Strict namespace binding ensures agents cannot escape their configured domain.
+Strict namespace binding ensures agents cannot escape configured domains.
+
+These features are **additive** — they do not change the retrieval-first architecture.
 
 ---
 
-# 🧭 Router Contract (Provider-Agnostic)
+# 🛠 Runtime Contracts (Optional Advanced Features)
 
-`@knolo/core` does not call Ollama or any provider.
+Knolo defines strict validation contracts for:
 
-It defines strict contracts:
+## RouteDecisionV1
 
 ```ts
 type RouteDecisionV1 = {
@@ -207,18 +213,7 @@ type RouteDecisionV1 = {
 };
 ```
 
-You may:
-
-1. Call any router model.
-2. Validate output via `isRouteDecisionV1`.
-3. Enforce registry consistency via `validateRouteDecisionV1`.
-4. Select deterministically with `selectAgentIdFromRouteDecisionV1`.
-
-No runtime ambiguity.
-
----
-
-# 🛠 Tool Call Contract
+## ToolCallV1
 
 ```ts
 type ToolCallV1 = {
@@ -229,17 +224,20 @@ type ToolCallV1 = {
 };
 ```
 
-Policy enforcement:
+Validation helpers:
 
+* `isRouteDecisionV1`
+* `validateRouteDecisionV1`
 * `isToolAllowed`
-* `assertToolAllowed`
 * `assertToolCallAllowed`
 
-Deterministic failures. No silent bypass.
+These enable deterministic policy enforcement for advanced workflows.
+
+They are not required for standard retrieval usage.
 
 ---
 
-# 🗂 Repo Structure
+# 🗂 Repository Structure
 
 ```
 .
@@ -262,7 +260,7 @@ Deterministic failures. No silent bypass.
 * No cloud dependency required
 * Works offline
 * Works in React Native / Expo
-* Binary pack format versioned
+* Binary pack format is versioned
 
 ---
 
