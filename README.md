@@ -128,7 +128,7 @@ cd ../llamaindex-basic && npm install && npm run start
 # 🔌 LangChain-Style Usage
 
 ```ts
-import { mountPack } from '@knolo/core';
+import { mountPack } from '@knolo/core/node';
 import { KnoLoRetriever } from '@knolo/langchain';
 
 const pack = await mountPack({ src: './dist/knowledge.knolo' });
@@ -149,7 +149,7 @@ for (const doc of docs) {
 # 🦙 LlamaIndex-Style Usage
 
 ```ts
-import { mountPack } from '@knolo/core';
+import { mountPack } from '@knolo/core/node';
 import { KnoLoRetriever } from '@knolo/llamaindex';
 
 const pack = await mountPack({ src: './dist/knowledge.knolo' });
@@ -161,6 +161,28 @@ for (const hit of nodes) {
   console.log(hit.node.text);
   console.log(hit.node.metadata);
 }
+```
+
+---
+
+# 📱 Expo / React Native Mounting
+
+Use the runtime-safe entrypoint (`@knolo/core`) and pass URL/bytes.
+For local filesystem paths in Node.js, use `@knolo/core/node`.
+
+```ts
+import { mountPack } from '@knolo/core';
+
+const ab = await (await fetch(PACK_URL)).arrayBuffer();
+const pack = await mountPack({ src: new Uint8Array(ab) });
+```
+
+Node-only local path usage:
+
+```ts
+import { mountPack } from '@knolo/core/node';
+
+const pack = await mountPack({ src: './dist/knowledge.knolo' });
 ```
 
 ---

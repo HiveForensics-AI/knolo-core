@@ -91,19 +91,30 @@ You can write it to disk or store it in object storage.
 
 ## 2️⃣ Mount a Pack
 
+### Node.js (local path convenience)
+
 ```ts
-import { mountPack } from "@knolo/core";
+import { mountPack } from "@knolo/core/node";
 
 const pack = await mountPack({
   src: "./dist/knowledge.knolo"
 });
 ```
 
+### React Native / Expo (URL or bytes)
+
+```ts
+import { mountPack } from "@knolo/core";
+
+const ab = await (await fetch(PACK_URL)).arrayBuffer();
+const pack = await mountPack({ src: new Uint8Array(ab) });
+```
+
 You can mount from:
 
-* File path
+* URL string (runtime-safe entry)
 * Buffer / Uint8Array
-* Remote fetch response
+* Local file path in Node via `@knolo/core/node`
 * Object storage download
 
 Mount-time validation ensures:
