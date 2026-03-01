@@ -1,176 +1,317 @@
-
-
 # 📦 `@knolo/core`
 
-# @knolo/core
+`@knolo/core` is the **deterministic retrieval engine and pack runtime** behind Knolo.
 
-KnoLo Core is a **local-first knowledge base engine for small language models (LLMs)**.
+It lets you:
 
-It allows you to package structured documents into a compact `.knolo` file and query them deterministically — **no embeddings, no vector databases, no cloud required**.
+* Build structured knowledge packs
+* Mount portable `.knolo` artifacts
+* Run deterministic lexical retrieval
+* Optionally apply hybrid semantic reranking
+* Enforce strict runtime contracts for advanced workflows
 
-Designed for:
-- On-device LLMs
-- Deterministic AI systems
-- Agent routing
-- Air-gapped or privacy-first environments
-
----
-
-## ✨ Why KnoLo?
-
-Traditional RAG systems require:
-- Embeddings
-- Vector databases
-- External services
-- Non-deterministic similarity scoring
-
-KnoLo uses:
-- Structured indexing
-- Namespace-based routing
-- Deterministic query resolution
-- Compact `.knolo` bundles
-
-This makes it:
-- Fast
-- Reproducible
-- Lightweight
-- Fully local
+No vector database required.
+No cloud dependency required.
+Works fully offline.
 
 ---
 
-## 📦 Installation
+# 🧠 What It Is
+
+`@knolo/core` is **not**:
+
+* A vector database wrapper
+* A hosted RAG service
+* A probabilistic similarity engine
+
+It is:
+
+* A versioned binary pack format
+* A deterministic lexical retrieval engine
+* An optional semantic rerank layer
+* A portable knowledge runtime
+
+You build once.
+You mount anywhere — Node, browser, React Native, serverless, offline.
+
+---
+
+# 📊 Retrieval Characteristics
+
+Lexical retrieval is:
+
+* Deterministic
+* Reproducible
+* Stable across runs
+* Independent of embeddings
+
+Hybrid reranking is:
+
+* Optional
+* Deterministic for fixed vectors
+* Lexical-first (semantic never replaces grounding)
+
+In benchmark testing (March 2026):
+
+* **Recall@5:** 1.000
+* **MRR@5:** 0.867
+* **nDCG@5:** 0.900
+
+Strong ranking quality without requiring a vector database.
+
+---
+
+# 📦 Installation
 
 ```bash
 npm install @knolo/core
-````
+```
 
 ---
 
-## 🚀 Basic Usage
+# 🚀 Core Concepts
 
-### 1️⃣ Mount a Knowledge Pack
+## 1️⃣ Build a Pack
+
+```ts
+import { buildPack } from "@knolo/core";
+
+const bytes = await buildPack(docs, {
+  semantic: {
+    enabled: false
+  }
+});
+```
+
+`buildPack` produces a versioned `.knolo` binary artifact.
+
+You can write it to disk or store it in object storage.
+
+---
+
+## 2️⃣ Mount a Pack
 
 ```ts
 import { mountPack } from "@knolo/core";
 
-const pack = await mountPack("./dist/knowledge.knolo");
+const pack = await mountPack({
+  src: "./dist/knowledge.knolo"
+});
 ```
+
+You can mount from:
+
+* File path
+* Buffer / Uint8Array
+* Remote fetch response
+* Object storage download
+
+Mount-time validation ensures:
+
+* Pack version compatibility
+* Metadata integrity
+* Optional agent registry validation
 
 ---
 
-### 2️⃣ Query the Pack
+## 3️⃣ Query (Deterministic Lexical Retrieval)
 
 ```ts
 import { query } from "@knolo/core";
 
-const results = query(pack, {
-  namespace: "mobile",
-  q: "debounce vs throttle"
+const hits = query(pack, "debounce vs throttle", {
+  topK: 5
 });
 
-console.log(results);
+for (const hit of hits) {
+  console.log(hit.text);
+  console.log(hit.metadata); // { score, source, namespace, id }
+}
 ```
+
+Properties:
+
+* Fully deterministic
+* No embedding dependency
+* Namespace-aware
+* Evaluation-friendly scoring
 
 ---
 
-### 3️⃣ Resolve an Agent
+# 🔀 Optional: Hybrid Semantic Rerank
+
+Semantic rerank runs **after lexical retrieval**.
+
+It never replaces lexical grounding.
+
+## Build with embeddings
 
 ```ts
-import { resolveAgent } from "@knolo/core";
-
-const resolved = resolveAgent(pack, {
-  agentId: "support-agent",
-  query: "Explain debounce vs throttle",
+const bytes = await buildPack(docs, {
+  semantic: {
+    enabled: true,
+    modelId: "text-embedding-3-small",
+    embeddings,
+    quantization: {
+      type: "int8_l2norm",
+      perVectorScale: true
+    }
+  }
 });
 ```
 
-Supports patch variables:
+## Query with rerank
 
 ```ts
-resolveAgent(pack, {
-  agentId: "support-agent",
-  patch: { tone: "formal" },
+import { hasSemantic } from "@knolo/core";
+
+const hits = query(pack, "react native throttling issue", {
+  topK: 8,
+  semantic: {
+    enabled: hasSemantic(pack),
+    mode: "rerank",
+    topN: 50,
+    minLexConfidence: 0.35,
+    blend: { enabled: true, wLex: 0.75, wSem: 0.25 },
+    queryEmbedding
+  }
 });
 ```
 
----
+Design principles:
 
-## 🤖 Agents
-
-Agents are defined inside the pack metadata.
-
-Phase 2 features include:
-
-* Agent routing profiles
-* Deterministic route validation
-* Tool policies (`allow_all`, `mixed`, `unknown`)
-* Registry validation at mount-time
+* Lexical-first
+* Deterministic scoring
+* No external vector store
+* Quantized embedding storage inside pack
 
 ---
 
-## 🛠 Tool Policy Helpers
+# 🤖 Optional: Agent Metadata & Routing
+
+Knolo is a knowledge engine first.
+
+However, packs may optionally embed structured metadata for:
+
+* System prompts
+* Namespace restrictions
+* Tool policies
+* Routing hints
+
+Agent registries are validated once at `mountPack()`.
+
+These features are additive and do not affect retrieval.
+
+---
+
+# 🛠 Runtime Contracts (Advanced)
+
+For strict deterministic workflows:
+
+## RouteDecisionV1
 
 ```ts
-import { isToolAllowed, assertToolAllowed } from "@knolo/core";
-
-isToolAllowed(agent, "web-search");
-assertToolAllowed(agent, "database-read");
+type RouteDecisionV1 = {
+  type: "route_decision";
+  intent?: string;
+  entities?: Record<string, unknown>;
+  candidates: { agentId: string; score: number }[];
+  selected: string;
+};
 ```
 
-Default behavior:
+## ToolCallV1
 
-* If no policy → allow all
-* Explicit deny → deterministic error
+```ts
+type ToolCallV1 = {
+  type: "tool_call";
+  callId: string;
+  tool: string;
+  args: Record<string, unknown>;
+};
+```
 
----
+Helpers:
 
-## 📁 .knolo Format
+```ts
+import {
+  isRouteDecisionV1,
+  validateRouteDecisionV1,
+  isToolAllowed,
+  assertToolCallAllowed
+} from "@knolo/core";
+```
 
-A `.knolo` file contains:
+Enables:
 
-* Indexed documents
-* Namespaces
-* Agent registry
-* Metadata
-* Routing profiles
+* Deterministic routing validation
+* Policy enforcement
+* Tool permission checks
+* Structured AI pipelines
 
-Built using `@knolo/cli`.
-
----
-
-## 🧠 Design Philosophy
-
-KnoLo is built around:
-
-* Determinism over probability
-* Structure over embeddings
-* Local-first AI
-* Small model optimization
-* Agent-native architecture
-
----
-
-## 🔐 Use Cases
-
-* On-device assistants
-* Enterprise internal knowledge
-* Mobile AI apps
-* Secure environments
-* Offline-first systems
+These are optional — not required for standard retrieval usage.
 
 ---
 
-## 🗺 Roadmap
+# 📁 `.knolo` Pack Format
 
-* Rust core implementation
+Binary layout:
+
+```
+[metaLen][meta]
+[lexLen][lexicon]
+[postCount][postings]
+[blocksLen][blocks]
+[semantic?]
+```
+
+Properties:
+
+* Versioned
+* Compact
+* Immutable
+* Semantic section auto-detected
+* Designed for fast mount + query
+
+---
+
+# ⚙️ Design Guarantees
+
+* Deterministic lexical retrieval
+* Deterministic hybrid rerank (fixed vectors)
+* No vector database required
+* No cloud dependency required
+* Works offline
+* Works in React Native / Expo
+* Portable binary artifacts
+
+---
+
+# 🔐 Ideal For
+
+* Local-first AI systems
+* Offline assistants
+* On-device LLM retrieval
+* Secure / air-gapped environments
+* Deterministic RAG pipelines
+* Evaluation-heavy workflows
+
+---
+
+# 🗺 Roadmap
+
+* Incremental pack updates
+* Evaluation tooling
+* Performance introspection APIs
 * WASM builds
-* Multi-language SDKs
-* Advanced agent routing
-* Deterministic tool orchestration
+* Continued local-first optimization
 
 ---
 
-## 📄 License
+# 📄 License
 
-MIT
+Apache-2.0
+
+
+
 
