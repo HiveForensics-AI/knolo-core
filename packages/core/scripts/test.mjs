@@ -31,6 +31,7 @@ import {
   validateRouteDecisionV1,
   selectAgentIdFromRouteDecisionV1,
 } from '../dist/index.js';
+import { mountPack as mountPackNode } from '../dist/node.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -409,20 +410,20 @@ async function testMountPackFromLocalPathAndFileUrl() {
   try {
     await writeFile(packPath, bytes);
 
-    const fromPath = await mountPack({ src: packPath });
+    const fromPath = await mountPackNode({ src: packPath });
     const pathHits = query(fromPath, 'local path loading', { topK: 1 });
     assert.equal(
       pathHits[0]?.source,
       'local-doc',
-      'expected mountPack to load plain filesystem paths'
+      'expected @knolo/core/node mountPack to load plain filesystem paths'
     );
 
-    const fromFileUrl = await mountPack({ src: pathToFileURL(packPath).href });
+    const fromFileUrl = await mountPackNode({ src: pathToFileURL(packPath).href });
     const fileUrlHits = query(fromFileUrl, 'local path loading', { topK: 1 });
     assert.equal(
       fileUrlHits[0]?.source,
       'local-doc',
-      'expected mountPack to load file:// URLs'
+      'expected @knolo/core/node mountPack to load file:// URLs'
     );
   } finally {
     await rm(tmpDir, { recursive: true, force: true });
@@ -1251,7 +1252,7 @@ async function testCliEmbedsAgentsFromDirectory() {
       agentsDir,
     ]);
 
-    const pack = await mountPack({ src: outPath });
+    const pack = await mountPackNode({ src: outPath });
     assert.deepEqual(
       listAgents(pack),
       ['backend.agent', 'mobile.agent'],

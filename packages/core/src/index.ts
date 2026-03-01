@@ -1,5 +1,5 @@
 // src/index.ts
-export { mountPack, hasSemantic } from './pack.js';
+export { mountPack, hasSemantic } from './pack.runtime.js';
 export {
   query,
   lexConfidence,
@@ -23,7 +23,7 @@ export {
   validateAgentRegistry,
   validateAgentDefinition,
 } from './agent.js';
-export type { MountOptions, PackMeta, Pack } from './pack.js';
+export type { MountOptions, PackMeta, Pack } from './pack.runtime.js';
 export type { QueryOptions, Hit } from './query.js';
 export type { ContextPatch } from './patch.js';
 export type { BuildInputDoc, BuildPackOptions } from './builder.js';
