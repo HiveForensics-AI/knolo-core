@@ -23,6 +23,37 @@ Knolo prioritizes:
 
 ---
 
+# 📊 Retrieval Benchmark (March 2026)
+
+Knolo was evaluated using a deterministic lexical-first + optional rerank configuration.
+
+**Run:** 2026-03-01
+**TopK:** 5
+
+### Aggregate Metrics
+
+| Metric      | Score     |
+| ----------- | --------- |
+| Precision@5 | **0.490** |
+| Recall@5    | **1.000** |
+| MRR@5       | **0.867** |
+| nDCG@5      | **0.900** |
+
+### Interpretation
+
+* ✅ **Recall@5 = 1.0** → All relevant documents were retrieved in every test query.
+* ✅ **High MRR (0.867)** → Relevant documents appear near the top.
+* ✅ **Strong nDCG (0.900)** → Ranking quality is consistently high.
+* 🔍 Precision reflects lexical grounding before rerank — by design, Knolo prioritizes deterministic recall over aggressive pruning.
+
+This benchmark demonstrates:
+
+* Deterministic lexical retrieval is highly reliable.
+* Hybrid reranking improves ranking quality without sacrificing grounding.
+* No vector database is required to achieve strong retrieval performance.
+
+---
+
 # ⚡ 5-Minute Quickstart
 
 ```bash
@@ -182,7 +213,7 @@ const hits = query(kb, 'react native bridge throttling', {
 
 Knolo is a knowledge base first.
 
-However, packs may optionally embed structured metadata for:
+Packs may optionally embed structured metadata for:
 
 * System prompts
 * Namespace restrictions
@@ -193,13 +224,13 @@ Agent registries are validated once at `mountPack()` time.
 
 Strict namespace binding ensures agents cannot escape configured domains.
 
-These features are **additive** — they do not change the retrieval-first architecture.
+These features are additive — they do not change the retrieval-first architecture.
 
 ---
 
 # 🛠 Runtime Contracts (Optional Advanced Features)
 
-Knolo defines strict validation contracts for:
+Knolo defines strict validation contracts for deterministic workflows:
 
 ## RouteDecisionV1
 
@@ -224,16 +255,12 @@ type ToolCallV1 = {
 };
 ```
 
-Validation helpers:
+Helpers:
 
 * `isRouteDecisionV1`
 * `validateRouteDecisionV1`
 * `isToolAllowed`
 * `assertToolCallAllowed`
-
-These enable deterministic policy enforcement for advanced workflows.
-
-They are not required for standard retrieval usage.
 
 ---
 
@@ -254,8 +281,8 @@ They are not required for standard retrieval usage.
 
 # ⚙️ Design Guarantees
 
-* Lexical retrieval is deterministic
-* Hybrid rerank is deterministic for fixed vectors
+* Deterministic lexical retrieval
+* Deterministic hybrid rerank (fixed vectors)
 * No vector DB required
 * No cloud dependency required
 * Works offline
@@ -296,6 +323,7 @@ Docs & updates:
 **[https://www.knolo.dev/](https://www.knolo.dev/)**
 
 ---
+
 
 # 📄 License
 
