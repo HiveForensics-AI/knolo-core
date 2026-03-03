@@ -115,3 +115,9 @@ This ensures:
 ## 📄 License
 
 MIT
+---
+
+## ClaimGraph section compatibility
+
+New `.knolo` packs may include an optional trailing **ClaimGraph** JSON section.
+This section is deterministic, offline-safe, and additive; runtimes that ignore trailing sections remain backward compatible.

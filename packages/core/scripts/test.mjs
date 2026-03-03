@@ -30,6 +30,13 @@ import {
   isRouteDecisionV1,
   validateRouteDecisionV1,
   selectAgentIdFromRouteDecisionV1,
+  getClaimGraph,
+  buildClaimGraph,
+  createGraphLog,
+  appendOp,
+  mergeClaimGraphLogs,
+  applyClaimGraphLog,
+  expandQueryWithGraph,
 } from '../dist/index.js';
 import { mountPack as mountPackNode } from '../dist/node.js';
 
@@ -1523,6 +1530,110 @@ async function testRouteDecisionSelectionHelper() {
   assert.deepEqual(deterministicDefault, { agentId: 'a.agent', reason: 'fallback' });
 }
 
+
+
+function claimGraphFixtureDocs() {
+  return [
+    {
+      id: 'doc-alpha',
+      text: '# Knolo ClaimGraph\nKnolo is a deterministic knowledge graph overlay.\nSee [Spec](https://example.com/spec).\n[[Delta Log]]',
+    },
+    {
+      id: 'doc-beta',
+      text: 'Delta Log is append only.\n# Determinism\nDeterminism is reproducible behavior.',
+    },
+  ];
+}
+
+async function testClaimGraphDeterministicBuild() {
+  const docs = claimGraphFixtureDocs();
+  const g1 = buildClaimGraph(docs);
+  const g2 = buildClaimGraph(docs);
+  assert.equal(JSON.stringify(g1), JSON.stringify(g2));
+  assert.deepEqual(
+    g1.nodes.map((n) => n.id),
+    [...g1.nodes.map((n) => n.id)].sort(),
+    'expected nodes sorted by id'
+  );
+  assert.deepEqual(
+    g1.edges.map((e) => e.id),
+    [...g1.edges.map((e) => e.id)].sort(),
+    'expected edges sorted by id'
+  );
+}
+
+async function testClaimGraphPackRoundTrip() {
+  const pack = await mountPack({
+    src: await buildPack(claimGraphFixtureDocs(), { graph: { enabled: true } }),
+  });
+  const graph = getClaimGraph(pack);
+  assert.ok(graph, 'expected claim graph to be mounted');
+  assert.ok((pack.meta.claimGraph?.nodes ?? 0) > 0);
+  assert.ok((pack.meta.claimGraph?.edges ?? 0) > 0);
+  assert.ok(graph.edges.some((e) => e.p === 'ref'), 'expected markdown link edge');
+}
+
+async function testClaimGraphMountToleratesUnknownTrailingBytes() {
+  const base = await buildPack([{ id: 'x', text: 'plain text' }], { graph: { enabled: false } });
+  const extra = new Uint8Array(base.length + 6);
+  extra.set(base, 0);
+  extra.set([1, 2, 3, 4, 5, 6], base.length);
+  const pack = await mountPack({ src: extra });
+  assert.equal(pack.blocks.length, 1);
+}
+
+async function testClaimGraphLogMergeAndTombstone() {
+  const base = buildClaimGraph(claimGraphFixtureDocs());
+  const nodeId = base.nodes[0]?.id;
+  const edge = base.edges[0];
+  assert.ok(nodeId && edge);
+
+  let logA = createGraphLog();
+  logA = appendOp(logA, {
+    op: 'upsert_node',
+    label: 'Shared Memory',
+    ts: 10,
+    actor: 'alice',
+    props: { role: 'scratchpad' },
+  });
+
+  let logB = createGraphLog();
+  logB = appendOp(logB, {
+    op: 'tombstone_edge',
+    edgeId: edge.id,
+    ts: 20,
+    actor: 'bob',
+  });
+
+  const merged1 = mergeClaimGraphLogs(logA, logB);
+  const merged2 = mergeClaimGraphLogs(logB, logA);
+  assert.equal(JSON.stringify(merged1), JSON.stringify(merged2));
+
+  const effective = applyClaimGraphLog(base, merged1);
+  assert.ok(effective.nodes.some((n) => n.label === 'shared memory'));
+  assert.ok(!effective.edges.some((e) => e.id === edge.id));
+}
+
+async function testClaimGraphQueryExpansionDeterministic() {
+  const docs = claimGraphFixtureDocs();
+  const pack = await mountPack({
+    src: await buildPack(docs, { graph: { enabled: true } }),
+  });
+
+  const expandedA = expandQueryWithGraph(pack, 'knolo', { maxExtraTerms: 5 });
+  const expandedB = expandQueryWithGraph(pack, 'knolo', { maxExtraTerms: 5 });
+  assert.equal(expandedA, expandedB);
+  assert.ok(expandedA.includes('example com spec') || expandedA.includes('deterministic'));
+
+  const hits = query(pack, 'knolo', { topK: 5, graph: { expand: true, maxExtraTerms: 5 } });
+  assert.ok(hits.length > 0);
+}
+
+await testClaimGraphDeterministicBuild();
+await testClaimGraphPackRoundTrip();
+await testClaimGraphMountToleratesUnknownTrailingBytes();
+await testClaimGraphLogMergeAndTombstone();
+await testClaimGraphQueryExpansionDeterministic();
 await testLexConfidenceDeterministic();
 await testSemanticRerankLowConfidence();
 await testSemanticRerankRespectsConfidenceAndForce();

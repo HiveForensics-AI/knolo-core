@@ -12,6 +12,7 @@ import { getTextEncoder } from './utils/utf8.js';
 import { encodeScaleF16, quantizeEmbeddingInt8L2Norm } from './semantic.js';
 import type { AgentDefinitionV1, AgentRegistry } from './agent.js';
 import { validateAgentRegistry } from './agent.js';
+import { buildClaimGraph } from './graph/build_claim_graph.js';
 
 export type BuildInputDoc = {
   id?: string;
@@ -26,6 +27,10 @@ export type BuildPackOptions = {
     modelId: string;
     embeddings: Float32Array[];
     quantization?: { type: 'int8_l2norm'; perVectorScale?: true };
+  };
+  graph?: {
+    enabled?: boolean;
+    maxEdgesPerDoc?: number;
   };
 };
 
@@ -50,6 +55,10 @@ export async function buildPack(
   const avgBlockLen = blocks.length ? totalTokens / blocks.length : 1;
 
   const agents = normalizeAgents(opts.agents);
+  const graphEnabled = opts.graph?.enabled ?? true;
+  const claimGraph = graphEnabled
+    ? buildClaimGraph(normalizedDocs, { maxEdgesPerDoc: opts.graph?.maxEdgesPerDoc })
+    : null;
 
   const meta = {
     version: 3,
@@ -60,6 +69,15 @@ export async function buildPack(
       avgBlockLen,
     },
     ...(agents ? { agents } : {}),
+    ...(claimGraph
+      ? {
+          claimGraph: {
+            version: 1 as const,
+            nodes: claimGraph.nodes.length,
+            edges: claimGraph.edges.length,
+          },
+        }
+      : {}),
   };
 
   // Persist blocks as objects to optionally carry heading/docId/token length.
@@ -86,6 +104,7 @@ export async function buildPack(
     ? enc.encode(JSON.stringify(semanticSection.semJson))
     : undefined;
   const semBlob = semanticSection?.semBlob;
+  const graphBytes = claimGraph ? enc.encode(JSON.stringify(claimGraph)) : undefined;
 
   const totalLength =
     4 +
@@ -98,7 +117,8 @@ export async function buildPack(
     blocksBytes.length +
     (semanticEnabled && semBytes && semBlob
       ? 4 + semBytes.length + 4 + semBlob.length
-      : 0);
+      : 0) +
+    (graphBytes ? 4 + graphBytes.length : 0);
 
   const out = new Uint8Array(totalLength);
   const dv = new DataView(out.buffer);
@@ -138,6 +158,13 @@ export async function buildPack(
     dv.setUint32(offset, semBlob.length, true);
     offset += 4;
     out.set(semBlob, offset);
+    offset += semBlob.length;
+  }
+
+  if (graphBytes) {
+    dv.setUint32(offset, graphBytes.length, true);
+    offset += 4;
+    out.set(graphBytes, offset);
   }
 
   return out;

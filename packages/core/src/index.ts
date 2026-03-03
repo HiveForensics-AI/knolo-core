@@ -23,6 +23,20 @@ export {
   validateAgentRegistry,
   validateAgentDefinition,
 } from './agent.js';
+export {
+  getClaimGraph,
+  validateClaimGraph,
+} from './graph/claim_graph.js';
+export { buildClaimGraph } from './graph/build_claim_graph.js';
+export {
+  createGraphLog,
+  appendOp,
+  applyClaimGraphLog,
+  mergeClaimGraphLogs,
+  serializeClaimGraphLog,
+  deserializeClaimGraphLog,
+} from './graph/log.js';
+export { expandQueryWithGraph } from './graph/query_expand.js';
 export type { MountOptions, PackMeta, Pack } from './pack.runtime.js';
 export type { QueryOptions, Hit } from './query.js';
 export type { ContextPatch } from './patch.js';
@@ -36,6 +50,8 @@ export type {
   ResolveAgentInput,
   ResolvedAgent,
 } from './agent.js';
+export type { ClaimGraph, ClaimNode, ClaimEdge } from './graph/claim_graph.js';
+export type { ClaimGraphLog, ClaimOp } from './graph/log.js';
 
 export { parseToolCallV1FromText } from './tool_parse.js';
 export { nowIso, createTrace } from './trace.js';

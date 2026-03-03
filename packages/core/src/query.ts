@@ -16,6 +16,7 @@ import { minCoverSpan, proximityMultiplier } from "./quality/proximity.js";
 import { diversifyAndDedupe } from "./quality/diversify.js";
 import { knsSignature, knsDistance } from "./quality/signature.js";
 import { decodeScaleF16, quantizeEmbeddingInt8L2Norm } from "./semantic.js";
+import { expandQueryWithGraph } from "./graph/query_expand.js";
 
 export type QueryOptions = {
   topK?: number;
@@ -29,6 +30,11 @@ export type QueryOptions = {
     terms?: number;
     weight?: number;
     minTermLength?: number;
+  };
+  graph?: {
+    expand?: boolean;
+    maxExtraTerms?: number;
+    predicates?: string[];
   };
   semantic?: {
     enabled?: boolean;
@@ -74,6 +80,17 @@ export function validateQueryOptions(opts?: QueryOptions): void {
     }
     if (qe.minTermLength !== undefined && (!Number.isInteger(qe.minTermLength) || qe.minTermLength < 1)) {
       throw new Error("query(...): queryExpansion.minTermLength must be a positive integer.");
+    }
+  }
+  if (opts.graph) {
+    if (opts.graph.expand !== undefined && typeof opts.graph.expand !== "boolean") {
+      throw new Error("query(...): graph.expand must be a boolean when provided.");
+    }
+    if (opts.graph.maxExtraTerms !== undefined && (!Number.isInteger(opts.graph.maxExtraTerms) || opts.graph.maxExtraTerms < 1)) {
+      throw new Error("query(...): graph.maxExtraTerms must be a positive integer.");
+    }
+    if (opts.graph.predicates !== undefined && (!Array.isArray(opts.graph.predicates) || opts.graph.predicates.some((p) => typeof p !== "string"))) {
+      throw new Error("query(...): graph.predicates must be an array of strings when provided.");
     }
   }
   validateSemanticQueryOptions(opts.semantic);
@@ -145,8 +162,16 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
     force: opts.semantic?.force ?? false,
   };
 
+  const graphQuery =
+    opts.graph?.expand === true
+      ? expandQueryWithGraph(pack, q, {
+          maxExtraTerms: opts.graph?.maxExtraTerms,
+          predicates: opts.graph?.predicates,
+        })
+      : q;
+
   // --- Query parsing
-  const normTokens = tokenize(q).map((t) => t.term);
+  const normTokens = tokenize(graphQuery).map((t) => t.term);
 
   // Normalize quoted phrases from q
   const quotedRaw = parsePhrases(q);
