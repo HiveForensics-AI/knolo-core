@@ -47,7 +47,10 @@ async function tryImport(filePath) {
 }
 
 async function loadCore() {
-  const candidates = ['@knolo/core', path.resolve(__dirname, '../../core/dist/index.js')];
+  const candidates = [
+    path.resolve(__dirname, '../../core/dist/index.js'),
+    '@knolo/core',
+  ];
   for (const candidate of candidates) {
     const mod = await tryImport(candidate);
     if (mod?.buildPack && mod?.mountPack && mod?.query) return mod;
@@ -278,7 +281,9 @@ async function cmdQuery(core, args) {
   const topK = opts.k !== undefined ? Number(opts.k) : (config.query?.topK ?? 5);
   if (!Number.isInteger(topK) || topK <= 0) throw createError('--k must be a positive integer.');
 
-  const kb = await core.mountPack({ src: packPath });
+  const packBuffer = readFileSync(packPath);
+  const bytes = Uint8Array.from(packBuffer);
+  const kb = await mountPackFromBytes(core, bytes);
   const hits = core.query(kb, question, { topK }).map((hit) => ({
     title: kb.headings?.[hit.blockId] || hit.source || `Block ${hit.blockId}`,
     source: hit.source || kb.docIds?.[hit.blockId] || 'unknown',
@@ -306,6 +311,14 @@ async function cmdQuery(core, args) {
     console.log(`   score: ${hit.score}`);
     console.log(`   snippet: ${hit.snippet}`);
   });
+}
+
+async function mountPackFromBytes(core, bytes) {
+  try {
+    return await core.mountPack({ bytes });
+  } catch {
+    return await core.mountPack({ src: bytes });
+  }
 }
 
 function listDirectoriesRecursively(root) {
