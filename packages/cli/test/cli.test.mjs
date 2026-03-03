@@ -6,6 +6,9 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 const cliPath = path.resolve(process.cwd(), 'bin/knolo.mjs');
+const cliPackageJson = JSON.parse(
+  readFileSync(path.resolve(process.cwd(), 'package.json'), 'utf8')
+);
 
 function runCli(args, cwd) {
   return execFileSync(process.execPath, [cliPath, ...args], {
@@ -43,7 +46,10 @@ test('packed @knolo/cli tarball includes expected runtime files only', () => {
   );
   assert.equal(packedPackageJson.private, false);
   assert.equal(packedPackageJson.bin.knolo, 'bin/knolo.mjs');
-  assert.equal(packedPackageJson.dependencies['@knolo/core'], '^0.3.1');
+  assert.equal(
+    packedPackageJson.dependencies['@knolo/core'],
+    cliPackageJson.dependencies['@knolo/core']
+  );
 });
 
 test('init creates config and sample docs', () => {

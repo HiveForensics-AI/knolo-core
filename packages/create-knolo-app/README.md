@@ -1,4 +1,3 @@
-
 # create-knolo-app
 
 Bootstrap a new KnoLo-powered application in seconds.
@@ -21,7 +20,7 @@ npx create-knolo-app my-app
 cd my-app
 npm install
 npm run dev
-````
+```
 
 First-time build:
 
@@ -113,3 +112,4 @@ You can experiment directly in the playground UI.
 ## 📄 License
 
 MIT
+

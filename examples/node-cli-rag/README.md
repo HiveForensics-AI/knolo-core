@@ -6,3 +6,10 @@ Minimal CLI retrieval flow using workspace `@knolo/cli`.
 npm install
 npm run build-pack && npm run query
 ```
+
+---
+
+## License
+
+Apache-2.0
+

@@ -347,6 +347,99 @@ Docs & updates:
 ---
 
 
+
+---
+
+# 🕸 ClaimGraph (Deterministic Knowledge Graph + Delta Logs)
+
+Knolo packs can now embed an optional **ClaimGraph** section built deterministically from source docs.
+
+What it adds:
+
+* Deterministic node/edge extraction from markdown links, wiki links, headings, and conservative `X is Y` sentences.
+* Pack-embedded base graph (`meta.claimGraph`) with stable IDs and sorted ordering.
+* Agent-shareable append-only **ClaimGraphLog** overlays for offline collaboration.
+
+Determinism guarantees:
+
+* Same docs + options → same graph JSON and pack bytes.
+* Stable hash IDs for nodes and edges.
+* Sorted nodes/edges, sorted evidence arrays, deterministic caps.
+
+## Build a pack with ClaimGraph
+
+```ts
+import { buildPack } from '@knolo/core';
+
+const bytes = await buildPack(docs, {
+  graph: {
+    enabled: true,
+    maxEdgesPerDoc: 500,
+  },
+});
+```
+
+## Mount and inspect ClaimGraph
+
+```ts
+import { mountPack, getClaimGraph } from '@knolo/core';
+
+const pack = await mountPack({ src: bytes });
+const graph = getClaimGraph(pack);
+
+console.log(pack.meta.claimGraph); // { version: 1, nodes, edges }
+console.log(graph?.edges.slice(0, 3));
+```
+
+## Agent-shared delta logs
+
+```ts
+import {
+  createGraphLog,
+  appendOp,
+  mergeClaimGraphLogs,
+  applyClaimGraphLog,
+} from '@knolo/core';
+
+let a = createGraphLog();
+a = appendOp(a, {
+  op: 'upsert_node',
+  label: 'Delta Log',
+  ts: 1710000000000,
+  actor: 'agent.alpha',
+});
+
+let b = createGraphLog();
+b = appendOp(b, {
+  op: 'add_edge',
+  from: 'n_1234abcd',
+  p: 'mentions',
+  to: 'n_7890ef12',
+  ts: 1710000000100,
+  actor: 'agent.beta',
+});
+
+const merged = mergeClaimGraphLogs(a, b);
+const effectiveGraph = applyClaimGraphLog(graph ?? { version: 1, nodes: [], edges: [] }, merged);
+```
+
+## Optional deterministic graph-based query expansion
+
+```ts
+import { query } from '@knolo/core';
+
+const hits = query(pack, 'knolo determinism', {
+  topK: 5,
+  graph: {
+    expand: true,
+    maxExtraTerms: 12,
+    predicates: ['defined_as', 'is', 'mentions', 'ref'],
+  },
+});
+```
+
+---
+
 # 📄 License
 
 Apache-2.0 — see `LICENSE`

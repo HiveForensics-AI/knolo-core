@@ -8,6 +8,8 @@
 import { getTextDecoder } from './utils/utf8.js';
 import type { AgentRegistry } from './agent.js';
 import { validateAgentRegistry } from './agent.js';
+import type { ClaimGraph } from './graph/claim_graph.js';
+import { validateClaimGraph } from './graph/claim_graph.js';
 
 export type MountOptions = { src: string | ArrayBufferLike | Uint8Array };
 
@@ -15,6 +17,7 @@ export type PackMeta = {
   version: number;
   stats: { docs: number; blocks: number; terms: number; avgBlockLen?: number };
   agents?: AgentRegistry;
+  claimGraph?: { version: 1; nodes: number; edges: number };
 };
 
 export type Pack = {
@@ -35,6 +38,7 @@ export type Pack = {
     vecs: Int8Array;
     scales?: Uint16Array;
   };
+  claimGraph?: ClaimGraph;
 };
 
 export function hasSemantic(pack: Pack): boolean {
@@ -115,17 +119,53 @@ export function mountPackFromBuffer(buf: ArrayBuffer): Pack {
   }
 
   let semantic: Pack['semantic'];
-  if (offset < buf.byteLength) {
-    const semLen = dv.getUint32(offset, true);
-    offset += 4;
-    const semJson = dec.decode(new Uint8Array(buf, offset, semLen));
-    offset += semLen;
-    const sem = JSON.parse(semJson);
+  let claimGraph: ClaimGraph | undefined;
 
-    const semBlobLen = dv.getUint32(offset, true);
+  while (offset < buf.byteLength) {
+    const sectionStart = offset;
+    if (buf.byteLength - offset < 4) break;
+    const jsonLen = dv.getUint32(offset, true);
     offset += 4;
-    const semBlob = new Uint8Array(buf, offset, semBlobLen);
-    semantic = parseSemanticSection(sem, semBlob);
+    if (jsonLen < 0 || offset + jsonLen > buf.byteLength) {
+      offset = sectionStart;
+      break;
+    }
+
+    let parsed: unknown;
+    try {
+      const json = dec.decode(new Uint8Array(buf, offset, jsonLen));
+      parsed = JSON.parse(json);
+    } catch {
+      offset = sectionStart;
+      break;
+    }
+    offset += jsonLen;
+
+    if (!semantic && looksLikeSemanticJson(parsed)) {
+      if (buf.byteLength - offset < 4) {
+        offset = sectionStart;
+        break;
+      }
+      const semBlobLen = dv.getUint32(offset, true);
+      offset += 4;
+      if (semBlobLen < 0 || offset + semBlobLen > buf.byteLength) {
+        offset = sectionStart;
+        break;
+      }
+      const semBlob = new Uint8Array(buf, offset, semBlobLen);
+      offset += semBlobLen;
+      semantic = parseSemanticSection(parsed, semBlob);
+      continue;
+    }
+
+    const graph = validateClaimGraph(parsed);
+    if (!claimGraph && graph) {
+      claimGraph = graph;
+      continue;
+    }
+
+    offset = sectionStart;
+    break;
   }
 
   return {
@@ -138,7 +178,23 @@ export function mountPackFromBuffer(buf: ArrayBuffer): Pack {
     namespaces,
     blockTokenLens,
     semantic,
+    claimGraph,
   };
+}
+
+function looksLikeSemanticJson(parsed: unknown): boolean {
+  if (!parsed || typeof parsed !== 'object') return false;
+  const sem = parsed as {
+    version?: number;
+    encoding?: string;
+    blocks?: { vectors?: { byteOffset?: number; length?: number } };
+  };
+  return (
+    sem.version === 1 &&
+    sem.encoding === 'int8_l2norm' &&
+    typeof sem.blocks?.vectors?.byteOffset === 'number' &&
+    typeof sem.blocks?.vectors?.length === 'number'
+  );
 }
 
 function parseSemanticSection(sem: any, blob: Uint8Array): Pack['semantic'] {

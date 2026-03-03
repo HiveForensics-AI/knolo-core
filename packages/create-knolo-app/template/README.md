@@ -7,3 +7,10 @@ npm run dev
 ```
 
 Open http://localhost:3000 and ask questions about files in `./docs`.
+
+---
+
+## License
+
+MIT
+

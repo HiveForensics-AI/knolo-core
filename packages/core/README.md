@@ -319,10 +319,73 @@ Properties:
 
 ---
 
+# 🕸 ClaimGraph API
+
+`@knolo/core` includes a deterministic ClaimGraph subsystem.
+
+## Build-time config
+
+```ts
+type BuildPackOptions = {
+  graph?: {
+    enabled?: boolean; // default true
+    maxEdgesPerDoc?: number; // default 500
+  };
+};
+```
+
+## Query-time config
+
+```ts
+type QueryOptions = {
+  graph?: {
+    expand?: boolean; // default false
+    maxExtraTerms?: number; // default 12
+    predicates?: string[]; // default ['defined_as', 'is', 'mentions', 'ref']
+  };
+};
+```
+
+## Exports
+
+```ts
+import {
+  buildClaimGraph,
+  getClaimGraph,
+  applyClaimGraphLog,
+  mergeClaimGraphLogs,
+  expandQueryWithGraph,
+  createGraphLog,
+  appendOp,
+} from '@knolo/core';
+```
+
+Types:
+
+* `ClaimNode`
+* `ClaimEdge`
+* `ClaimGraph`
+* `ClaimOp`
+* `ClaimGraphLog`
+
+## Notes on determinism and bounds
+
+* Node IDs are hash-derived from normalized labels.
+* Edge IDs are hash-derived from `(from, predicate, to, evidence)`.
+* Node labels are normalized and deterministically truncated.
+* Evidence arrays are sorted + unique.
+* Node/edge arrays are sorted by ID in final graph.
+* Extraction is bounded with `maxEdgesPerDoc`.
+* Query expansion is bounded with `maxExtraTerms` and stable ordering.
+
+## Pack format note
+
+`.knolo` binary layout now supports an optional trailing ClaimGraph JSON section after existing sections.
+Runtimes that ignore unknown trailing bytes remain compatible.
+
+---
+
 # 📄 License
 
 Apache-2.0
-
-
-
 
