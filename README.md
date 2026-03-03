@@ -347,10 +347,6 @@ Docs & updates:
 ---
 
 
-# 📄 License
-
-Apache-2.0 — see `LICENSE`
-
 
 ---
 
@@ -441,3 +437,10 @@ const hits = query(pack, 'knolo determinism', {
   },
 });
 ```
+
+---
+
+# 📄 License
+
+Apache-2.0 — see `LICENSE`
+

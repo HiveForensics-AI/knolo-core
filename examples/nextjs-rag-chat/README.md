@@ -14,3 +14,10 @@ npm install
 npm run knolo:build
 npm run dev
 ```
+
+---
+
+## License
+
+Apache-2.0
+

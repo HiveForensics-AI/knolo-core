@@ -6,3 +6,10 @@ Minimal LangChain-style retrieval with `@knolo/langchain` (no `langchain` depend
 npm install
 npm run start
 ```
+
+---
+
+## License
+
+Apache-2.0
+

@@ -319,16 +319,6 @@ Properties:
 
 ---
 
-# 📄 License
-
-Apache-2.0
-
-
-
-
-
----
-
 # 🕸 ClaimGraph API
 
 `@knolo/core` includes a deterministic ClaimGraph subsystem.
@@ -392,3 +382,10 @@ Types:
 
 `.knolo` binary layout now supports an optional trailing ClaimGraph JSON section after existing sections.
 Runtimes that ignore unknown trailing bytes remain compatible.
+
+---
+
+# 📄 License
+
+Apache-2.0
+
