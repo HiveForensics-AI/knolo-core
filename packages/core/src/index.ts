@@ -13,6 +13,15 @@ export {
   encodeScaleF16,
   decodeScaleF16,
 } from './semantic.js';
+export { cosineSimilarity, normalizeVector } from './semantic/cosine.js';
+export {
+  createPackFingerprint,
+  serializeSidecar,
+  parseSidecar,
+  validateSidecarForPack,
+} from './semantic/sidecar.js';
+export { rerankCandidates } from './semantic/rerank.js';
+export { assertProviderCompatible, ensureProviderModelId } from './semantic/provider.js';
 export {
   listAgents,
   getAgent,
@@ -39,6 +48,7 @@ export {
 export { expandQueryWithGraph } from './graph/query_expand.js';
 export type { MountOptions, PackMeta, Pack } from './pack.runtime.js';
 export type { QueryOptions, Hit } from './query.js';
+export type { EmbeddingProvider, SemanticSidecar, SemanticQueryOptions, RetrievalEvidence } from './semantic/types.js';
 export type { ContextPatch } from './patch.js';
 export type { BuildInputDoc, BuildPackOptions } from './builder.js';
 export type {

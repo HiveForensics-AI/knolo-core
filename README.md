@@ -229,6 +229,27 @@ const hits = query(kb, 'react native bridge throttling', {
 });
 ```
 
+## Semantic sidecar workflow (Ollama, optional)
+
+Lexical retrieval is still the first-pass and default. Sidecars add optional local reranking over lexical top-N candidates (no vector DB, no `.knolo` format migration).
+
+```bash
+# 1) Build deterministic lexical pack
+knolo build
+
+# 2) Generate local semantic sidecar (requires Ollama running)
+knolo semantic:index --pack ./dist/knowledge.knolo --out ./dist/knowledge.knolo.semantic.json --model qwen3-embedding:4b
+
+# 3) Inspect and validate sidecar before query-time use
+knolo semantic:inspect --sidecar ./dist/knowledge.knolo.semantic.json
+knolo semantic:validate --pack ./dist/knowledge.knolo --sidecar ./dist/knowledge.knolo.semantic.json --model qwen3-embedding:4b
+```
+
+Troubleshooting:
+- If Ollama is not running, start it and ensure `http://localhost:11434` is reachable.
+- If model is missing, run `ollama pull qwen3-embedding:4b`.
+- If validate fails for fingerprint/model mismatch, regenerate sidecar with the current pack and exact model.
+
 ---
 
 # 🧠 Optional: Agent Metadata & Routing
@@ -443,4 +464,3 @@ const hits = query(pack, 'knolo determinism', {
 # 📄 License
 
 Apache-2.0 — see `LICENSE`
-
