@@ -19,6 +19,7 @@ import { decodeScaleF16, quantizeEmbeddingInt8L2Norm } from "./semantic.js";
 import { expandQueryWithGraph } from "./graph/query_expand.js";
 import type { RetrievalEvidence, SemanticSidecar } from "./semantic/types.js";
 import { rerankCandidates } from "./semantic/rerank.js";
+import { parseSidecar } from "./semantic/sidecar.js";
 
 export type QueryOptions = {
   topK?: number;
@@ -123,6 +124,9 @@ export function validateSemanticQueryOptions(options?: QueryOptions["semantic"])
   if (options.queryEmbedding !== undefined && !(options.queryEmbedding instanceof Float32Array)) {
     throw new Error("query(...): semantic.queryEmbedding must be a Float32Array.");
   }
+  if (options.sidecarPath !== undefined && typeof options.sidecarPath !== "string") {
+    throw new Error("query(...): semantic.sidecarPath must be a string when provided.");
+  }
   if (options.minSemanticScore !== undefined && (!Number.isFinite(options.minSemanticScore) || options.minSemanticScore < 0 || options.minSemanticScore > 1)) {
     throw new Error("query(...): semantic.minSemanticScore must be a finite number between 0 and 1.");
   }
@@ -179,7 +183,7 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
       wSem: Math.max(0, opts.semantic?.blend?.wSem ?? 0.25),
     },
     queryEmbedding: opts.semantic?.queryEmbedding,
-    sidecar: opts.semantic?.sidecar,
+    sidecar: resolveSemanticSidecar(opts.semantic?.sidecar, opts.semantic?.sidecarPath),
     provider: opts.semantic?.provider,
     minSemanticScore: opts.semantic?.minSemanticScore,
     force: opts.semantic?.force ?? false,
@@ -378,6 +382,7 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
   const confidence = lexConfidence(prelim);
   let semanticScores: Map<number, number> | undefined;
   let blendedScores: Map<number, number> | undefined;
+  const originalLexicalScores = new Map(prelim.map((item) => [item.blockId, item.score]));
   if (shouldRerankWithSemantic(pack, semanticOpts, confidence)) {
     const semanticResult = rerankLexicalHitsWithSemantic(pack, prelim, semanticOpts);
     prelim = semanticResult.hits;
@@ -400,7 +405,7 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
       namespace: pack.namespaces?.[r.blockId] ?? undefined,
       evidence: {
         retrieval: retrievalMode,
-        lexicalScore: r.score,
+        lexicalScore: originalLexicalScores.get(r.blockId) ?? r.score,
         semanticScore: semanticScores?.get(r.blockId),
         blendedScore: blendedScores?.get(r.blockId),
         modelId: semanticOpts.provider?.modelId ?? semanticOpts.sidecar?.modelId,
@@ -441,6 +446,42 @@ function shouldRerankWithSemantic(pack: Pack, opts: ResolvedSemanticOpts, confid
     throw new Error("query(...): semantic.queryEmbedding (Float32Array) is required when semantic.enabled=true.");
   }
   return opts.force || confidence < opts.minLexConfidence;
+}
+
+function resolveSemanticSidecar(sidecar?: SemanticSidecar, sidecarPath?: string): SemanticSidecar | undefined {
+  if (sidecar) return sidecar;
+  if (!sidecarPath) return undefined;
+  const raw = sidecarPath.trim();
+  if (!raw) return undefined;
+
+  if (raw.startsWith("{")) {
+    return parseSidecar(raw);
+  }
+
+  if (raw.startsWith("data:")) {
+    const comma = raw.indexOf(",");
+    if (comma <= 0) return undefined;
+    const meta = raw.slice(5, comma).toLowerCase();
+    const payload = raw.slice(comma + 1);
+    const decoded = meta.includes(";base64")
+      ? decodeBase64(payload)
+      : decodeURIComponent(payload);
+    if (!decoded.trim()) return undefined;
+    return parseSidecar(decoded);
+  }
+
+  return undefined;
+}
+
+function decodeBase64(input: string): string {
+  const normalized = input.replace(/\s+/g, "");
+  const atobFn = (globalThis as { atob?: (s: string) => string }).atob;
+  if (typeof atobFn === "function") return atobFn(normalized);
+
+  const maybeBufferCtor = (globalThis as { Buffer?: { from: (s: string, enc: string) => { toString: (enc: string) => string } } }).Buffer;
+  if (maybeBufferCtor?.from) return maybeBufferCtor.from(normalized, "base64").toString("utf8");
+
+  throw new Error("query(...): Unable to decode semantic.sidecarPath base64 payload in this runtime.");
 }
 
 function rerankLexicalHitsWithSemantic(
