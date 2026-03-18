@@ -17,6 +17,9 @@ import { diversifyAndDedupe } from "./quality/diversify.js";
 import { knsSignature, knsDistance } from "./quality/signature.js";
 import { decodeScaleF16, quantizeEmbeddingInt8L2Norm } from "./semantic.js";
 import { expandQueryWithGraph } from "./graph/query_expand.js";
+import type { RetrievalEvidence, SemanticSidecar } from "./semantic/types.js";
+import { rerankCandidates } from "./semantic/rerank.js";
+import { parseSidecar } from "./semantic/sidecar.js";
 
 export type QueryOptions = {
   topK?: number;
@@ -47,6 +50,14 @@ export type QueryOptions = {
       wSem?: number;
     };
     queryEmbedding?: Float32Array;
+    sidecar?: SemanticSidecar;
+    provider?: {
+      type: "ollama";
+      modelId: string;
+      endpoint?: string;
+    };
+    sidecarPath?: string;
+    minSemanticScore?: number;
     force?: boolean;
   };
 };
@@ -113,6 +124,18 @@ export function validateSemanticQueryOptions(options?: QueryOptions["semantic"])
   if (options.queryEmbedding !== undefined && !(options.queryEmbedding instanceof Float32Array)) {
     throw new Error("query(...): semantic.queryEmbedding must be a Float32Array.");
   }
+  if (options.sidecarPath !== undefined && typeof options.sidecarPath !== "string") {
+    throw new Error("query(...): semantic.sidecarPath must be a string when provided.");
+  }
+  if (options.minSemanticScore !== undefined && (!Number.isFinite(options.minSemanticScore) || options.minSemanticScore < 0 || options.minSemanticScore > 1)) {
+    throw new Error("query(...): semantic.minSemanticScore must be a finite number between 0 and 1.");
+  }
+  if (options.provider) {
+    if (options.provider.type !== "ollama") throw new Error('query(...): semantic.provider.type must be "ollama".');
+    if (typeof options.provider.modelId !== "string" || !options.provider.modelId.trim()) {
+      throw new Error("query(...): semantic.provider.modelId must be a non-empty string.");
+    }
+  }
   if (options.blend) {
     if (options.blend.enabled !== undefined && typeof options.blend.enabled !== "boolean") {
       throw new Error("query(...): semantic.blend.enabled must be a boolean when provided.");
@@ -135,6 +158,7 @@ export type Hit = {
   text: string;
   source?: string;
   namespace?: string;
+  evidence?: RetrievalEvidence;
 };
 
 export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
@@ -159,6 +183,9 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
       wSem: Math.max(0, opts.semantic?.blend?.wSem ?? 0.25),
     },
     queryEmbedding: opts.semantic?.queryEmbedding,
+    sidecar: resolveSemanticSidecar(opts.semantic?.sidecar, opts.semantic?.sidecarPath),
+    provider: opts.semantic?.provider,
+    minSemanticScore: opts.semantic?.minSemanticScore,
     force: opts.semantic?.force ?? false,
   };
 
@@ -353,9 +380,17 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
   }
 
   const confidence = lexConfidence(prelim);
+  let semanticScores: Map<number, number> | undefined;
+  let blendedScores: Map<number, number> | undefined;
+  const originalLexicalScores = new Map(prelim.map((item) => [item.blockId, item.score]));
   if (shouldRerankWithSemantic(pack, semanticOpts, confidence)) {
-    prelim = rerankLexicalHitsWithSemantic(pack, prelim, semanticOpts);
+    const semanticResult = rerankLexicalHitsWithSemantic(pack, prelim, semanticOpts);
+    prelim = semanticResult.hits;
+    semanticScores = semanticResult.semanticScores;
+    blendedScores = semanticResult.blendedScores;
   }
+
+  const retrievalMode = semanticScores ? "hybrid" : "lexical";
 
   // --- KNS tie-breaker + de-dup/MMR
   const qSig = knsSignature(normalize(q));
@@ -368,6 +403,13 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
       text,
       source: pack.docIds?.[r.blockId] ?? undefined,
       namespace: pack.namespaces?.[r.blockId] ?? undefined,
+      evidence: {
+        retrieval: retrievalMode,
+        lexicalScore: originalLexicalScores.get(r.blockId) ?? r.score,
+        semanticScore: semanticScores?.get(r.blockId),
+        blendedScore: blendedScores?.get(r.blockId),
+        modelId: semanticOpts.provider?.modelId ?? semanticOpts.sidecar?.modelId,
+      },
     };
   });
 
@@ -391,26 +433,77 @@ type ResolvedSemanticOpts = {
   minLexConfidence: number;
   blend: { enabled: boolean; wLex: number; wSem: number };
   queryEmbedding?: Float32Array;
+  sidecar?: SemanticSidecar;
+  provider?: { type: "ollama"; modelId: string; endpoint?: string };
+  minSemanticScore?: number;
   force: boolean;
 };
 
 function shouldRerankWithSemantic(pack: Pack, opts: ResolvedSemanticOpts, confidence: number): boolean {
   if (!opts.enabled || opts.mode !== "rerank") return false;
-  if (!pack.semantic) return false;
+  if (!pack.semantic && !opts.sidecar) return false;
   if (!opts.queryEmbedding) {
     throw new Error("query(...): semantic.queryEmbedding (Float32Array) is required when semantic.enabled=true.");
   }
   return opts.force || confidence < opts.minLexConfidence;
 }
 
+function resolveSemanticSidecar(sidecar?: SemanticSidecar, sidecarPath?: string): SemanticSidecar | undefined {
+  if (sidecar) return sidecar;
+  if (!sidecarPath) return undefined;
+  const raw = sidecarPath.trim();
+  if (!raw) return undefined;
+
+  if (raw.startsWith("{")) {
+    return parseSidecar(raw);
+  }
+
+  if (raw.startsWith("data:")) {
+    const comma = raw.indexOf(",");
+    if (comma <= 0) return undefined;
+    const meta = raw.slice(5, comma).toLowerCase();
+    const payload = raw.slice(comma + 1);
+    const decoded = meta.includes(";base64")
+      ? decodeBase64(payload)
+      : decodeURIComponent(payload);
+    if (!decoded.trim()) return undefined;
+    return parseSidecar(decoded);
+  }
+
+  return undefined;
+}
+
+function decodeBase64(input: string): string {
+  const normalized = input.replace(/\s+/g, "");
+  const atobFn = (globalThis as { atob?: (s: string) => string }).atob;
+  if (typeof atobFn === "function") return atobFn(normalized);
+
+  const maybeBufferCtor = (globalThis as { Buffer?: { from: (s: string, enc: string) => { toString: (enc: string) => string } } }).Buffer;
+  if (maybeBufferCtor?.from) return maybeBufferCtor.from(normalized, "base64").toString("utf8");
+
+  throw new Error("query(...): Unable to decode semantic.sidecarPath base64 payload in this runtime.");
+}
+
 function rerankLexicalHitsWithSemantic(
   pack: Pack,
   prelim: Array<{ blockId: number; score: number }>,
   opts: ResolvedSemanticOpts
-): Array<{ blockId: number; score: number }> {
+): { hits: Array<{ blockId: number; score: number }>; semanticScores?: Map<number, number>; blendedScores?: Map<number, number> } {
+  if (opts.sidecar && opts.queryEmbedding) {
+    const sidecarResult = rerankCandidates({
+      lexical: prelim,
+      sidecar: opts.sidecar,
+      queryEmbedding: opts.queryEmbedding,
+      topN: opts.topN,
+      blend: opts.blend,
+      minSemanticScore: opts.minSemanticScore,
+    });
+    return { hits: sidecarResult.reranked, semanticScores: sidecarResult.semanticScores, blendedScores: sidecarResult.blendedScores };
+  }
+
   const sem = pack.semantic;
-  if (!sem || !opts.queryEmbedding) return prelim;
-  if (sem.dims <= 0 || sem.vecs.length === 0 || sem.dims !== opts.queryEmbedding.length) return prelim;
+  if (!sem || !opts.queryEmbedding) return { hits: prelim };
+  if (sem.dims <= 0 || sem.vecs.length === 0 || sem.dims !== opts.queryEmbedding.length) return { hits: prelim };
 
   const topN = Math.min(opts.topN, prelim.length);
   const rerankSlice = prelim.slice(0, topN);
@@ -427,16 +520,20 @@ function rerankLexicalHitsWithSemantic(
   const wSem = denom > 0 ? opts.blend.wSem / denom : 0.5;
 
   const reranked = new Array<{ blockId: number; score: number }>(topN);
+  const semanticScores = new Map<number, number>();
+  const blendedScores = new Map<number, number>();
   for (let i = 0; i < topN; i++) {
     const hit = rerankSlice[i];
+    semanticScores.set(hit.blockId, normSem[i]);
+    blendedScores.set(hit.blockId, opts.blend.enabled ? wLex * normLex[i] + wSem * normSem[i] : semScores[i]);
     reranked[i] = {
       blockId: hit.blockId,
-      score: opts.blend.enabled ? wLex * normLex[i] + wSem * normSem[i] : semScores[i],
+      score: blendedScores.get(hit.blockId) ?? hit.score,
     };
   }
   reranked.sort((a, b) => b.score - a.score || a.blockId - b.blockId);
 
-  return [...reranked, ...tail];
+  return { hits: [...reranked, ...tail], semanticScores, blendedScores };
 }
 
 function scoreSemanticInt8(

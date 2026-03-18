@@ -4,6 +4,7 @@ import { mkdtempSync, existsSync, mkdirSync, writeFileSync, readFileSync } from 
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 
 const cliPath = path.resolve(process.cwd(), 'bin/knolo.mjs');
 const cliPackageJson = JSON.parse(
@@ -90,4 +91,34 @@ test('add updates existing source path', () => {
 
   const config = JSON.parse(readFileSync(path.join(cwd, 'knolo.config.json'), 'utf8'));
   assert.equal(config.sources[0].path, './knowledge-base');
+});
+
+test('semantic:validate succeeds for matching pack/model and fails on mismatch', async () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-sem-validate-'));
+  runCli(['init'], cwd);
+  runCli(['build'], cwd);
+
+  const coreModule = await import(pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href);
+  const packPath = path.join(cwd, 'dist/knowledge.knolo');
+  const packBytes = readFileSync(packPath);
+  const pack = await coreModule.mountPack({ src: Uint8Array.from(packBytes) });
+  const sidecarPath = path.join(cwd, 'dist/knowledge.knolo.semantic.json');
+  const sidecar = {
+    version: 1,
+    packFingerprint: coreModule.createPackFingerprint(pack),
+    modelId: 'qwen3-embedding:4b',
+    dimension: 3,
+    metric: 'cosine',
+    createdAt: new Date().toISOString(),
+    blocks: pack.blocks.map((_, blockId) => ({ blockId, vector: [1, 0, 0] })),
+  };
+  writeFileSync(sidecarPath, coreModule.serializeSidecar(sidecar), 'utf8');
+
+  const output = runCli(['semantic:validate', '--pack', './dist/knowledge.knolo', '--sidecar', './dist/knowledge.knolo.semantic.json', '--model', 'qwen3-embedding:4b'], cwd);
+  assert.match(output, /validation passed/);
+
+  assert.throws(
+    () => runCli(['semantic:validate', '--pack', './dist/knowledge.knolo', '--sidecar', './dist/knowledge.knolo.semantic.json', '--model', 'other-model'], cwd),
+    /Semantic model mismatch/
+  );
 });

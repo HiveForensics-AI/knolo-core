@@ -27,7 +27,7 @@ const DEFAULT_CONFIG = {
 };
 const SUPPORTED_EXTENSIONS = new Set(['.md', '.txt', '.json']);
 const SKIP_DIRS = new Set(['node_modules', 'dist', '.git']);
-const SUBCOMMANDS = new Set(['init', 'add', 'build', 'query', 'dev']);
+const SUBCOMMANDS = new Set(['init', 'add', 'build', 'query', 'dev', 'semantic:index', 'semantic:inspect', 'semantic:validate']);
 
 function createError(message) {
   return new Error(message);
@@ -87,6 +87,9 @@ function printCommandHelp(command) {
     build: 'Usage: knolo build',
     query: 'Usage: knolo query <question> [--pack <path>] [--k <number>] [--json]',
     dev: 'Usage: knolo dev',
+    'semantic:index': 'Usage: knolo semantic:index --pack <path> [--out <path>] [--model <id>] [--endpoint <url>]',
+    'semantic:inspect': 'Usage: knolo semantic:inspect --sidecar <path>',
+    'semantic:validate': 'Usage: knolo semantic:validate --pack <path> --sidecar <path> --model <id>',
   };
   console.log(help[command] ?? 'Unknown command.');
 }
@@ -311,6 +314,79 @@ async function cmdQuery(core, args) {
     console.log(`   score: ${hit.score}`);
     console.log(`   snippet: ${hit.snippet}`);
   });
+}
+
+function parseKeyValueArgs(args) {
+  const out = {};
+  for (let i = 0; i < args.length; i++) {
+    const key = args[i];
+    if (!key.startsWith('--')) throw createError(`Unexpected argument: ${key}`);
+    out[key.slice(2)] = args[++i];
+  }
+  return out;
+}
+
+async function loadOllamaProvider() {
+  const mod = await tryImport(path.resolve(__dirname, '../../semantic-ollama/dist/index.js'));
+  if (mod?.OllamaEmbeddingProvider) return mod.OllamaEmbeddingProvider;
+  const pkg = await tryImport('@knolo/semantic-ollama');
+  if (pkg?.OllamaEmbeddingProvider) return pkg.OllamaEmbeddingProvider;
+  throw createError('Could not load @knolo/semantic-ollama. Build packages/semantic-ollama first.');
+}
+
+async function cmdSemanticIndex(core, args) {
+  const flags = parseKeyValueArgs(args);
+  const packPath = path.resolve(process.cwd(), flags.pack || 'dist/knowledge.knolo');
+  const outPath = path.resolve(process.cwd(), flags.out || `${packPath}.semantic.json`);
+  const modelId = flags.model || 'qwen3-embedding:4b';
+  const endpoint = flags.endpoint || 'http://localhost:11434';
+  if (!existsSync(packPath)) throw createError(`Pack file not found at ${path.relative(process.cwd(), packPath)}.`);
+
+  const bytes = Uint8Array.from(readFileSync(packPath));
+  const pack = await mountPackFromBytes(core, bytes);
+  const OllamaEmbeddingProvider = await loadOllamaProvider();
+  const provider = new OllamaEmbeddingProvider({ modelId, endpoint });
+  const vectors = await provider.embedTexts(pack.blocks);
+  const sidecar = {
+    version: 1,
+    packFingerprint: core.createPackFingerprint(pack),
+    modelId: provider.modelId,
+    dimension: vectors[0]?.length ?? 0,
+    metric: 'cosine',
+    createdAt: new Date().toISOString(),
+    blocks: vectors.map((vector, blockId) => ({ blockId, vector: Array.from(core.normalizeVector(vector)) })),
+  };
+  writeFileSync(outPath, core.serializeSidecar(sidecar));
+  console.log(`✔ wrote ${path.relative(process.cwd(), outPath)}`);
+}
+
+async function cmdSemanticInspect(core, args) {
+  const flags = parseKeyValueArgs(args);
+  const sidecarPath = path.resolve(process.cwd(), flags.sidecar);
+  const sidecar = core.parseSidecar(readFileSync(sidecarPath, 'utf8'));
+  console.log(JSON.stringify({
+    version: sidecar.version,
+    packFingerprint: sidecar.packFingerprint,
+    modelId: sidecar.modelId,
+    dimension: sidecar.dimension,
+    metric: sidecar.metric,
+    createdAt: sidecar.createdAt,
+    blocks: sidecar.blocks.length,
+  }, null, 2));
+}
+
+async function cmdSemanticValidate(core, args) {
+  const flags = parseKeyValueArgs(args);
+  const packPath = path.resolve(process.cwd(), flags.pack || 'dist/knowledge.knolo');
+  const sidecarPath = path.resolve(process.cwd(), flags.sidecar);
+  const modelId = flags.model;
+  if (!modelId) throw createError('semantic:validate requires --model <id>.');
+  const pack = await mountPackFromBytes(core, Uint8Array.from(readFileSync(packPath)));
+  const sidecar = core.parseSidecar(readFileSync(sidecarPath, 'utf8'));
+  core.validateSidecarForPack({ sidecar, pack, modelId });
+  if (sidecar.blocks.length !== pack.blocks.length) throw createError(`Semantic block count mismatch: sidecar=${sidecar.blocks.length}, pack=${pack.blocks.length}`);
+  if (sidecar.dimension <= 0) throw createError('Semantic sidecar dimension must be > 0.');
+  console.log('✔ semantic sidecar validation passed');
 }
 
 async function mountPackFromBytes(core, bytes) {
@@ -598,6 +674,9 @@ async function main() {
       if (command === 'build') return await cmdBuild(core);
       if (command === 'query') return await cmdQuery(core, commandArgs);
       if (command === 'dev') return await cmdDev(core);
+      if (command === 'semantic:index') return await cmdSemanticIndex(core, commandArgs);
+      if (command === 'semantic:inspect') return await cmdSemanticInspect(core, commandArgs);
+      if (command === 'semantic:validate') return await cmdSemanticValidate(core, commandArgs);
     }
 
     if (command.startsWith('-')) throw createError(`Unknown option: ${command}`);

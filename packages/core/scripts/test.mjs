@@ -37,6 +37,12 @@ import {
   mergeClaimGraphLogs,
   applyClaimGraphLog,
   expandQueryWithGraph,
+  cosineSimilarity,
+  normalizeVector,
+  createPackFingerprint,
+  serializeSidecar,
+  parseSidecar,
+  validateSidecarForPack,
 } from '../dist/index.js';
 import { mountPack as mountPackNode } from '../dist/node.js';
 
@@ -611,6 +617,132 @@ async function testSemanticRerankErrorAndDefaults() {
     /semantic\.queryEmbedding/,
     'expected clear error when semantic rerank is enabled without a query embedding'
   );
+}
+
+async function testSemanticSidecarRerankAndValidation() {
+  const docs = [
+    { id: 'a', text: 'alpha beta alpha beta alpha beta river stone' },
+    { id: 'b', text: 'alpha beta solar wind' },
+  ];
+  const pack = await mountPack({ src: await buildPack(docs) });
+  const sidecar = {
+    version: 1,
+    packFingerprint: createPackFingerprint(pack),
+    modelId: 'qwen3-embedding:4b',
+    dimension: 2,
+    metric: 'cosine',
+    createdAt: new Date().toISOString(),
+    blocks: [
+      { blockId: 0, vector: [1, 0] },
+      { blockId: 1, vector: [0, 1] },
+    ],
+  };
+
+  const lexical = query(pack, 'alpha beta', { topK: 2, queryExpansion: { enabled: false } });
+  const reranked = query(pack, 'alpha beta', {
+    topK: 2,
+    queryExpansion: { enabled: false },
+    semantic: {
+      enabled: true,
+      sidecarPath: serializeSidecar(sidecar),
+      provider: { type: 'ollama', modelId: 'qwen3-embedding:4b' },
+      queryEmbedding: new Float32Array([0, 1]),
+      force: true,
+      blend: { enabled: false },
+    },
+  });
+
+  assert.notEqual(reranked[0]?.source, lexical[0]?.source, 'expected sidecar rerank to update ordering');
+  assert.equal(reranked[0]?.evidence?.retrieval, 'hybrid');
+
+  assert.throws(
+    () => validateSidecarForPack({ sidecar: { ...sidecar, modelId: 'other' }, pack, modelId: 'qwen3-embedding:4b' }),
+    /Semantic model mismatch/
+  );
+  assert.throws(
+    () => validateSidecarForPack({ sidecar: { ...sidecar, packFingerprint: 'fnv1a-deadbeef' }, pack, modelId: 'qwen3-embedding:4b' }),
+    /pack fingerprint mismatch/
+  );
+
+  const loaded = parseSidecar(serializeSidecar(sidecar));
+  assert.deepEqual(loaded, sidecar, 'expected semantic sidecar round trip to remain stable');
+}
+
+async function testSemanticEvidenceScoresRemainCorrectAfterRerank() {
+  const docs = [
+    { id: 'lex-a', text: 'alpha beta alpha beta alpha beta river stone' },
+    { id: 'lex-b', text: 'alpha beta solar wind' },
+  ];
+  const pack = await mountPack({
+    src: await buildPack(docs, {
+      semantic: {
+        enabled: true,
+        modelId: 'test-model',
+        embeddings: [new Float32Array([1, 0]), new Float32Array([0, 1])],
+        quantization: { type: 'int8_l2norm', perVectorScale: true },
+      },
+    }),
+  });
+
+  const lexical = query(pack, 'alpha beta', {
+    topK: 2,
+    queryExpansion: { enabled: false },
+  });
+  const lexicalScores = new Map(lexical.map((h) => [h.blockId, h.evidence?.lexicalScore ?? h.score]));
+  const reranked = query(pack, 'alpha beta', {
+    topK: 2,
+    queryExpansion: { enabled: false },
+    semantic: {
+      enabled: true,
+      queryEmbedding: new Float32Array([0, 1]),
+      force: true,
+      blend: { enabled: true, wLex: 0.5, wSem: 0.5 },
+    },
+  });
+
+  assert.notEqual(
+    reranked[0]?.source,
+    lexical[0]?.source,
+    'expected semantic rerank to change ordering'
+  );
+  for (const hit of reranked) {
+    const before = lexicalScores.get(hit.blockId);
+    assert.equal(
+      hit.evidence?.lexicalScore,
+      before,
+      'expected evidence.lexicalScore to preserve pre-rerank lexical score'
+    );
+    assert.equal(hit.evidence?.retrieval, 'hybrid');
+    assert.equal(typeof hit.evidence?.semanticScore, 'number');
+    assert.equal(typeof hit.evidence?.blendedScore, 'number');
+  }
+}
+
+async function testLexicalOnlyEvidenceRemainsUnchanged() {
+  const docs = [
+    { id: 'a', text: 'alpha beta gamma' },
+    { id: 'b', text: 'alpha beta delta' },
+  ];
+  const pack = await mountPack({ src: await buildPack(docs) });
+  const hits = query(pack, 'alpha beta', {
+    topK: 2,
+    queryExpansion: { enabled: false },
+  });
+  assert.ok(hits.length > 0, 'expected lexical query to return hits');
+  for (const hit of hits) {
+    assert.equal(hit.evidence?.retrieval, 'lexical');
+    assert.equal(typeof hit.evidence?.lexicalScore, 'number');
+    assert.equal(hit.evidence?.semanticScore, undefined);
+    assert.equal(hit.evidence?.blendedScore, undefined);
+  }
+}
+
+async function testCosineHelpers() {
+  const a = normalizeVector(new Float32Array([3, 4]));
+  const b = normalizeVector(new Float32Array([3, 4]));
+  const c = normalizeVector(new Float32Array([4, -3]));
+  assert.ok(Math.abs(cosineSimilarity(a, b) - 1) < 1e-6, 'expected same vector cosine to be 1');
+  assert.ok(Math.abs(cosineSimilarity(a, c)) < 1e-6, 'expected orthogonal vector cosine to be ~0');
 }
 
 async function testSemanticFixtureAndHelpers() {
@@ -1638,6 +1770,10 @@ await testLexConfidenceDeterministic();
 await testSemanticRerankLowConfidence();
 await testSemanticRerankRespectsConfidenceAndForce();
 await testSemanticRerankErrorAndDefaults();
+await testSemanticSidecarRerankAndValidation();
+await testSemanticEvidenceScoresRemainCorrectAfterRerank();
+await testLexicalOnlyEvidenceRemainsUnchanged();
+await testCosineHelpers();
 await testSmartQuotePhrase();
 await testFirstBlockRetrieval();
 await testNearDuplicateDedupe();
