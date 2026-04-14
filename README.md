@@ -104,6 +104,26 @@ Hybrid semantic reranking is optional and **never replaces lexical grounding**.
 | `create-knolo-app`  | Next.js scaffolding with playground                       |
 | `@knolo/langchain`  | LangChain-style retriever interface                       |
 | `@knolo/llamaindex` | LlamaIndex-style retriever interface                      |
+| `knolo-core-rust`   | Native Rust pack mount + lexical query runtime            |
+
+---
+
+# 🦀 Rust Runtime Support (New)
+
+Knolo now includes an initial Rust runtime in `packages/core-rust`.
+
+Current Rust support includes:
+
+* Mounting `.knolo` packs from bytes
+* Parsing v1/v3-compatible core sections (`meta`, `lexicon`, `postings`, `blocks`)
+* Deterministic lexical querying with `top_k`, `min_score`, `namespace`, and `source` filters
+
+Run Rust tests:
+
+```bash
+cd packages/core-rust
+cargo test
+```
 
 ---
 
