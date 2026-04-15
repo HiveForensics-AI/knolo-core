@@ -9,6 +9,7 @@
     "test": "npm run test --workspaces --if-present",
     "format": "npm run format --workspace @knolo/core",
     "format:check": "npm run format:check --workspace @knolo/core",
-    "knolo": "node ./packages/cli/bin/knolo.mjs"
+    "knolo": "node ./packages/cli/bin/knolo.mjs",
+    "test:rust": "cargo test --manifest-path packages/core-rust/Cargo.toml"
   }
 }
