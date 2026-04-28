@@ -1,0 +1,17 @@
+[package]
+name = "knolo-icp-canister"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "ICP canister adapter for Knolo retrieval over Candid"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
+
+[dependencies]
+candid = "0.10"
+ic-cdk = "0.17"
+ic-cdk-macros = "0.17"
+knolo-core-rust = { path = "../knolo-core-rust" }
+serde = { version = "1", features = ["derive"] }

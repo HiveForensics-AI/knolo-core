@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "name": "docs",
+      "path": "./knowledge"
+    }
+  ],
+  "output": {
+    "path": "./dist/knowledge.knolo"
+  },
+  "query": {
+    "topK": 5
+  }
+}

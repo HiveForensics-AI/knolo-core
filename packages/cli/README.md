@@ -36,6 +36,24 @@ Indexes your configured content and outputs:
 dist/knowledge.knolo
 ```
 
+### ICP Canister Workflow
+
+```bash
+knolo icp init ./icp-knowledge-canister
+cd ./icp-knowledge-canister
+dfx start --background
+dfx deploy
+knolo icp build-pack ./knowledge --out ./dist/knowledge.knolo
+knolo icp upload ./dist/knowledge.knolo --canister knolo_knowledge
+knolo icp query "alpha beta" --canister knolo_knowledge --k 5
+```
+
+These commands stay local-first:
+
+* No hosted service
+* No vector database
+* Lexical retrieval by default
+
 ---
 
 ## 📁 Expected Project Structure
@@ -122,4 +140,3 @@ This section is deterministic, offline-safe, and additive; runtimes that ignore 
 ## 📄 License
 
 MIT
-
