@@ -8,6 +8,7 @@ The example:
 - deploys the Rust canister from `packages/icp-canister`
 - uploads the pack with `dfx canister call`
 - queries the canister directly
+- includes a tiny Vite + React browser client that talks to the canister directly
 
 ## Prerequisites
 
@@ -40,6 +41,16 @@ If `dfx` is running under a minimal shell and complains about terminal colors, r
 TERM=xterm-256color dfx start --background
 TERM=xterm-256color dfx deploy
 ```
+
+To run the browser client:
+
+```bash
+cd examples/icp-knowledge-canister/frontend
+npm install
+npm run dev
+```
+
+The frontend uses `VITE_KNOLO_CANISTER_ID` when provided. Otherwise it falls back to the local canister ID from `.dfx/local/canister_ids.json`, which is available after `dfx deploy`.
 
 ## What Gets Built
 

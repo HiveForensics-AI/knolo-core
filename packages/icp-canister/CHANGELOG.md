@@ -13,6 +13,7 @@ All notable changes to the ICP canister adapter will be documented in this file.
 - Stable-memory persistence for `.knolo` bytes and pack label, with upgrade restore hooks.
 - Persistence helper tests covering snapshot encode/decode, clear behavior, and post-upgrade remounting.
 - Phase 3 local `dfx` example under `examples/icp-knowledge-canister`, including a minimal `dfx.json`, sample pack generator, upload script, query script, and checked-in demo knowledge files.
+- Phase 4 browser frontend under `examples/icp-knowledge-canister/frontend`, using a direct Vite React client with `@dfinity/agent` and no middleware API route.
 
 ### Changed
 - Added the `knolo_icp.did` interface definition for the new canister package.
