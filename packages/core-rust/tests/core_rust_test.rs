@@ -37,6 +37,7 @@ fn mounts_pack_and_exposes_meta() {
     assert_eq!(pack.meta.version, 3);
     assert_eq!(pack.meta.stats.blocks, 2);
     assert_eq!(pack.blocks.len(), 2);
+    assert_eq!(pack.blocks[0], "alpha beta gamma");
     assert_eq!(pack.doc_ids[0].as_deref(), Some("a"));
     assert_eq!(pack.namespaces[1].as_deref(), Some("guides"));
 }

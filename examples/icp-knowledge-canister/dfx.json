@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "dfx": "0.20.0",
+  "canisters": {
+    "knolo_knowledge": {
+      "type": "custom",
+      "candid": "../../packages/icp-canister/knolo_icp.did",
+      "wasm": "../../packages/icp-canister/target/wasm32-unknown-unknown/release/knolo_icp_canister.wasm",
+      "build": [
+        "cargo build --target wasm32-unknown-unknown --release --manifest-path ../../packages/icp-canister/Cargo.toml"
+      ],
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ],
+      "declarations": {
+        "bindings": [
+          "did"
+        ],
+        "output": "./.dfx/local/declarations/knolo_knowledge"
+      }
+    }
+  }
+}

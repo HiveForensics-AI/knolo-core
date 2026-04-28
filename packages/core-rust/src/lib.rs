@@ -441,7 +441,34 @@ fn tokenize(text: &str) -> Vec<String> {
 }
 
 fn compact(s: &str) -> String {
-    s.chars().filter(|c| !c.is_whitespace()).collect()
+    let mut out = String::with_capacity(s.len());
+    let mut in_string = false;
+    let mut escaped = false;
+
+    for ch in s.chars() {
+        if in_string {
+            out.push(ch);
+            if escaped {
+                escaped = false;
+            } else if ch == '\\' {
+                escaped = true;
+            } else if ch == '"' {
+                in_string = false;
+            }
+            continue;
+        }
+
+        if ch.is_whitespace() {
+            continue;
+        }
+
+        out.push(ch);
+        if ch == '"' {
+            in_string = true;
+        }
+    }
+
+    out
 }
 
 fn unescape(s: &str) -> String {

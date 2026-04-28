@@ -12,10 +12,12 @@ All notable changes to the ICP canister adapter will be documented in this file.
 - Phase 1 verification script at `scripts/test-phase-1-icp-canister.sh`.
 - Stable-memory persistence for `.knolo` bytes and pack label, with upgrade restore hooks.
 - Persistence helper tests covering snapshot encode/decode, clear behavior, and post-upgrade remounting.
+- Phase 3 local `dfx` example under `examples/icp-knowledge-canister`, including a minimal `dfx.json`, sample pack generator, upload script, query script, and checked-in demo knowledge files.
 
 ### Changed
 - Added the `knolo_icp.did` interface definition for the new canister package.
 - Added a package-local `Cargo.lock` for reproducible Rust dependency resolution.
+- Fixed pack position encoding and Rust block parsing so JS-built `.knolo` packs query correctly through the canister.
 
 ### Notes
 - Phase 2 now persists `.knolo` bytes and label across upgrades.

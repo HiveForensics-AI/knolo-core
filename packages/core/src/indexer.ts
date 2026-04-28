@@ -23,12 +23,13 @@ export type IndexBuildResult = {
  * sequences of blockId and positions for that term, with zeros as delimiters.
  * The structure looks like:
  *
- *     [termId, blockId+1, pos, pos, 0, blockId+1, pos, 0, 0, termId, ...]
+ *     [termId, blockId+1, pos+1, pos+1, 0, blockId+1, pos+1, 0, 0, termId, ...]
  *
  * Block IDs are stored as bid+1 so that 0 can remain a sentinel delimiter.
- * Each block section ends with a 0, and each term section ends with a 0. The
- * entire array can be streamed sequentially without needing to know the sizes
- * of individual lists ahead of time.
+ * Positions are also stored as pos+1 for the same reason. Each block section
+ * ends with a 0, and each term section ends with a 0. The entire array can be
+ * streamed sequentially without needing to know the sizes of individual lists
+ * ahead of time.
  */
 export function buildIndex(blocks: Block[]): IndexBuildResult {
   // Map term to termId and interim map of termId -> blockId -> positions
@@ -73,7 +74,7 @@ export function buildIndex(blocks: Block[]): IndexBuildResult {
   for (const [tid, blockMap] of termBlockPositions) {
     postings.push(tid);
     for (const [bid, positions] of blockMap) {
-      postings.push(bid + 1, ...positions, 0);
+      postings.push(bid + 1, ...positions.map((pos) => pos + 1), 0);
     }
     postings.push(0); // end of term
   }
