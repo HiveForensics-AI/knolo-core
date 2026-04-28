@@ -1,5 +1,6 @@
 use candid::CandidType;
-use ic_cdk_macros::{query, update};
+use ic_cdk::storage::{stable_restore, stable_save};
+use ic_cdk_macros::{post_upgrade, pre_upgrade, query, update};
 use knolo_core_rust::{mount_pack_from_bytes, query as knolo_query, Pack, QueryOptions};
 use serde::Deserialize;
 use std::cell::RefCell;
@@ -32,6 +33,7 @@ pub struct HealthDto {
 #[derive(Default)]
 struct CanisterState {
     loaded_pack: Option<LoadedPack>,
+    persisted_pack: Option<PersistedPack>,
 }
 
 struct LoadedPack {
@@ -39,18 +41,61 @@ struct LoadedPack {
     pack: Pack,
 }
 
+#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq)]
+struct PersistedPack {
+    bytes: Vec<u8>,
+    label: Option<String>,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
+struct StableSnapshot {
+    pack: Option<PersistedPack>,
+}
+
+struct PreparedPack {
+    loaded: LoadedPack,
+    persisted: PersistedPack,
+    success_message: String,
+}
+
 thread_local! {
-    // TODO(phase-2): move pack persistence to stable memory with pre_upgrade/post_upgrade hooks.
     static STATE: RefCell<CanisterState> = RefCell::new(CanisterState::default());
 }
 
 #[update]
 fn set_pack(bytes: Vec<u8>, label: String) -> HealthDto {
-    STATE.with(|state| set_pack_in_state(&mut state.borrow_mut(), &bytes, label))
+    let prepared = match prepare_pack(&bytes, label) {
+        Ok(prepared) => prepared,
+        Err(err) => return err,
+    };
+
+    if let Err(err) = persist_snapshot(&StableSnapshot {
+        pack: Some(prepared.persisted.clone()),
+    }) {
+        return HealthDto {
+            ok: false,
+            message: format!("Failed to persist pack: {err}"),
+        };
+    }
+
+    let success_message = prepared.success_message.clone();
+    STATE.with(|state| apply_prepared_pack(&mut state.borrow_mut(), prepared));
+
+    HealthDto {
+        ok: true,
+        message: success_message,
+    }
 }
 
 #[update]
 fn clear_pack() -> HealthDto {
+    if let Err(err) = persist_snapshot(&StableSnapshot::default()) {
+        return HealthDto {
+            ok: false,
+            message: format!("Failed to clear persisted pack: {err}"),
+        };
+    }
+
     STATE.with(|state| clear_pack_in_state(&mut state.borrow_mut()))
 }
 
@@ -69,38 +114,56 @@ fn health() -> HealthDto {
     STATE.with(|state| health_from_state(&state.borrow()))
 }
 
-fn set_pack_in_state(state: &mut CanisterState, bytes: &[u8], label: String) -> HealthDto {
-    if bytes.is_empty() {
-        return HealthDto {
-            ok: false,
-            message: "Pack bytes were empty.".to_string(),
-        };
+#[pre_upgrade]
+fn pre_upgrade() {
+    let snapshot = STATE.with(|state| snapshot_from_state(&state.borrow()));
+
+    if let Err(err) = persist_snapshot(&snapshot) {
+        ic_cdk::trap(&format!(
+            "Failed to save pack snapshot during pre_upgrade: {err}"
+        ));
     }
+}
 
-    match mount_pack_from_bytes(bytes) {
-        Ok(pack) => {
-            let label = normalize_label(label);
-            let success_message = match label.as_deref() {
-                Some(label) => format!("Pack loaded successfully: {label}"),
-                None => "Pack loaded successfully.".to_string(),
-            };
+#[post_upgrade]
+fn post_upgrade() {
+    let snapshot = match load_snapshot() {
+        Ok(snapshot) => snapshot,
+        Err(err) => ic_cdk::trap(&format!(
+            "Failed to load pack snapshot during post_upgrade: {err}"
+        )),
+    };
 
-            state.loaded_pack = Some(LoadedPack { label, pack });
+    let restored = match restore_state_from_snapshot(snapshot) {
+        Ok(state) => state,
+        Err(err) => ic_cdk::trap(&format!(
+            "Failed to restore pack during post_upgrade: {err}"
+        )),
+    };
 
-            HealthDto {
-                ok: true,
-                message: success_message,
-            }
-        }
-        Err(err) => HealthDto {
-            ok: false,
-            message: format!("Failed to mount pack: {err}"),
-        },
+    STATE.with(|state| *state.borrow_mut() = restored);
+}
+
+#[cfg_attr(not(test), allow(dead_code))]
+fn set_pack_in_state(state: &mut CanisterState, bytes: &[u8], label: String) -> HealthDto {
+    let prepared = match prepare_pack(bytes, label) {
+        Ok(prepared) => prepared,
+        Err(err) => return err,
+    };
+
+    let success_message = prepared.success_message.clone();
+    apply_prepared_pack(state, prepared);
+
+    HealthDto {
+        ok: true,
+        message: success_message,
     }
 }
 
 fn clear_pack_in_state(state: &mut CanisterState) -> HealthDto {
-    let had_pack = state.loaded_pack.take().is_some();
+    let had_loaded_pack = state.loaded_pack.take().is_some();
+    let had_persisted_pack = state.persisted_pack.take().is_some();
+    let had_pack = had_loaded_pack || had_persisted_pack;
 
     HealthDto {
         ok: true,
@@ -179,6 +242,84 @@ fn health_from_state(state: &CanisterState) -> HealthDto {
     }
 }
 
+fn prepare_pack(bytes: &[u8], label: String) -> Result<PreparedPack, HealthDto> {
+    if bytes.is_empty() {
+        return Err(HealthDto {
+            ok: false,
+            message: "Pack bytes were empty.".to_string(),
+        });
+    }
+
+    match mount_pack_from_bytes(bytes) {
+        Ok(pack) => {
+            let label = normalize_label(label);
+            let success_message = match label.as_deref() {
+                Some(label) => format!("Pack loaded successfully: {label}"),
+                None => "Pack loaded successfully.".to_string(),
+            };
+
+            Ok(PreparedPack {
+                loaded: LoadedPack {
+                    label: label.clone(),
+                    pack,
+                },
+                persisted: PersistedPack {
+                    bytes: bytes.to_vec(),
+                    label,
+                },
+                success_message,
+            })
+        }
+        Err(err) => Err(HealthDto {
+            ok: false,
+            message: format!("Failed to mount pack: {err}"),
+        }),
+    }
+}
+
+fn apply_prepared_pack(state: &mut CanisterState, prepared: PreparedPack) {
+    state.loaded_pack = Some(prepared.loaded);
+    state.persisted_pack = Some(prepared.persisted);
+}
+
+fn snapshot_from_state(state: &CanisterState) -> StableSnapshot {
+    StableSnapshot {
+        pack: state.persisted_pack.clone(),
+    }
+}
+
+fn restore_state_from_snapshot(snapshot: StableSnapshot) -> Result<CanisterState, String> {
+    let persisted_pack = snapshot.pack;
+    let loaded_pack = match persisted_pack.as_ref() {
+        Some(persisted) => Some(LoadedPack {
+            label: persisted.label.clone(),
+            pack: mount_pack_from_bytes(&persisted.bytes)
+                .map_err(|err| format!("Failed to mount persisted pack: {err}"))?,
+        }),
+        None => None,
+    };
+
+    Ok(CanisterState {
+        loaded_pack,
+        persisted_pack,
+    })
+}
+
+fn persist_snapshot(snapshot: &StableSnapshot) -> Result<(), String> {
+    stable_save((snapshot,)).map_err(|err| format!("failed to write stable snapshot: {err}"))
+}
+
+fn load_snapshot() -> Result<StableSnapshot, String> {
+    if ic_cdk::api::stable::stable_size() == 0 {
+        return Ok(StableSnapshot::default());
+    }
+
+    let (snapshot,): (StableSnapshot,) =
+        stable_restore().map_err(|err| format!("failed to read stable snapshot: {err}"))?;
+
+    Ok(snapshot)
+}
+
 fn normalize_label(label: String) -> Option<String> {
     let trimmed = label.trim();
     if trimmed.is_empty() {
@@ -195,6 +336,7 @@ fn to_nat64(value: usize) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use candid::{decode_args, encode_args};
 
     fn build_test_pack_bytes() -> Vec<u8> {
         let meta =
@@ -334,6 +476,7 @@ mod tests {
 
         assert!(result.ok);
         assert_eq!(result.message, "Pack cleared.");
+        assert!(state.persisted_pack.is_none());
         assert_eq!(
             pack_info_from_state(&state),
             PackInfo {
@@ -345,5 +488,58 @@ mod tests {
                 terms: None,
             }
         );
+    }
+
+    #[test]
+    fn snapshot_encoding_round_trip_preserves_bytes_and_label() {
+        let snapshot = StableSnapshot {
+            pack: Some(PersistedPack {
+                bytes: build_test_pack_bytes(),
+                label: Some("docs-pack".to_string()),
+            }),
+        };
+
+        let encoded = encode_args((snapshot.clone(),)).expect("snapshot should encode");
+        let (decoded,): (StableSnapshot,) = decode_args(&encoded).expect("snapshot should decode");
+
+        assert_eq!(decoded, snapshot);
+    }
+
+    #[test]
+    fn restore_state_from_snapshot_remounts_pack_and_label() {
+        let snapshot = StableSnapshot {
+            pack: Some(PersistedPack {
+                bytes: build_test_pack_bytes(),
+                label: Some("docs-pack".to_string()),
+            }),
+        };
+
+        let restored = restore_state_from_snapshot(snapshot).expect("snapshot should restore");
+
+        assert_eq!(
+            pack_info_from_state(&restored),
+            PackInfo {
+                loaded: true,
+                label: Some("docs-pack".to_string()),
+                version: Some(3),
+                docs: Some(2),
+                blocks: Some(2),
+                terms: Some(4),
+            }
+        );
+    }
+
+    #[test]
+    fn restore_state_from_snapshot_rejects_invalid_pack_bytes() {
+        let err = restore_state_from_snapshot(StableSnapshot {
+            pack: Some(PersistedPack {
+                bytes: vec![1, 2, 3],
+                label: Some("broken".to_string()),
+            }),
+        })
+        .err()
+        .expect("invalid persisted bytes should fail restore");
+
+        assert!(err.contains("Failed to mount persisted pack"));
     }
 }
