@@ -15,6 +15,7 @@ All notable changes to the ICP canister adapter will be documented in this file.
 - Phase 3 local `dfx` example under `examples/icp-knowledge-canister`, including a minimal `dfx.json`, sample pack generator, upload script, query script, and checked-in demo knowledge files.
 - Phase 4 browser frontend under `examples/icp-knowledge-canister/frontend`, using a direct Vite React client with `@dfinity/agent` and no middleware API route.
 - Phase 5 `knolo icp` CLI commands for local ICP init, pack build, upload, and query flows, plus a bundled ICP scaffold template shipped with `@knolo/cli`.
+- Phase 6 local ICP end-to-end script at `scripts/e2e-icp-local.sh`, covering Rust builds, `dfx` startup and deploy, sample pack upload, lexical query assertion, and clean replica shutdown.
 
 ### Changed
 - Added the `knolo_icp.did` interface definition for the new canister package.
