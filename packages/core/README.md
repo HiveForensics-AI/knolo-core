@@ -309,6 +309,74 @@ Properties:
 
 ---
 
+# 🧠 Knolo Cortex
+
+Knolo Cortex is a local-first overlay memory layer for `.knolo` packs.
+
+It gives you:
+
+* Deterministic append-only memory writes
+* Lexical-first recall with label and namespace filters
+* Portable memory logs you can serialize and replay
+* Consolidation back into pack docs without mutating the pack itself
+* Deterministic graph export via `memoryToClaimOps()`
+
+## Example
+
+```ts
+import {
+  buildPack,
+  consolidateMemories,
+  createCortex,
+  mountPack,
+  recall,
+  remember,
+} from "@knolo/core";
+
+const cortex = createCortex({ actor: "notes-app" });
+const { cortex: next, memory } = remember(cortex, {
+  kind: "note",
+  text: "Project alpha uses a local-first memory overlay.",
+  labels: ["project.alpha"],
+  namespace: "project.alpha",
+});
+
+const hits = recall(next, "project alpha");
+const docs = consolidateMemories(next, { namespacePrefix: "memory" });
+const bytes = await buildPack(docs);
+const pack = await mountPack({ src: bytes });
+```
+
+If you need to load a local file in Node, use `@knolo/core/node` or read the bytes first and pass a `Uint8Array` into `mountPack()`.
+
+## Cortex API
+
+```ts
+import {
+  createCortex,
+  remember,
+  forget,
+  labelMemory,
+  linkMemories,
+  recall,
+  consolidateMemories,
+  memoryToClaimOps,
+} from "@knolo/core";
+```
+
+* `createCortex({ actor?, now?, log? })` creates an immutable memory runtime
+* `remember()` appends a new memory entry
+* `forget()` tombstones a memory
+* `labelMemory()` adds labels without mutating the original cortex
+* `linkMemories()` records deterministic memory relationships
+* `recall()` ranks memories with lexical-first scoring
+* `consolidateMemories()` converts selected memories back into `BuildInputDoc[]`
+* `memoryToClaimOps()` emits deterministic ClaimGraph ops for memory nodes, labels, and links
+
+The full example lives in [`examples/memory-overlay/README.md`](../../examples/memory-overlay/README.md).
+
+---
+
 # 🗺 Roadmap
 
 * Incremental pack updates
@@ -388,4 +456,3 @@ Runtimes that ignore unknown trailing bytes remain compatible.
 # 📄 License
 
 Apache-2.0
-
