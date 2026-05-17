@@ -131,6 +131,8 @@ cargo test
 
 Knolo now ships a local-first ICP path that keeps retrieval lexical-first and talks to the canister directly, with no middleware and no vector database.
 
+> Status: the ICP integration is still under active testing and should be treated as experimental, not fully production-ready.
+
 What it includes:
 
 * `packages/icp-canister` for the Rust canister adapter
