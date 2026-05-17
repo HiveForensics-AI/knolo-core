@@ -84,6 +84,7 @@ Knolo is:
 * A structured, versioned binary pack format
 * A deterministic lexical retrieval engine
 * An optional hybrid rerank layer
+* A local-first Knolo Cortex overlay memory layer for `.knolo` packs
 * A portable knowledge artifact you can ship anywhere
 
 You build `.knolo` packs once.
@@ -95,11 +96,51 @@ Hybrid semantic reranking is optional and **never replaces lexical grounding**.
 
 ---
 
+# 🧠 Knolo Cortex
+
+Knolo Cortex adds a local-first overlay memory layer on top of `@knolo/core`.
+
+It gives you:
+
+* Immutable `createCortex()`, `remember()`, `forget()`, `labelMemory()`, and `linkMemories()` writes
+* Deterministic lexical recall with labels, namespaces, source filters, and confidence/importance thresholds
+* Portable memory logs that can be serialized, merged, and replayed
+* `consolidateMemories()` to turn selected memories back into build docs
+* `memoryToClaimOps()` to export deterministic ClaimGraph ops without changing the existing graph builder
+
+```ts
+import {
+  buildPack,
+  consolidateMemories,
+  createCortex,
+  mountPack,
+  recall,
+  remember,
+} from '@knolo/core';
+
+const cortex = createCortex({ actor: 'notes-app' });
+const { cortex: next, memory } = remember(cortex, {
+  kind: 'note',
+  text: 'Project alpha uses a local-first memory overlay.',
+  labels: ['project.alpha'],
+  namespace: 'project.alpha',
+});
+
+const hits = recall(next, 'project alpha');
+const docs = consolidateMemories(next, { namespacePrefix: 'memory' });
+const bytes = await buildPack(docs);
+const pack = await mountPack({ src: bytes });
+```
+
+For the full API surface and memory-specific examples, see [`packages/core/README.md`](packages/core/README.md) and [`examples/memory-overlay/README.md`](examples/memory-overlay/README.md).
+
+---
+
 # 📦 Packages
 
 | Package             | Description                                               |
 | ------------------- | --------------------------------------------------------- |
-| `@knolo/core`       | Pack builder, pack loader, deterministic retrieval engine |
+| `@knolo/core`       | Pack builder, pack loader, deterministic retrieval engine, and Cortex memory layer |
 | `@knolo/cli`        | CLI for building `.knolo` artifacts                       |
 | `create-knolo-app`  | Next.js scaffolding with playground                       |
 | `@knolo/langchain`  | LangChain-style retriever interface                       |
