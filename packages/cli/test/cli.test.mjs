@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, existsSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { chmodSync, mkdtempSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 const cliPath = path.resolve(process.cwd(), 'bin/knolo.mjs');
@@ -11,20 +11,99 @@ const cliPackageJson = JSON.parse(
   readFileSync(path.resolve(process.cwd(), 'package.json'), 'utf8')
 );
 
-function runCli(args, cwd) {
-  return execFileSync(process.execPath, [cliPath, ...args], {
-    cwd,
-    encoding: 'utf8',
-  });
+function shellQuote(value) {
+  return `'${String(value).replace(/'/g, `'\\''`)}'`;
+}
+
+function runShellCommand(command, { cwd, env = {} } = {}) {
+  const captureDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-shell-'));
+  const stdoutFile = path.join(captureDir, 'stdout.txt');
+  const stderrFile = path.join(captureDir, 'stderr.txt');
+
+  try {
+    try {
+      execSync(`${command} > ${shellQuote(stdoutFile)} 2> ${shellQuote(stderrFile)}`, {
+        cwd,
+        env: { ...process.env, ...env },
+        shell: '/bin/bash',
+        encoding: 'utf8',
+      });
+    } catch (error) {
+      if (error?.status !== 0) {
+        const stdout = existsSync(stdoutFile) ? readFileSync(stdoutFile, 'utf8') : '';
+        const stderr = existsSync(stderrFile) ? readFileSync(stderrFile, 'utf8') : '';
+        const wrapped = new Error((stderr || stdout || error.message).trim());
+        wrapped.cause = error;
+        wrapped.stdout = stdout;
+        wrapped.stderr = stderr;
+        throw wrapped;
+      }
+    }
+
+    return {
+      stdout: existsSync(stdoutFile) ? readFileSync(stdoutFile, 'utf8') : '',
+      stderr: existsSync(stderrFile) ? readFileSync(stderrFile, 'utf8') : '',
+    };
+  } catch (error) {
+    throw error;
+  } finally {
+    rmSync(captureDir, { recursive: true, force: true });
+  }
+}
+
+function runCli(args, cwd, env = {}) {
+  const command = ['node', cliPath, ...args].map(shellQuote).join(' ');
+  return runShellCommand(command, { cwd, env }).stdout;
 }
 
 function npmPack(workdir, destination) {
-  const out = execFileSync('npm', ['pack', '--json', '--pack-destination', destination], {
-    cwd: workdir,
-    encoding: 'utf8',
-  });
+  const out = runShellCommand(
+    `npm pack --json --pack-destination ${shellQuote(destination)}`,
+    {
+      cwd: workdir,
+      env: {
+        ...process.env,
+        npm_config_cache: path.join(destination, '.npm-cache'),
+      },
+    }
+  ).stdout;
   const [result] = JSON.parse(out);
   return path.join(destination, result.filename);
+}
+
+function createFakeDfxHarness(prefix) {
+  const cwd = mkdtempSync(path.join(tmpdir(), prefix));
+  const scriptPath = path.join(cwd, 'fake-dfx.sh');
+  const argsFile = path.join(cwd, 'args.txt');
+  const didFile = path.join(cwd, 'args.did');
+
+  writeFileSync(
+    scriptPath,
+    `#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\n' "$@" > "$FAKE_DFX_ARGS_FILE"
+prev=""
+for arg in "$@"; do
+  if [ "$prev" = "--argument-file" ]; then
+    cp "$arg" "$FAKE_DFX_DID_FILE"
+  fi
+  prev="$arg"
+done
+printf '{"ok":true}\n'
+`,
+    'utf8'
+  );
+  chmodSync(scriptPath, 0o755);
+
+  return {
+    env: {
+      DFX_BIN: scriptPath,
+      FAKE_DFX_ARGS_FILE: argsFile,
+      FAKE_DFX_DID_FILE: didFile,
+    },
+    argsFile,
+    didFile,
+  };
 }
 
 test('packed @knolo/cli tarball includes expected runtime files only', () => {
@@ -32,18 +111,22 @@ test('packed @knolo/cli tarball includes expected runtime files only', () => {
   const cliDir = process.cwd();
   const tarballPath = npmPack(cliDir, packDir);
 
-  const entries = execFileSync('tar', ['-tzf', tarballPath], { encoding: 'utf8' })
+  const entries = runShellCommand(`tar -tzf ${shellQuote(tarballPath)}`, { cwd: cliDir }).stdout
     .trim()
     .split('\n')
     .filter(Boolean);
 
   assert.ok(entries.includes('package/bin/knolo.mjs'));
   assert.ok(entries.includes('package/package.json'));
+  assert.ok(entries.includes('package/templates/icp-knowledge-canister/dfx.json'));
   assert.equal(entries.some((entry) => entry.startsWith('package/test/')), false);
   assert.equal(entries.some((entry) => entry.startsWith('package/src/')), false);
 
   const packedPackageJson = JSON.parse(
-    execFileSync('tar', ['-xOf', tarballPath, 'package/package.json'], { encoding: 'utf8' })
+    runShellCommand(
+      `tar -xOf ${shellQuote(tarballPath)} ${shellQuote('package/package.json')}`,
+      { cwd: cliDir }
+    ).stdout
   );
   assert.equal(packedPackageJson.private, false);
   assert.equal(packedPackageJson.bin.knolo, 'bin/knolo.mjs');
@@ -91,6 +174,67 @@ test('add updates existing source path', () => {
 
   const config = JSON.parse(readFileSync(path.join(cwd, 'knolo.config.json'), 'utf8'));
   assert.equal(config.sources[0].path, './knowledge-base');
+});
+
+test('icp init copies the bundled scaffold', () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-icp-init-'));
+  const target = path.join(cwd, 'demo');
+
+  const output = runCli(['icp', 'init', target], cwd);
+
+  assert.match(output, /created .*demo/);
+  assert.ok(existsSync(path.join(target, 'dfx.json')));
+  assert.ok(existsSync(path.join(target, 'knowledge/alpha.md')));
+  assert.ok(existsSync(path.join(target, 'canisters/knolo-icp-canister/Cargo.toml')));
+});
+
+test('icp build-pack produces a pack from a docs directory', () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-icp-build-pack-'));
+  const docsDir = path.join(cwd, 'knowledge');
+  mkdirSync(path.join(docsDir, 'guides'), { recursive: true });
+  writeFileSync(path.join(docsDir, 'alpha.md'), '# Alpha\n\nOne two three.\n', 'utf8');
+  writeFileSync(path.join(docsDir, 'guides', 'beta.txt'), 'Beta guide text.\n', 'utf8');
+
+  const output = runCli(['icp', 'build-pack', './knowledge', '--out', './dist/knowledge.knolo'], cwd);
+
+  assert.match(output, /indexed 2 files/);
+  assert.ok(existsSync(path.join(cwd, 'dist/knowledge.knolo')));
+});
+
+test('icp upload shells out through dfx with an argument file', () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-icp-upload-'));
+  const packPath = path.join(cwd, 'knowledge.knolo');
+  writeFileSync(packPath, Buffer.from([1, 2, 3, 255]));
+  const harness = createFakeDfxHarness('knolo-cli-fake-dfx-upload-');
+
+  const output = runCli(
+    ['icp', 'upload', './knowledge.knolo', '--canister', 'knolo_knowledge', '--label', 'sample-pack'],
+    cwd,
+    harness.env
+  );
+
+  const args = readFileSync(harness.argsFile, 'utf8');
+  const didArgs = readFileSync(harness.didFile, 'utf8');
+  assert.match(output, /\{"ok":true\}/);
+  assert.match(args, /canister\ncall\nknolo_knowledge\nset_pack/);
+  assert.match(didArgs, /\(vec \{ 1; 2; 3; 255 \}, "sample-pack"\)/);
+});
+
+test('icp query shells out through dfx query with top-k', () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-icp-query-'));
+  const harness = createFakeDfxHarness('knolo-cli-fake-dfx-query-');
+
+  const output = runCli(
+    ['icp', 'query', 'alpha beta', '--canister', 'knolo_knowledge', '--k', '7'],
+    cwd,
+    harness.env
+  );
+
+  const args = readFileSync(harness.argsFile, 'utf8');
+  const didArgs = readFileSync(harness.didFile, 'utf8');
+  assert.match(output, /\{"ok":true\}/);
+  assert.match(args, /canister\ncall\nknolo_knowledge\nsearch\n--query/);
+  assert.match(didArgs, /\("alpha beta", 7 : nat32\)/);
 });
 
 test('semantic:validate succeeds for matching pack/model and fails on mismatch', async () => {

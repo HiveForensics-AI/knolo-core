@@ -1,0 +1,10 @@
+[package]
+name = "knolo-core-rust"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "Rust runtime support for reading and querying .knolo packs"
+
+[lib]
+name = "knolo_core_rust"
+path = "src/lib.rs"

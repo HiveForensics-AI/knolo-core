@@ -1,0 +1,6 @@
+.dfx/
+canister_ids.json
+.cargo-target/
+dist/
+frontend/dist/
+frontend/node_modules/

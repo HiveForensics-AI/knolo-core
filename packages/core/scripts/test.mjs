@@ -215,6 +215,32 @@ async function testFirstBlockRetrieval() {
   );
 }
 
+async function testPackStoresOneBasedTokenPositions() {
+  const docs = [
+    { id: 'first', text: 'alpha beta' },
+    { id: 'second', text: 'beta gamma' },
+  ];
+  const pack = await mountPack({ src: await buildPack(docs) });
+  const alphaId = pack.lexicon.get('alpha');
+
+  assert.notEqual(alphaId, undefined, 'expected alpha to be indexed');
+
+  const postings = Array.from(pack.postings);
+  const alphaOffset = postings.indexOf(alphaId);
+
+  assert.notEqual(alphaOffset, -1, 'expected alpha postings to exist');
+  assert.equal(
+    postings[alphaOffset + 1],
+    1,
+    'expected the first block id to remain one-based'
+  );
+  assert.equal(
+    postings[alphaOffset + 2],
+    1,
+    'expected token position 0 to be stored as 1 so it cannot collide with delimiters'
+  );
+}
+
 async function testNearDuplicateDedupe() {
   const docs = [
     {
@@ -1776,6 +1802,7 @@ await testLexicalOnlyEvidenceRemainsUnchanged();
 await testCosineHelpers();
 await testSmartQuotePhrase();
 await testFirstBlockRetrieval();
+await testPackStoresOneBasedTokenPositions();
 await testNearDuplicateDedupe();
 await testNamespaceFiltering();
 await testQueryExpansionRecall();

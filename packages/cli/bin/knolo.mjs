@@ -1,15 +1,21 @@
 #!/usr/bin/env node
 
+import { execFileSync } from 'node:child_process';
 import {
+  chmodSync,
+  copyFileSync,
   existsSync,
   mkdirSync,
+  mkdtempSync,
   readFileSync,
   readdirSync,
+  rmSync,
   statSync,
   watch,
   writeFileSync,
 } from 'node:fs';
 import { promises as fs } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -26,8 +32,13 @@ const DEFAULT_CONFIG = {
   query: { topK: 5 },
 };
 const SUPPORTED_EXTENSIONS = new Set(['.md', '.txt', '.json']);
-const SKIP_DIRS = new Set(['node_modules', 'dist', '.git']);
+const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', '.dfx', '.cargo-target']);
 const SUBCOMMANDS = new Set(['init', 'add', 'build', 'query', 'dev', 'semantic:index', 'semantic:inspect', 'semantic:validate']);
+const ICP_SUBCOMMANDS = new Set(['init', 'build-pack', 'upload', 'query']);
+const ICP_TEMPLATE_CANDIDATES = [
+  path.resolve(__dirname, '../templates/icp-knowledge-canister'),
+  path.resolve(__dirname, '../../../examples/icp-knowledge-canister'),
+];
 
 function createError(message) {
   return new Error(message);
@@ -72,6 +83,7 @@ Commands:
   build                   Build a .knolo pack from configured sources
   query <question>        Query a built pack and print top hits
   dev                     Watch config/sources and rebuild on change
+  icp                     Scaffold and operate an ICP-native knowledge canister
 
 Global options:
   --debug                 Print stack traces for errors
@@ -87,11 +99,69 @@ function printCommandHelp(command) {
     build: 'Usage: knolo build',
     query: 'Usage: knolo query <question> [--pack <path>] [--k <number>] [--json]',
     dev: 'Usage: knolo dev',
+    icp: 'Usage: knolo icp <command> [options]',
     'semantic:index': 'Usage: knolo semantic:index --pack <path> [--out <path>] [--model <id>] [--endpoint <url>]',
     'semantic:inspect': 'Usage: knolo semantic:inspect --sidecar <path>',
     'semantic:validate': 'Usage: knolo semantic:validate --pack <path> --sidecar <path> --model <id>',
   };
   console.log(help[command] ?? 'Unknown command.');
+}
+
+function printIcpHelp() {
+  console.log(`KnoLo CLI - ICP
+
+Usage:
+  knolo icp <command> [options]
+
+Commands:
+  init <dir>                                Copy the bundled ICP canister template
+  build-pack <docsDir> --out <file>         Build a lexical-only .knolo pack
+  upload <packFile> --canister <name-or-id> Upload a pack with dfx canister call set_pack
+  query <question> --canister <name-or-id>  Query the canister with search
+
+Examples:
+  knolo icp init ./icp-knowledge-canister
+  knolo icp build-pack ./knowledge --out ./dist/knowledge.knolo
+  knolo icp upload ./dist/knowledge.knolo --canister knolo_knowledge
+  knolo icp query "alpha beta" --canister knolo_knowledge --k 5
+
+Environment:
+  DFX_BIN                                   Override the dfx executable path
+
+Run "knolo icp <command> --help" for subcommand details.`);
+}
+
+function printIcpCommandHelp(command) {
+  const help = {
+    init: `Usage: knolo icp init <dir>
+
+Copy the bundled ICP knowledge canister template into <dir>.
+
+Example:
+  knolo icp init ./icp-knowledge-canister`,
+    'build-pack': `Usage: knolo icp build-pack <docsDir> --out <file>
+
+Build a lexical-only .knolo pack from markdown, text, or JSON docs.
+
+Examples:
+  knolo icp build-pack ./knowledge --out ./dist/knowledge.knolo
+  knolo icp build-pack ./docs --out ./packs/support.knolo`,
+    upload: `Usage: knolo icp upload <packFile> --canister <name-or-id> [--label <text>]
+
+Upload a .knolo pack through dfx canister call set_pack.
+
+Examples:
+  knolo icp upload ./dist/knowledge.knolo --canister knolo_knowledge
+  knolo icp upload ./dist/knowledge.knolo --canister ux6qi-fyaaa-aaaab-qaaaq-cai --label release-2026-04-28`,
+    query: `Usage: knolo icp query <question> --canister <name-or-id> [--k <number>]
+
+Query the canister's search method directly over dfx.
+
+Examples:
+  knolo icp query "alpha beta" --canister knolo_knowledge
+  knolo icp query "billing escalation" --canister ux6qi-fyaaa-aaaab-qaaaq-cai --k 10`,
+  };
+  console.log(help[command] ?? 'Unknown ICP command.');
 }
 
 function parseArgv(argv) {
@@ -186,6 +256,120 @@ async function cmdAdd(args) {
   console.log(`✔ wrote ${CONFIG_FILE}`);
 }
 
+function resolveIcpTemplateDir() {
+  for (const candidate of ICP_TEMPLATE_CANDIDATES) {
+    if (existsSync(candidate) && statSync(candidate).isDirectory()) return candidate;
+  }
+  throw createError('Bundled ICP template not found. Reinstall @knolo/cli or run from the Knolo repo checkout.');
+}
+
+function ensureDirectoryMissingOrEmpty(targetDir) {
+  if (!existsSync(targetDir)) return;
+  const stats = statSync(targetDir);
+  if (!stats.isDirectory()) throw createError(`Target path already exists and is not a directory: ${targetDir}`);
+  const visibleEntries = readdirSync(targetDir);
+  if (visibleEntries.length > 0) {
+    throw createError(`Target directory is not empty: ${targetDir}`);
+  }
+}
+
+function copyDirectoryContents(sourceDir, targetDir) {
+  mkdirSync(targetDir, { recursive: true });
+  const entries = readdirSync(sourceDir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name));
+  for (const entry of entries) {
+    const sourcePath = path.join(sourceDir, entry.name);
+    const targetPath = path.join(targetDir, entry.name);
+    if (entry.isSymbolicLink()) continue;
+    if (entry.isDirectory()) {
+      copyDirectoryContents(sourcePath, targetPath);
+      continue;
+    }
+    if (!entry.isFile()) continue;
+    mkdirSync(path.dirname(targetPath), { recursive: true });
+    copyFileSync(sourcePath, targetPath);
+    chmodSync(targetPath, statSync(sourcePath).mode);
+  }
+}
+
+function parseFlagArgs(args, { booleanFlags = [] } = {}) {
+  const positional = [];
+  const flags = {};
+  const booleanSet = new Set(booleanFlags);
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (!arg.startsWith('--')) {
+      positional.push(arg);
+      continue;
+    }
+
+    const name = arg.slice(2);
+    if (!name) throw createError(`Unexpected flag: ${arg}`);
+    if (booleanSet.has(name)) {
+      flags[name] = true;
+      continue;
+    }
+
+    const value = args[i + 1];
+    if (value === undefined || value.startsWith('--')) {
+      throw createError(`Missing value for ${arg}`);
+    }
+    flags[name] = value;
+    i += 1;
+  }
+
+  return { positional, flags };
+}
+
+function parsePositiveInteger(value, flagName) {
+  const parsed = Number.parseInt(String(value), 10);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw createError(`${flagName} must be a positive integer.`);
+  }
+  return parsed;
+}
+
+function renderDidNat8Vec(bytes) {
+  return bytes.length ? ` ${Array.from(bytes, (value) => `${value}`).join('; ')} ` : '';
+}
+
+function withArgumentFile(prefix, contents, run) {
+  const tempDir = mkdtempSync(path.join(tmpdir(), prefix));
+  const argumentFile = path.join(tempDir, 'args.did');
+  try {
+    writeFileSync(argumentFile, contents, 'utf8');
+    return run(argumentFile);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+}
+
+function runDfx(args, { cwd = process.cwd() } = {}) {
+  const dfxBin = process.env.DFX_BIN || 'dfx';
+  const env = { ...process.env };
+  if (env.TERM === 'dumb') env.TERM = 'xterm-256color';
+
+  try {
+    const output = execFileSync(dfxBin, args, {
+      cwd,
+      encoding: 'utf8',
+      env,
+    });
+    if (output) process.stdout.write(output);
+    return output;
+  } catch (error) {
+    if (error?.status === 0) {
+      const recovered = typeof error?.stdout === 'string' ? error.stdout : '';
+      if (recovered) process.stdout.write(recovered);
+      return recovered;
+    }
+    const stderr = typeof error?.stderr === 'string' ? error.stderr.trim() : '';
+    const stdout = typeof error?.stdout === 'string' ? error.stdout.trim() : '';
+    const detail = stderr || stdout || error?.message || 'dfx command failed';
+    throw createError(detail);
+  }
+}
+
 async function walkDir(dir) {
   const out = [];
   const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -256,6 +440,141 @@ async function buildFromConfig(core, { silent = false } = {}) {
 
 async function cmdBuild(core) {
   await buildFromConfig(core);
+}
+
+async function collectNamedFiles(sourceName, inputPath) {
+  const resolved = path.resolve(process.cwd(), inputPath);
+  if (!existsSync(resolved)) throw createError(`Source path not found: ${inputPath}`);
+
+  const stats = await fs.lstat(resolved);
+  if (stats.isSymbolicLink()) return [];
+  if (stats.isFile()) {
+    if (!SUPPORTED_EXTENSIONS.has(path.extname(resolved).toLowerCase())) {
+      throw createError(`Unsupported file type for ${inputPath}. Expected .md, .txt, or .json.`);
+    }
+    return [{ sourceName, absolutePath: resolved }];
+  }
+  if (!stats.isDirectory()) throw createError(`Source path must be a file or directory: ${inputPath}`);
+
+  return (await walkDir(resolved))
+    .map((absolutePath) => ({ sourceName, absolutePath }))
+    .sort((a, b) => a.absolutePath.localeCompare(b.absolutePath));
+}
+
+function buildDocsFromFiles(files, rootDir) {
+  return files.map((file) => {
+    const rel = path.relative(rootDir, file.absolutePath).replace(/\\/g, '/');
+    return {
+      id: rel,
+      heading: path.basename(rel),
+      namespace: file.sourceName,
+      text: readFileSync(file.absolutePath, 'utf8'),
+    };
+  });
+}
+
+async function cmdIcpInit(args) {
+  const [targetDir] = args;
+  if (!targetDir) throw createError('Usage: knolo icp init <dir>');
+
+  const templateDir = resolveIcpTemplateDir();
+  const resolvedTarget = path.resolve(process.cwd(), targetDir);
+  ensureDirectoryMissingOrEmpty(resolvedTarget);
+  mkdirSync(resolvedTarget, { recursive: true });
+  copyDirectoryContents(templateDir, resolvedTarget);
+
+  const relativeTarget = path.relative(process.cwd(), resolvedTarget) || '.';
+  console.log(`✔ created ${relativeTarget}`);
+  console.log('Next steps:');
+  console.log(`  cd ${relativeTarget}`);
+  console.log('  dfx start --background');
+  console.log('  dfx deploy');
+  console.log('  knolo icp build-pack ./knowledge --out ./dist/knowledge.knolo');
+  console.log('  knolo icp upload ./dist/knowledge.knolo --canister knolo_knowledge');
+  console.log('  knolo icp query "alpha beta" --canister knolo_knowledge');
+}
+
+async function cmdIcpBuildPack(core, args) {
+  const { positional, flags } = parseFlagArgs(args);
+  const docsDir = positional[0];
+  if (!docsDir || !flags.out) {
+    throw createError('Usage: knolo icp build-pack <docsDir> --out <file>');
+  }
+
+  const resolvedInput = path.resolve(process.cwd(), docsDir);
+  const files = await collectNamedFiles('docs', docsDir);
+  if (!files.length) throw createError('No supported files found (.md, .txt, .json).');
+
+  const rootDir = statSync(resolvedInput).isDirectory() ? resolvedInput : path.dirname(resolvedInput);
+  const docs = buildDocsFromFiles(files, rootDir);
+  const bytes = await core.buildPack(docs);
+  const outPath = path.resolve(process.cwd(), flags.out);
+
+  mkdirSync(path.dirname(outPath), { recursive: true });
+  writeFileSync(outPath, Buffer.from(bytes));
+
+  console.log(`✔ indexed ${files.length} files`);
+  console.log(`✔ wrote ${path.relative(process.cwd(), outPath)}`);
+  console.log('✔ lexical-only pack build completed');
+}
+
+function defaultPackLabel(packPath) {
+  return path.basename(packPath, path.extname(packPath)) || 'knowledge-pack';
+}
+
+async function cmdIcpUpload(args) {
+  const { positional, flags } = parseFlagArgs(args);
+  const packFile = positional[0];
+  if (!packFile || !flags.canister) {
+    throw createError('Usage: knolo icp upload <packFile> --canister <name-or-id> [--label <text>]');
+  }
+
+  const packPath = path.resolve(process.cwd(), packFile);
+  if (!existsSync(packPath)) throw createError(`Pack file not found at ${path.relative(process.cwd(), packPath)}.`);
+
+  const label = flags.label || defaultPackLabel(packPath);
+  const bytes = readFileSync(packPath);
+  const didArgs = `(vec {${renderDidNat8Vec(bytes)}}, ${JSON.stringify(label)})\n`;
+
+  withArgumentFile('knolo-icp-upload-', didArgs, (argumentFile) =>
+    runDfx(
+      ['canister', 'call', flags.canister, 'set_pack', '--argument-file', argumentFile, '--output', 'json'],
+      { cwd: process.cwd() }
+    )
+  );
+}
+
+async function cmdIcpQuery(args) {
+  const { positional, flags } = parseFlagArgs(args);
+  const question = positional.join(' ').trim();
+  if (!question || !flags.canister) {
+    throw createError('Usage: knolo icp query <question> --canister <name-or-id> [--k <number>]');
+  }
+
+  const topK = flags.k === undefined ? 5 : parsePositiveInteger(flags.k, '--k');
+  const didArgs = `(${JSON.stringify(question)}, ${topK} : nat32)\n`;
+
+  withArgumentFile('knolo-icp-query-', didArgs, (argumentFile) =>
+    runDfx(
+      ['canister', 'call', flags.canister, 'search', '--query', '--argument-file', argumentFile, '--output', 'json'],
+      { cwd: process.cwd() }
+    )
+  );
+}
+
+async function cmdIcp(args) {
+  const [subcommand, ...rest] = args;
+  if (!subcommand) return printIcpHelp();
+  if (!ICP_SUBCOMMANDS.has(subcommand)) throw createError(`Unknown ICP command: ${subcommand}`);
+  if (rest.includes('--help') || rest.includes('-h')) return printIcpCommandHelp(subcommand);
+
+  if (subcommand === 'init') return await cmdIcpInit(rest);
+  if (subcommand === 'upload') return await cmdIcpUpload(rest);
+  if (subcommand === 'query') return await cmdIcpQuery(rest);
+  if (subcommand === 'build-pack') {
+    const core = await loadCore();
+    return await cmdIcpBuildPack(core, rest);
+  }
 }
 
 function parseQueryArgs(args) {
@@ -664,13 +983,19 @@ async function main() {
   const { global, command, commandArgs } = parseArgv(process.argv.slice(2));
   try {
     if (command === 'help') return printRootHelp();
-
-    const core = await loadCore();
+    if (command === 'icp') {
+      if (commandArgs.length === 0 || commandArgs[0] === '--help' || commandArgs[0] === '-h') {
+        return printIcpHelp();
+      }
+      return await cmdIcp(commandArgs);
+    }
 
     if (SUBCOMMANDS.has(command)) {
       if (commandArgs.includes('--help') || commandArgs.includes('-h')) return printCommandHelp(command);
       if (command === 'init') return await cmdInit();
       if (command === 'add') return await cmdAdd(commandArgs);
+
+      const core = await loadCore();
       if (command === 'build') return await cmdBuild(core);
       if (command === 'query') return await cmdQuery(core, commandArgs);
       if (command === 'dev') return await cmdDev(core);
@@ -680,6 +1005,7 @@ async function main() {
     }
 
     if (command.startsWith('-')) throw createError(`Unknown option: ${command}`);
+    const core = await loadCore();
     return await runDirectMode(core, command, commandArgs);
   } catch (error) {
     console.error(`knolo: ${error instanceof Error ? error.message : String(error)}`);

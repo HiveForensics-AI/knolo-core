@@ -127,6 +127,56 @@ cargo test
 
 ---
 
+# 🌐 ICP Canister Adapter (New)
+
+Knolo now ships a local-first ICP path that keeps retrieval lexical-first and talks to the canister directly, with no middleware and no vector database.
+
+What it includes:
+
+* `packages/icp-canister` for the Rust canister adapter
+* `examples/icp-knowledge-canister` for a local `dfx` example
+* `knolo icp` CLI commands for init, build-pack, upload, and query
+* `scripts/e2e-icp-local.sh` for one-command local end-to-end verification
+
+Local prerequisites:
+
+* `dfx`
+* Rust wasm target: `rustup target add wasm32-unknown-unknown`
+* `npm install` from the repo root
+
+CLI path:
+
+```bash
+knolo icp init ./my-icp-canister
+cd ./my-icp-canister
+knolo icp build-pack ./knowledge --out ./dist/knowledge.knolo
+knolo icp upload ./dist/knowledge.knolo --canister knolo_knowledge
+knolo icp query "alpha beta" --canister knolo_knowledge
+```
+
+Run the example manually:
+
+```bash
+cd examples/icp-knowledge-canister
+dfx start --background --clean
+dfx deploy
+node scripts/build-sample-pack.mjs
+bash scripts/upload-pack.sh
+bash scripts/query.sh "alpha beta"
+```
+
+If `dfx` is running in a minimal shell and complains about terminal colors, prefix the commands with `TERM=xterm-256color`.
+
+Run the full end-to-end check:
+
+```bash
+bash scripts/e2e-icp-local.sh
+```
+
+The sample pack is built from the checked-in docs under `examples/icp-knowledge-canister/knowledge`, so the search results are deterministic and easy to verify locally.
+
+---
+
 # 🚀 10-Minute Ecosystem Path
 
 From this repository:

@@ -1,0 +1,29 @@
+type HitDto = record {
+  block_id : nat64;
+  score : float64;
+  text : text;
+  source : opt text;
+  namespace : opt text;
+};
+
+type PackInfo = record {
+  loaded : bool;
+  label : opt text;
+  version : opt nat32;
+  docs : opt nat64;
+  blocks : opt nat64;
+  terms : opt nat64;
+};
+
+type HealthDto = record {
+  ok : bool;
+  message : text;
+};
+
+service : {
+  clear_pack : () -> (HealthDto);
+  health : () -> (HealthDto) query;
+  pack_info : () -> (PackInfo) query;
+  search : (text, nat32) -> (vec HitDto) query;
+  set_pack : (vec nat8, text) -> (HealthDto);
+}

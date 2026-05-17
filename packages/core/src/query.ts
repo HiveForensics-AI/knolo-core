@@ -252,7 +252,7 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
         let pos = p[i++];
         const positions: number[] = [];
         while (pos !== 0) {
-          positions.push(pos);
+          positions.push(pos - 1);
           pos = p[i++];
         }
         termDf++;
