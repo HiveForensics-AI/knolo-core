@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- Knolo Cortex, a local-first overlay memory layer for `.knolo` packs with deterministic lexical recall, append-only logs, portable serialization, and no required vector DB.
+- Added the initial memory surface under `@knolo/core`, including memory normalization, immutable cortex writes, recall ranking, and consolidation helpers, while keeping the existing pack runtime API unchanged.
+- Added `memoryToClaimOps()` to bridge Cortex memories into deterministic ClaimGraph ops without changing the existing graph builder.
+
 ## [0.3.1] - 2026-02-16
 
 ### Changed

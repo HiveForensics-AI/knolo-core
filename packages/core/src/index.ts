@@ -46,6 +46,7 @@ export {
   deserializeClaimGraphLog,
 } from './graph/log.js';
 export { expandQueryWithGraph } from './graph/query_expand.js';
+export * from './memory/index.js';
 export type { MountOptions, PackMeta, Pack } from './pack.runtime.js';
 export type { QueryOptions, Hit } from './query.js';
 export type { EmbeddingProvider, SemanticSidecar, SemanticQueryOptions, RetrievalEvidence } from './semantic/types.js';
