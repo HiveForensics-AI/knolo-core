@@ -28,8 +28,10 @@ It is:
 
 * A versioned binary pack format
 * A deterministic lexical retrieval engine
+* A deterministic `LivePack` overlay for mounted packs
 * An optional semantic rerank layer
 * A portable knowledge runtime
+* A separate append-only Cortex memory layer
 
 You build once.
 You mount anywhere — Node, browser, React Native, serverless, offline.
@@ -146,6 +148,39 @@ Properties:
 * No embedding dependency
 * Namespace-aware
 * Evaluation-friendly scoring
+
+For iterative pack builds, use `knolo dev` as the watch/rebuild workflow. We are keeping that flow instead of introducing `build --watch` in this phase.
+
+---
+
+## 4️⃣ LivePack Overlay
+
+`LivePack` is a deterministic mutable overlay on top of a mounted base pack.
+
+It is designed for document-style live updates:
+
+* `addDocument()` inserts or replaces a live doc by stable id
+* `updateDocument()` merges partial fields onto the last known full doc
+* `removeDocument()` tombstones a doc id and hides the base copy
+* `query()` returns the same `Hit[]` shape as `query(pack, ...)`
+* `serialize()` materializes the merged live state as a normal `.knolo` snapshot
+
+Live querying in v1 stays lexical/graph-only.
+Semantic build or query options are rejected until live embeddings are added.
+
+```ts
+import { createLivePack, mountPack, query } from '@knolo/core';
+
+const base = await mountPack({ src: './dist/knowledge.knolo' });
+const live = await createLivePack(base, [
+  { id: 'notes.alpha', text: 'alpha note', namespace: 'notes' },
+]);
+
+await live.addDocument({ id: 'notes.beta', text: 'beta note' });
+const hits = live.query('alpha note', { topK: 5 });
+const snapshot = await live.serialize();
+const rebuilt = await mountPack({ src: snapshot });
+```
 
 ---
 

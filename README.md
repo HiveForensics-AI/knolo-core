@@ -4,7 +4,7 @@ Knolo is a **local-first knowledge base engine** built around deterministic retr
 
 It provides:
 
-* `@knolo/core` — pack format + deterministic retrieval engine
+* `@knolo/core` — pack format + deterministic retrieval engine, LivePack overlay, and Cortex memory layer
 * `@knolo/cli` — build workflows for `.knolo` artifacts
 * `create-knolo-app` — instant Next.js starter with playground
 * `@knolo/langchain` — LangChain-style retriever adapter
@@ -64,6 +64,8 @@ npm run knolo:build
 npm run dev
 ```
 
+For pack workflows, `knolo dev` is the watch/rebuild loop for configured sources. We are keeping that workflow instead of adding a separate `build --watch` command in this phase.
+
 Open:
 
 ```
@@ -89,6 +91,7 @@ Knolo is:
 
 You build `.knolo` packs once.
 You mount them anywhere — Node, web, React Native, offline.
+When you need a deterministic mutable overlay on top of a mounted pack, use `LivePack`.
 
 Retrieval is lexical-first and deterministic by default.
 
@@ -99,6 +102,7 @@ Hybrid semantic reranking is optional and **never replaces lexical grounding**.
 # 🧠 Knolo Cortex
 
 Knolo Cortex adds a local-first overlay memory layer on top of `@knolo/core`.
+It is separate from `LivePack`: Cortex is append-only memory, while LivePack is a mutable document overlay for mounted packs.
 
 It gives you:
 
