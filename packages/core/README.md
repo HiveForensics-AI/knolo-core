@@ -157,13 +157,18 @@ For iterative pack builds, use `knolo dev` as the watch/rebuild workflow. We are
 
 `LivePack` is a deterministic mutable overlay on top of a mounted base pack.
 
+It is phase-1 lexical/graph-only. Stable doc ids are required for the initial `docs` array and for every live mutation, and semantic live updates are rejected until the embedding story exists.
+
+Construction accepts `LivePackOptions` for graph settings such as `maxEdgesPerDoc`, but semantic live options stay disabled in v1.
+
 It is designed for document-style live updates:
 
 * `addDocument()` inserts or replaces a live doc by stable id
-* `updateDocument()` merges partial fields onto the last known full doc
+* `updateDocument()` merges partial fields onto the last known full doc and shadows any base copy
 * `removeDocument()` tombstones a doc id and hides the base copy
 * `query()` returns the same `Hit[]` shape as `query(pack, ...)`
 * `serialize()` materializes the merged live state as a normal `.knolo` snapshot
+* repeated `serialize()` calls on the same state are byte-identical
 
 Live querying in v1 stays lexical/graph-only.
 Semantic build or query options are rejected until live embeddings are added.
@@ -177,10 +182,17 @@ const live = await createLivePack(base, [
 ]);
 
 await live.addDocument({ id: 'notes.beta', text: 'beta note' });
+await live.updateDocument({ id: 'notes.alpha', text: 'alpha note v2' });
+await live.removeDocument('notes.beta');
+await live.addDocument({ id: 'notes.beta', text: 'beta note restored' });
+
 const hits = live.query('alpha note', { topK: 5 });
 const snapshot = await live.serialize();
 const rebuilt = await mountPack({ src: snapshot });
+const roundTripHits = query(rebuilt, 'beta note', { topK: 5 });
 ```
+
+For the phase-1 rollout notes and test matrix, see [`../../LIVE_KBS_MVP.md`](../../LIVE_KBS_MVP.md).
 
 ---
 

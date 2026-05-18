@@ -97,6 +97,30 @@ Retrieval is lexical-first and deterministic by default.
 
 Hybrid semantic reranking is optional and **never replaces lexical grounding**.
 
+# 🧪 Live KBs MVP
+
+`LivePack` is the phase-1 mutable overlay for mounted packs. The base pack stays immutable, live docs are keyed by stable ids, and `serialize()` returns a standard `.knolo` snapshot.
+
+For the rollout plan, implementation notes, and test matrix, see [`LIVE_KBS_MVP.md`](./LIVE_KBS_MVP.md).
+
+```ts
+import { createLivePack, mountPack } from '@knolo/core';
+
+const base = await mountPack({ src: './dist/knowledge.knolo' });
+const live = await createLivePack(base, [
+  { id: 'notes.alpha', text: 'alpha note', namespace: 'notes' },
+]);
+
+await live.updateDocument({ id: 'notes.alpha', text: 'alpha note v2' });
+await live.removeDocument('notes.alpha');
+await live.addDocument({ id: 'notes.alpha', text: 'alpha note restored' });
+
+const snapshot = await live.serialize();
+const rebuilt = await mountPack({ src: snapshot });
+```
+
+`LivePack` stays lexical/graph-only in v1. Cortex remains a separate append-only memory layer.
+
 ---
 
 # 🧠 Knolo Cortex
