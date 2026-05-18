@@ -8,6 +8,7 @@ export {
 } from './query.js';
 export { makeContextPatch } from './patch.js';
 export { buildPack } from './builder.js';
+export { LivePack, createLivePack } from './live.js';
 export {
   quantizeEmbeddingInt8L2Norm,
   encodeScaleF16,
@@ -49,6 +50,7 @@ export { expandQueryWithGraph } from './graph/query_expand.js';
 export * from './memory/index.js';
 export type { MountOptions, PackMeta, Pack } from './pack.runtime.js';
 export type { QueryOptions, Hit } from './query.js';
+export type { LivePackOptions } from './live.js';
 export type { EmbeddingProvider, SemanticSidecar, SemanticQueryOptions, RetrievalEvidence } from './semantic/types.js';
 export type { ContextPatch } from './patch.js';
 export type { BuildInputDoc, BuildPackOptions } from './builder.js';

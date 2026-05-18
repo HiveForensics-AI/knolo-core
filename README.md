@@ -4,7 +4,7 @@ Knolo is a **local-first knowledge base engine** built around deterministic retr
 
 It provides:
 
-* `@knolo/core` — pack format + deterministic retrieval engine
+* `@knolo/core` — pack format + deterministic retrieval engine, LivePack overlay, and Cortex memory layer
 * `@knolo/cli` — build workflows for `.knolo` artifacts
 * `create-knolo-app` — instant Next.js starter with playground
 * `@knolo/langchain` — LangChain-style retriever adapter
@@ -64,6 +64,8 @@ npm run knolo:build
 npm run dev
 ```
 
+For pack workflows, `knolo dev` is the watch/rebuild loop for configured sources. We are keeping that workflow instead of adding a separate `build --watch` command in this phase.
+
 Open:
 
 ```
@@ -89,16 +91,42 @@ Knolo is:
 
 You build `.knolo` packs once.
 You mount them anywhere — Node, web, React Native, offline.
+When you need a deterministic mutable overlay on top of a mounted pack, use `LivePack`.
 
 Retrieval is lexical-first and deterministic by default.
 
 Hybrid semantic reranking is optional and **never replaces lexical grounding**.
+
+# 🧪 Live KBs MVP
+
+`LivePack` is the phase-1 mutable overlay for mounted packs. The base pack stays immutable, live docs are keyed by stable ids, and `serialize()` returns a standard `.knolo` snapshot.
+
+For the rollout plan, implementation notes, and test matrix, see [`LIVE_KBS_MVP.md`](./LIVE_KBS_MVP.md).
+
+```ts
+import { createLivePack, mountPack } from '@knolo/core';
+
+const base = await mountPack({ src: './dist/knowledge.knolo' });
+const live = await createLivePack(base, [
+  { id: 'notes.alpha', text: 'alpha note', namespace: 'notes' },
+]);
+
+await live.updateDocument({ id: 'notes.alpha', text: 'alpha note v2' });
+await live.removeDocument('notes.alpha');
+await live.addDocument({ id: 'notes.alpha', text: 'alpha note restored' });
+
+const snapshot = await live.serialize();
+const rebuilt = await mountPack({ src: snapshot });
+```
+
+`LivePack` stays lexical/graph-only in v1. Cortex remains a separate append-only memory layer.
 
 ---
 
 # 🧠 Knolo Cortex
 
 Knolo Cortex adds a local-first overlay memory layer on top of `@knolo/core`.
+It is separate from `LivePack`: Cortex is append-only memory, while LivePack is a mutable document overlay for mounted packs.
 
 It gives you:
 
