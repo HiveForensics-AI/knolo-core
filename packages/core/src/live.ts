@@ -1,5 +1,4 @@
-import { buildPack, type BuildInputDoc } from './builder.js';
-import { buildClaimGraph } from './graph/build_claim_graph.js';
+import { buildPack, type BuildInputDoc, type BuildPackOptions } from './builder.js';
 import type { Pack } from './pack.runtime.js';
 import { mountPack } from './pack.runtime.js';
 import {
@@ -41,7 +40,8 @@ export class LivePack {
   private readonly baseDocsById: Map<string, BaseDocEntry>;
   private overlay = new Map<string, LiveDoc>();
   private tombstones = new Set<string>();
-  private delta: Pack;
+  // Materialized merged view so BM25 sees one corpus-wide IDF.
+  private merged: Pack;
   private mutationQueue: Promise<void> = Promise.resolve();
 
   constructor(base: Pack, opts: LivePackOptions = {}) {
@@ -49,7 +49,7 @@ export class LivePack {
     this.graph = normalizeLiveGraphOptions(base, opts);
     this.baseEntries = extractBaseEntries(base);
     this.baseDocsById = indexBaseEntries(this.baseEntries);
-    this.delta = createEmptyDeltaPack(this.graph.enabled);
+    this.merged = base;
   }
 
   public async addDocument(doc: LiveDoc): Promise<this> {
@@ -61,10 +61,16 @@ export class LivePack {
       nextOverlay.set(nextDoc.id, nextDoc);
       nextTombstones.delete(nextDoc.id);
 
-      const nextDelta = await buildOverlayPack(nextOverlay, this.graph);
+      const nextMerged = await buildMergedPack(
+        this.baseEntries,
+        nextOverlay,
+        nextTombstones,
+        this.graph,
+        this.base.meta.agents
+      );
       this.overlay = nextOverlay;
       this.tombstones = nextTombstones;
-      this.delta = nextDelta;
+      this.merged = nextMerged;
     });
   }
 
@@ -85,10 +91,16 @@ export class LivePack {
       nextOverlay.set(nextDoc.id, nextDoc);
       nextTombstones.delete(nextDoc.id);
 
-      const nextDelta = await buildOverlayPack(nextOverlay, this.graph);
+      const nextMerged = await buildMergedPack(
+        this.baseEntries,
+        nextOverlay,
+        nextTombstones,
+        this.graph,
+        this.base.meta.agents
+      );
       this.overlay = nextOverlay;
       this.tombstones = nextTombstones;
-      this.delta = nextDelta;
+      this.merged = nextMerged;
     });
   }
 
@@ -108,34 +120,22 @@ export class LivePack {
       nextOverlay.delete(normalizedId);
       nextTombstones.add(normalizedId);
 
-      const nextDelta = await buildOverlayPack(nextOverlay, this.graph);
+      const nextMerged = await buildMergedPack(
+        this.baseEntries,
+        nextOverlay,
+        nextTombstones,
+        this.graph,
+        this.base.meta.agents
+      );
       this.overlay = nextOverlay;
       this.tombstones = nextTombstones;
-      this.delta = nextDelta;
+      this.merged = nextMerged;
     });
   }
 
   public query(q: string, opts: QueryOptions = {}): Hit[] {
     validateLiveQueryOptions(opts);
-
-    const topK = opts.topK ?? 10;
-    const poolTopK = Math.max(25, topK * 5);
-    const queryOpts = sanitizeLiveQueryOptions(opts, poolTopK);
-
-    const baseHits = queryPack(this.base, q, queryOpts);
-    const deltaHits = queryPack(this.delta, q, queryOpts);
-    const hiddenBaseIds = this.getShadowedBaseIds();
-
-    const merged: Hit[] = [];
-    for (const hit of baseHits) {
-      const source = typeof hit.source === 'string' ? hit.source : undefined;
-      if (source && hiddenBaseIds.has(source)) continue;
-      merged.push(hit);
-    }
-    merged.push(...deltaHits);
-
-    merged.sort(compareHits);
-    return merged.slice(0, topK);
+    return queryPack(this.merged, q, sanitizeLiveQueryOptions(opts));
   }
 
   public async serialize(): Promise<Uint8Array> {
@@ -178,35 +178,8 @@ export class LivePack {
     return baseEntryToDoc(base) as LiveDoc;
   }
 
-  private getShadowedBaseIds(): Set<string> {
-    const hidden = new Set<string>(this.tombstones);
-    for (const id of this.overlay.keys()) hidden.add(id);
-    return hidden;
-  }
-
   private collectMergedDocs(): BuildInputDoc[] {
-    const hidden = this.getShadowedBaseIds();
-    const named = new Map<string, BuildInputDoc>();
-    const anonymous: BuildInputDoc[] = [];
-
-    for (const entry of this.baseEntries) {
-      if (entry.id === undefined) {
-        anonymous.push(baseEntryToDoc(entry));
-        continue;
-      }
-      if (hidden.has(entry.id)) continue;
-      named.set(entry.id, baseEntryToDoc(entry));
-    }
-
-    for (const [id, doc] of this.overlay) {
-      named.set(id, cloneLiveDoc(doc));
-    }
-
-    const sortedNamed = [...named.entries()]
-      .sort(([left], [right]) => compareIds(left, right))
-      .map(([, doc]) => doc);
-
-    return [...sortedNamed, ...anonymous];
+    return collectMergedDocsFromState(this.baseEntries, this.overlay, this.tombstones);
   }
 }
 
@@ -368,82 +341,74 @@ function validateLiveQueryOptions(opts: QueryOptions): void {
   validateQueryOptions({ ...opts, semantic: undefined });
 }
 
-function sanitizeLiveQueryOptions(
-  opts: QueryOptions,
-  topK: number
-): QueryOptions {
+function sanitizeLiveQueryOptions(opts: QueryOptions): QueryOptions {
   return {
     ...opts,
-    topK,
     semantic: undefined,
   };
 }
 
-function createEmptyDeltaPack(graphEnabled: boolean): Pack {
-  const claimGraph = graphEnabled ? buildClaimGraph([]) : undefined;
-  return {
-    meta: {
-      version: 3,
-      stats: {
-        docs: 0,
-        blocks: 0,
-        terms: 0,
-        avgBlockLen: 1,
-      },
-    },
-    lexicon: new Map<string, number>(),
-    postings: new Uint32Array(0),
-    blocks: [],
-    headings: [],
-    docIds: [],
-    namespaces: [],
-    blockTokenLens: [],
-    ...(claimGraph ? { claimGraph } : {}),
-  };
-}
-
-async function buildOverlayPack(
+async function buildMergedPack(
+  baseEntries: BaseDocEntry[],
   overlay: Map<string, LiveDoc>,
-  graph: NormalizedLivePackOptions['graph']
+  tombstones: Set<string>,
+  graph: NormalizedLivePackOptions['graph'],
+  agents?: BuildPackOptions['agents']
 ): Promise<Pack> {
-  const docs = [...overlay.values()].sort((a, b) => compareIds(a.id, b.id));
-  const bytes = await buildPack(
-    docs,
-    graph.enabled
-      ? {
-          graph: {
-            enabled: true,
-            ...(graph.maxEdgesPerDoc !== undefined
-              ? { maxEdgesPerDoc: graph.maxEdgesPerDoc }
-              : {}),
-          },
-        }
-      : {
-          graph: { enabled: false },
-        }
-  );
+  const docs = collectMergedDocsFromState(baseEntries, overlay, tombstones);
+  const bytes = await buildPack(docs, createBuildPackOptions(graph, agents));
   return await mountPack({ src: bytes });
 }
 
-function compareHits(left: Hit, right: Hit): number {
-  const scoreDiff = right.score - left.score;
-  if (scoreDiff !== 0) return scoreDiff;
+function collectMergedDocsFromState(
+  baseEntries: BaseDocEntry[],
+  overlay: Map<string, LiveDoc>,
+  tombstones: Set<string>
+): BuildInputDoc[] {
+  const hidden = new Set<string>(tombstones);
+  for (const id of overlay.keys()) hidden.add(id);
 
-  const leftSource = typeof left.source === 'string' ? left.source : '\uffff';
-  const rightSource = typeof right.source === 'string' ? right.source : '\uffff';
-  const sourceDiff = compareStrings(leftSource, rightSource);
-  if (sourceDiff !== 0) return sourceDiff;
+  const named = new Map<string, BuildInputDoc>();
+  const anonymous: BuildInputDoc[] = [];
 
-  return left.blockId - right.blockId;
+  for (const entry of baseEntries) {
+    if (entry.id === undefined) {
+      anonymous.push(baseEntryToDoc(entry));
+      continue;
+    }
+    if (hidden.has(entry.id)) continue;
+    named.set(entry.id, baseEntryToDoc(entry));
+  }
+
+  for (const [id, doc] of overlay) {
+    named.set(id, cloneLiveDoc(doc));
+  }
+
+  const sortedNamed = [...named.entries()]
+    .sort(([left], [right]) => compareStrings(left, right))
+    .map(([, doc]) => doc);
+
+  return [...sortedNamed, ...anonymous];
 }
 
-function compareIds(left: string, right: string): number {
-  return compareStrings(left, right);
-}
-
-function compareStrings(left: string, right: string): number {
-  if (left === right) return 0;
-  return left < right ? -1 : 1;
+function createBuildPackOptions(
+  graph: NormalizedLivePackOptions['graph'],
+  agents?: BuildPackOptions['agents']
+): BuildPackOptions {
+  return graph.enabled
+    ? {
+        graph: {
+          enabled: true,
+          ...(graph.maxEdgesPerDoc !== undefined
+            ? { maxEdgesPerDoc: graph.maxEdgesPerDoc }
+            : {}),
+        },
+        ...(agents ? { agents } : {}),
+      }
+    : {
+        graph: { enabled: false },
+        ...(agents ? { agents } : {}),
+      };
 }
 
 function normalizeLiveId(id: unknown, context: string): string {
@@ -475,4 +440,9 @@ function validateOptionalString(
     );
   }
   return value;
+}
+
+function compareStrings(left: string, right: string): number {
+  if (left === right) return 0;
+  return left < right ? -1 : 1;
 }
