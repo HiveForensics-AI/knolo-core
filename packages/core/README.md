@@ -71,6 +71,39 @@ npm install @knolo/core
 
 ---
 
+## 0️⃣ LivePack Overlay
+
+`LivePack` is the mutable overlay for mounted packs.
+
+Use it when you want stable-id document edits without rebuilding the immutable base pack first:
+
+* `addDocument()` inserts or replaces a live doc by stable id
+* `updateDocument()` merges partial fields onto the last known full doc
+* `removeDocument()` tombstones a doc id and hides the base copy
+* `serialize()` materializes the merged live state as a normal `.knolo` snapshot
+
+```ts
+import { createLivePack, mountPack } from "@knolo/core";
+
+const base = await mountPack({ src: "./dist/knowledge.knolo" });
+const live = await createLivePack(base, [
+  { id: "notes.alpha", text: "alpha note", namespace: "notes" },
+]);
+
+await live.updateDocument({ id: "notes.alpha", text: "alpha note v2" });
+await live.removeDocument("notes.alpha");
+await live.addDocument({ id: "notes.alpha", text: "alpha note restored" });
+
+const snapshot = await live.serialize();
+const rebuilt = await mountPack({ src: snapshot });
+```
+
+Live querying in v1 stays lexical/graph-only. Semantic live options are rejected until the embedding story exists.
+
+For the rollout notes and constraints, see [`../../LIVE_KBS_MVP.md`](../../LIVE_KBS_MVP.md).
+
+---
+
 # 🚀 Core Concepts
 
 ## 1️⃣ Build a Pack
@@ -153,7 +186,7 @@ For iterative pack builds, use `knolo dev` as the watch/rebuild workflow. We are
 
 ---
 
-## 4️⃣ LivePack Overlay
+## 4️⃣ LivePack Overlay Details
 
 `LivePack` is a deterministic mutable overlay on top of a mounted base pack.
 

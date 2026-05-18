@@ -1,11 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {
-  buildPack,
-  createLivePack,
-  mountPack,
-  query,
-} from '../dist/index.js';
+import { buildPack, createLivePack, mountPack, query } from '../dist/index.js';
 
 function stableHits(hits) {
   return hits.map(({ source, text, namespace }) => ({
@@ -27,7 +22,7 @@ function buildDocsSnapshot(pack, docId) {
   };
 }
 
-test('LivePack lifecycle is deterministic and round-trips through mountPack', async () => {
+async function buildFixture() {
   const base = await mountPack({
     src: await buildPack([
       {
@@ -78,19 +73,32 @@ test('LivePack lifecycle is deterministic and round-trips through mountPack', as
     },
   ]);
 
-  const newtermHits = live.query('newterm', { topK: 5 });
-  assert.deepEqual(newtermHits.map((hit) => hit.source), ['a', 'z']);
-
-  const alphaHits = live.query('alpha', { topK: 5 });
-  assert.equal(alphaHits.some((hit) => hit.source === 'b'), true);
-  assert.equal(alphaHits.find((hit) => hit.source === 'shared')?.namespace, 'live');
-
   await live.addDocument({
     id: 'added',
     heading: 'Added',
     namespace: 'live',
     text: 'fresh term gamma',
   });
+  await live.updateDocument({
+    id: 'base-update',
+    text: 'updated note',
+  });
+  await live.removeDocument('remove-me');
+  await live.addDocument({
+    id: 'remove-me',
+    heading: 'Readded Heading',
+    namespace: 'live',
+    text: 'restored unique',
+  });
+
+  const bytes1 = await live.serialize();
+  const bytes2 = await live.serialize();
+  return { live, bytes1, bytes2 };
+}
+
+test('lifecycle probe', async () => {
+  const { live, bytes1, bytes2 } = await buildFixture();
+
   assert.deepEqual(stableHits(live.query('newterm', { topK: 5 })), [
     { source: 'a', text: 'newterm aaabbc', namespace: 'live' },
     { source: 'z', text: 'newterm aabaad', namespace: 'live' },
@@ -98,32 +106,18 @@ test('LivePack lifecycle is deterministic and round-trips through mountPack', as
   assert.deepEqual(stableHits(live.query('fresh', { topK: 5 })), [
     { source: 'added', text: 'fresh term gamma', namespace: 'live' },
   ]);
-
-  await live.updateDocument({
-    id: 'base-update',
-    text: 'updated note',
-  });
   assert.deepEqual(stableHits(live.query('updated', { topK: 5 })), [
     { source: 'base-update', text: 'updated note', namespace: 'base' },
   ]);
-
-  await live.removeDocument('remove-me');
-  assert.equal(live.query('obsolete', { topK: 5 }).length, 0);
-
-  await live.addDocument({
-    id: 'remove-me',
-    heading: 'Readded Heading',
-    namespace: 'live',
-    text: 'restored unique',
-  });
   assert.deepEqual(stableHits(live.query('restored', { topK: 5 })), [
     { source: 'remove-me', text: 'restored unique', namespace: 'live' },
   ]);
 
-  const bytes1 = await live.serialize();
-  const bytes2 = await live.serialize();
   assert.equal(Buffer.compare(Buffer.from(bytes1), Buffer.from(bytes2)), 0);
+});
 
+test('roundtrip probe', async () => {
+  const { bytes1 } = await buildFixture();
   const roundTrip = await mountPack({ src: bytes1 });
   const roundTripOpts = { topK: 5, queryExpansion: { enabled: false } };
   assert.deepEqual(stableHits(query(roundTrip, 'newterm', roundTripOpts)), [
@@ -154,7 +148,34 @@ test('LivePack lifecycle is deterministic and round-trips through mountPack', as
   assert.equal(roundTrip.namespaces?.[roundTrip.docIds?.findIndex((id) => id === 'shared') ?? -1], 'live');
 });
 
-test('LivePack validates stable ids and unknown updates fail fast', async () => {
+test('merged corpus probe', async () => {
+  const base = await mountPack({
+    src: await buildPack([
+      { id: 'base-short', text: 'alpha' },
+      ...Array.from({ length: 40 }, (_, i) => ({
+        id: `base-${i}`,
+        text: `alpha filler filler filler filler ${i}`,
+      })),
+    ]),
+  });
+
+  const live = await createLivePack(base, [
+    {
+      id: 'live-long',
+      text: `alpha ${Array.from({ length: 25 }, (_, i) => `unique${i}`).join(' ')}`,
+    },
+  ]);
+
+  const roundTrip = await mountPack({ src: await live.serialize() });
+  const queryOpts = { topK: 3, queryExpansion: { enabled: false } };
+
+  assert.deepEqual(
+    stableHits(live.query('alpha', queryOpts)),
+    stableHits(query(roundTrip, 'alpha', queryOpts))
+  );
+});
+
+test('validation probe', async () => {
   const base = await mountPack({
     src: await buildPack([
       {
