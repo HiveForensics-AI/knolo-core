@@ -4,6 +4,7 @@ scripts/*
 !scripts/test.mjs
 !scripts/smoke.mjs
 !scripts/e2e-icp-local.sh
+!scripts/regenerate-python-fixture.mjs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -14,14 +15,37 @@ pnpm-lock.yaml
 # Build outputs
 dist/
 tmpdist/
+build/
 coverage/
 .nyc_output/
 
 # TypeScript
 *.tsbuildinfo
 
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.python-user-base/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.eggs/
+*.egg-info/
+pip-wheel-metadata/
+htmlcov/
+.coverage
+.coverage.*
+.venv/
+venv/
+env/
+
 # Env / system files
 .env
+.env.local
+.env.*.local
+.agents/
 .DS_Store
 Thumbs.db
 
