@@ -1,0 +1,35 @@
+[build-system]
+requires = []
+build-backend = "setuptools.build_meta"
+backend-path = ["."]
+
+[project]
+name = "knolo"
+version = "0.1.0"
+description = "Pure-Python runtime for mounting and querying .knolo packs."
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Knolo" }]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2",
+  "pytest>=8",
+  "twine>=5",
+]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+knolo = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

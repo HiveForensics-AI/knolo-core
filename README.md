@@ -196,6 +196,32 @@ cargo test
 
 ---
 
+# 🐍 Python Runtime Support (Phase 2)
+
+Knolo also ships a pure-Python runtime in `packages/core-python` for mounting existing `.knolo` packs and running deterministic lexical queries locally.
+
+It stays local-first, requires no vector database, and does not use embeddings on the default query path.
+
+Install locally:
+
+```bash
+cd packages/core-python
+python -m pip install -e ".[dev]"
+```
+
+Use it from Python:
+
+```python
+from knolo import mount_pack, query
+
+pack = mount_pack("tests/fixtures/simple.knolo")
+hits = query(pack, "alpha beta", top_k=5)
+```
+
+For the release checklist and publishing notes, see [`packages/core-python/README.md`](packages/core-python/README.md) and [`packages/core-python/RELEASE.md`](packages/core-python/RELEASE.md).
+
+---
+
 # 🌐 ICP Canister Adapter (New)
 
 Knolo now ships a local-first ICP path that keeps retrieval lexical-first and talks to the canister directly, with no middleware and no vector database.
