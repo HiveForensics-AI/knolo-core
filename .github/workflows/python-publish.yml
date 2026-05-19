@@ -14,14 +14,17 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
           cache: pip
           cache-dependency-path: packages/core-python/pyproject.toml
+
       - run: python -m pip install -e ".[dev]"
       - run: python -m build
       - run: python -m twine check dist/*
+
       - uses: actions/upload-artifact@v4
         with:
           name: python-distributions
@@ -33,14 +36,19 @@ jobs:
     needs: build
     permissions:
       contents: read
-      id-token: write
+      id-token: write   # Required for Trusted Publishing
     environment:
       name: pypi
+      url: https://pypi.org/p/knolo   # Recommended
+
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: python-distributions
           path: dist
-      - uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist
+          # attestations: true   # Uncomment if you want Sigstore provenance
