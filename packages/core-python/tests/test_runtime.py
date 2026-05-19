@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import importlib.util
 import struct
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -15,6 +17,7 @@ from knolo import (
 
 
 FIXTURE_PATH = Path(__file__).resolve().parent / "fixtures" / "simple.knolo"
+BUILD_BACKEND_PATH = Path(__file__).resolve().parents[1] / "setuptools" / "build_meta.py"
 
 
 @pytest.fixture(scope="module")
@@ -25,6 +28,16 @@ def fixture_bytes() -> bytes:
 @pytest.fixture(scope="module")
 def fixture_pack(fixture_bytes: bytes):
     return mount_pack_from_bytes(fixture_bytes)
+
+
+def _load_build_backend():
+    spec = importlib.util.spec_from_file_location("knolo_local_build_meta", BUILD_BACKEND_PATH)
+    assert spec is not None
+    assert spec.loader is not None
+
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def test_mounts_from_path_and_bytes(fixture_bytes: bytes):
@@ -86,6 +99,25 @@ def test_query_options_are_merged_with_explicit_kwargs(fixture_pack):
     hits = query(fixture_pack, "alpha beta", options, top_k=2)
     assert len(hits) == 2
     assert all(hit.namespace == "docs.alpha" for hit in hits)
+
+
+def test_non_editable_wheel_uses_top_level_package_paths(tmp_path):
+    build_meta = _load_build_backend()
+    wheel_name = build_meta.build_wheel(tmp_path)
+    wheel_path = tmp_path / wheel_name
+
+    assert wheel_path.exists()
+
+    with zipfile.ZipFile(wheel_path) as wheel:
+        names = wheel.namelist()
+
+    assert "knolo/__init__.py" in names
+    assert "knolo/errors.py" in names
+    assert "knolo/models.py" in names
+    assert "knolo/runtime.py" in names
+    assert "knolo/tokenize.py" in names
+    assert "knolo/py.typed" in names
+    assert not any(name.startswith("src/knolo/") for name in names)
 
 
 @pytest.mark.parametrize(

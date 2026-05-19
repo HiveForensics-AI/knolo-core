@@ -84,7 +84,7 @@ def _build_wheel(out_dir: Path, *, editable: bool) -> str:
     else:
         for rel_path in _wheel_files():
             src = ROOT / rel_path
-            arcname = rel_path.as_posix()
+            arcname = rel_path.relative_to("src").as_posix()
             files.append((arcname, src.read_bytes()))
 
     metadata_prefix = DIST_INFO
