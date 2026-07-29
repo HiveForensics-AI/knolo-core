@@ -121,6 +121,20 @@ const rebuilt = await mountPack({ src: snapshot });
 
 `LivePack` stays lexical/graph-only in v1. Cortex remains a separate append-only memory layer.
 
+### Delta / append-only patch packs
+
+Live mutations can be distributed as a small deterministic patch stream:
+
+```ts
+import { applyPatchPack, deserializePatchPack, mountPack } from '@knolo/core';
+
+const base = await mountPack({ src: './knowledge.knolo' });
+const patch = deserializePatchPack(patchBytes);
+const live = await applyPatchPack(base, patch);
+```
+
+Patch packs contain complete stable-id upserts and tombstones, are mergeable, and bind themselves to the fingerprint of the base pack. `live.serializePatchPack()` exports the append-only mutations since the live overlay was created; `live.serialize()` still produces a normal full `.knolo` snapshot.
+
 ---
 
 # 🧠 Knolo Cortex

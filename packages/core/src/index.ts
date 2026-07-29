@@ -10,6 +10,14 @@ export { makeContextPatch } from './patch.js';
 export { buildPack } from './builder.js';
 export { LivePack, createLivePack } from './live.js';
 export {
+  createPatchPack,
+  appendPatch,
+  mergePatchPacks,
+  serializePatchPack,
+  deserializePatchPack,
+  applyPatchPack,
+} from './patch_pack.js';
+export {
   quantizeEmbeddingInt8L2Norm,
   encodeScaleF16,
   decodeScaleF16,
@@ -51,6 +59,7 @@ export * from './memory/index.js';
 export type { MountOptions, PackMeta, Pack } from './pack.runtime.js';
 export type { QueryOptions, Hit } from './query.js';
 export type { LivePackOptions } from './live.js';
+export type { PatchPack, PatchPackV1, PatchOpV1, PatchUpsertV1, PatchRemoveV1 } from './patch_pack.js';
 export type { EmbeddingProvider, SemanticSidecar, SemanticQueryOptions, RetrievalEvidence } from './semantic/types.js';
 export type { ContextPatch } from './patch.js';
 export type { BuildInputDoc, BuildPackOptions } from './builder.js';

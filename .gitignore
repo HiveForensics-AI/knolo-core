@@ -62,3 +62,6 @@ Desktop.ini
 *.zip
 *.tgz
 .codex
+
+# Local rollout notes (not part of the public repository)
+LIVE_KBS_MVP.md

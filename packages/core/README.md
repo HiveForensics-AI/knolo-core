@@ -100,6 +100,25 @@ const rebuilt = await mountPack({ src: snapshot });
 
 Live querying in v1 stays lexical/graph-only. Semantic live options are rejected until the embedding story exists.
 
+### Append-only patch packs
+
+Use patch packs to ship only stable-id document mutations instead of rebuilding and distributing a full snapshot. Patch packs are deterministic JSON bytes, carry a fingerprint of their base pack, and can be merged or replayed safely:
+
+```ts
+import {
+  applyPatchPack,
+  deserializePatchPack,
+  mountPack,
+} from "@knolo/core";
+
+const base = await mountPack({ src: "./dist/knowledge.knolo" });
+const patch = deserializePatchPack(new Uint8Array(await fetch("./updates.knolo.patch").then(r => r.arrayBuffer())));
+const live = await applyPatchPack(base, patch);
+const snapshot = await live.serialize();
+```
+
+`LivePack.serializePatchPack()` exports the mutations made since the overlay was created. Each upsert is a complete document replacement and each remove is a tombstone; replay rejects a patch whose base fingerprint does not match.
+
 For the rollout notes and constraints, see [`../../LIVE_KBS_MVP.md`](../../LIVE_KBS_MVP.md).
 
 ---

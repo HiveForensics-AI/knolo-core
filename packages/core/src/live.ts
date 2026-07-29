@@ -7,8 +7,10 @@ import {
   type Hit,
   type QueryOptions,
 } from './query.js';
+import type { PatchOpV1 } from './patch_pack.js';
 
 export type LivePackOptions = {
+  actor?: string;
   graph?: {
     enabled?: boolean;
     maxEdgesPerDoc?: number;
@@ -36,6 +38,9 @@ export class LivePack {
   public readonly base: Readonly<Pack>;
 
   private readonly graph: NormalizedLivePackOptions['graph'];
+  private readonly actor: string;
+  private patchClock = 0;
+  private patchOps: PatchOpV1[] = [];
   private readonly baseEntries: BaseDocEntry[];
   private readonly baseDocsById: Map<string, BaseDocEntry>;
   private overlay = new Map<string, LiveDoc>();
@@ -47,6 +52,7 @@ export class LivePack {
   constructor(base: Pack, opts: LivePackOptions = {}) {
     this.base = base;
     this.graph = normalizeLiveGraphOptions(base, opts);
+    this.actor = normalizeLiveActor(opts.actor);
     this.baseEntries = extractBaseEntries(base);
     this.baseDocsById = indexBaseEntries(this.baseEntries);
     this.merged = base;
@@ -71,6 +77,7 @@ export class LivePack {
       this.overlay = nextOverlay;
       this.tombstones = nextTombstones;
       this.merged = nextMerged;
+      this.recordPatch({ op: 'upsert', id: nextDoc.id, doc: nextDoc });
     });
   }
 
@@ -101,6 +108,7 @@ export class LivePack {
       this.overlay = nextOverlay;
       this.tombstones = nextTombstones;
       this.merged = nextMerged;
+      this.recordPatch({ op: 'upsert', id: nextDoc.id, doc: nextDoc });
     });
   }
 
@@ -130,6 +138,7 @@ export class LivePack {
       this.overlay = nextOverlay;
       this.tombstones = nextTombstones;
       this.merged = nextMerged;
+      this.recordPatch({ op: 'remove', id: normalizedId });
     });
   }
 
@@ -157,6 +166,37 @@ export class LivePack {
         };
 
     return await buildPack(docs, buildOpts);
+  }
+
+  /** Return the append-only mutation stream since this LivePack was created. */
+  public async serializePatchPack(): Promise<Uint8Array> {
+    await this.mutationQueue;
+    const { createPatchPack, serializePatchPack } = await import('./patch_pack.js');
+    return serializePatchPack(createPatchPack(this.base, this.patchOps));
+  }
+
+  private recordPatch(input: {
+    op: 'upsert' | 'remove';
+    id: string;
+    doc?: LiveDoc;
+  }): void {
+    this.patchClock += 1;
+    if (input.op === 'upsert' && input.doc) {
+      this.patchOps.push({
+        op: 'upsert',
+        id: input.id,
+        doc: cloneLiveDoc(input.doc),
+        ts: this.patchClock,
+        actor: this.actor,
+      });
+      return;
+    }
+    this.patchOps.push({
+      op: 'remove',
+      id: input.id,
+      ts: this.patchClock,
+      actor: this.actor,
+    });
   }
 
   private async enqueueMutation(task: () => Promise<void>): Promise<this> {
@@ -419,6 +459,14 @@ function normalizeLiveId(id: unknown, context: string): string {
     throw new Error(`${context}: id must be a non-empty string.`);
   }
   return id;
+}
+
+function normalizeLiveActor(actor: unknown): string {
+  if (actor === undefined) return 'live-pack';
+  if (typeof actor !== 'string' || !actor.trim()) {
+    throw new Error('LivePack actor must be a non-empty string when provided.');
+  }
+  return actor;
 }
 
 function normalizeLiveText(text: unknown, context: string): string {
