@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Deterministic append-only document patch packs with base fingerprints, JSON serialization, merging, replay into `LivePack`, and `LivePack.serializePatchPack()`.
 - Knolo Cortex, a local-first overlay memory layer for `.knolo` packs with deterministic lexical recall, append-only logs, portable serialization, and no required vector DB.
 - Added the initial memory surface under `@knolo/core`, including memory normalization, immutable cortex writes, recall ranking, and consolidation helpers, while keeping the existing pack runtime API unchanged.
 - Added `memoryToClaimOps()` to bridge Cortex memories into deterministic ClaimGraph ops without changing the existing graph builder.
