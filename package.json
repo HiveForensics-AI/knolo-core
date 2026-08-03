@@ -10,6 +10,9 @@
     "format": "npm run format --workspace @knolo/core",
     "format:check": "npm run format:check --workspace @knolo/core",
     "knolo": "node ./packages/cli/bin/knolo.mjs",
-    "test:rust": "cargo test --manifest-path packages/core-rust/Cargo.toml"
+    "test:rust": "cargo test --manifest-path packages/core-rust/Cargo.toml",
+    "test:icp": "cargo test --manifest-path packages/core-rust/Cargo.toml && cargo test --manifest-path packages/icp-canister/Cargo.toml && bash scripts/check-icp-template-sync.sh",
+    "test:icp:e2e": "bash scripts/e2e-icp-local.sh",
+    "icp:local": "bash tests/icp-local/run-local.sh"
   }
 }

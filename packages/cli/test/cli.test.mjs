@@ -237,6 +237,27 @@ test('icp query shells out through dfx query with top-k', () => {
   assert.match(didArgs, /\("alpha beta", 7 : nat32\)/);
 });
 
+test('icp health and info call query methods', () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-icp-health-'));
+  const healthHarness = createFakeDfxHarness('knolo-cli-fake-dfx-health-');
+  const healthOut = runCli(['icp', 'health', '--canister', 'knolo_knowledge'], cwd, healthHarness.env);
+  assert.match(healthOut, /\{"ok":true\}/);
+  assert.match(readFileSync(healthHarness.argsFile, 'utf8'), /canister\ncall\nknolo_knowledge\nhealth\n--query/);
+
+  const infoHarness = createFakeDfxHarness('knolo-cli-fake-dfx-info-');
+  const infoOut = runCli(['icp', 'info', '--canister', 'knolo_knowledge'], cwd, infoHarness.env);
+  assert.match(infoOut, /\{"ok":true\}/);
+  assert.match(readFileSync(infoHarness.argsFile, 'utf8'), /canister\ncall\nknolo_knowledge\npack_info\n--query/);
+});
+
+test('icp clear shells out to clear_pack', () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-icp-clear-'));
+  const harness = createFakeDfxHarness('knolo-cli-fake-dfx-clear-');
+  const output = runCli(['icp', 'clear', '--canister', 'knolo_knowledge'], cwd, harness.env);
+  assert.match(output, /\{"ok":true\}/);
+  assert.match(readFileSync(harness.argsFile, 'utf8'), /canister\ncall\nknolo_knowledge\nclear_pack/);
+});
+
 test('semantic:validate succeeds for matching pack/model and fails on mismatch', async () => {
   const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-sem-validate-'));
   runCli(['init'], cwd);

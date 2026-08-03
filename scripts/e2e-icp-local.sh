@@ -134,4 +134,26 @@ echo "$OUT" | grep -q '"text"'
 echo "$OUT" | grep -qi "alpha"
 echo "$OUT" | grep -qi "beta"
 
+log "Upgrade canister and assert pack persistence"
+(
+  cd "$EXAMPLE_DIR"
+  run_dfx deploy
+)
+
+POST_UPGRADE_INFO="$(
+  cd "$EXAMPLE_DIR"
+  TERM="$DFX_TERM" XDG_DATA_HOME="$DFX_DATA_HOME" "$DFX_RUN_BIN" canister call knolo_knowledge pack_info --query --output json
+)"
+printf '%s\n' "$POST_UPGRADE_INFO"
+echo "$POST_UPGRADE_INFO" | grep -q '"loaded": true'
+echo "$POST_UPGRADE_INFO" | grep -q 'sample-knowledge-pack'
+
+POST_UPGRADE_OUT="$(
+  cd "$EXAMPLE_DIR"
+  DFX_BIN="$DFX_RUN_BIN" TERM="$DFX_TERM" XDG_DATA_HOME="$DFX_DATA_HOME" bash scripts/query.sh "alpha beta"
+)"
+printf '%s\n' "$POST_UPGRADE_OUT"
+echo "$POST_UPGRADE_OUT" | grep -qi "alpha"
+echo "$POST_UPGRADE_OUT" | grep -qi "beta"
+
 log "OK"

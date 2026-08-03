@@ -1,9 +1,14 @@
 use candid::CandidType;
+use ic_cdk::api::{caller, is_controller};
 use ic_cdk::storage::{stable_restore, stable_save};
 use ic_cdk_macros::{post_upgrade, pre_upgrade, query, update};
 use knolo_core_rust::{mount_pack_from_bytes, query as knolo_query, Pack, QueryOptions};
 use serde::Deserialize;
 use std::cell::RefCell;
+
+/// Soft ceiling for a single `set_pack` payload.
+/// Local/mainnet update messages are limited; keep well under the practical ingress cap.
+pub const MAX_PACK_BYTES: usize = 2 * 1024 * 1024;
 
 #[derive(CandidType, Deserialize, Clone, Debug, PartialEq)]
 pub struct HitDto {
@@ -64,6 +69,10 @@ thread_local! {
 
 #[update]
 fn set_pack(bytes: Vec<u8>, label: String) -> HealthDto {
+    if let Err(err) = require_controller() {
+        return err;
+    }
+
     let prepared = match prepare_pack(&bytes, label) {
         Ok(prepared) => prepared,
         Err(err) => return err,
@@ -89,6 +98,10 @@ fn set_pack(bytes: Vec<u8>, label: String) -> HealthDto {
 
 #[update]
 fn clear_pack() -> HealthDto {
+    if let Err(err) = require_controller() {
+        return err;
+    }
+
     if let Err(err) = persist_snapshot(&StableSnapshot::default()) {
         return HealthDto {
             ok: false,
@@ -242,11 +255,36 @@ fn health_from_state(state: &CanisterState) -> HealthDto {
     }
 }
 
+fn require_controller() -> Result<(), HealthDto> {
+    let principal = caller();
+    if is_controller(&principal) {
+        Ok(())
+    } else {
+        Err(HealthDto {
+            ok: false,
+            message: format!(
+                "Unauthorized: caller {principal} is not a controller of this canister."
+            ),
+        })
+    }
+}
+
 fn prepare_pack(bytes: &[u8], label: String) -> Result<PreparedPack, HealthDto> {
     if bytes.is_empty() {
         return Err(HealthDto {
             ok: false,
             message: "Pack bytes were empty.".to_string(),
+        });
+    }
+
+    if bytes.len() > MAX_PACK_BYTES {
+        return Err(HealthDto {
+            ok: false,
+            message: format!(
+                "Pack is too large: {} bytes exceeds the {} byte limit.",
+                bytes.len(),
+                MAX_PACK_BYTES
+            ),
         });
     }
 
@@ -395,6 +433,28 @@ mod tests {
         let health = health_from_state(&state);
         assert!(health.ok);
         assert!(health.message.contains("ready"));
+    }
+
+    #[test]
+    fn prepare_pack_rejects_oversize_payload() {
+        let oversized = vec![0u8; MAX_PACK_BYTES + 1];
+        let err = prepare_pack(&oversized, "too-big".to_string())
+            .err()
+            .expect("oversize pack should fail");
+
+        assert!(!err.ok);
+        assert!(err.message.contains("too large"));
+        assert!(err.message.contains(&MAX_PACK_BYTES.to_string()));
+    }
+
+    #[test]
+    fn prepare_pack_rejects_empty_payload() {
+        let err = prepare_pack(&[], "empty".to_string())
+            .err()
+            .expect("empty pack should fail");
+
+        assert!(!err.ok);
+        assert!(err.message.contains("empty"));
     }
 
     #[test]

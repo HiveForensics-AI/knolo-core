@@ -1,0 +1,39 @@
+name: icp-ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  icp-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Template sync check
+        run: bash scripts/check-icp-template-sync.sh
+
+      - name: Test Rust core
+        run: cargo test --manifest-path packages/core-rust/Cargo.toml
+
+      - name: Test ICP canister
+        run: cargo test --manifest-path packages/icp-canister/Cargo.toml
+
+      - name: Build canister wasm
+        run: cargo build --target wasm32-unknown-unknown --release --manifest-path packages/icp-canister/Cargo.toml
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install JS deps and test CLI ICP commands
+        run: |
+          npm ci
+          npm run build --workspace @knolo/core
+          npm test --workspace @knolo/cli

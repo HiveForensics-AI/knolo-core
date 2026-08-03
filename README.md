@@ -5,7 +5,8 @@ Knolo is a **local-first knowledge base engine** built around deterministic retr
 It provides:
 
 * `@knolo/core` — pack format + deterministic retrieval engine, LivePack overlay, and Cortex memory layer
-* `@knolo/cli` — build workflows for `.knolo` artifacts
+* `@knolo/cli` — build workflows for `.knolo` artifacts, including **live ICP** canister commands
+* `packages/icp-canister` — **live** Internet Computer knowledge canister (lexical search on-chain)
 * `create-knolo-app` — instant Next.js starter with playground
 * `@knolo/langchain` — LangChain-style retriever adapter
 * `@knolo/llamaindex` — LlamaIndex-style retriever adapter
@@ -17,6 +18,7 @@ Knolo prioritizes:
 * Zero vector database requirement
 * Local-first execution (offline capable)
 * Portable binary knowledge packs
+* Optional ICP deployment for on-chain knowledge retrieval
 * Strict runtime contracts (optional advanced features)
 
 > ⚠️ `knolo-core` (unscoped) on npm is deprecated. Use `@knolo/core`.
@@ -236,36 +238,117 @@ For the release checklist and publishing notes, see [`packages/core-python/READM
 
 ---
 
-# 🌐 ICP Canister Adapter (New)
+# 🌐 ICP Canister Adapter — LIVE
 
-Knolo now ships a local-first ICP path that keeps retrieval lexical-first and talks to the canister directly, with no middleware and no vector database.
+Knolo’s Internet Computer path is **live**: deploy a knowledge canister, upload a `.knolo` pack, and run **deterministic lexical search** directly on-chain.
 
-> Status: the ICP integration is still under active testing and should be treated as experimental, not fully production-ready.
+No middleware server. No vector database. Browser clients, CLI, `dfx`, Postman (via local REST gateway), and Candid UI all talk to the same canister.
 
-What it includes:
+> **Status: LIVE** for local ICP development and controller-operated deploys.
+>
+> - `set_pack` / `clear_pack` require a **canister controller**
+> - Pack uploads are capped at **2 MiB**
+> - Search is lexical-only (BM25-style via `packages/core-rust`)
+> - Pack bytes + label persist across canister upgrades
 
-* `packages/icp-canister` for the Rust canister adapter
-* `examples/icp-knowledge-canister` for a local `dfx` example
-* `knolo icp` CLI commands for init, build-pack, upload, and query
-* `scripts/e2e-icp-local.sh` for one-command local end-to-end verification
+## What ships
 
-Local prerequisites:
+| Piece | Path / command |
+| ----- | -------------- |
+| Rust canister | `packages/icp-canister` |
+| Repo example | `examples/icp-knowledge-canister` |
+| CLI scaffold | `knolo icp init` → bundled template |
+| CLI ops | `knolo icp build-pack`, `upload`, `query`, `health`, `info`, `clear` |
+| Automated e2e | `npm run test:icp:e2e` / `scripts/e2e-icp-local.sh` |
+| Manual seed + Postman | `npm run icp:local` / `tests/icp-local/` |
 
-* `dfx`
-* Rust wasm target: `rustup target add wasm32-unknown-unknown`
-* `npm install` from the repo root
-
-CLI path:
+## Prerequisites
 
 ```bash
-knolo icp init ./my-icp-canister
-cd ./my-icp-canister
-knolo icp build-pack ./knowledge --out ./dist/knowledge.knolo
-knolo icp upload ./dist/knowledge.knolo --canister knolo_knowledge
-knolo icp query "alpha beta" --canister knolo_knowledge
+npm install
+npm run build
+rustup target add wasm32-unknown-unknown
+# dfx 0.20.x on PATH
 ```
 
-Run the example manually:
+## Quick start (scaffold + CLI)
+
+```bash
+# from repo root after npm install / build
+npx knolo icp init ./my-icp-canister
+cd ./my-icp-canister
+
+dfx start --background --clean
+dfx deploy
+
+knolo icp build-pack ./knowledge --out ./dist/knowledge.knolo
+knolo icp upload ./dist/knowledge.knolo --canister knolo_knowledge --label my-docs
+knolo icp health --canister knolo_knowledge
+knolo icp info --canister knolo_knowledge
+knolo icp query "alpha beta" --canister knolo_knowledge --k 5
+```
+
+> Tip: run name-based `dfx` / `knolo icp` commands from the directory that contains `dfx.json`, or pass the canister principal id instead of the name.
+
+### Operator commands
+
+```bash
+knolo icp health --canister knolo_knowledge   # ready / not loaded
+knolo icp info --canister knolo_knowledge     # docs, blocks, terms, label
+knolo icp query "billing escalation" --canister knolo_knowledge --k 5
+knolo icp clear --canister knolo_knowledge    # controller only
+```
+
+### Same calls via dfx
+
+```bash
+cd examples/icp-knowledge-canister   # or your scaffold dir
+dfx canister call knolo_knowledge health --query --output json
+dfx canister call knolo_knowledge pack_info --query --output json
+dfx canister call knolo_knowledge search --query --output json \
+  --argument '("password reset", 5 : nat32)'
+```
+
+## One-command local demo (dummy seed + REST for Postman)
+
+Generates **gitignored** dummy docs/pack under `tests/icp-local/data/`, deploys the canister, seeds it, and starts a REST gateway:
+
+```bash
+npm run icp:local
+# equivalent: bash tests/icp-local/run-local.sh
+```
+
+Then use either surface:
+
+**CLI**
+
+```bash
+cd examples/icp-knowledge-canister
+node ../../packages/cli/bin/knolo.mjs icp query "billing escalation" --canister knolo_knowledge --k 5
+```
+
+**Postman / curl** (gateway on `http://127.0.0.1:8787`)
+
+```http
+GET  http://127.0.0.1:8787/health
+GET  http://127.0.0.1:8787/info
+GET  http://127.0.0.1:8787/search?q=billing%20escalation&k=5
+POST http://127.0.0.1:8787/search
+Content-Type: application/json
+
+{ "q": "password reset", "k": 5 }
+```
+
+```bash
+curl -sS "http://127.0.0.1:8787/search?q=deploy%20checklist&k=3"
+curl -sS -X POST "http://127.0.0.1:8787/search" \
+  -H 'Content-Type: application/json' \
+  -d '{"q":"onboarding","k":5}'
+```
+
+Full harness notes: [`tests/icp-local/README.md`](tests/icp-local/README.md).
+
+## Checked-in example (no dummy generator)
 
 ```bash
 cd examples/icp-knowledge-canister
@@ -276,15 +359,37 @@ bash scripts/upload-pack.sh
 bash scripts/query.sh "alpha beta"
 ```
 
-If `dfx` is running in a minimal shell and complains about terminal colors, prefix the commands with `TERM=xterm-256color`.
+If `dfx` complains about terminal colors in a minimal shell, prefix with `TERM=xterm-256color`.
 
-Run the full end-to-end check:
+Browser client (after deploy + upload):
 
 ```bash
-bash scripts/e2e-icp-local.sh
+cd examples/icp-knowledge-canister/frontend
+npm install
+npm run dev
 ```
 
-The sample pack is built from the checked-in docs under `examples/icp-knowledge-canister/knowledge`, so the search results are deterministic and easy to verify locally.
+## Automated verification
+
+```bash
+# unit + template drift + CLI icp tests (CI job: icp-ci)
+npm run test:icp
+
+# full local replica: deploy, upload, query, upgrade persistence, stop
+npm run test:icp:e2e
+```
+
+## Canister API (Candid)
+
+| Method | Kind | Access | Purpose |
+| ------ | ---- | ------ | ------- |
+| `set_pack(bytes, label)` | update | controller | Mount + persist a `.knolo` pack |
+| `clear_pack()` | update | controller | Clear loaded pack |
+| `search(q, top_k)` | query | public | Lexical top-k hits (max 50) |
+| `pack_info()` | query | public | Loaded meta (docs/blocks/terms/label) |
+| `health()` | query | public | Ready / not loaded message |
+
+Interface file: [`packages/icp-canister/knolo_icp.did`](packages/icp-canister/knolo_icp.did).
 
 ---
 

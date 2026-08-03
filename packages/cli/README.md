@@ -36,7 +36,9 @@ Indexes your configured content and outputs:
 dist/knowledge.knolo
 ```
 
-### ICP Canister Workflow
+### ICP Canister Workflow (LIVE)
+
+Deploy a Knolo knowledge canister on a local ICP replica, upload a `.knolo` pack, and query it with no middleware.
 
 ```bash
 knolo icp init ./icp-knowledge-canister
@@ -44,8 +46,18 @@ cd ./icp-knowledge-canister
 dfx start --background
 dfx deploy
 knolo icp build-pack ./knowledge --out ./dist/knowledge.knolo
-knolo icp upload ./dist/knowledge.knolo --canister knolo_knowledge
+knolo icp upload ./dist/knowledge.knolo --canister knolo_knowledge --label my-docs
+knolo icp health --canister knolo_knowledge
+knolo icp info --canister knolo_knowledge
 knolo icp query "alpha beta" --canister knolo_knowledge --k 5
+# knolo icp clear --canister knolo_knowledge  # controller only
+```
+
+From the monorepo, you can also seed dummy data and open a Postman-friendly REST gateway:
+
+```bash
+npm run icp:local
+curl -sS "http://127.0.0.1:8787/search?q=billing&k=5"
 ```
 
 These commands stay local-first:
@@ -53,6 +65,8 @@ These commands stay local-first:
 * No hosted service
 * No vector database
 * Lexical retrieval by default
+* Controller-only pack mutation; 2 MiB pack limit
+* Pack state survives canister upgrades
 
 ---
 

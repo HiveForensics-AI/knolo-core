@@ -5,6 +5,7 @@ scripts/*
 !scripts/smoke.mjs
 !scripts/e2e-icp-local.sh
 !scripts/regenerate-python-fixture.mjs
+!scripts/check-icp-template-sync.sh
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -65,3 +66,9 @@ Desktop.ini
 
 # Local rollout notes (not part of the public repository)
 LIVE_KBS_MVP.md
+
+# ICP local harness generated seed data / runtime (also covered by tests/icp-local/.gitignore)
+tests/icp-local/data/
+tests/icp-local/generated/
+tests/icp-local/.runtime/
+tests/icp-local/**/*.knolo

@@ -15,11 +15,17 @@ All notable changes to the ICP canister adapter will be documented in this file.
 - Phase 4 browser frontend under `examples/icp-knowledge-canister/frontend`, using a direct Vite React client with `@dfinity/agent` and no middleware API route.
 - Phase 5 `knolo icp` CLI commands for local ICP init, pack build, upload, and query flows, plus a bundled ICP scaffold template shipped with `@knolo/cli`.
 - Phase 6 local ICP end-to-end script at `scripts/e2e-icp-local.sh`, covering Rust builds, `dfx` startup and deploy, sample pack upload, lexical query assertion, and clean replica shutdown.
+- Controller-only authorization for `set_pack` and `clear_pack` so anonymous callers cannot mutate packs.
+- Hard `MAX_PACK_BYTES` (2 MiB) rejection for oversized uploads, with unit coverage.
+- Local manual harness under `tests/icp-local` (generated seed data gitignored) with REST gateway for Postman and CLI testing.
+- `knolo icp health|info|clear` operator commands.
 
 ### Changed
 - Added the `knolo_icp.did` interface definition for the new canister package.
 - Added a package-local `Cargo.lock` for reproducible Rust dependency resolution.
 - Fixed pack position encoding and Rust block parsing so JS-built `.knolo` packs query correctly through the canister.
+- End-to-end script now re-deploys after upload and asserts pack persistence across upgrade.
 
 ### Notes
 - Phase 2 now persists `.knolo` bytes and label across upgrades.
+- Write methods require the caller to be a canister controller (local `dfx` identity qualifies after deploy).

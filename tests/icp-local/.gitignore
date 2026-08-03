@@ -1,0 +1,8 @@
+# All generated seed content, packs, and runtime state stay local.
+# Commit only harness scripts + README from this directory.
+data/
+generated/
+.runtime/
+*.knolo
+*.log
+.pid

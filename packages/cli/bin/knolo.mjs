@@ -34,7 +34,7 @@ const DEFAULT_CONFIG = {
 const SUPPORTED_EXTENSIONS = new Set(['.md', '.txt', '.json']);
 const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', '.dfx', '.cargo-target']);
 const SUBCOMMANDS = new Set(['init', 'add', 'build', 'query', 'dev', 'semantic:index', 'semantic:inspect', 'semantic:validate']);
-const ICP_SUBCOMMANDS = new Set(['init', 'build-pack', 'upload', 'query']);
+const ICP_SUBCOMMANDS = new Set(['init', 'build-pack', 'upload', 'query', 'health', 'info', 'clear']);
 const ICP_TEMPLATE_CANDIDATES = [
   path.resolve(__dirname, '../templates/icp-knowledge-canister'),
   path.resolve(__dirname, '../../../examples/icp-knowledge-canister'),
@@ -118,12 +118,18 @@ Commands:
   build-pack <docsDir> --out <file>         Build a lexical-only .knolo pack
   upload <packFile> --canister <name-or-id> Upload a pack with dfx canister call set_pack
   query <question> --canister <name-or-id>  Query the canister with search
+  health --canister <name-or-id>            Call the canister health method
+  info --canister <name-or-id>              Call the canister pack_info method
+  clear --canister <name-or-id>             Clear the loaded pack (controller only)
 
 Examples:
   knolo icp init ./icp-knowledge-canister
   knolo icp build-pack ./knowledge --out ./dist/knowledge.knolo
   knolo icp upload ./dist/knowledge.knolo --canister knolo_knowledge
   knolo icp query "alpha beta" --canister knolo_knowledge --k 5
+  knolo icp health --canister knolo_knowledge
+  knolo icp info --canister knolo_knowledge
+  knolo icp clear --canister knolo_knowledge
 
 Environment:
   DFX_BIN                                   Override the dfx executable path
@@ -160,6 +166,24 @@ Query the canister's search method directly over dfx.
 Examples:
   knolo icp query "alpha beta" --canister knolo_knowledge
   knolo icp query "billing escalation" --canister ux6qi-fyaaa-aaaab-qaaaq-cai --k 10`,
+    health: `Usage: knolo icp health --canister <name-or-id>
+
+Call the canister health query method.
+
+Example:
+  knolo icp health --canister knolo_knowledge`,
+    info: `Usage: knolo icp info --canister <name-or-id>
+
+Call the canister pack_info query method.
+
+Example:
+  knolo icp info --canister knolo_knowledge`,
+    clear: `Usage: knolo icp clear --canister <name-or-id>
+
+Clear the loaded pack. Requires a controller identity.
+
+Example:
+  knolo icp clear --canister knolo_knowledge`,
   };
   console.log(help[command] ?? 'Unknown ICP command.');
 }
@@ -562,6 +586,30 @@ async function cmdIcpQuery(args) {
   );
 }
 
+async function cmdIcpHealth(args) {
+  const { flags } = parseFlagArgs(args);
+  if (!flags.canister) throw createError('Usage: knolo icp health --canister <name-or-id>');
+  runDfx(['canister', 'call', flags.canister, 'health', '--query', '--output', 'json'], {
+    cwd: process.cwd(),
+  });
+}
+
+async function cmdIcpInfo(args) {
+  const { flags } = parseFlagArgs(args);
+  if (!flags.canister) throw createError('Usage: knolo icp info --canister <name-or-id>');
+  runDfx(['canister', 'call', flags.canister, 'pack_info', '--query', '--output', 'json'], {
+    cwd: process.cwd(),
+  });
+}
+
+async function cmdIcpClear(args) {
+  const { flags } = parseFlagArgs(args);
+  if (!flags.canister) throw createError('Usage: knolo icp clear --canister <name-or-id>');
+  runDfx(['canister', 'call', flags.canister, 'clear_pack', '--output', 'json'], {
+    cwd: process.cwd(),
+  });
+}
+
 async function cmdIcp(args) {
   const [subcommand, ...rest] = args;
   if (!subcommand) return printIcpHelp();
@@ -571,6 +619,9 @@ async function cmdIcp(args) {
   if (subcommand === 'init') return await cmdIcpInit(rest);
   if (subcommand === 'upload') return await cmdIcpUpload(rest);
   if (subcommand === 'query') return await cmdIcpQuery(rest);
+  if (subcommand === 'health') return await cmdIcpHealth(rest);
+  if (subcommand === 'info') return await cmdIcpInfo(rest);
+  if (subcommand === 'clear') return await cmdIcpClear(rest);
   if (subcommand === 'build-pack') {
     const core = await loadCore();
     return await cmdIcpBuildPack(core, rest);
