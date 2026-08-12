@@ -9,6 +9,11 @@ import {
   buildPack,
   mountPack,
   query,
+  queryWithPlan,
+  queryWithReceipt,
+  verifyReceipt,
+  ANALYZER_PROFILES,
+  analyzerProfileDigest,
   makeContextPatch,
   decodeScaleF16,
   lexConfidence,
@@ -346,6 +351,64 @@ async function testQueryExpansionRecall() {
     !withoutExpansion.some((h) => h.source === 'related'),
     'expected disabling query expansion to keep strict lexical matching behavior'
   );
+}
+
+async function testHardConstraintsSurviveQueryExpansion() {
+  const docs = [
+    {
+      id: 'allowed',
+      namespace: 'public',
+      text: 'Throttling controls event bursts and smooths bridge pressure.',
+    },
+    {
+      id: 'blocked',
+      namespace: 'private',
+      text: 'Rate limiting caps request bursts and protects systems under load.',
+    },
+  ];
+  const pack = await mountPack({ src: await buildPack(docs) });
+  const hits = query(pack, 'throttling bridge pressure', {
+    topK: 5,
+    namespace: 'public',
+    queryExpansion: { enabled: true, docs: 2, terms: 4, weight: 1 },
+  });
+  assert.ok(hits.length > 0, 'expected the scoped seed document to remain searchable');
+  assert.ok(hits.every((hit) => hit.namespace === 'public'), 'expansion must not widen namespace scope');
+  assert.ok(!hits.some((hit) => hit.source === 'blocked'), 'expansion must not reintroduce blocked sources');
+}
+
+async function testSourceTextIsPreserved() {
+  const source = '# API\n\n```ts\nconst path = `a/b`;\n```\n\nUse [the path](https://example.test).';
+  const pack = await mountPack({ src: await buildPack([{ id: 'raw', text: source }]) });
+  assert.equal(pack.blocks[0], source, 'pack blocks must preserve raw source text for evidence');
+}
+
+async function testPhase3AnalyzerAndRetrievalPlan() {
+  const docs = [{ id: 'code', heading: 'TypeScript paths', namespace: 'docs', text: '# TypeScript paths\n\n```ts\nconst resolver = "./src/index.ts";\n```' }];
+  const pack = await mountPack({ src: await buildPack(docs, { analyzer: 'knolo-analyzer/code-typescript-v1' }) });
+  assert.equal(pack.meta.analyzer.id, 'knolo-analyzer/code-typescript-v1');
+  assert.equal(pack.meta.analyzer.digest, analyzerProfileDigest(ANALYZER_PROFILES['knolo-analyzer/code-typescript-v1']));
+  assert.ok(pack.chunks?.[0]?.codeSymbols?.includes('resolver'));
+  assert.ok(pack.chunks?.[0]?.paths?.includes('./src/index.ts'));
+
+  const first = queryWithPlan(pack, 'resolver', { topK: 3 });
+  const second = queryWithPlan(pack, 'resolver', { topK: 3 });
+  assert.equal(first.plan.version, 'retrieval-v4.0');
+  assert.equal(first.plan.planHash, second.plan.planHash);
+  assert.equal(first.hits[0]?.evidence?.planHash, first.plan.planHash);
+}
+
+async function testPhase4ReceiptVerification() {
+  const pack = await mountPack({ src: await buildPack([{ id: 'receipt-doc', text: 'Receipt verification requires exact evidence.' }]) });
+  const result = queryWithReceipt(pack, 'receipt verification', { topK: 2, policy: { minAnswerability: 0.1 } });
+  assert.equal(result.receipt.version, 'receipt-v1');
+  assert.equal(result.receipt.decision, 'answer');
+  assert.ok(result.receipt.replayHash.startsWith('sha256-'));
+  assert.ok(result.receipt.hits[0]?.spans[0]?.text);
+  verifyReceipt(result.receipt, pack);
+  const tampered = structuredClone(result.receipt);
+  tampered.hits[0].spans[0].text = 'tampered';
+  assert.throws(() => verifyReceipt(tampered, pack), /evidence span mismatch|replay hash mismatch/);
 }
 
 async function testMinScoreFiltering() {
@@ -722,7 +785,7 @@ async function testSemanticEvidenceScoresRemainCorrectAfterRerank() {
       enabled: true,
       queryEmbedding: new Float32Array([0, 1]),
       force: true,
-      blend: { enabled: true, wLex: 0.5, wSem: 0.5 },
+      blend: { enabled: true, wLex: 0.4, wSem: 0.6 },
     },
   });
 
@@ -1806,6 +1869,10 @@ await testPackStoresOneBasedTokenPositions();
 await testNearDuplicateDedupe();
 await testNamespaceFiltering();
 await testQueryExpansionRecall();
+await testHardConstraintsSurviveQueryExpansion();
+await testSourceTextIsPreserved();
+await testPhase3AnalyzerAndRetrievalPlan();
+await testPhase4ReceiptVerification();
 await testSourceFiltering();
 await testMinScoreFiltering();
 await testContextPatchSourcePropagation();

@@ -1,5 +1,9 @@
 # ICP local manual harness
 
+This harness intentionally exercises the legacy ICP v3 capability profile.
+The main TypeScript build emits v4 packs; use the ICP CLI builder, which opts
+into v3 for the current canister reader.
+
 Deploy the Knolo knowledge canister on a **local dfx replica**, seed it with **generated dummy data**, and exercise it from:
 
 - `knolo icp` CLI / `dfx canister call`

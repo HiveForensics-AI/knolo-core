@@ -19,3 +19,7 @@ node scripts/regenerate-python-fixture.mjs
 ```
 
 Pass `--check` to verify that the working tree bytes still match the corpus without rewriting the file.
+# Legacy compatibility fixture
+
+This fixture intentionally remains v3 for the Python runtime compatibility
+profile. It is not the Phase 5 v4 TrustBench reference pack.

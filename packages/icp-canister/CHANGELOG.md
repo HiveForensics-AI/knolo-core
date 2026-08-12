@@ -29,3 +29,10 @@ All notable changes to the ICP canister adapter will be documented in this file.
 ### Notes
 - Phase 2 now persists `.knolo` bytes and label across upgrades.
 - Write methods require the caller to be a canister controller (local `dfx` identity qualifies after deploy).
+# Unreleased
+
+- Phase 2 compatibility note: the TypeScript builder emits v4 by default, while the CLI ICP build workflow explicitly emits legacy v3 packs until the canister reader gains a v4 capability profile.
+- Phase 3 note: analyzer profiles and retrieval-plan hashes are TypeScript-core features; the canister remains on the legacy v3 capability profile until it gains v4 field/chunk support.
+- Phase 4 note: receipt generation/verification is currently a TypeScript-core capability; ICP support should follow its v4 reader and resource-limit profile.
+- Phase 5 note: shared conformance fixtures and TrustBench currently certify only the TypeScript runtime; ICP remains a legacy-v3 profile until v4 equivalence is implemented.
+- Future ICP v4 work must implement the shared magic/header, section-directory bounds checks, and SHA-256 digest verification before changing that default.

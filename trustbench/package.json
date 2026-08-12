@@ -1,0 +1,10 @@
+{
+  "name": "@knolo/trustbench",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate": "node generate-fixtures.mjs",
+    "run": "node run.mjs",
+    "test": "node test.mjs"
+  }
+}

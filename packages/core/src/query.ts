@@ -5,7 +5,7 @@
  *  - REQUIRED phrase enforcement (quoted and requirePhrases)
  *  - Proximity bonus based on min cover span
  *  - Optional heading overlap boost
- *  - KNS numeric-signature tie-breaker (tiny)
+ *  - Stable block-id tie-breaking
  *  - Near-duplicate suppression + MMR diversity
  */
 
@@ -14,12 +14,12 @@ import { rankBM25L } from "./rank.js";
 import type { Pack } from "./pack.js";
 import { minCoverSpan, proximityMultiplier } from "./quality/proximity.js";
 import { diversifyAndDedupe } from "./quality/diversify.js";
-import { knsSignature, knsDistance } from "./quality/signature.js";
 import { decodeScaleF16, quantizeEmbeddingInt8L2Norm } from "./semantic.js";
 import { expandQueryWithGraph } from "./graph/query_expand.js";
 import type { RetrievalEvidence, SemanticSidecar } from "./semantic/types.js";
 import { rerankCandidates } from "./semantic/rerank.js";
 import { parseSidecar } from "./semantic/sidecar.js";
+import { createRetrievalPlan, type RetrievalPlan } from './retrieval_plan.js';
 
 export type QueryOptions = {
   topK?: number;
@@ -61,6 +61,28 @@ export type QueryOptions = {
     force?: boolean;
   };
 };
+
+export type QueryWithPlanResult = { hits: Hit[]; plan: RetrievalPlan };
+
+export function queryWithPlan(pack: Pack, q: string, opts: QueryOptions = {}): QueryWithPlanResult {
+  const namespace = normalizeNamespaceFilter(opts.namespace);
+  const source = normalizeSourceFilter(opts.source);
+  const requiredPhrases = [...parsePhrases(q).map((seq) => seq.map(normalize)), ...(opts.requirePhrases ?? []).map((phrase) => tokenize(phrase).map((token) => token.term))];
+  const plan = createRetrievalPlan({
+    version: 'retrieval-v4.0',
+    analyzer: pack.meta.analyzer ? { id: pack.meta.analyzer.id, digest: pack.meta.analyzer.digest } : undefined,
+    normalize: 'unicode-nfkd-diacritic-fold-v1',
+    scope: { namespace: [...namespace].sort(), source: [...source].sort(), requiredPhrases },
+    generate: ['lexical-postings', ...(opts.queryExpansion?.enabled === false ? [] : ['pseudo-relevance-expansion']), ...(opts.graph?.expand ? ['claim-graph-expansion'] : []), ...(pack.chunks ? ['fielded-chunks'] : [])],
+    constrain: ['namespace', 'source', 'required-phrases'],
+    expand: { enabled: opts.queryExpansion?.enabled !== false, graph: opts.graph?.expand === true },
+    rescore: ['bm25l', 'proximity', 'heading', ...(opts.semantic?.enabled ? ['semantic-grounded-rerank'] : [])],
+    semantic: { enabled: opts.semantic?.enabled === true, grounded: true },
+    diversify: 'stable-id-mmr-v1',
+  });
+  const hits = query(pack, q, { ...opts, __planHash: plan.planHash } as QueryOptions & { __planHash?: string });
+  return { hits, plan };
+}
 
 export function validateQueryOptions(opts?: QueryOptions): void {
   if (!opts) return;
@@ -161,9 +183,64 @@ export type Hit = {
   evidence?: RetrievalEvidence;
 };
 
+type Candidate = {
+  tf: Map<number, number>;
+  pos: Map<number, number[]>;
+  hasPhrase?: boolean;
+  headingScore?: number;
+  fieldScore?: number;
+};
+
+/**
+ * Apply every hard retrieval boundary to a candidate set.
+ *
+ * This function is deliberately shared by the initial lexical scan and every
+ * later candidate-producing stage. Relevance stages may add or reorder
+ * candidates, but they must never be able to widen a caller's scope.
+ */
+export function applyHardConstraints(
+  pack: Pack,
+  candidates: Map<number, Candidate>,
+  constraints: {
+    namespace?: Set<string>;
+    source?: Set<string>;
+    requiredPhrases?: string[][];
+  },
+): void {
+  const namespaceFilter = constraints.namespace ?? new Set<string>();
+  const sourceFilter = constraints.source ?? new Set<string>();
+  const requiredPhrases = constraints.requiredPhrases ?? [];
+
+  for (const [bid, data] of [...candidates]) {
+    if (namespaceFilter.size > 0) {
+      const namespace = typeof pack.namespaces?.[bid] === "string" ? normalize(pack.namespaces[bid] as string) : "";
+      if (!namespace || !namespaceFilter.has(namespace)) {
+        candidates.delete(bid);
+        continue;
+      }
+    }
+    if (sourceFilter.size > 0) {
+      const source = typeof pack.docIds?.[bid] === "string" ? normalize(pack.docIds[bid] as string) : "";
+      if (!source || !sourceFilter.has(source)) {
+        candidates.delete(bid);
+        continue;
+      }
+    }
+    if (requiredPhrases.length > 0) {
+      const text = pack.blocks[bid] ?? "";
+      if (!requiredPhrases.every((phrase) => containsPhrase(text, phrase))) {
+        candidates.delete(bid);
+        continue;
+      }
+      data.hasPhrase = true;
+    }
+  }
+}
+
 export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
   validateQueryOptions(opts);
   const topK = opts.topK ?? 10;
+  const planHash = (opts as QueryOptions & { __planHash?: string }).__planHash;
   const minScore = Number.isFinite(opts.minScore) ? Math.max(0, opts.minScore as number) : 0;
   const expansionOpts = {
     enabled: opts.queryExpansion?.enabled ?? true,
@@ -225,7 +302,7 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
   // --- Candidate map
   const candidates = new Map<
     number,
-    { tf: Map<number, number>; pos: Map<number, number[]>; hasPhrase?: boolean; headingScore?: number }
+    Candidate
   >();
 
   // Query-time document frequency collection for BM25 IDF.
@@ -281,6 +358,28 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
     scanForTermIds(new Map(Array.from(termSet.values(), (tid) => [tid, 1])));
   }
 
+  // Fielded v4 chunks provide deterministic title/heading/code/path/table
+  // signals. They can add grounded lexical candidates, but are constrained
+  // immediately below like every other candidate-producing stage.
+  if (pack.chunks) {
+    for (const chunk of pack.chunks) {
+      const fieldTokens = tokenize(chunk.fieldedText ?? chunk.text).map((token) => token.term);
+      const matched = normTokens.filter((token) => fieldTokens.includes(token));
+      if (matched.length === 0) continue;
+      const entry: Candidate = candidates.get(chunk.id) ?? { tf: new Map(), pos: new Map() };
+      entry.fieldScore = new Set(matched).size / Math.max(1, new Set(normTokens).size);
+      for (const token of new Set(matched)) {
+        const tid = pack.lexicon.get(token);
+        if (tid === undefined) continue;
+        const positions = fieldTokens.flatMap((value, position) => value === token ? [position] : []);
+        if (!entry.tf.has(tid)) entry.tf.set(tid, Math.max(1, positions.length));
+        if (!entry.pos.has(tid)) entry.pos.set(tid, positions);
+      }
+      candidates.set(chunk.id, entry);
+    }
+    applyHardConstraints(pack, candidates, { namespace: namespaceFilter, source: sourceFilter, requiredPhrases });
+  }
+
   // 2) Phrase-first rescue:
   // If nothing matched the free tokens, but we do have required phrases,
   // build a fallback term set from ALL tokens that appear in those phrases and scan again.
@@ -297,37 +396,12 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
     }
   }
 
-  // --- Namespace filtering
-  if (namespaceFilter.size > 0) {
-    for (const bid of [...candidates.keys()]) {
-      const ns = pack.namespaces?.[bid];
-      const normalizedNs = typeof ns === "string" ? normalize(ns) : "";
-      if (!normalizedNs || !namespaceFilter.has(normalizedNs)) {
-        candidates.delete(bid);
-      }
-    }
-  }
-
-  // --- Source/docId filtering
-  if (sourceFilter.size > 0) {
-    for (const bid of [...candidates.keys()]) {
-      const source = pack.docIds?.[bid];
-      const normalizedSource = typeof source === "string" ? normalize(source) : "";
-      if (!normalizedSource || !sourceFilter.has(normalizedSource)) {
-        candidates.delete(bid);
-      }
-    }
-  }
-
-  // --- Phrase enforcement (now that we have some candidates)
-  if (requiredPhrases.length > 0) {
-    for (const [bid, data] of [...candidates]) {
-      const text = pack.blocks[bid] || "";
-      const ok = requiredPhrases.every((seq) => containsPhrase(text, seq));
-      if (!ok) candidates.delete(bid);
-      else data.hasPhrase = true;
-    }
-  } else if (quoted.length > 0) {
+  applyHardConstraints(pack, candidates, {
+    namespace: namespaceFilter,
+    source: sourceFilter,
+    requiredPhrases,
+  });
+  if (requiredPhrases.length === 0 && quoted.length > 0) {
     for (const [bid, data] of candidates) {
       const text = pack.blocks[bid] || "";
       data.hasPhrase = quoted.some((seq) => containsPhrase(text, seq));
@@ -366,6 +440,11 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
     const expansionWeights = deriveExpansionTerms(pack, prelim, termSet, requiredPhrases, expansionOpts);
     if (expansionWeights.size > 0) {
       scanForTermIds(expansionWeights, { collectPositions: false, createCandidates: true });
+      applyHardConstraints(pack, candidates, {
+        namespace: namespaceFilter,
+        source: sourceFilter,
+        requiredPhrases,
+      });
       prelim = rankBM25L(candidates, avgLen, docCount, dfs, pack.blockTokenLens, {
         proximityBonus: (cand) => proximityMultiplier(minCoverSpan(cand.pos)),
       });
@@ -392,14 +471,13 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
 
   const retrievalMode = semanticScores ? "hybrid" : "lexical";
 
-  // --- KNS tie-breaker + de-dup/MMR
-  const qSig = knsSignature(normalize(q));
+  // --- Stable block-id ordering + de-dup/MMR. Relevance scores are never
+  // modified by an unrelated query/text signature.
   const pool = prelim.slice(0, topK * 5).map((r) => {
     const text = pack.blocks[r.blockId] || "";
-    const boost = 1 + 0.02 * (1 - knsDistance(qSig, knsSignature(text)));
     return {
       blockId: r.blockId,
-      score: r.score * boost,
+      score: r.score,
       text,
       source: pack.docIds?.[r.blockId] ?? undefined,
       namespace: pack.namespaces?.[r.blockId] ?? undefined,
@@ -408,6 +486,12 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
         lexicalScore: originalLexicalScores.get(r.blockId) ?? r.score,
         semanticScore: semanticScores?.get(r.blockId),
         blendedScore: blendedScores?.get(r.blockId),
+        scoreBreakdown: {
+          lexical: originalLexicalScores.get(r.blockId) ?? r.score,
+          ...(semanticScores?.has(r.blockId) ? { semantic: semanticScores.get(r.blockId) } : {}),
+          ...(blendedScores?.has(r.blockId) ? { blended: blendedScores.get(r.blockId) } : {}),
+        },
+        planHash,
         modelId: semanticOpts.provider?.modelId ?? semanticOpts.sidecar?.modelId,
       },
     };

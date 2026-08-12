@@ -65,3 +65,7 @@ bash scripts/query.sh "alpha beta"
 ## Sample Content
 
 The pack is built from the checked-in files under `knowledge/`, so the example stays deterministic and easy to rerun locally.
+# Knolo v4 compatibility
+
+This template uses the ICP legacy v3 pack profile. The TypeScript CLI’s
+`icp build-pack` command opts into v3 until the canister supports v4.

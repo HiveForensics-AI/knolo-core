@@ -1,5 +1,9 @@
 # Knolo Cortex memory overlay
 
+The overlay now serializes into v4 packs by default. Verify generated packs
+with `knolo verify` and use `queryWithReceipt()` when evidence/replay metadata
+is required.
+
 ```ts
 import {
   buildPack,

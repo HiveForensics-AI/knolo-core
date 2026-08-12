@@ -1,7 +1,7 @@
 /*
  * builder.ts
  *
- * Build `.knolo` packs from input docs. Persists headings/docIds/token lengths
+ * Build `.knolo` packs from input docs. Persists raw source text, headings/docIds/token lengths
  * and stores avgBlockLen in meta for stable query-time normalization.
  */
 
@@ -13,6 +13,9 @@ import { encodeScaleF16, quantizeEmbeddingInt8L2Norm } from './semantic.js';
 import type { AgentDefinitionV1, AgentRegistry } from './agent.js';
 import { validateAgentRegistry } from './agent.js';
 import { buildClaimGraph } from './graph/build_claim_graph.js';
+import { mountPackFromBuffer } from './pack.runtime.js';
+import { serializePackV4 } from './pack.v4.js';
+import { analyzerProfileDigest, resolveAnalyzerProfile, type AnalyzerProfile } from './analyzer.js';
 
 export type BuildInputDoc = {
   id?: string;
@@ -21,6 +24,9 @@ export type BuildInputDoc = {
   text: string;
 };
 export type BuildPackOptions = {
+  /** Defaults to v4. Use 3 only for legacy runtimes such as older ICP canisters. */
+  format?: 3 | 4;
+  analyzer?: AnalyzerProfile['id'];
   agents?: AgentRegistry | AgentDefinitionV1[];
   semantic?: {
     enabled: boolean;
@@ -40,10 +46,11 @@ export async function buildPack(
 ): Promise<Uint8Array> {
   const normalizedDocs = validateDocs(docs);
 
-  // Prepare blocks (strip MD) and carry heading/docId for optional boosts.
+  // Preserve source text exactly. Tokenization is an indexing concern; the
+  // stored block is also the evidence/citation surface returned to callers.
   const blocks: Block[] = normalizedDocs.map((d, i) => ({
     id: i,
-    text: stripMd(d.text),
+    text: d.text,
     heading: d.heading,
   }));
 
@@ -60,8 +67,10 @@ export async function buildPack(
     ? buildClaimGraph(normalizedDocs, { maxEdgesPerDoc: opts.graph?.maxEdgesPerDoc })
     : null;
 
+  const analyzer = resolveAnalyzerProfile(opts.analyzer);
   const meta = {
     version: 3,
+    analyzer: { id: analyzer.id, version: analyzer.version, digest: analyzerProfileDigest(analyzer) },
     stats: {
       docs: normalizedDocs.length,
       blocks: blocks.length,
@@ -167,7 +176,8 @@ export async function buildPack(
     out.set(graphBytes, offset);
   }
 
-  return out;
+  if (opts.format === 3) return out;
+  return serializePackV4(mountPackFromBuffer(out.buffer), normalizedDocs);
 }
 
 function normalizeAgents(
@@ -293,16 +303,4 @@ function validateDocs(docs: BuildInputDoc[]): BuildInputDoc[] {
     }
     return doc;
   });
-}
-
-/** Strip Markdown syntax with lightweight regexes (no deps). */
-function stripMd(md: string): string {
-  let text = md.replace(/```[\s\S]*?```/g, ' ');
-  text = text.replace(/`[^`]*`/g, ' ');
-  text = text.replace(/[\*_~]+/g, ' ');
-  text = text.replace(/^#+\s*/gm, '');
-  text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-  text = text.replace(/[\[\]()]/g, ' ');
-  text = text.replace(/\s+/g, ' ').trim();
-  return text;
 }

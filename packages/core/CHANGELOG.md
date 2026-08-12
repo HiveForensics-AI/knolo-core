@@ -4,7 +4,48 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### v4.0.0 / Phase 5
+- Completed the TypeScript TrustBench reference profile and repository conformance documentation.
+- Added aggregate Recall@K, MRR, nDCG, hit-count, abstention-precision, and receipt-verification reporting.
+- Bumped `@knolo/core` to `4.0.0`; legacy v1–v3 readers remain supported.
+
+### Changed
+- Enforced namespace, source, and required-phrase constraints after every lexical, expansion, and reranking stage.
+- Removed KNS relevance perturbations; equal scores now use stable block-ID ordering.
+- Preserved raw source text in built packs so Markdown, code, paths, identifiers, and evidence spans remain intact.
+- Phase 2 packs now use a self-describing v4 container by default, with SHA-256 manifest, section, and pack identities.
+- Legacy v1–v3 packs remain readable; `buildPack(..., { format: 3 })` preserves the legacy writer for older runtimes.
+
 ### Added
+- Strict v4 header, section-directory, bounds, overlap, schema, and digest validation.
+- v4 source manifests and stable document chunks with exact raw spans.
+- CLI support for `knolo inspect`, `knolo migrate <pack> --to 4`, and `knolo verify`.
+- Browser/React-Native-safe SHA-256 implementation for independent pack verification.
+- Phase 3 analyzer profiles, profile digests, fielded chunk signals, and deterministic `queryWithPlan()` retrieval plans.
+- Phase 4 `queryWithReceipt()`/`verifyReceipt()` APIs with pack/source identities, exact evidence spans, answer/clarify/abstain decisions, and replay hashes.
+- Phase 5 TrustBench conformance fixtures, canonical retrieval output, corruption fixtures, and reproducible Recall@K/MRR evaluation.
+
+### Phase 2 handoff
+- Phase 3 should make the v4 analyzer profile and retrieval plan canonical; the current v4 chunks expose raw text and basic source spans but do not yet implement fielded retrieval.
+- Phase 4 should bind receipts to the v4 manifest/section digests and add independent receipt verification.
+- ICP and other external runtimes should add v4 readers before their builders switch from `format: 3`.
+
+### Phase 3 handoff
+- Phase 4 should add receipts around `queryWithPlan()` and bind plan hashes to manifest/source digests.
+- Fielded retrieval currently uses deterministic chunk metadata for heading, code-symbol, path, and table signals; future work can split these into dedicated postings channels without changing the plan contract.
+- Analyzer profiles are immutable declarations with SHA-256 digests; new profiles require explicit IDs and conformance fixtures.
+
+### Phase 4 handoff
+- Receipts are integrity-verifiable but unsigned; Phase 6 should add key IDs, signatures, rotation, revocation, and signed quality certificates.
+- ClaimGraph edges remain deterministic and evidence-indexed by block IDs; Phase 5/next graph work should add source digests, temporal validity, authority, contradiction, and conflict policies.
+- `query --receipt <file> --json`, `explain`, and `diff` provide local operator workflows; hosted registry/distribution is intentionally out of scope.
+
+### Phase 5 handoff
+- `conformance/` is the shared fixture contract; regenerate with `npm run trustbench:generate` and gate with `npm run trustbench:test`.
+- TypeScript is the first canonical runtime profile. Rust, Python, and ICP remain explicitly unmarked until they consume the v4 fixtures and produce equivalent canonical rows.
+- Metrics currently include Recall@K, reciprocal rank, hit count, decision, receipt verification, and deterministic plan hashes. TrustBench can add nDCG, attribution, abstention calibration, and latency baselines as runtime profiles mature.
+
+### Earlier additions
 - Deterministic append-only document patch packs with base fingerprints, JSON serialization, merging, replay into `LivePack`, and `LivePack.serializePatchPack()`.
 - Knolo Cortex, a local-first overlay memory layer for `.knolo` packs with deterministic lexical recall, append-only logs, portable serialization, and no required vector DB.
 - Added the initial memory surface under `@knolo/core`, including memory normalization, immutable cortex writes, recall ranking, and consolidation helpers, while keeping the existing pack runtime API unchanged.

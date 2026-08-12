@@ -1,5 +1,9 @@
 # create-knolo-app
 
+Generated applications target the Knolo v4 TypeScript runtime. Packs are v4 by
+default and can be checked with `knolo verify`; Python/Rust/ICP adapters remain
+legacy profiles until their TrustBench conformance is complete.
+
 Bootstrap a new KnoLo-powered application in seconds.
 
 Creates a Next.js app preconfigured with:
@@ -111,5 +115,4 @@ You can experiment directly in the playground UI.
 
 ## 📄 License
 
-MIT
-
+Apache-2.0

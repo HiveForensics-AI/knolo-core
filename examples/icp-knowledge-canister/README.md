@@ -1,5 +1,9 @@
 # icp-knowledge-canister
 
+This example uses the legacy ICP v3 capability profile. TypeScript builds v4
+by default, so the example’s ICP pack builder intentionally requests v3 until
+the canister supports the v4 container and TrustBench contract.
+
 Minimal local `dfx` example for deploying the Knolo ICP canister without any middleware server.
 
 The example:

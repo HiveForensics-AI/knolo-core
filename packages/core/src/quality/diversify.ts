@@ -15,7 +15,7 @@ export function diversifyAndDedupe(
   opts: DiversifyOptions
 ): HitLike[] {
   const { k, lambda = 0.8, simThreshold = 0.92, sim = (a, b) => jaccard5(a.text, b.text) } = opts;
-  const pool = [...hits].sort((a, b) => b.score - a.score);
+  const pool = [...hits].sort((a, b) => b.score - a.score || a.blockId - b.blockId);
   const kept: HitLike[] = [];
 
   while (pool.length && kept.length < k) {

@@ -66,6 +66,7 @@ Desktop.ini
 
 # Local rollout notes (not part of the public repository)
 LIVE_KBS_MVP.md
+/upcoming feature.md
 
 # ICP local harness generated seed data / runtime (also covered by tests/icp-local/.gitignore)
 tests/icp-local/data/

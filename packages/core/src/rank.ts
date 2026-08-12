@@ -13,11 +13,12 @@ export type RankOptions = {
     pos?: Map<number, number[]>;
     hasPhrase?: boolean;
     headingScore?: number;
+    fieldScore?: number;
   }) => number;
 };
 
 export function rankBM25L(
-  candidates: Map<number, { tf: Map<number, number>; pos?: Map<number, number[]>; hasPhrase?: boolean; headingScore?: number }>,
+  candidates: Map<number, { tf: Map<number, number>; pos?: Map<number, number[]>; hasPhrase?: boolean; headingScore?: number; fieldScore?: number }>,
   avgLen: number,
   docCount: number,
   dfs: Map<number, number>,
@@ -43,9 +44,10 @@ export function rankBM25L(
     if (opts.proximityBonus) score *= opts.proximityBonus(data) ?? 1;
     if (data.hasPhrase) score *= 1 + phraseBoost;
     if (data.headingScore) score *= 1 + headingBoost * data.headingScore;
+    if (data.fieldScore) score *= 1 + 0.2 * Math.min(1, data.fieldScore);
 
     results.push({ blockId: bid, score });
   }
-  results.sort((a, b2) => b2.score - a.score);
+  results.sort((a, b2) => b2.score - a.score || a.blockId - b2.blockId);
   return results;
 }
