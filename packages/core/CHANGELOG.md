@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### v4.0.0 / Phase 5
 - Completed the TypeScript TrustBench reference profile and repository conformance documentation.
 - Added aggregate Recall@K, MRR, nDCG, hit-count, abstention-precision, and receipt-verification reporting.
+- Added explicit v1/v3/v4 profile mounting checks and a TrustBench operator README.
 - Bumped `@knolo/core` to `4.0.0`; legacy v1–v3 readers remain supported.
 
 ### Changed

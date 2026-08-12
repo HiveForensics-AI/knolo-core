@@ -11,6 +11,17 @@ const actual = await evaluatePack(await readFile(path.join(root, 'conformance/pa
 const expectedContract = { ...expected }; delete expectedContract.runtime;
 assert.deepEqual(actual, expectedContract, 'conformance output changed; regenerate expected output intentionally');
 
+const profileCases = [
+  ['minimal-v1.knolo', 1],
+  ['standard-v3.knolo', 3],
+  ['verified-v4.knolo', 4],
+];
+for (const [name, version] of profileCases) {
+  const pack = await mountPack({ src: await readFile(path.join(root, 'conformance/packs', name)) });
+  assert.equal(pack.meta.version, version, `${name} must mount as v${version}`);
+  assert.ok(pack.blocks.length > 0, `${name} must contain at least one block`);
+}
+
 for (const name of ['truncated.knolo', 'section-digest.knolo']) {
   await assert.rejects(async () => mountPack({ src: await readFile(path.join(root, 'conformance/packs/corrupted', name)) }), /invalid|mismatch|truncated/i, `${name} must fail closed`);
 }
