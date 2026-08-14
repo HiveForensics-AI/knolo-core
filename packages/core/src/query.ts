@@ -65,6 +65,7 @@ export type QueryOptions = {
 export type QueryWithPlanResult = { hits: Hit[]; plan: RetrievalPlan };
 
 export function queryWithPlan(pack: Pack, q: string, opts: QueryOptions = {}): QueryWithPlanResult {
+  validateQueryOptions(opts);
   const namespace = normalizeNamespaceFilter(opts.namespace);
   const source = normalizeSourceFilter(opts.source);
   const requiredPhrases = [...parsePhrases(q).map((seq) => seq.map(normalize)), ...(opts.requirePhrases ?? []).map((phrase) => tokenize(phrase).map((token) => token.term))];
@@ -79,9 +80,51 @@ export function queryWithPlan(pack: Pack, q: string, opts: QueryOptions = {}): Q
     rescore: ['bm25l', 'proximity', 'heading', ...(opts.semantic?.enabled ? ['semantic-grounded-rerank'] : [])],
     semantic: { enabled: opts.semantic?.enabled === true, grounded: true },
     diversify: 'stable-id-mmr-v1',
+    options: normalizePlanOptions(opts, namespace, source, requiredPhrases),
   });
   const hits = query(pack, q, { ...opts, __planHash: plan.planHash } as QueryOptions & { __planHash?: string });
   return { hits, plan };
+}
+
+function normalizePlanOptions(opts: QueryOptions, namespace: Iterable<string>, source: Iterable<string>, requiredPhrases: string[][]): Record<string, unknown> {
+  return {
+    topK: opts.topK ?? 10,
+    minScore: opts.minScore ?? 0,
+    namespace: [...namespace].sort(),
+    source: [...source].sort(),
+    requiredPhrases,
+    queryExpansion: {
+      enabled: opts.queryExpansion?.enabled ?? true,
+      docs: opts.queryExpansion?.docs ?? 3,
+      terms: opts.queryExpansion?.terms ?? 4,
+      weight: opts.queryExpansion?.weight ?? 0.35,
+      minTermLength: opts.queryExpansion?.minTermLength ?? 3,
+    },
+    graph: {
+      expand: opts.graph?.expand ?? false,
+      maxExtraTerms: opts.graph?.maxExtraTerms ?? 12,
+      predicates: opts.graph?.predicates
+        ? opts.graph.predicates.map((p) => normalize(p)).sort()
+        : ['defined_as', 'is', 'mentions', 'ref'],
+    },
+    semantic: {
+      enabled: opts.semantic?.enabled ?? false,
+      mode: opts.semantic?.mode ?? 'rerank',
+      topN: opts.semantic?.topN ?? 50,
+      minLexConfidence: clamp01(opts.semantic?.minLexConfidence ?? 0.35),
+      minSemanticScore: opts.semantic?.minSemanticScore ?? null,
+      force: opts.semantic?.force ?? false,
+      blend: {
+        enabled: opts.semantic?.blend?.enabled ?? true,
+        wLex: opts.semantic?.blend?.wLex ?? 0.75,
+        wSem: opts.semantic?.blend?.wSem ?? 0.25,
+      },
+      provider: opts.semantic?.provider ?? null,
+      sidecarPath: opts.semantic?.sidecarPath ?? null,
+      sidecar: opts.semantic?.sidecar ?? null,
+      queryEmbedding: opts.semantic?.queryEmbedding ? Array.from(opts.semantic.queryEmbedding) : null,
+    },
+  };
 }
 
 export function validateQueryOptions(opts?: QueryOptions): void {

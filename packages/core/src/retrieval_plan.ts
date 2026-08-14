@@ -12,6 +12,8 @@ export type RetrievalPlan = {
   rescore: string[];
   semantic: { enabled: boolean; grounded: boolean };
   diversify: string;
+  /** Normalized result-affecting query settings included in planHash. */
+  options: Record<string, unknown>;
   planHash: string;
 };
 

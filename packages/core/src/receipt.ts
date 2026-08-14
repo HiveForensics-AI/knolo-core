@@ -67,7 +67,26 @@ export function verifyReceipt(receipt: QueryReceipt, pack: Pack): void {
 }
 
 export function packDigest(pack: Pack): string {
-  return pack.meta.packDigest ?? `sha256-${sha256Hex(getTextEncoder().encode(JSON.stringify({ version: pack.meta.version, blocks: pack.blocks, docIds: pack.docIds ?? [], namespaces: pack.namespaces ?? [], analyzer: pack.meta.analyzer ?? null })))}`;
+  if (pack.meta.packDigest) return pack.meta.packDigest;
+  // Legacy packs have no stored whole-pack digest. Include every mounted
+  // retrieval input so receipts cannot be replayed against a behaviorally
+  // different pack with the same block text and ids.
+  const retrievalState = {
+    meta: { ...pack.meta, packDigest: undefined },
+    blocks: pack.blocks,
+    headings: pack.headings ?? [],
+    docIds: pack.docIds ?? [],
+    namespaces: pack.namespaces ?? [],
+    blockTokenLens: pack.blockTokenLens ?? [],
+    chunks: pack.chunks ?? [],
+    lexicon: Array.from(pack.lexicon.entries()),
+    postings: Array.from(pack.postings),
+    semantic: pack.semantic
+      ? { ...pack.semantic, vecs: Array.from(pack.semantic.vecs), scales: pack.semantic.scales ? Array.from(pack.semantic.scales) : undefined }
+      : null,
+    claimGraph: pack.claimGraph ?? null,
+  };
+  return `sha256-${sha256Hex(getTextEncoder().encode(JSON.stringify(retrievalState)))}`;
 }
 
 function sourceDigest(pack: Pack, blockId: number): string { return `sha256-${sha256Hex(getTextEncoder().encode(`${pack.docIds?.[blockId] ?? ''}\n${pack.blocks[blockId] ?? ''}`))}`; }

@@ -45,6 +45,10 @@ export function rankBM25L(
     if (data.hasPhrase) score *= 1 + phraseBoost;
     if (data.headingScore) score *= 1 + headingBoost * data.headingScore;
     if (data.fieldScore) score *= 1 + 0.2 * Math.min(1, data.fieldScore);
+    // A v4 field can contain terms that are intentionally absent from the
+    // body lexicon. Keep those grounded matches above zero so they remain
+    // meaningful candidates instead of becoming score-zero hits.
+    if (data.fieldScore) score += 0.2 * Math.min(1, data.fieldScore);
 
     results.push({ blockId: bid, score });
   }
