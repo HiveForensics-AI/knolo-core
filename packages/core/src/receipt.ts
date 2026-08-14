@@ -67,10 +67,9 @@ export function verifyReceipt(receipt: QueryReceipt, pack: Pack): void {
 }
 
 export function packDigest(pack: Pack): string {
-  if (pack.meta.packDigest) return pack.meta.packDigest;
-  // Legacy packs have no stored whole-pack digest. Include every mounted
-  // retrieval input so receipts cannot be replayed against a behaviorally
-  // different pack with the same block text and ids.
+  // Use the mounted retrieval state rather than trusting the container's
+  // stored digest. Packs are mutable in memory, and receipts must not remain
+  // valid after postings, chunks, metadata, or other retrieval inputs change.
   const retrievalState = {
     meta: { ...pack.meta, packDigest: undefined },
     blocks: pack.blocks,

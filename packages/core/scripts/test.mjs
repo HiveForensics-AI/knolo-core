@@ -411,6 +411,18 @@ async function testPhase4ReceiptVerification() {
   assert.throws(() => verifyReceipt(tampered, pack), /evidence span mismatch|replay hash mismatch/);
 }
 
+async function testRetrievalIdentityBindsOptionsAndPackState() {
+  const pack = await mountPack({ src: await buildPack([{ id: 'identity-doc', text: 'Identity binding protects retrieval replay.' }]) });
+  const defaultPlan = queryWithPlan(pack, 'identity binding', { topK: 2 }).plan;
+  const constrainedPlan = queryWithPlan(pack, 'identity binding', { topK: 3, minScore: 0.25 }).plan;
+  assert.notEqual(defaultPlan.planHash, constrainedPlan.planHash, 'result-affecting query options must change the plan hash');
+
+  const receipt = queryWithReceipt(pack, 'identity binding', { topK: 2 }).receipt;
+  const alteredPack = { ...pack, postings: new Uint32Array(pack.postings) };
+  alteredPack.postings[0] = alteredPack.postings[0] + 1;
+  assert.throws(() => verifyReceipt(receipt, alteredPack), /Receipt pack digest mismatch/);
+}
+
 async function testMinScoreFiltering() {
   const docs = [
     {
@@ -1873,6 +1885,7 @@ await testHardConstraintsSurviveQueryExpansion();
 await testSourceTextIsPreserved();
 await testPhase3AnalyzerAndRetrievalPlan();
 await testPhase4ReceiptVerification();
+await testRetrievalIdentityBindsOptionsAndPackState();
 await testSourceFiltering();
 await testMinScoreFiltering();
 await testContextPatchSourcePropagation();

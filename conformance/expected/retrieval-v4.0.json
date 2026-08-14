@@ -20,16 +20,16 @@
         {
           "id": "intro.md",
           "blockId": 0,
-          "score": 0.956856
+          "score": 1.156856
         },
         {
           "id": "runtime.md",
           "blockId": 1,
-          "score": 0.797493
+          "score": 0.897493
         }
       ],
       "decision": "answer",
-      "planHash": "sha256-49e6fa300d07005e2bd75c0856d1c182fb9fd3cf36ca5b29308d0e1012ee18eb",
+      "planHash": "sha256-a37a075b3b1fb36ed90154c679bdb78b47de9065fcebe302223206ecbfc617b2",
       "receiptVerified": true,
       "metrics": {
         "recallAtK": 0.5,
@@ -46,11 +46,11 @@
         {
           "id": "intro.md",
           "blockId": 0,
-          "score": 1.069768
+          "score": 1.269768
         }
       ],
       "decision": "answer",
-      "planHash": "sha256-101807cf8e82cd778cf944f7cbb144943645d13468a196a3c0a60075ec460c24",
+      "planHash": "sha256-32f75441d37cffd6fd68d9bc6a76d67913163d121df50ab479d9218bc9ef64d5",
       "receiptVerified": true,
       "metrics": {
         "recallAtK": 0.5,
@@ -67,11 +67,11 @@
         {
           "id": "runtime.md",
           "blockId": 1,
-          "score": 2.36473
+          "score": 2.56473
         }
       ],
       "decision": "answer",
-      "planHash": "sha256-2ec416027feeeb28bcdca0d3a04ffc4c6525edce1b9dc6db70a95ce67890b016",
+      "planHash": "sha256-ff9b5b0daef232196dc01a57850d3f7d3bd8c953c5cece450f87c64d81875623",
       "receiptVerified": true,
       "metrics": {
         "recallAtK": 1,
@@ -88,11 +88,11 @@
         {
           "id": "intro.md",
           "blockId": 0,
-          "score": 1.441785
+          "score": 1.641785
         }
       ],
       "decision": "answer",
-      "planHash": "sha256-32734c7016b6298c1967bf54fd04f053f37cf01b5df1dcd3efa47e48d26dc31b",
+      "planHash": "sha256-934edee9ecea91cdf3927e5654f0f9195548e906e1d806e4fe9cb213162dde3b",
       "receiptVerified": true,
       "metrics": {
         "recallAtK": 0.5,
@@ -107,7 +107,7 @@
       "query": "alpha",
       "hits": [],
       "decision": "abstain",
-      "planHash": "sha256-fb84e31df21e151c53999de7ac6a8323b3f47630dc589ff94ccc02082f8883f8",
+      "planHash": "sha256-2d5f95949ddcbbe4bc76c14b16019e4dd2a58234ac78df8d99986cc859a38cbd",
       "receiptVerified": true,
       "metrics": {
         "recallAtK": 1,
