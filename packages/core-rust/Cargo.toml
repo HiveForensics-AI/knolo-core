@@ -1,9 +1,13 @@
 [package]
 name = "knolo-core-rust"
-version = "0.1.0"
+version = "4.0.0"
 edition = "2021"
 license = "Apache-2.0"
 description = "Rust runtime support for reading and querying .knolo packs"
+repository = "https://github.com/HiveForensics-AI/knolo-core"
+readme = "README.md"
+keywords = ["knolo", "knowledge-base", "retrieval", "rag"]
+categories = ["data-structures", "text-processing"]
 
 [lib]
 name = "knolo_core_rust"

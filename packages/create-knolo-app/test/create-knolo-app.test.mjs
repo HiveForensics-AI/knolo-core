@@ -6,10 +6,16 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 function npmPack(workdir, destination) {
-  const out = execFileSync('npm', ['pack', '--json', '--pack-destination', destination], {
-    cwd: workdir,
-    encoding: 'utf8',
-  });
+  let out;
+  try {
+    out = execFileSync('npm', ['pack', '--json', '--pack-destination', destination], {
+      cwd: workdir,
+      encoding: 'utf8',
+    });
+  } catch (error) {
+    process.stderr.write(error.stderr?.toString() || `${error}\n`);
+    throw error;
+  }
   const [result] = JSON.parse(out);
   return path.join(destination, result.filename);
 }
@@ -28,7 +34,7 @@ test('scaffolded app installs and builds with publish-style tarball dependencies
     `${JSON.stringify({ name: 'launcher', private: true, type: 'module' }, null, 2)}\n`,
     'utf8'
   );
-  execFileSync('npm', ['install', '--ignore-scripts', createAppTarball], {
+  execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', createAppTarball], {
     cwd: launcherDir,
     encoding: 'utf8',
   });
@@ -64,7 +70,7 @@ test('scaffolded app installs and builds with publish-style tarball dependencies
   };
   writeFileSync(packageJsonPath, `${JSON.stringify(installPackageJson, null, 2)}\n`, 'utf8');
 
-  execFileSync('npm', ['install', '--ignore-scripts'], {
+  execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], {
     cwd: target,
     encoding: 'utf8',
   });

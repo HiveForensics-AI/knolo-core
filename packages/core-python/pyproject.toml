@@ -5,7 +5,7 @@ backend-path = ["."]
 
 [project]
 name = "knolo"
-version = "0.1.0"
+version = "4.0.0"
 description = "Pure-Python runtime for mounting and querying .knolo packs."
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10"

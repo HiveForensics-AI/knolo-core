@@ -13,7 +13,7 @@ from typing import Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_NAME = "knolo"
-VERSION = "0.1.0"
+VERSION = "4.0.0"
 DIST_INFO = f"{PACKAGE_NAME}-{VERSION}.dist-info"
 WHEEL_NAME = f"{PACKAGE_NAME}-{VERSION}-py3-none-any.whl"
 SDIST_NAME = f"{PACKAGE_NAME}-{VERSION}.tar.gz"
@@ -171,6 +171,9 @@ def _iter_sdist_paths() -> Iterable[Path]:
         ".python-user-base",
         ".ruff_cache",
         ".tox",
+        ".venv",
+        "venv",
+        "env",
         "dist",
     }
     for path in ROOT.rglob("*"):
