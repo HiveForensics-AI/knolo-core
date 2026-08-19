@@ -1,5 +1,9 @@
 # 📦 `@knolo/core`
 
+**Version 4 contract:** v4 packs, analyzer profiles, deterministic retrieval
+plans, verifiable receipts, evidence spans, and TrustBench conformance are the
+current TypeScript runtime surface.
+
 `@knolo/core` is the **deterministic retrieval engine and pack runtime** behind Knolo.
 
 It lets you:
@@ -138,6 +142,9 @@ const bytes = await buildPack(docs, {
 ```
 
 `buildPack` produces a versioned `.knolo` binary artifact.
+
+It emits a v4 container by default. Use `{ format: 3 }` only when targeting a
+legacy runtime. v1–v3 packs remain readable.
 
 You can write it to disk or store it in object storage.
 

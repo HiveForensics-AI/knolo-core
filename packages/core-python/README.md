@@ -1,8 +1,12 @@
-# `knolo`
+# `knolo` — legacy v3-compatible runtime
+
+**Compatibility status:** legacy v1–v3 Python reader/query profile. The v4
+container, analyzer profiles, retrieval plans, receipts, and TrustBench
+equivalence are currently implemented in TypeScript first.
 
 `knolo` is the pure-Python runtime for mounting existing `.knolo` packs and running deterministic lexical queries locally.
 
-It is intentionally release-scoped for Phase 2:
+It is intentionally release-scoped for the legacy compatibility profile:
 
 - local-first retrieval
 - deterministic lexical retrieval
@@ -11,6 +15,7 @@ It is intentionally release-scoped for Phase 2:
 - no Python pack builder
 - no LangChain or LlamaIndex integration
 - no Node.js runtime dependency for mount/query
+- not certified as v4-equivalent in `conformance/`
 
 Packs are still built with `@knolo/core` in TypeScript, then mounted and queried from Python.
 

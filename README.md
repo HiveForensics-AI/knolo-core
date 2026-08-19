@@ -1,5 +1,9 @@
 # 🧠 Knolo
 
+**Current contract: Knolo v4 / Phase 5 TrustBench.** TypeScript `@knolo/core`
+builds v4 packs by default. v1–v3 packs remain readable; Python, Rust, and ICP
+are legacy compatibility profiles until their v4 conformance runners land.
+
 Knolo is a **local-first knowledge base engine** built around deterministic retrieval and portable `.knolo` packs.
 
 It provides:
@@ -20,35 +24,38 @@ Knolo prioritizes:
 * Portable binary knowledge packs
 * Optional ICP deployment for on-chain knowledge retrieval
 * Strict runtime contracts (optional advanced features)
+* Verifiable receipts, evidence spans, and deterministic retrieval-plan hashes
 
 > ⚠️ `knolo-core` (unscoped) on npm is deprecated. Use `@knolo/core`.
 
 ---
 
-# 📊 Retrieval Benchmark (March 2026)
+# 📊 TrustBench Reference (v4 / Phase 5)
 
-Knolo was evaluated using a deterministic lexical-first + optional rerank configuration.
+Knolo is evaluated using the checked-in deterministic lexical-first reference
+profile and the shared `conformance/` fixtures.
 
-**Run:** 2026-03-01
-**TopK:** 5
+**Contract:** `retrieval-v4.0`
+**Runner:** `npm run trustbench:test`
 
 ### Aggregate Metrics
 
 | Metric      | Score     |
 | ----------- | --------- |
-| Precision@5 | **0.490** |
-| Recall@5    | **1.000** |
-| MRR@5       | **0.867** |
-| nDCG@5      | **0.900** |
+| Metric | Definition |
+| --- | --- |
+| Recall@K | Relevant fixture sources retrieved |
+| MRR@K | Reciprocal rank of the first relevant source |
+| nDCG@K | Discounted ranking quality |
+| Abstention precision | Correct empty-scope decisions |
 
 ### Interpretation
 
-* ✅ **Recall@5 = 1.0** → All relevant documents were retrieved in every test query.
-* ✅ **High MRR (0.867)** → Relevant documents appear near the top.
-* ✅ **Strong nDCG (0.900)** → Ranking quality is consistently high.
-* 🔍 Precision reflects lexical grounding before rerank — by design, Knolo prioritizes deterministic recall over aggressive pruning.
+* Results are generated from committed fixtures, not a time-stamped external benchmark.
+* IDs, plan hashes, decisions, receipts, and corruption rejection are canonical.
+* Scores are rounded to six decimals for cross-runtime comparison.
 
-This benchmark demonstrates:
+This contract demonstrates:
 
 * Deterministic lexical retrieval is highly reliable.
 * Hybrid reranking improves ranking quality without sacrificing grounding.
@@ -212,11 +219,23 @@ cargo test
 
 ---
 
-# 🐍 Python Runtime Support (Phase 2)
+# 🐍 Python Runtime Support (Legacy compatibility profile)
 
 Knolo also ships a pure-Python runtime in `packages/core-python` for mounting existing `.knolo` packs and running deterministic lexical queries locally.
 
 It stays local-first, requires no vector database, and does not use embeddings on the default query path.
+
+The Python package currently reads v1–v3 packs and is not yet a v4 TrustBench-equivalent runtime.
+
+# 🧪 TrustBench / Conformance
+
+```bash
+npm run trustbench:generate
+npm run trustbench:test
+```
+
+The suite checks deterministic IDs, scores, plan hashes, receipts, Recall@K,
+MRR, nDCG, abstention precision, and fail-closed corruption handling.
 
 Install locally:
 

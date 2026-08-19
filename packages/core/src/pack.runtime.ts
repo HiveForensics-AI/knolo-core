@@ -10,6 +10,7 @@ import type { AgentRegistry } from './agent.js';
 import { validateAgentRegistry } from './agent.js';
 import type { ClaimGraph } from './graph/claim_graph.js';
 import { validateClaimGraph } from './graph/claim_graph.js';
+import { isPackV4, parsePackV4 } from './pack.v4.js';
 
 export type MountOptions = { src: string | ArrayBufferLike | Uint8Array };
 
@@ -18,6 +19,27 @@ export type PackMeta = {
   stats: { docs: number; blocks: number; terms: number; avgBlockLen?: number };
   agents?: AgentRegistry;
   claimGraph?: { version: 1; nodes: number; edges: number };
+  format?: 'legacy' | 'v4';
+  analyzer?: { id: string; digest: string; version: number };
+  manifestDigest?: string;
+  packDigest?: string;
+};
+
+export type PackChunk = {
+  id: number;
+  parentId?: number;
+  text: string;
+  displayText?: string;
+  fieldedText?: string;
+  heading?: string | null;
+  docId?: string | null;
+  namespace?: string | null;
+  len?: number;
+  span?: { start: number; end: number; lineStart?: number; lineEnd?: number };
+  kind?: 'document' | 'markdown' | 'code' | 'json' | 'table';
+  codeSymbols?: string[];
+  paths?: string[];
+  tableHeaders?: string[];
 };
 
 export type Pack = {
@@ -29,6 +51,7 @@ export type Pack = {
   docIds?: (string | null)[];
   namespaces?: (string | null)[];
   blockTokenLens?: number[];
+  chunks?: PackChunk[];
   semantic?: {
     version: 1;
     modelId: string;
@@ -53,27 +76,31 @@ export async function mountPack(opts: MountOptions): Promise<Pack> {
 }
 
 export function mountPackFromBuffer(buf: ArrayBuffer): Pack {
+  if (isPackV4(buf)) return parsePackV4(buf);
+  if (buf.byteLength < 16) throw new Error('Invalid or truncated pack: missing legacy header.');
   const dv = new DataView(buf);
   const dec = getTextDecoder();
   let offset = 0;
 
-  const metaLen = dv.getUint32(offset, true);
+  const metaLen = readLength(dv, offset, buf.byteLength, 'metadata');
   offset += 4;
   const metaJson = dec.decode(new Uint8Array(buf, offset, metaLen));
   offset += metaLen;
   const meta: PackMeta = JSON.parse(metaJson);
+  if (!meta || !Number.isInteger(meta.version) || meta.version < 1 || meta.version > 3) throw new Error(`Unsupported legacy pack version: ${String(meta?.version)}.`);
   if (meta.agents) {
     validateAgentRegistry(meta.agents);
   }
 
-  const lexLen = dv.getUint32(offset, true);
+  const lexLen = readLength(dv, offset, buf.byteLength, 'lexicon');
   offset += 4;
   const lexJson = dec.decode(new Uint8Array(buf, offset, lexLen));
   offset += lexLen;
   const lexEntries: Array<[string, number]> = JSON.parse(lexJson);
   const lexicon = new Map<string, number>(lexEntries);
 
-  const postCount = dv.getUint32(offset, true);
+  const postCount = readLength(dv, offset, buf.byteLength, 'postings');
+  if (postCount > 128 * 1024 * 1024) throw new Error('Legacy postings declaration exceeds safety limit.');
   offset += 4;
   const postings = new Uint32Array(postCount);
   for (let i = 0; i < postCount; i++) {
@@ -81,7 +108,7 @@ export function mountPackFromBuffer(buf: ArrayBuffer): Pack {
     offset += 4;
   }
 
-  const blocksLen = dv.getUint32(offset, true);
+  const blocksLen = readLength(dv, offset, buf.byteLength, 'blocks');
   offset += 4;
   const blocksJson = dec.decode(new Uint8Array(buf, offset, blocksLen));
   offset += blocksLen;
@@ -168,6 +195,7 @@ export function mountPackFromBuffer(buf: ArrayBuffer): Pack {
     break;
   }
 
+  if (blocks.length > 10_000_000 || (meta.stats?.blocks ?? blocks.length) !== blocks.length) throw new Error('Invalid legacy pack block count.');
   return {
     meta,
     lexicon,
@@ -180,6 +208,13 @@ export function mountPackFromBuffer(buf: ArrayBuffer): Pack {
     semantic,
     claimGraph,
   };
+}
+
+function readLength(dv: DataView, offset: number, total: number, label: string): number {
+  if (offset < 0 || offset + 4 > total) throw new Error(`Invalid or truncated pack: missing ${label} length.`);
+  const length = dv.getUint32(offset, true);
+  if (length > total - offset - 4) throw new Error(`Invalid or truncated pack: ${label} exceeds payload.`);
+  return length;
 }
 
 function looksLikeSemanticJson(parsed: unknown): boolean {

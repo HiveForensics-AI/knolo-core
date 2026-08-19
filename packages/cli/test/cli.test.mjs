@@ -154,6 +154,30 @@ test('build produces default pack', () => {
   assert.ok(existsSync(path.join(cwd, 'dist/knowledge.knolo')));
 });
 
+test('inspect and verify expose the v4 container', () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-v4-inspect-'));
+  runCli(['init'], cwd);
+  runCli(['build'], cwd);
+
+  const inspected = JSON.parse(runCli(['inspect', './dist/knowledge.knolo'], cwd));
+  assert.equal(inspected.format, 'v4');
+  assert.ok(inspected.container.sections.some((section) => section.name === 'manifest'));
+
+  const verified = JSON.parse(runCli(['verify', './dist/knowledge.knolo'], cwd));
+  assert.equal(verified.verified, true);
+});
+
+test('migrate converts an ICP-compatible legacy pack to v4', () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-v4-migrate-'));
+  const docsDir = path.join(cwd, 'docs');
+  mkdirSync(docsDir);
+  writeFileSync(path.join(docsDir, 'alpha.txt'), 'alpha legacy text', 'utf8');
+  runCli(['icp', 'build-pack', './docs', '--out', './legacy.knolo'], cwd);
+  runCli(['migrate', './legacy.knolo', '--out', './migrated.knolo', '--to', '4'], cwd);
+  const verified = JSON.parse(runCli(['verify', './migrated.knolo'], cwd));
+  assert.equal(verified.format, 'v4');
+});
+
 test('query returns hit from sample doc', () => {
   const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-query-'));
   runCli(['init'], cwd);
@@ -162,6 +186,16 @@ test('query returns hit from sample doc', () => {
   const output = runCli(['query', 'hello'], cwd);
   assert.match(output, /Top 1 hit\(s\)/);
   assert.match(output, /docs\/hello\.md/);
+});
+
+test('query receipts can be explained and verified', () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-receipt-'));
+  runCli(['init'], cwd);
+  runCli(['build'], cwd);
+  runCli(['query', 'hello', '--receipt', './receipt.json', '--json'], cwd);
+  assert.ok(existsSync(path.join(cwd, 'receipt.json')));
+  const explained = runCli(['explain', './receipt.json', '--pack', './dist/knowledge.knolo'], cwd);
+  assert.match(explained, /"verified": true/);
 });
 
 test('add updates existing source path', () => {

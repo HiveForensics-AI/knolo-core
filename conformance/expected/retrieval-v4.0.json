@@ -1,0 +1,125 @@
+{
+  "contract": "retrieval-v4.0",
+  "packVersion": 4,
+  "packFormat": "v4",
+  "aggregate": {
+    "recallAtK": 0.7,
+    "mrrAtK": 0.8,
+    "ndcgAtK": 0.922629,
+    "meanHitCount": 1,
+    "answerCount": 4,
+    "abstentionCount": 1,
+    "abstentionPrecision": 1,
+    "receiptsVerified": true
+  },
+  "rows": [
+    {
+      "id": "lexical-alpha",
+      "query": "alpha beta",
+      "hits": [
+        {
+          "id": "intro.md",
+          "blockId": 0,
+          "score": 1.156856
+        },
+        {
+          "id": "runtime.md",
+          "blockId": 1,
+          "score": 0.897493
+        }
+      ],
+      "decision": "answer",
+      "planHash": "sha256-a37a075b3b1fb36ed90154c679bdb78b47de9065fcebe302223206ecbfc617b2",
+      "receiptVerified": true,
+      "metrics": {
+        "recallAtK": 0.5,
+        "reciprocalRank": 1,
+        "ndcgAtK": 0.613147,
+        "hitCount": 2,
+        "relevantCount": 1
+      }
+    },
+    {
+      "id": "namespace-alpha",
+      "query": "alpha",
+      "hits": [
+        {
+          "id": "intro.md",
+          "blockId": 0,
+          "score": 1.269768
+        }
+      ],
+      "decision": "answer",
+      "planHash": "sha256-32f75441d37cffd6fd68d9bc6a76d67913163d121df50ab479d9218bc9ef64d5",
+      "receiptVerified": true,
+      "metrics": {
+        "recallAtK": 0.5,
+        "reciprocalRank": 1,
+        "ndcgAtK": 1,
+        "hitCount": 1,
+        "relevantCount": 1
+      }
+    },
+    {
+      "id": "source-runtime",
+      "query": "runtime",
+      "hits": [
+        {
+          "id": "runtime.md",
+          "blockId": 1,
+          "score": 2.56473
+        }
+      ],
+      "decision": "answer",
+      "planHash": "sha256-ff9b5b0daef232196dc01a57850d3f7d3bd8c953c5cece450f87c64d81875623",
+      "receiptVerified": true,
+      "metrics": {
+        "recallAtK": 1,
+        "reciprocalRank": 1,
+        "ndcgAtK": 1,
+        "hitCount": 1,
+        "relevantCount": 1
+      }
+    },
+    {
+      "id": "required-phrase",
+      "query": "alpha",
+      "hits": [
+        {
+          "id": "intro.md",
+          "blockId": 0,
+          "score": 1.641785
+        }
+      ],
+      "decision": "answer",
+      "planHash": "sha256-934edee9ecea91cdf3927e5654f0f9195548e906e1d806e4fe9cb213162dde3b",
+      "receiptVerified": true,
+      "metrics": {
+        "recallAtK": 0.5,
+        "reciprocalRank": 1,
+        "ndcgAtK": 1,
+        "hitCount": 1,
+        "relevantCount": 1
+      }
+    },
+    {
+      "id": "empty-scope",
+      "query": "alpha",
+      "hits": [],
+      "decision": "abstain",
+      "planHash": "sha256-2d5f95949ddcbbe4bc76c14b16019e4dd2a58234ac78df8d99986cc859a38cbd",
+      "receiptVerified": true,
+      "metrics": {
+        "recallAtK": 1,
+        "reciprocalRank": 0,
+        "ndcgAtK": 1,
+        "hitCount": 0,
+        "relevantCount": 0
+      }
+    }
+  ],
+  "runtime": {
+    "name": "typescript",
+    "version": "v20.8.0"
+  }
+}

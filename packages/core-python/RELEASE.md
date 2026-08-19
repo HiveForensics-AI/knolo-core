@@ -11,3 +11,8 @@
 - [ ] Confirm the publish workflow only runs on GitHub release publication and uses Trusted Publishing with no hardcoded secrets.
 - [ ] Smoke install the built wheel in a clean environment and run a basic `mount_pack` / `query` check.
 - [ ] Yank a bad PyPI release instead of republishing the same tag if a release needs to be rolled back.
+# Phase 5 compatibility note
+
+The Python runtime remains a legacy v1–v3 reader/query profile. It is not
+marked equivalent in the shared Phase 5 TrustBench output until it supports
+the v4 container, analyzer profile digest, retrieval plan, and receipt contract.

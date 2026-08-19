@@ -43,5 +43,15 @@ export type RetrievalEvidence = {
   lexicalScore?: number;
   semanticScore?: number;
   blendedScore?: number;
+  /** Stable diagnostics for replay/debugging; never used as hidden ranking input. */
+  scoreBreakdown?: {
+    lexical?: number;
+    semantic?: number;
+    blended?: number;
+    phrase?: number;
+    proximity?: number;
+    heading?: number;
+  };
+  planHash?: string;
   modelId?: string;
 };

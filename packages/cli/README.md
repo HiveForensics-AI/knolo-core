@@ -1,5 +1,8 @@
 # @knolo/cli
 
+The CLI targets the Knolo v4 pack contract. Normal builds emit v4; the ICP
+legacy build path explicitly emits v3 until the canister gains a v4 profile.
+
 The official CLI for building `.knolo` knowledge packs.
 
 It indexes structured content and produces a deterministic, local-first knowledge bundle for use with `@knolo/core`.
@@ -34,6 +37,17 @@ Indexes your configured content and outputs:
 
 ```
 dist/knowledge.knolo
+```
+
+Artifact workflows:
+
+```bash
+knolo inspect dist/knowledge.knolo
+knolo verify dist/knowledge.knolo
+knolo migrate old.knolo --to 4 --out new.knolo
+knolo query "billing policy" --receipt receipt.json --json
+knolo explain receipt.json --pack dist/knowledge.knolo
+knolo diff old.knolo new.knolo
 ```
 
 ### ICP Canister Workflow (LIVE)
@@ -109,12 +123,13 @@ All builds are deterministic.
 
 ## 🧠 Agent Features
 
-Phase 2 includes:
+Current v4 features include:
 
 * Routing profile extraction
 * Tool policy validation
 * Mount-time registry validation
 * Deterministic selection logic
+* Pack manifests, analyzer identities, retrieval plans, receipts, and evidence spans
 
 ---
 
@@ -153,4 +168,4 @@ This section is deterministic, offline-safe, and additive; runtimes that ignore 
 
 ## 📄 License
 
-MIT
+Apache-2.0

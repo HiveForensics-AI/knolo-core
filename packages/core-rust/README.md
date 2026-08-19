@@ -1,5 +1,9 @@
 # knolo-core-rust
 
+**Compatibility status:** legacy v1–v3 Rust reader/query profile. The
+TypeScript runtime is the Phase 5 v4 TrustBench reference until Rust supports
+the v4 container, analyzer identity, retrieval plan, and receipt contract.
+
 Native Rust runtime support for Knolo `.knolo` packs.
 
 ## Included in this initial release

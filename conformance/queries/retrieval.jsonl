@@ -1,0 +1,5 @@
+{"id":"lexical-alpha","query":"alpha beta","options":{"topK":3},"relevant":["intro.md","other.md"]}
+{"id":"namespace-alpha","query":"alpha","options":{"topK":5,"namespace":"docs.alpha"},"relevant":["intro.md","other.md"]}
+{"id":"source-runtime","query":"runtime","options":{"topK":3,"source":"runtime.md"},"relevant":["runtime.md"]}
+{"id":"required-phrase","query":"alpha","options":{"topK":3,"requirePhrases":["alpha beta"]},"relevant":["intro.md","other.md"]}
+{"id":"empty-scope","query":"alpha","options":{"topK":3,"namespace":"does-not-exist"},"relevant":[]}
