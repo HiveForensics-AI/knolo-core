@@ -1,0 +1,27 @@
+{
+  "key": {
+    "version": 1,
+    "principal": "root",
+    "keyId": "root-old",
+    "algorithm": "Ed25519",
+    "publicKeyHex": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
+    "notBefore": 0
+  },
+  "record": {
+    "version": 1,
+    "kind": "key-rotation",
+    "issuer": "root",
+    "issuerKeyId": "root-old",
+    "principal": "root",
+    "previousKeyId": "root-old",
+    "keyId": "root-2027",
+    "algorithm": "Ed25519",
+    "publicKeyHex": "201f1e1d1c1b1a191817161514131211100f0e0d0c0b0a090807060504030201",
+    "notBefore": 100,
+    "issuedAt": 100,
+    "expiresAt": 500,
+    "signatureHex": "0708"
+  },
+  "rotationRoot": "sha256-13d38c0bf947274f714ef66483ce92dfbb5d7f10f0d4a49434a1ddac4eb52ea4",
+  "keyringRoot": "sha256-100546c50640211880e55a9b4bbb8d45c5df1f126576eb18db39133805886182"
+}

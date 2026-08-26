@@ -1,0 +1,10 @@
+{
+  "image": "knowledge-image-v5.fixture.base64",
+  "expression": "FROM metadata SEARCH \"hello\" LIMIT 10",
+  "policy": {"version": 1, "default": "deny", "rules": []},
+  "principal": "anonymous",
+  "action": "query",
+  "policyRoot": "sha256-92a33041498984ee8303a0862158a6624776418fd5b854fb293d66e63febee9f",
+  "authorizationRoot": "sha256-df948ba76cacb47bdaf9ca02f4a52529747c9e4de91b9b9d04543a2ecb50e637",
+  "decision": "deny"
+}

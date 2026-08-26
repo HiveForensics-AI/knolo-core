@@ -1,0 +1,10 @@
+{
+  "image": "knowledge-image-v5.fixture.base64",
+  "expression": "FROM metadata SEARCH \"hello\" LIMIT 10",
+  "stateRoot": "sha256-bc419264f60822bb8c601f01eb3020671e78056f4e6403ab6db087911d25d694",
+  "planRoot": "sha256-832b843bb24c188ec60f54689a2e6c3af7c4c8c1121c3c8fa782a89b06db5d11",
+  "resultRoot": "sha256-577f70602232871a16191a9648ddac3a8788f9508898ddad2f6a287efb489f9b",
+  "objectIds": [
+    "sha256-9be4abfdf50cd3d30a3bbcf0ada38f0b414849518ae465f32d415340f0545526"
+  ]
+}

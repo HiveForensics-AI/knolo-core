@@ -1,0 +1,12 @@
+{
+  "image": "knowledge-image-v5.fixture.base64",
+  "expression": "FROM metadata SEARCH \"hello\" LIMIT 10",
+  "principal": "anonymous",
+  "issuer": "root",
+  "algorithm": "test-v1",
+  "signatureBase64": "Bwg=",
+  "issuedAt": 0,
+  "expiresAt": 200,
+  "authorizationRoot": "sha256-df948ba76cacb47bdaf9ca02f4a52529747c9e4de91b9b9d04543a2ecb50e637",
+  "envelopeRoot": "sha256-ba807df11575c870d3022a487418b0cd1e5fb021fb603e046b71b73b5db16a92"
+}

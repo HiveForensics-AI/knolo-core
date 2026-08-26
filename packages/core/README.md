@@ -18,6 +18,136 @@ No vector database required.
 No cloud dependency required.
 Works fully offline.
 
+## V5 Knowledge Image foundation
+
+The V5 foundation adds a read-only, verifiable Knowledge Image contract while
+leaving V4 pack and retrieval APIs unchanged. The new APIs use deterministic
+CBOR, SHA-256 domain-separated roots, A/B superblocks, immutable segments, and
+fail-closed verification.
+
+```ts
+import {
+  migrateV4ToV5,
+  mountKnowledgeImageV5,
+  verifyKnowledgeImageV5,
+} from '@knolo/core';
+
+const { image, receipt } = await migrateV4ToV5(v4Bytes);
+const verification = verifyKnowledgeImageV5(image);
+const mounted = mountKnowledgeImageV5(image);
+console.log(verification.stateRoot, receipt.objectMappings.length, mounted.objects.length);
+```
+
+Single-writer transactions with detached snapshot readers are available through
+`KnowledgeImageStoreV5`:
+
+```ts
+import { KnowledgeImageStoreV5 } from '@knolo/core';
+
+const store = new KnowledgeImageStoreV5(image);
+const tx = store.beginTransaction({ actor: 'writer-a' });
+tx.addObject({ kind: 'source', bytes: new TextEncoder().encode('alpha'), meta: {} });
+const next = tx.commit();
+```
+
+Concurrent writers, stale-lock recovery, and model/tool execution remain
+intentionally deferred. Durable run journals, checkpointing, query indexes,
+query history, synchronization, and conflict merging are bounded V5 foundation
+features. The byte-level contracts live under
+[`/spec`](../../spec/README.md).
+
+Node applications can persist the same single-writer store with the Node-only
+entry point. It uses an exclusive lock file and temp-file plus fsync/rename
+writes; opening always verifies the complete V5 image before returning:
+
+```ts
+import { DurableKnowledgeImageStoreV5 } from '@knolo/core/node';
+
+const store = DurableKnowledgeImageStoreV5.open('./knowledge.v5', image);
+const tx = store.beginTransaction({ actor: 'disk-writer' });
+tx.addObject({ kind: 'source', bytes: new TextEncoder().encode('alpha'), meta: {} });
+const next = tx.commit();
+store.close();
+```
+
+The read-only V5 EQL surface supports bounded object filtering and search with
+verifiable plan and result roots:
+
+```ts
+import { queryKnowledgeImageV5 } from '@knolo/core';
+
+const result = queryKnowledgeImageV5(image, 'FROM chunk SEARCH "retention" LIMIT 20');
+console.log(result.planRoot, result.resultRoot, result.hits);
+```
+
+Persistent query indexes and append-only query history are available as
+state-root-bound V5 artifacts. Bounded joins and deterministic ordering remain
+available in the V5 EQL surface.
+
+V5 policy evaluation is available for committed policy roots. It applies
+deny-precedence rules to query hits and returns an authorization root bound to
+the image state root, query plan root, policy root, principal, and action.
+
+Signed authority envelopes can bind an externally resolved principal to that
+authorization root. Signature verification and key resolution are injected by
+the host runtime; delegation chains are bounded and validated fail-closed.
+The Node/browser-compatible WebCrypto adapter supports Ed25519 key IDs,
+validity windows, revocation cutoffs, and rotation-aware keyrings.
+
+Authority keyrings can now be serialized as canonical CBOR, replayed through
+signed predecessor-linked rotation records, and persisted atomically by the
+Node-only durable keyring store. The keyring root commits to active keys and
+ordered rotation history.
+
+Authority envelopes may include the keyring root; the verifier then requires
+the exact matching persisted keyring state.
+
+The authority-session facade composes query, policy, keyring selection, and
+Ed25519 envelope verification into one root-bound result.
+
+V5 sync summaries and read-only plans classify equal, fast-forward, and
+diverged images and list safe transfer deltas without applying implicit merges.
+Verified direct fast-forward adoption is available for memory and Node durable
+stores; divergent or keyring-incompatible states remain blocked.
+
+Transport-neutral sync requests and responses can be signed and verified with
+Ed25519, binding nonces, expiry, summaries, requested deltas, and keyring roots.
+The exchange helper verifies both messages before admitting the request to a
+bounded replay cache; durable replay persistence and network transport remain
+host responsibilities.
+
+Signed sync messages can be serialized for transport with the bounded,
+canonical-CBOR `encodeKnowledgeSyncRequestV1` and
+`encodeKnowledgeSyncResponseV1` helpers and restored with their matching decode
+functions. The codec remains transport-neutral and does not transfer image
+objects or events itself.
+
+Hosts can provide a `request(bytes)` adapter to
+`exchangeKnowledgeSyncOverTransportWithEd25519`; the core encodes, verifies,
+decodes, and replay-protects the exchange before returning it. Socket setup,
+framing, object transfer, and durable replay persistence remain host-owned.
+
+Durable agent run state is available through the pure lifecycle functions and
+the Node-only `DurableKnowledgeRunStoreV5`. Runs are bound to an image state
+root, checkpointable, resumable, and journal-verified; model and tool
+execution remain host-controlled.
+
+The host-controlled `executeKnowledgeAgentRunV1` helper connects that run state
+to any model or agent framework through injected step and tool functions. It
+enforces input binding, tool policy, unique call IDs, bounded steps, and
+checkpoint/complete/fail transitions without owning model inference or
+external side effects.
+
+Divergent branches can be compared with `planKnowledgeSyncMergeV5`, which
+returns a deterministic, read-only conflict plan covering branch-only objects,
+events, event targets, views, and commit metadata. It never chooses a winner or
+mutates either image; application requires an explicit authorized resolution.
+
+An authorized caller can apply a complete resolution with
+`applyKnowledgeSyncMergeV5` or the store-level `merge()` method. The result is
+an independently verified two-parent image; rejected or failed merges leave
+the existing store snapshot unchanged.
+
 ---
 
 # 🧠 What It Is

@@ -73,3 +73,4 @@ tests/icp-local/data/
 tests/icp-local/generated/
 tests/icp-local/.runtime/
 tests/icp-local/**/*.knolo
+docs/Knolo_V5_Verifiable_Knowledge_Runtime_Architecture.docx
