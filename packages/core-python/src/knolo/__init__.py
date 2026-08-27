@@ -5,7 +5,7 @@ from .models import Hit, Pack, PackMeta, PackStats, QueryOptions
 from .runtime import mount_pack, mount_pack_from_bytes, query
 from .tokenize import normalize, tokenize
 
-__version__ = "0.1.0"
+__version__ = "4.0.0"
 
 __all__ = [
     "__version__",
@@ -22,4 +22,3 @@ __all__ = [
     "query",
     "tokenize",
 ]
-

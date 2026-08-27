@@ -1,6 +1,6 @@
 {
   "name": "create-knolo-app",
-  "version": "0.1.1",
+  "version": "4.0.0",
   "type": "module",
   "description": "Scaffold a minimal KnoLo + Next.js starter app",
   "bin": {
