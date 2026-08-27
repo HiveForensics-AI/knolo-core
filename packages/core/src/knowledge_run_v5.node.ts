@@ -1,5 +1,6 @@
 import { closeSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { canonicalCbor, type CborValue } from './knowledge_image_v5.js';
 import {
   checkpointKnowledgeRunV1,
   completeKnowledgeRunV1,
@@ -64,7 +65,7 @@ export class DurableKnowledgeRunStoreV5 {
   update(next: KnowledgeRunV1): KnowledgeRunV1 {
     this.assertOpen();
     verifyKnowledgeRunV1(next);
-    if (next.runId !== this.current.runId || next.sequence < this.current.sequence) throw new Error('V5 durable run update does not extend the current run.');
+    if (next.runId !== this.current.runId || next.sequence < this.current.sequence || !hasEventPrefix(this.current, next)) throw new Error('V5 durable run update does not extend the current run journal.');
     this.persist(next);
     this.current = cloneRun(next);
     return this.snapshot();
@@ -103,3 +104,9 @@ export class DurableKnowledgeRunStoreV5 {
 }
 
 function cloneRun(run: KnowledgeRunV1): KnowledgeRunV1 { return deserializeKnowledgeRunV1(serializeKnowledgeRunV1(run)); }
+
+function hasEventPrefix(current: KnowledgeRunV1, next: KnowledgeRunV1): boolean {
+  return current.events.every((event, index) => bytesEqual(canonicalCbor(event as unknown as CborValue), canonicalCbor(next.events[index] as unknown as CborValue)));
+}
+
+function bytesEqual(left: Uint8Array, right: Uint8Array): boolean { return left.length === right.length && left.every((byte, index) => byte === right[index]); }

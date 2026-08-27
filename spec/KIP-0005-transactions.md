@@ -20,5 +20,7 @@ commit is no longer current. Rollback releases the writer slot without changing
 the committed image.
 
 This release intentionally does not provide concurrent writers, durable file
-locking, sync, conflict merging, authority evaluation, or transaction
-signatures.
+locking beyond the Node adapter, or transaction signatures. Sync summaries,
+conflict planning/application, and authority evaluation are defined by the
+subsequent KIP contracts without changing this single-writer transaction
+boundary.

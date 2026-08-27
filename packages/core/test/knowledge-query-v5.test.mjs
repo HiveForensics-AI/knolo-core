@@ -35,6 +35,17 @@ test('V5 EQL filters scalar metadata and normalize AND order', () => {
   assert.equal(first.hits[0].kind, 'chunk');
 });
 
+test('V5 EQL remounts mutable KnowledgeImage inputs before querying', () => {
+  const image = createKnowledgeImageV5({ objects: [
+    { kind: 'chunk', bytes: new TextEncoder().encode('original'), meta: {} },
+  ] });
+  const object = image.objects[0];
+  object.bytes = new TextEncoder().encode('tampered');
+  const result = queryKnowledgeImageV5(image, 'FROM chunk SEARCH "original" LIMIT 10');
+  assert.equal(result.hits.length, 1);
+  verifyKnowledgeQueryResultV5(image, result);
+});
+
 test('V5 EQL rejects unsupported or unbounded expressions', () => {
   assert.throws(() => parseKnowledgeQueryV5('SELECT * FROM chunk'), /start with FROM/i);
   assert.throws(() => parseKnowledgeQueryV5('FROM chunk WHERE bytes = "x"'), /unsupported.*field/i);

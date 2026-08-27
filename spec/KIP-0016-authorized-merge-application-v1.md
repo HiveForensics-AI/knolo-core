@@ -9,10 +9,13 @@ resolution. The runtime verifies the plan against the supplied local, remote,
 and ancestor images before invoking authorization.
 
 An accepted resolution creates a new immutable image with both branch commits
-as parents. Branch objects and selected events are retained, roots and views
-are recomputed, and the resulting image is mounted and verified before it is
-returned. Store-level merge methods persist only after successful construction,
-so rejected, unresolved, or failed merges leave the current snapshot unchanged.
+as parents. The merge is constructed from the shared ancestor: branch-only
+objects are retained, while event-target conflicts retain events only from the
+selected side. Losing conflicting events are excluded from the merged ledger.
+Roots and views are recomputed, and the resulting image is mounted and verified
+before it is returned. Store-level merge methods persist only after successful
+construction, so rejected, unresolved, or failed merges leave the current
+snapshot unchanged.
 
 The authorization callback is host-injected; this KIP does not prescribe a
 transport or authority protocol. Automatic conflict selection, remote writes,

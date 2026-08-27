@@ -81,6 +81,19 @@ test('Node V5 keyring store persists and reopens a verified rotation', async () 
     const record = await signKnowledgeKeyRotationWithEd25519({
       version: 1, kind: 'key-rotation', issuer: 'root', issuerKeyId: 'root-old', principal: 'root', previousKeyId: 'root-old', keyId: 'root-2027', algorithm: 'Ed25519', publicKey: next.publicKey, notBefore: 100, issuedAt: 100, expiresAt: 500,
     }, old.pair.privateKey, webcrypto);
+    const beforeFailure = store.snapshot();
+    const persist = store.persist;
+    store.persist = () => { throw new Error('simulated persistence failure'); };
+    await assert.rejects(() => store.appendRotationAsync(record, {
+      now: 150,
+      resolveKey: (principal, algorithm, keyId) => store.snapshot().keys.find((key) => key.principal === principal && key.algorithm === algorithm && key.keyId === keyId)?.publicKey,
+      verifySignature: async (algorithm, key, message, signature) => {
+        const publicKey = await webcrypto.subtle.importKey('raw', key, { name: algorithm }, false, ['verify']);
+        return webcrypto.subtle.verify({ name: algorithm }, publicKey, signature, message);
+      },
+    }), /simulated persistence failure/);
+    store.persist = persist;
+    assert.deepEqual(store.snapshot(), beforeFailure);
     const committed = await store.appendRotationAsync(record, {
       now: 150,
       resolveKey: (principal, algorithm, keyId) => store.snapshot().keys.find((key) => key.principal === principal && key.algorithm === algorithm && key.keyId === keyId)?.publicKey,

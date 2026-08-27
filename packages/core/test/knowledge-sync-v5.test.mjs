@@ -126,6 +126,16 @@ test('V5 divergent merge planning is deterministic and identifies target conflic
   assert.equal(applied.image.events.some((event) => event.id === plan.remoteOnlyEventIds[0]), false);
   assert.deepEqual(applied.resolution.decisions.map((decision) => `${decision.kind}\0${decision.key}`), plan.conflicts.map((conflict) => `${conflict.kind}\0${conflict.key}`));
 
+  const remoteResolution = { decisions: plan.conflicts.map((conflict) => ({ kind: conflict.kind, key: conflict.key, choice: conflict.kind === 'event-target' ? 'remote' : 'local' })) };
+  const remoteApplied = applyKnowledgeSyncMergeV5(local, remote, base, {
+    plan,
+    resolution: remoteResolution,
+    authorize: () => true,
+  }, keyringRoot, keyringRoot, keyringRoot);
+  assert.equal(remoteApplied.image.events.some((event) => event.id === plan.localOnlyEventIds[0]), false);
+  assert.equal(remoteApplied.image.events.some((event) => event.id === plan.remoteOnlyEventIds[0]), true);
+  assert.deepEqual(remoteApplied.image.commit.parents, [local.commitDigest, remote.commitDigest]);
+
   const store = new KnowledgeImageStoreV5(local);
   const before = store.stateRoot;
   assert.throws(() => store.merge(remote, base, { plan, resolution, authorize: () => false }, keyringRoot, keyringRoot, keyringRoot), /authorization/i);

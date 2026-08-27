@@ -64,16 +64,16 @@ export class DurableAuthorityKeyringStoreV5 {
   appendRotation(record: KnowledgeKeyRotationRecordV1, options: KnowledgeKeyRotationVerificationOptionsV1): KnowledgeAuthorityKeyringV1 {
     this.assertOpen();
     const next = applyKnowledgeKeyRotationV5(this.current, record, options);
+    this.persist(next);
     this.current = next;
-    this.persist();
     return this.snapshot();
   }
 
   async appendRotationAsync(record: KnowledgeKeyRotationRecordV1, options: KnowledgeKeyRotationAsyncVerificationOptionsV1): Promise<KnowledgeAuthorityKeyringV1> {
     this.assertOpen();
     const next = await applyKnowledgeKeyRotationV5Async(this.current, record, options);
+    this.persist(next);
     this.current = next;
-    this.persist();
     return this.snapshot();
   }
 
@@ -83,12 +83,12 @@ export class DurableAuthorityKeyringStoreV5 {
     rmSync(this.lockPath, { force: true });
   }
 
-  private persist(): void {
+  private persist(keyring: KnowledgeAuthorityKeyringV1 = this.current): void {
     const tempPath = `${this.filePath}.${process.pid}.${Date.now()}.tmp`;
     const dir = dirname(this.filePath);
     mkdirSync(dir, { recursive: true });
     try {
-      writeFileSync(tempPath, serializeAuthorityKeyringV1(this.current));
+      writeFileSync(tempPath, serializeAuthorityKeyringV1(keyring));
       const fd = openSync(tempPath, 'r');
       try { fsyncSync(fd); } finally { closeSync(fd); }
       renameSync(tempPath, this.filePath);

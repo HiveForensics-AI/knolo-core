@@ -186,7 +186,7 @@ export function isKnowledgeImageV5(input: ArrayBufferLike | Uint8Array): boolean
 export function createKnowledgeImageV5(options: CreateKnowledgeImageOptions): KnowledgeImageV5 {
   const base = options.baseImage;
   const actor = options.actor ?? (base ? 'knolo-transaction' : 'knolo-migration');
-  const parents = base ? [base.commitDigest, ...(options.additionalParents ?? [])] : [...(options.parents ?? [])];
+  const parents = options.parents ? [...options.parents] : base ? [base.commitDigest, ...(options.additionalParents ?? [])] : [];
   const newObjects = options.objects.map((input) => {
     const bytes = new Uint8Array(input.bytes);
     const body = { kind: input.kind, bytes, meta: input.meta as unknown as CborValue } as CborValue;
@@ -426,11 +426,34 @@ function decodeObjects(payload: Uint8Array): KnowledgeObjectV1[] {
 
 function decodeEvents(payload: Uint8Array): KnowledgeEventV1[] {
   const value = decodeCbor(payload); if (!Array.isArray(value)) throw new Error('Invalid V5 event segment.');
-  return value.map((entry) => { const event = asRecord(entry); const id = asString(event.id); const normalized = { version: asNumber(event.version), transactionId: asString(event.transactionId), parents: asStringArray(event.parents), actor: asString(event.actor), actorCounter: asNumber(event.actorCounter), kind: asString(event.kind), target: asString(event.target), payload: asString(event.payload), provenance: asRecord(event.provenance) }; if (normalized.version !== 1 || digestDomain('event', canonicalCbor({ ...normalized })) !== id) throw new Error('V5 event identity mismatch.'); return { ...normalized, version: 1, id }; });
+  return value.map((entry) => {
+    const event = asRecord(entry);
+    const id = asDigest(event.id);
+    const normalized = { version: asNumber(event.version), transactionId: asDigest(event.transactionId), parents: asDigestArray(event.parents), actor: asString(event.actor), actorCounter: asNumber(event.actorCounter), kind: asString(event.kind), target: asDigest(event.target), payload: asDigest(event.payload), provenance: asRecord(event.provenance) };
+    if (normalized.version !== 1 || normalized.actor.length === 0 || normalized.actorCounter < 1 || digestDomain('event', canonicalCbor({ ...normalized })) !== id) throw new Error('V5 event identity mismatch.');
+    return { ...normalized, version: 1, id };
+  });
 }
 
 function decodeCommit(payload: Uint8Array): KnowledgeCommitV1 {
-  const value = asRecord(decodeCbor(payload)); const commit = { version: asNumber(value.version), parents: asStringArray(value.parents), transactionRoot: asString(value.transactionRoot), objectRoot: asString(value.objectRoot), eventRoot: asString(value.eventRoot), views: asDigestRecord(value.views), schemaRoot: asString(value.schemaRoot), policyRoot: asString(value.policyRoot), runtimeContract: asString(value.runtimeContract), sequence: asNumber(value.sequence), actor: asString(value.actor), objectSegmentDigest: asString(value.objectSegmentDigest), eventSegmentDigest: asString(value.eventSegmentDigest) }; if (commit.version !== 1) throw new Error('Unsupported V5 commit version.'); return { ...commit, version: 1 };
+  const value = asRecord(decodeCbor(payload));
+  const commit = {
+    version: asNumber(value.version),
+    parents: asDigestArray(value.parents),
+    transactionRoot: asDigest(value.transactionRoot),
+    objectRoot: asDigest(value.objectRoot),
+    eventRoot: asDigest(value.eventRoot),
+    views: asDigestRecord(value.views),
+    schemaRoot: asDigest(value.schemaRoot),
+    policyRoot: asDigest(value.policyRoot),
+    runtimeContract: asDigest(value.runtimeContract),
+    sequence: asNumber(value.sequence),
+    actor: asString(value.actor),
+    objectSegmentDigest: asDigest(value.objectSegmentDigest),
+    eventSegmentDigest: asDigest(value.eventSegmentDigest),
+  };
+  if (commit.version !== 1 || commit.sequence < 1 || commit.actor.length === 0 || new Set(commit.parents).size !== commit.parents.length) throw new Error('Malformed V5 commit.');
+  return { ...commit, version: 1 };
 }
 
 function objectToCbor(object: KnowledgeObjectV1): CborValue { return { id: object.id, kind: object.kind, bytes: object.bytes, meta: object.meta as CborValue }; }
@@ -460,7 +483,9 @@ function asString(value: CborValue | undefined): string { if (typeof value !== '
 function asNumber(value: CborValue | undefined): number { if (typeof value !== 'number' && typeof value !== 'bigint') throw new Error('Expected V5 integer value.'); const n = Number(value); if (!Number.isSafeInteger(n)) throw new Error('V5 integer exceeds safe range.'); return n; }
 function asBytesValue(value: CborValue | undefined): Uint8Array { if (!(value instanceof Uint8Array)) throw new Error('Expected V5 byte string.'); return value; }
 function asStringArray(value: CborValue | undefined): string[] { if (!Array.isArray(value)) throw new Error('Expected V5 text array.'); return value.map((item) => asString(item)); }
-function asDigestRecord(value: CborValue | undefined): Record<string, Digest> { const record = asRecord(value ?? null); return Object.fromEntries(Object.entries(record).map(([key, item]) => [key, asString(item)])); }
+function asDigest(value: CborValue | undefined): Digest { const digest = asString(value); digestBytes(digest); return digest; }
+function asDigestArray(value: CborValue | undefined): Digest[] { if (!Array.isArray(value)) throw new Error('Expected V5 digest array.'); return value.map((item) => asDigest(item)); }
+function asDigestRecord(value: CborValue | undefined): Record<string, Digest> { const record = asRecord(value ?? null); return Object.fromEntries(Object.entries(record).map(([key, item]) => [key, asDigest(item)])); }
 function bytesToDigest(bytes: Uint8Array): Digest { return `${SHA256_PREFIX}${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`; }
 function asBytes(input: ArrayBufferLike | Uint8Array): Uint8Array { return input instanceof Uint8Array ? input : new Uint8Array(input); }
 function isV4Artifact(bytes: Uint8Array): boolean { return bytes.length >= 8 && getTextDecoder().decode(bytes.slice(0, 8)) === 'KNLOV4\0\0'; }

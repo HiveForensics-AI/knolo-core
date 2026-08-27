@@ -45,5 +45,6 @@ before opening; failed opens release their newly acquired lock. Index refresh
 rebuilds the index for a new state root and adopts it only after persistence.
 
 Persistent indexes and history are local read-side artifacts. Multi-process
-coordination, distributed query caches, query authorization, and Studio views
-remain host-level or subsequent features.
+coordination and distributed query caches remain host-level concerns. Query
+authorization is defined by the authority KIPs, and KIP-0026 defines the
+read-only Studio management view over verified index/history state.

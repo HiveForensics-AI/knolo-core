@@ -6,6 +6,7 @@ import test from 'node:test';
 import {
   createKnowledgeImageV5,
   createKnowledgeRunV1,
+  startKnowledgeRunV1,
 } from '../dist/index.js';
 import { DurableKnowledgeRunStoreV5 } from '../dist/node.js';
 
@@ -21,6 +22,8 @@ test('Node durable V5 run store atomically persists and resumes checkpoints', ()
     const initial = createKnowledgeRunV1({ agentId: 'agent', imageStateRoot: image.stateRoot, input: { task: 'inspect' }, createdAt: 10 });
     const store = DurableKnowledgeRunStoreV5.open(path, initial);
     store.start(11);
+    const fork = startKnowledgeRunV1(initial, 12);
+    assert.throws(() => store.update(fork), /extend.*journal|prefix/i);
     store.checkpoint({ cursor: 4 }, 12);
     const paused = store.snapshot();
     store.close();

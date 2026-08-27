@@ -133,7 +133,7 @@ export function queryKnowledgeImageV5(
   expression: string | KnowledgeQueryPlanV1,
   index?: KnowledgeQueryIndexV1,
 ): KnowledgeQueryResultV1 {
-  const image = isKnowledgeImage(input) ? input : mountKnowledgeImageV5(input);
+  const image = isKnowledgeImage(input) ? mountKnowledgeImageV5(input.bytes) : mountKnowledgeImageV5(input);
   const plan = typeof expression === 'string' ? parseKnowledgeQueryV5(expression) : expression;
   if (index) verifyKnowledgeQueryIndexV5(image, index);
   const candidates = index ? candidateObjectIdsForKnowledgeQueryIndexV1(index, plan) : undefined;
@@ -160,7 +160,7 @@ export function queryKnowledgeImageV5(
 }
 
 export function verifyKnowledgeQueryResultV5(input: KnowledgeImageV5 | ArrayBufferLike | Uint8Array, result: KnowledgeQueryResultV1): void {
-  const image = isKnowledgeImage(input) ? input : mountKnowledgeImageV5(input);
+  const image = isKnowledgeImage(input) ? mountKnowledgeImageV5(input.bytes) : mountKnowledgeImageV5(input);
   if (!result || result.version !== 1 || result.stateRoot !== image.stateRoot) throw new Error('V5 query result state root mismatch.');
   const expected = queryKnowledgeImageV5(image, result.plan);
   if (expected.planRoot !== result.planRoot || expected.resultRoot !== result.resultRoot || JSON.stringify(expected.hits) !== JSON.stringify(result.hits)) {

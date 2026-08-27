@@ -157,11 +157,19 @@ export function applyKnowledgeSyncMergeV5(
   if (!options.authorize(options.plan, resolution)) throw new Error('V5 merge authorization rejected.');
 
   const decisions = new Map(resolution.decisions.map((decision) => [`${decision.kind}\0${decision.key}`, decision.choice]));
+  const conflictingLocalEventIds = new Set(options.plan.conflicts.filter((conflict) => conflict.kind === 'event-target' && decisions.get(`event-target\0${conflict.key}`) === 'remote').flatMap((conflict) => conflict.local));
   const conflictingRemoteEventIds = new Set(options.plan.conflicts.filter((conflict) => conflict.kind === 'event-target' && decisions.get(`event-target\0${conflict.key}`) === 'local').flatMap((conflict) => conflict.remote));
+  const localOnlyEventIds = new Set(options.plan.localOnlyEventIds);
   const remoteOnlyEventIds = new Set(options.plan.remoteOnlyEventIds);
-  const preservedEvents = remoteImage.events.filter((event) => remoteOnlyEventIds.has(event.id) && !conflictingRemoteEventIds.has(event.id));
+  const preservedEvents = [
+    ...localImage.events.filter((event) => localOnlyEventIds.has(event.id) && !conflictingLocalEventIds.has(event.id)),
+    ...remoteImage.events.filter((event) => remoteOnlyEventIds.has(event.id) && !conflictingRemoteEventIds.has(event.id)),
+  ];
+  const localOnlyObjectIds = new Set(options.plan.localOnlyObjectIds);
   const remoteOnlyObjectIds = new Set(options.plan.remoteOnlyObjectIds);
-  const objects: KnowledgeObjectInput[] = remoteImage.objects.filter((object) => remoteOnlyObjectIds.has(object.id)).map((object) => ({ id: object.id, kind: object.kind, bytes: new Uint8Array(object.bytes), meta: { ...object.meta } }));
+  const objects: KnowledgeObjectInput[] = [...localImage.objects, ...remoteImage.objects]
+    .filter((object) => localOnlyObjectIds.has(object.id) || remoteOnlyObjectIds.has(object.id))
+    .map((object) => ({ id: object.id, kind: object.kind, bytes: new Uint8Array(object.bytes), meta: { ...object.meta } }));
   const views = resolveViews(localImage, remoteImage, ancestorImage, decisions);
   const commitOverrides = {
     views,
@@ -170,8 +178,8 @@ export function applyKnowledgeSyncMergeV5(
     runtimeContract: resolveCommitField('runtimeContract', localImage, remoteImage, ancestorImage, decisions),
   };
   const merged = createKnowledgeImageV5({
-    baseImage: localImage,
-    additionalParents: [remoteImage.commitDigest],
+    baseImage: ancestorImage,
+    parents: [localImage.commitDigest, remoteImage.commitDigest],
     objects,
     events: [],
     preservedEvents,

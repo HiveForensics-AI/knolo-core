@@ -38,3 +38,9 @@ objectSegmentDigest, eventSegmentDigest
 The commit digest is the digest of its canonical CBOR payload under
 `knolo:commit:v1`. The state root is the digest of the raw 32-byte commit hash
 under `knolo:state:v1`.
+
+Every digest-typed commit field (`parents`, roots, view values, and segment
+digests) must use the `sha256-` plus 64 lowercase hexadecimal representation.
+The same validation applies to event IDs, transaction IDs, parent IDs, targets,
+and payload identities. Commit sequence values start at one and parent IDs are
+unique. Mounting rejects malformed typed fields before exposing the image.

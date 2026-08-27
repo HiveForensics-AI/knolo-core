@@ -56,6 +56,6 @@ verified snapshot.
 
 This KIP makes run state durable and verifiable. The host remains responsible
 for executing models and tools, applying authority policy, managing scheduling
-and leases, and deciding how external side effects are recorded. Networked run
-replication, signed run authority, and Studio management are subsequent
-features.
+and leases, and deciding how external side effects are recorded. Signed run
+authority and Studio management are defined by KIP-0024 and KIP-0026; networked
+run replication remains outside this foundation.

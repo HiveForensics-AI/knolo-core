@@ -14,5 +14,5 @@ with the `knolo:merge-plan:v1` SHA-256 domain. `verifyKnowledgeMergePlanV5`
 recomputes all summary and plan roots before accepting an external plan.
 
 KIP-0015 does not select a winner, rewrite an object, apply a merge commit, or
-mutate either branch. Conflict resolution policy, merge authorization, and
-atomic merge application remain subsequent upgrades.
+mutate either branch. Conflict resolution policy and merge authorization are
+host decisions; KIP-0016 defines their authorized atomic application.

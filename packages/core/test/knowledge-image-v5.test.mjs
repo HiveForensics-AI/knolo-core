@@ -5,6 +5,7 @@ import {
   buildPack,
   canonicalCbor,
   createKnowledgeImageV5,
+  decodeCanonicalCbor,
   digestDomain,
   inspectKnowledgeImageV5,
   migrateV4ToV5,
@@ -77,6 +78,30 @@ test('V5 verifier fails closed on truncation, digest tampering, and missing supe
   const noSuperblock = image.bytes.slice();
   noSuperblock.fill(0, 16, 16 + 128 * 2);
   assert.throws(() => verifyKnowledgeImageV5(noSuperblock), /superblock/i);
+});
+
+test('V5 verifier rejects malformed digest-typed commit fields', () => {
+  const image = createKnowledgeImageV5({ objects: [{ kind: 'metadata', bytes: new TextEncoder().encode('hello'), meta: { version: 1 } }] });
+  const malformed = image.bytes.slice();
+  const commitSegment = inspectKnowledgeImageV5(malformed).segments.find((segment) => segment.kind === 3);
+  const payloadOffset = commitSegment.offset + 48;
+  const payloadEnd = commitSegment.offset + commitSegment.length;
+  const commit = decodeCanonicalCbor(malformed.slice(payloadOffset, payloadEnd));
+  commit.objectRoot = `sha256-${'g'.repeat(64)}`;
+  const payload = canonicalCbor(commit);
+  assert.equal(payload.length, payloadEnd - payloadOffset);
+  malformed.set(payload, payloadOffset);
+  malformed.set(Buffer.from(digestDomain('segment', payload).slice(7), 'hex'), commitSegment.offset + 16);
+  const commitDigest = digestDomain('commit', payload);
+  const stateRoot = digestDomain('state', Buffer.from(commitDigest.slice(7), 'hex'));
+  for (const superblockOffset of [16, 144]) {
+    const superblock = malformed.slice(superblockOffset, superblockOffset + 128);
+    superblock.set(Buffer.from(commitDigest.slice(7), 'hex'), 32);
+    superblock.set(Buffer.from(stateRoot.slice(7), 'hex'), 64);
+    superblock.set(Buffer.from(digestDomain('superblock', superblock.slice(0, 96)).slice(7), 'hex'), 96);
+    malformed.set(superblock, superblockOffset);
+  }
+  assert.throws(() => verifyKnowledgeImageV5(malformed), /digest|commit/i);
 });
 
 test('V5 verifier accepts unknown optional segments without changing the state root', () => {
