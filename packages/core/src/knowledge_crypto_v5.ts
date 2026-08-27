@@ -33,6 +33,13 @@ import type { KnowledgeAuthorizationResultV1 } from './knowledge_policy_v5.js';
 import type { KnowledgeImageV5, KnowledgePolicyV1 } from './knowledge_image_v5.js';
 import type { KnowledgeQueryResultV1 } from './knowledge_query_v5.js';
 import type { Digest } from './knowledge_image_v5.js';
+import {
+  runAuthorityPayloadV1,
+  verifyKnowledgeRunAuthorityV5Async,
+  type KnowledgeRunAuthorityEnvelopeV1,
+  type KnowledgeRunAuthorityVerificationV1,
+} from './knowledge_run_authority_v5.js';
+import type { KnowledgeRunV1 } from './knowledge_run_v5.js';
 
 export type Ed25519AuthorityKeyV1 = {
   principal: string;
@@ -158,6 +165,19 @@ export async function signKnowledgeSyncResponseWithEd25519(response: KnowledgeSy
   if (response.algorithm !== 'Ed25519') throw new Error('V5 sync response algorithm must be Ed25519 for this adapter.');
   const signature = await subtle.sign({ name: 'Ed25519' }, privateKey, syncResponsePayloadV1(response).buffer as ArrayBuffer);
   return { ...response, signature: new Uint8Array(signature) };
+}
+
+export async function signKnowledgeRunAuthorityWithEd25519(envelope: KnowledgeRunAuthorityEnvelopeV1, privateKey: CryptoKey, cryptoLike?: { subtle: SubtleCrypto }): Promise<KnowledgeRunAuthorityEnvelopeV1> {
+  const subtle = cryptoLike?.subtle ?? globalThis.crypto?.subtle;
+  if (!subtle) throw new Error('WebCrypto SubtleCrypto is unavailable for Ed25519 signing.');
+  if (envelope.algorithm !== 'Ed25519') throw new Error('V5 run authority algorithm must be Ed25519 for this adapter.');
+  const signature = await subtle.sign({ name: 'Ed25519' }, privateKey, runAuthorityPayloadV1(envelope).buffer as ArrayBuffer);
+  return { ...envelope, signature: new Uint8Array(signature) };
+}
+
+export async function verifyKnowledgeRunAuthorityWithEd25519(run: KnowledgeRunV1, envelope: KnowledgeRunAuthorityEnvelopeV1, keyring: Ed25519AuthorityKeyringV1, now: number, cryptoLike?: { subtle: SubtleCrypto }): Promise<KnowledgeRunAuthorityVerificationV1> {
+  const { resolveKey, verifySignature } = ed25519SyncVerifier(keyring, now, cryptoLike);
+  return verifyKnowledgeRunAuthorityV5Async(run, envelope, { now, expectedKeyringRoot: keyring.keyringRoot, resolveKey, verifySignature });
 }
 
 export async function verifyKnowledgeSyncRequestWithEd25519(request: KnowledgeSyncRequestV1, keyring: Ed25519AuthorityKeyringV1, now: number, cryptoLike?: { subtle: SubtleCrypto }): Promise<void> {

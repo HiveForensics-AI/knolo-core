@@ -16,5 +16,6 @@ derivation, signed request/response binding, and keyring-root continuity. The
 runtime also provides a bounded in-memory replay cache and an exchange helper
 that admits a request only after both messages verify. A malformed,
 replay-shaped, expired, tampered, or keyring-incompatible message fails closed.
-Durable replay-cache persistence, sockets, and transport-level anti-replay
-policy remain host responsibilities and remain outside this bounded release.
+Durable replay-cache persistence and complete image transfer are defined by
+KIP-0023. Sockets and transport-level anti-replay policy remain host
+responsibilities.

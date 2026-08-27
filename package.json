@@ -15,6 +15,7 @@
     "test:icp:e2e": "bash scripts/e2e-icp-local.sh",
     "trustbench:generate": "npm run build --workspace @knolo/core && node trustbench/generate-fixtures.mjs && node trustbench/run.mjs",
     "trustbench:test": "npm run build --workspace @knolo/core && node trustbench/test.mjs",
+    "release:check": "npm run build --workspace @knolo/core && node scripts/check-v5-release.mjs",
     "icp:local": "bash tests/icp-local/run-local.sh"
   }
 }

@@ -4,6 +4,8 @@
 read-only Knowledge Image verifier and deterministic migration foundation. The
 TypeScript runtime remains the Phase 5 v4 retrieval reference.
 
+The shared implementation roadmap is [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
+
 Native Rust runtime support for Knolo `.knolo` packs.
 
 ## V5 Knowledge Image foundation

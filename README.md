@@ -1,8 +1,14 @@
 # 🧠 Knolo
 
-**Current contract: Knolo v4 / Phase 5 TrustBench.** TypeScript `@knolo/core`
-builds v4 packs by default. v1–v3 packs remain readable; Python, Rust, and ICP
-are legacy compatibility profiles until their v4 conformance runners land.
+**Current contract: Knolo V5 foundation with V4 compatibility.** TypeScript
+`@knolo/core` still builds and retrieves V4 packs by default, while the V5
+Knowledge Image, verification, migration, runtime diagnostics, and read-only
+Studio management contracts are available alongside the unchanged V4 APIs.
+V1–V4 packs remain readable; Python and ICP remain legacy compatibility
+profiles, while Rust provides the native V5 verification foundation.
+
+See the [V5 roadmap](docs/ROADMAP.md) for delivered work, release hardening,
+and the next implementation wave.
 
 Knolo is a **local-first knowledge base engine** built around deterministic retrieval and portable `.knolo` packs.
 
@@ -27,6 +33,24 @@ Knolo prioritizes:
 * Verifiable receipts, evidence spans, and deterministic retrieval-plan hashes
 
 > ⚠️ `knolo-core` (unscoped) on npm is deprecated. Use `@knolo/core`.
+
+## V5 foundation and operational checks
+
+The V5 foundation adds a verifiable Knowledge Image runtime beside the
+unchanged V4 retrieval path. It supports deterministic encoding and roots,
+fail-closed verification, V4 migration receipts, read-only runtime
+diagnostics, and the KIP-0026 Studio management snapshot.
+
+```bash
+npm run release:check
+npm run knolo -- v5 info ./dist/knowledge.v5
+npm run knolo -- v5 health ./dist/knowledge.v5
+npm run knolo -- v5 studio ./dist/knowledge.v5
+```
+
+The Studio command reports verified state and available read-only panels; it
+does not grant mutation, authority, or host execution permissions. See the
+[V5 roadmap](docs/ROADMAP.md) and [V5 contracts](spec/README.md).
 
 ---
 
@@ -191,8 +215,8 @@ For the full API surface and memory-specific examples, see [`packages/core/READM
 
 | Package             | Description                                               |
 | ------------------- | --------------------------------------------------------- |
-| `@knolo/core`       | Pack builder, pack loader, deterministic retrieval engine, and Cortex memory layer |
-| `@knolo/cli`        | CLI for building `.knolo` artifacts                       |
+| `@knolo/core`       | V4 pack/retrieval APIs plus the V5 verifiable Knowledge Image foundation |
+| `@knolo/cli`        | CLI for V4 artifacts and V5 inspection/Studio management  |
 | `create-knolo-app`  | Next.js scaffolding with playground                       |
 | `@knolo/langchain`  | LangChain-style retriever interface                       |
 | `@knolo/llamaindex` | LlamaIndex-style retriever interface                      |
@@ -209,6 +233,8 @@ Current Rust support includes:
 * Mounting `.knolo` packs from bytes
 * Parsing v1/v3-compatible core sections (`meta`, `lexicon`, `postings`, `blocks`)
 * Deterministic lexical querying with `top_k`, `min_score`, `namespace`, and `source` filters
+* Read-only V5 Knowledge Image verification and deterministic V4 migration
+* Cross-runtime V5 roots and migration fixtures under `conformance/v5/`
 
 Run Rust tests:
 
@@ -236,6 +262,14 @@ npm run trustbench:test
 
 The suite checks deterministic IDs, scores, plan hashes, receipts, Recall@K,
 MRR, nDCG, abstention precision, and fail-closed corruption handling.
+
+For the V5 release gate, run:
+
+```bash
+npm run release:check
+```
+
+The complete implementation roadmap is [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 Install locally:
 
@@ -657,10 +691,9 @@ Semantic section is optional and auto-detected.
 
 # 🗺 Roadmap
 
-* Hybrid evaluation tooling
-* Incremental pack updates
-* Better diagnostics & introspection
-* Continued local-first performance tuning
+The active roadmap is maintained in [`docs/ROADMAP.md`](docs/ROADMAP.md).
+The current release hardens the V5 foundation while preserving V4 retrieval
+compatibility; the next product layer is the Studio UI/service.
 
 ---
 

@@ -1,5 +1,8 @@
 # Knolo V5 specifications
 
+See the [implementation roadmap](../docs/ROADMAP.md) for the current release
+scope and the next V5 delivery stages.
+
 The V5 foundation freezes the byte-level contracts before introducing
 transactions, EQL, authority, or durable agent execution.
 
@@ -27,6 +30,10 @@ transactions, EQL, authority, or durable agent execution.
 | KIP-0020 | Durable agent run journals, checkpoints, and resume |
 | KIP-0021 | State-root-bound query indexes and append-only query history |
 | KIP-0022 | Host-controlled agent execution and tool-policy boundary |
+| KIP-0023 | Verified image transfer and durable sync replay protection |
+| KIP-0024 | Signed run authority bound to durable run roots |
+| KIP-0025 | Deterministic runtime diagnostics and health snapshots |
+| KIP-0026 | Read-only Studio management snapshots and capability panels |
 
 The TypeScript and Rust implementations must consume the same vectors under
 `conformance/v5/` and reject malformed input fail-closed.

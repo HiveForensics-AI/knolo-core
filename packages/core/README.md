@@ -125,7 +125,11 @@ objects or events itself.
 Hosts can provide a `request(bytes)` adapter to
 `exchangeKnowledgeSyncOverTransportWithEd25519`; the core encodes, verifies,
 decodes, and replay-protects the exchange before returning it. Socket setup,
-framing, object transfer, and durable replay persistence remain host-owned.
+framing, peer discovery, and deployment remain host-owned. The
+`exchangeKnowledgeSyncImageOverTransportV5` variant additionally verifies a
+complete transferred image before replay admission, and
+`DurableKnowledgeSyncReplayStoreV5` persists replay state atomically through
+the Node entry point.
 
 Durable agent run state is available through the pure lifecycle functions and
 the Node-only `DurableKnowledgeRunStoreV5`. Runs are bound to an image state
@@ -138,6 +142,22 @@ enforces input binding, tool policy, unique call IDs, bounded steps, and
 checkpoint/complete/fail transitions without owning model inference or
 external side effects.
 
+Signed run authority is available through `runAuthorityPayloadV1`,
+`verifyKnowledgeRunAuthorityV5`, and the Ed25519/WebCrypto adapter. It binds
+the issuer, subject, run ID, run root, image state root, validity window, and
+optional keyring root; execution permissions and credentials remain host
+responsibilities.
+
+`inspectKnowledgeRuntimeV5` provides a deterministic, read-only health snapshot
+for the image and optional query index, query history, durable run, and sync
+replay state. Its diagnostics root is suitable for CLI/service health checks
+and future Studio management views; inspection never mutates runtime state.
+
+`inspectKnowledgeStudioManagementV5` wraps those verified diagnostics in a
+deterministic, read-only management snapshot with explicit artifact-panel
+availability and a `managementRoot`. It is suitable as the data contract for a
+future Studio UI; it exposes no mutation or authority capability.
+
 Divergent branches can be compared with `planKnowledgeSyncMergeV5`, which
 returns a deterministic, read-only conflict plan covering branch-only objects,
 events, event targets, views, and commit metadata. It never chooses a winner or
@@ -147,6 +167,12 @@ An authorized caller can apply a complete resolution with
 `applyKnowledgeSyncMergeV5` or the store-level `merge()` method. The result is
 an independently verified two-parent image; rejected or failed merges leave
 the existing store snapshot unchanged.
+
+Before publishing a V5 foundation build, run `npm run release:check` from the
+repository root. It rebuilds `@knolo/core` and validates the public runtime and
+Node exports, package artifacts, Node-free runtime bundle, CLI entry point, and
+required V5 specification coverage. The active implementation roadmap is
+[`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
 
 ---
 

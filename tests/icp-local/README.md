@@ -4,6 +4,10 @@ This harness intentionally exercises the legacy ICP v3 capability profile.
 The main TypeScript build emits v4 packs; use the ICP CLI builder, which opts
 into v3 for the current canister reader.
 
+It does not exercise the V5 Knowledge Image runtime yet. V5 release checks and
+read-only Studio management run locally through the root CLI; see the
+[roadmap](../../docs/ROADMAP.md) for the planned ICP integration.
+
 Deploy the Knolo knowledge canister on a **local dfx replica**, seed it with **generated dummy data**, and exercise it from:
 
 - `knolo icp` CLI / `dfx canister call`

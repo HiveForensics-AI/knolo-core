@@ -11,5 +11,5 @@ admits the request to replay protection only after success.
 Duplicate requests are rejected before a second transport call. Invalid,
 expired, oversized, tampered, or keyring-incompatible responses never enter the
 replay cache. The adapter returns only verified request/response metadata and
-wire bytes; it does not open sockets, define framing, transfer image objects,
-or persist replay state.
+wire bytes; it does not open sockets or define framing. Complete verified image
+transfer and durable replay state are provided by KIP-0023.

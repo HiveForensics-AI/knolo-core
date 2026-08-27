@@ -1,5 +1,9 @@
 # V5 conformance fixtures
 
+These fixtures are the byte-level compatibility set for the V5 foundation. The
+contract index is [`../../spec/README.md`](../../spec/README.md), and the
+implementation roadmap is [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
+
 The base64 fixtures are checked-in byte fixtures, not generated test output:
 
 - `knowledge-image-v5.fixture.base64` is the minimal V5 image. Its state root is

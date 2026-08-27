@@ -167,6 +167,30 @@ test('inspect and verify expose the v4 container', () => {
   assert.equal(verified.verified, true);
 });
 
+test('v5 info and health expose verified runtime diagnostics', async () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-v5-diagnostics-'));
+  const core = await import(pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href);
+  const image = core.createKnowledgeImageV5({ objects: [{ kind: 'metadata', bytes: new TextEncoder().encode('cli v5'), meta: {} }] });
+  const imagePath = path.join(cwd, 'knowledge.v5');
+  writeFileSync(imagePath, image.bytes);
+
+  const info = JSON.parse(runCli(['v5', 'info', './knowledge.v5'], cwd));
+  assert.equal(info.valid, true);
+  assert.equal(info.image.stateRoot, image.stateRoot);
+  assert.equal(info.image.objectCount, 1);
+
+  const health = JSON.parse(runCli(['v5', 'health', '--image', './knowledge.v5'], cwd));
+  assert.equal(health.healthy, true);
+  assert.equal(health.diagnosticsRoot, info.diagnosticsRoot);
+
+  const studio = JSON.parse(runCli(['v5', 'studio', './knowledge.v5'], cwd));
+  assert.equal(studio.valid, true);
+  assert.equal(studio.surface, 'studio-management');
+  assert.equal(studio.readOnly, true);
+  assert.equal(studio.diagnostics.diagnosticsRoot, info.diagnosticsRoot);
+  assert.equal(studio.capabilities.mutateImage, false);
+});
+
 test('migrate converts an ICP-compatible legacy pack to v4', () => {
   const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-v4-migrate-'));
   const docsDir = path.join(cwd, 'docs');

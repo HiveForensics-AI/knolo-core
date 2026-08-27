@@ -2,6 +2,11 @@
 
 Minimal local `dfx` example for deploying a Knolo ICP canister without any middleware server.
 
+This scaffold remains on the legacy ICP V3 profile. The V5 foundation is
+available in the TypeScript/Rust runtimes and through the root CLI’s read-only
+Knowledge Image commands; see the repository `docs/ROADMAP.md` for the staged
+ICP upgrade path.
+
 This scaffold:
 
 - builds a real `.knolo` pack from local sample docs

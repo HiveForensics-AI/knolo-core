@@ -35,12 +35,13 @@
     "prepublishOnly": "npm run build",
     "smoke": "node scripts/smoke.mjs",
     "test": "npm run build && node scripts/check-runtime-no-node.mjs && node --test test/*.test.mjs && node scripts/test.mjs",
-    "format": "prettier --write src/agent.ts src/pack.ts src/pack.runtime.ts src/pack.node.ts src/node.ts src/builder.ts src/live.ts src/index.ts scripts/test.mjs scripts/check-runtime-no-node.mjs ../../README.md README.md",
-    "format:check": "prettier --check src/agent.ts src/pack.ts src/pack.runtime.ts src/pack.node.ts src/node.ts src/builder.ts src/live.ts src/index.ts scripts/test.mjs scripts/check-runtime-no-node.mjs ../../README.md README.md",
+    "format": "prettier --write src/agent.ts src/pack.ts src/pack.runtime.ts src/pack.node.ts src/node.ts src/builder.ts src/live.ts src/index.ts src/knowledge_studio_v5.ts scripts/test.mjs scripts/check-runtime-no-node.mjs ../../README.md README.md",
+    "format:check": "prettier --check src/agent.ts src/pack.ts src/pack.runtime.ts src/pack.node.ts src/node.ts src/builder.ts src/live.ts src/index.ts src/knowledge_studio_v5.ts scripts/test.mjs scripts/check-runtime-no-node.mjs ../../README.md README.md",
     "check:runtime-no-node": "node scripts/check-runtime-no-node.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
+    "prettier": "^3.9.6",
     "typescript": "^5.5.0"
   }
 }

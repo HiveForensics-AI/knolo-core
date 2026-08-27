@@ -33,7 +33,7 @@ const DEFAULT_CONFIG = {
 };
 const SUPPORTED_EXTENSIONS = new Set(['.md', '.txt', '.json']);
 const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', '.dfx', '.cargo-target']);
-const SUBCOMMANDS = new Set(['init', 'add', 'build', 'query', 'inspect', 'migrate', 'verify', 'explain', 'diff', 'dev', 'semantic:index', 'semantic:inspect', 'semantic:validate']);
+const SUBCOMMANDS = new Set(['init', 'add', 'build', 'query', 'inspect', 'migrate', 'verify', 'explain', 'diff', 'dev', 'v5', 'semantic:index', 'semantic:inspect', 'semantic:validate']);
 const ICP_SUBCOMMANDS = new Set(['init', 'build-pack', 'upload', 'query', 'health', 'info', 'clear']);
 const ICP_TEMPLATE_CANDIDATES = [
   path.resolve(__dirname, '../templates/icp-knowledge-canister'),
@@ -88,6 +88,7 @@ Commands:
   explain <receipt>       Verify and explain a query receipt
   diff <pack-a> <pack-b>  Compare pack identities and source/chunk counts
   dev                     Watch config/sources and rebuild on change
+  v5                      Inspect, health-check, and manage a V5 Knowledge Image
   icp                     Scaffold and operate an ICP-native knowledge canister
 
 Global options:
@@ -109,6 +110,7 @@ function printCommandHelp(command) {
     explain: 'Usage: knolo explain <receipt.json> --pack <pack.knolo>',
     diff: 'Usage: knolo diff <pack-a.knolo> <pack-b.knolo>',
     dev: 'Usage: knolo dev',
+    v5: 'Usage: knolo v5 <info|health|studio> <image.v5> [--index <file>] [--history <file>] [--run <file>] [--replay <file>]',
     icp: 'Usage: knolo icp <command> [options]',
     'semantic:index': 'Usage: knolo semantic:index --pack <path> [--out <path>] [--model <id>] [--endpoint <url>]',
     'semantic:inspect': 'Usage: knolo semantic:inspect --sidecar <path>',
@@ -773,6 +775,41 @@ async function cmdDiff(core, args) {
   console.log(JSON.stringify({ equal: aDigest === bDigest, a: { packDigest: aDigest, blocks: a.pack.blocks.length, terms: a.pack.lexicon.size }, b: { packDigest: bDigest, blocks: b.pack.blocks.length, terms: b.pack.lexicon.size }, addedSources: [...bSources].filter((id) => !aSources.has(id)).sort(), removedSources: [...aSources].filter((id) => !bSources.has(id)).sort() }, null, 2));
 }
 
+function parseV5Args(args) {
+  const positional = [];
+  const flags = {};
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '--image' || arg === '--index' || arg === '--history' || arg === '--run' || arg === '--replay') flags[arg.slice(2)] = args[++i];
+    else if (arg.startsWith('--')) throw createError(`Unknown flag for v5: ${arg}`);
+    else positional.push(arg);
+  }
+  return { positional, flags };
+}
+
+async function cmdV5(core, args) {
+  const subcommand = args[0] || 'info';
+  if (!['info', 'health', 'studio'].includes(subcommand)) throw createError(`Unknown V5 command: ${subcommand}`);
+  const { positional, flags } = parseV5Args(args.slice(['info', 'health', 'studio'].includes(args[0]) ? 1 : 0));
+  const imagePath = path.resolve(process.cwd(), flags.image || positional[0] || 'dist/knowledge.v5');
+  if (!existsSync(imagePath)) throw createError(`V5 image file not found at ${path.relative(process.cwd(), imagePath)}.`);
+  const readOptional = (file, decode) => file ? decode(Uint8Array.from(readFileSync(path.resolve(process.cwd(), file)))) : undefined;
+  const input = {
+    image: Uint8Array.from(readFileSync(imagePath)),
+    ...(flags.index ? { queryIndex: readOptional(flags.index, core.deserializeKnowledgeQueryIndexV1) } : {}),
+    ...(flags.history ? { queryHistory: readOptional(flags.history, core.deserializeKnowledgeQueryHistoryV1) } : {}),
+    ...(flags.run ? { run: readOptional(flags.run, core.deserializeKnowledgeRunV1) } : {}),
+    ...(flags.replay ? { replayState: readOptional(flags.replay, core.deserializeKnowledgeSyncReplayStateV1) } : {}),
+  };
+  if (subcommand === 'studio') {
+    console.log(JSON.stringify(core.inspectKnowledgeStudioManagementV5(input), null, 2));
+    return;
+  }
+  const diagnostics = core.inspectKnowledgeRuntimeV5(input);
+  if (subcommand === 'health') console.log(JSON.stringify({ healthy: true, ...diagnostics }, null, 2));
+  else console.log(JSON.stringify(diagnostics, null, 2));
+}
+
 function parseKeyValueArgs(args) {
   const out = {};
   for (let i = 0; i < args.length; i++) {
@@ -1142,6 +1179,7 @@ async function main() {
       if (command === 'explain') return await cmdExplain(core, commandArgs);
       if (command === 'diff') return await cmdDiff(core, commandArgs);
       if (command === 'dev') return await cmdDev(core);
+      if (command === 'v5') return await cmdV5(core, commandArgs);
       if (command === 'semantic:index') return await cmdSemanticIndex(core, commandArgs);
       if (command === 'semantic:inspect') return await cmdSemanticInspect(core, commandArgs);
       if (command === 'semantic:validate') return await cmdSemanticValidate(core, commandArgs);

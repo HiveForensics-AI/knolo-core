@@ -42,7 +42,10 @@ export {
 } from './knowledge_sync_wire_v5.js';
 export {
   KnowledgeSyncReplayCacheV1,
+  deserializeKnowledgeSyncReplayStateV1,
+  exchangeKnowledgeSyncImageOverTransportV5,
   exchangeKnowledgeSyncOverTransportV5,
+  serializeKnowledgeSyncReplayStateV1,
   verifyKnowledgeSyncExchangeV5,
   verifyKnowledgeSyncExchangeV5Async,
 } from './knowledge_sync_exchange_v5.js';
@@ -84,11 +87,21 @@ export {
   verifyKnowledgeKeyRotationWithEd25519,
   signKnowledgeSyncRequestWithEd25519,
   signKnowledgeSyncResponseWithEd25519,
+  signKnowledgeRunAuthorityWithEd25519,
+  verifyKnowledgeRunAuthorityWithEd25519,
   verifyKnowledgeSyncRequestWithEd25519,
   verifyKnowledgeSyncResponseWithEd25519,
   verifyKnowledgeSyncExchangeWithEd25519,
   exchangeKnowledgeSyncOverTransportWithEd25519,
 } from './knowledge_crypto_v5.js';
+export {
+  runAuthorityPayloadV1,
+  runAuthorityRootV1,
+  verifyKnowledgeRunAuthorityV5,
+  verifyKnowledgeRunAuthorityV5Async,
+} from './knowledge_run_authority_v5.js';
+export { inspectKnowledgeRuntimeV5, verifyKnowledgeRuntimeDiagnosticsV5 } from './knowledge_runtime_diagnostics_v5.js';
+export { inspectKnowledgeStudioManagementV5, verifyKnowledgeStudioManagementV5 } from './knowledge_studio_v5.js';
 export { authoritySessionRootV1, verifyKnowledgeAuthoritySessionWithEd25519 } from './knowledge_authority_session_v5.js';
 export {
   applyKnowledgeKeyRotationV5,
@@ -192,6 +205,7 @@ export type {
 } from './knowledge_query_v5.js';
 export type { KnowledgeQueryIndexV1 } from './knowledge_query_index_v5.js';
 export type { KnowledgeQueryHistoryEntryV1, KnowledgeQueryHistoryV1 } from './knowledge_query_history_v5.js';
+export type { KnowledgeStudioManagementInputV1, KnowledgeStudioManagementV1 } from './knowledge_studio_v5.js';
 export type {
   KnowledgeAuthorizationDecisionV1,
   KnowledgeAuthorizationResultV1,
@@ -221,6 +235,13 @@ export type {
   KnowledgeAuthoritySessionInputV1,
   KnowledgeAuthoritySessionV1,
 } from './knowledge_authority_session_v5.js';
+export type {
+  KnowledgeRunAuthorityAsyncVerificationOptionsV1,
+  KnowledgeRunAuthorityEnvelopeV1,
+  KnowledgeRunAuthorityVerificationOptionsV1,
+  KnowledgeRunAuthorityVerificationV1,
+} from './knowledge_run_authority_v5.js';
+export type { KnowledgeRuntimeDiagnosticsInputV1, KnowledgeRuntimeDiagnosticsV1 } from './knowledge_runtime_diagnostics_v5.js';
 export type {
   KnowledgeFastForwardResultV1,
   KnowledgeSyncPlanV1,
@@ -281,6 +302,13 @@ export type {
   KnowledgeSyncTransportExchangeOptionsV1,
   KnowledgeSyncTransportExchangeResultV1,
   KnowledgeSyncTransportV1,
+} from './knowledge_sync_exchange_v5.js';
+export type {
+  KnowledgeSyncImageTransportExchangeOptionsV1,
+  KnowledgeSyncImageTransportExchangeResultV1,
+  KnowledgeSyncImageTransportV1,
+  KnowledgeSyncReplayEntryV1,
+  KnowledgeSyncReplayStateV1,
 } from './knowledge_sync_exchange_v5.js';
 export type { LivePackOptions } from './live.js';
 export type { PatchPack, PatchPackV1, PatchOpV1, PatchUpsertV1, PatchRemoveV1 } from './patch_pack.js';

@@ -1,8 +1,10 @@
 # `knolo` — legacy v3-compatible runtime
 
-**Compatibility status:** legacy v1–v3 Python reader/query profile. The v4
-container, analyzer profiles, retrieval plans, receipts, and TrustBench
-equivalence are currently implemented in TypeScript first.
+**Compatibility status:** legacy v1–v3 Python reader/query profile. The V4
+retrieval path and V5 Knowledge Image foundation are implemented in TypeScript
+first; Python does not yet consume V5 images.
+
+The staged cross-runtime plan is [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
 
 `knolo` is the pure-Python runtime for mounting existing `.knolo` packs and running deterministic lexical queries locally.
 
@@ -16,6 +18,7 @@ It is intentionally release-scoped for the legacy compatibility profile:
 - no LangChain or LlamaIndex integration
 - no Node.js runtime dependency for mount/query
 - not certified as v4-equivalent in `conformance/`
+- not a V5 image verifier or Studio management runtime
 
 Packs are still built with `@knolo/core` in TypeScript, then mounted and queried from Python.
 

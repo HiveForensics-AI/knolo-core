@@ -1,8 +1,13 @@
 # create-knolo-app
 
-Generated applications target the Knolo v4 TypeScript runtime. Packs are v4 by
-default and can be checked with `knolo verify`; Python/Rust/ICP adapters remain
-legacy profiles until their TrustBench conformance is complete.
+Generated applications target the Knolo V4 TypeScript retrieval path, with the
+V5 foundation available beside it. Packs are V4 by default and can be checked
+with `knolo verify`; Python and ICP remain legacy profiles, while Rust provides
+the native V5 verification foundation.
+
+V5 Knowledge Image inspection is available after generation with
+`knolo v5 info`, `knolo v5 health`, and `knolo v5 studio`. See the
+[implementation roadmap](../../docs/ROADMAP.md).
 
 Bootstrap a new KnoLo-powered application in seconds.
 
@@ -106,10 +111,9 @@ You can experiment directly in the playground UI.
 
 ## 🗺 Roadmap
 
-* Multiple starter templates
-* Rust-powered builds
-* Edge-runtime support
-* Embedded device templates
+The active roadmap is maintained in [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
+The starter currently generates the stable V4 retrieval path; V5 image
+inspection can be added without changing that application behavior.
 
 ---
 
