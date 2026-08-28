@@ -1,12 +1,25 @@
 {
   "name": "@knolo/llamaindex",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "private": false,
   "type": "module",
   "main": "./src/index.js",
   "files": [
     "src"
   ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HiveForensics-AI/knolo-core.git",
+    "directory": "packages/llamaindex"
+  },
+  "homepage": "https://github.com/HiveForensics-AI/knolo-core#readme",
+  "bugs": {
+    "url": "https://github.com/HiveForensics-AI/knolo-core/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": "./src/index.js"
   },
@@ -15,7 +28,7 @@
     "test": "node --test test/llamaindex.test.mjs"
   },
   "dependencies": {
-    "@knolo/core": "^4.0.0"
+    "@knolo/core": "^5.0.0"
   },
   "description": "LlamaIndex-style retriever interface for KnoLo."
 }

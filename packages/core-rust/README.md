@@ -2,7 +2,8 @@
 
 **Compatibility status:** legacy v1–v3 Rust reader/query profile plus the V5
 read-only Knowledge Image verifier and deterministic migration foundation. The
-TypeScript runtime remains the Phase 5 v4 retrieval reference.
+TypeScript runtime remains the V4 retrieval reference, while this crate is the
+native V5 byte-contract foundation.
 
 The shared implementation roadmap is [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
 

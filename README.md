@@ -233,6 +233,7 @@ The current scope is intentionally a foundation release. It proves the portable 
 
 - [Documentation index](docs/README.md)
 - [V5 roadmap](docs/ROADMAP.md)
+- [V5 release guide](docs/RELEASE.md)
 - [V5 specification index](spec/README.md)
 - [TypeScript core](packages/core/README.md)
 - [CLI](packages/cli/README.md)

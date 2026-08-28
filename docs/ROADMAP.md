@@ -1,8 +1,9 @@
 # Knolo roadmap
 
 This roadmap describes the staged path from the V4 retrieval ecosystem to the
-full V5 verifiable knowledge runtime. V4 remains supported while V5 contracts
-are introduced incrementally.
+full V5 verifiable knowledge runtime. The `5.0.0` release is the bounded V5
+foundation; V4 remains supported while the remaining V5 contracts are
+introduced incrementally.
 
 ## Delivered: V5 foundation
 

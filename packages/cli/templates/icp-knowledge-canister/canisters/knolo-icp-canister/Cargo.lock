@@ -245,11 +245,11 @@ dependencies = [
 
 [[package]]
 name = "knolo-core-rust"
-version = "4.0.0"
+version = "5.0.0"
 
 [[package]]
 name = "knolo-icp-canister"
-version = "4.0.0"
+version = "5.0.0"
 dependencies = [
  "candid",
  "ic-cdk",

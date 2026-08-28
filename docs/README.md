@@ -7,6 +7,8 @@ materials for Knolo.
 
 - [V5 roadmap](ROADMAP.md) — delivered foundation, release hardening, and the
   next implementation waves.
+- [Release guide](RELEASE.md) — preflight checks and publication commands for
+  npm and crates.io, plus legacy runtime boundaries.
 - [V5 specification index](../spec/README.md) — KIP byte, root, runtime, and
   management contracts.
 - [V5 conformance fixtures](../conformance/v5/README.md) — shared binary
