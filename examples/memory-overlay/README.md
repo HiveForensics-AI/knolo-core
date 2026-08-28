@@ -4,6 +4,10 @@ The overlay now serializes into v4 packs by default. Verify generated packs
 with `knolo verify` and use `queryWithReceipt()` when evidence/replay metadata
 is required.
 
+The overlay remains a V4-compatible application path; V5 migration and
+read-only Studio management operate on Knowledge Images through the core
+runtime. See the [V5 roadmap](../../docs/ROADMAP.md).
+
 ```ts
 import {
   buildPack,

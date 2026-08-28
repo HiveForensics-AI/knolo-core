@@ -1,6 +1,6 @@
 {
   "name": "@knolo/cli",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "type": "module",
   "bin": {
     "knolo": "bin/knolo.mjs"
@@ -9,12 +9,29 @@
     "bin/",
     "templates/"
   ],
+  "description": "CLI for building, inspecting, verifying, and operating Knolo V4 packs and V5 Knowledge Images.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HiveForensics-AI/knolo-core.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/HiveForensics-AI/knolo-core#readme",
+  "bugs": {
+    "url": "https://github.com/HiveForensics-AI/knolo-core/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "node -e \"console.log('cli is executable via bin/knolo.mjs')\"",
     "test": "npm run build --prefix ../core && node --test test/cli.test.mjs"
   },
   "dependencies": {
-    "@knolo/core": "^4.0.0"
+    "@knolo/core": "^5.0.0"
   },
   "private": false
 }

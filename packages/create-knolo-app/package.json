@@ -1,8 +1,18 @@
 {
   "name": "create-knolo-app",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "type": "module",
-  "description": "Scaffold a minimal KnoLo + Next.js starter app",
+  "description": "Scaffold a Knolo V5-compatible Next.js knowledge application.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HiveForensics-AI/knolo-core.git",
+    "directory": "packages/create-knolo-app"
+  },
+  "homepage": "https://github.com/HiveForensics-AI/knolo-core#readme",
+  "bugs": {
+    "url": "https://github.com/HiveForensics-AI/knolo-core/issues"
+  },
   "bin": {
     "create-knolo-app": "./bin/index.mjs"
   },
@@ -15,6 +25,7 @@
   },
   "scripts": {
     "build": "node -e \"console.log('create-knolo-app has no build step')\"",
-    "test": "node --test test/create-knolo-app.test.mjs"
+    "test": "node --test test/create-knolo-app.test.mjs",
+    "prepublishOnly": "npm test"
   }
 }

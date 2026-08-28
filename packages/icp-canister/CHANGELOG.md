@@ -2,7 +2,7 @@
 
 All notable changes to the ICP canister adapter will be documented in this file.
 
-## [Unreleased]
+## [5.0.0] - 2026-08-28
 
 ### Added
 - Initial Rust ICP canister adapter for Knolo retrieval under `packages/icp-canister`.

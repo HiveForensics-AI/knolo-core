@@ -1,0 +1,12 @@
+{
+  "contract": "knowledge-image-v5.0",
+  "canonicalCbor": {
+    "sortedTextMap": "a261610161626178"
+  },
+  "singleMetadataObject": {
+    "actor": "fixture",
+    "objectText": "hello",
+    "stateRoot": "sha256-bc419264f60822bb8c601f01eb3020671e78056f4e6403ab6db087911d25d694",
+    "commitDigest": "sha256-7a6ed0a7e488ee085053d6d8d885141e0a8b6abd5c40bd552e4d2b10b721b177"
+  }
+}

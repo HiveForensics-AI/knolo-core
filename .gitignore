@@ -6,6 +6,8 @@ scripts/*
 !scripts/e2e-icp-local.sh
 !scripts/regenerate-python-fixture.mjs
 !scripts/check-icp-template-sync.sh
+!scripts/check-v5-release.mjs
+!scripts/check-release-metadata.mjs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -19,6 +21,12 @@ tmpdist/
 build/
 coverage/
 .nyc_output/
+
+# Local V5/Studio runtime scratch state
+.knolo-v5/
+.studio/
+*.v5.tmp
+*.v5.lock
 
 # TypeScript
 *.tsbuildinfo
@@ -73,3 +81,4 @@ tests/icp-local/data/
 tests/icp-local/generated/
 tests/icp-local/.runtime/
 tests/icp-local/**/*.knolo
+docs/Knolo_V5_Verifiable_Knowledge_Runtime_Architecture.docx

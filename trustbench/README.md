@@ -3,6 +3,11 @@
 TrustBench is the reproducible Phase 5 quality and conformance harness for the
 Knolo v4 TypeScript reference runtime.
 
+It remains the V4 compatibility gate for the V5 foundation. V5 byte/root and
+migration fixtures are checked under [`../conformance/v5/`](../conformance/v5/),
+and the release preflight is `npm run release:check`. See the
+[implementation roadmap](../docs/ROADMAP.md).
+
 Run from the repository root:
 
 ```bash

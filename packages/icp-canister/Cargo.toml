@@ -1,11 +1,11 @@
 [package]
 name = "knolo-icp-canister"
-version = "4.0.0"
+version = "5.0.0"
 edition = "2021"
 license = "Apache-2.0"
 description = "ICP canister adapter for Knolo retrieval over Candid"
 repository = "https://github.com/HiveForensics-AI/knolo-core"
-readme = "../core-rust/README.md"
+readme = "README.md"
 keywords = ["knolo", "internet-computer", "icp", "canister"]
 categories = ["web-programming", "database-implementations"]
 
@@ -17,5 +17,5 @@ path = "src/lib.rs"
 candid = "0.10"
 ic-cdk = "0.17"
 ic-cdk-macros = "0.17"
-knolo-core-rust = { path = "../core-rust", version = "4.0.0" }
+knolo-core-rust = { path = "../core-rust", version = "5.0.0" }
 serde = { version = "1", features = ["derive"] }

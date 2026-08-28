@@ -1,7 +1,9 @@
 # @knolo/cli
 
-The CLI targets the Knolo v4 pack contract. Normal builds emit v4; the ICP
-legacy build path explicitly emits v3 until the canister gains a v4 profile.
+The CLI preserves the Knolo V4 pack workflow and adds read-only V5 Knowledge
+Image inspection. Normal builds emit V4; the ICP legacy build path explicitly
+emits V3 until the canister gains a V4 profile. V5 Studio output is a verified
+management snapshot, not a mutation interface.
 
 The official CLI for building `.knolo` knowledge packs.
 
@@ -49,6 +51,20 @@ knolo query "billing policy" --receipt receipt.json --json
 knolo explain receipt.json --pack dist/knowledge.knolo
 knolo diff old.knolo new.knolo
 ```
+
+V5 runtime diagnostics:
+
+```bash
+knolo v5 info ./dist/knowledge.v5
+knolo v5 health ./dist/knowledge.v5
+knolo v5 studio ./dist/knowledge.v5
+knolo v5 info ./dist/knowledge.v5 --index ./dist/query-index.v5 --history ./dist/query-history.v5
+```
+
+These commands verify the V5 image and optional state-root-bound runtime
+artifacts before printing deterministic diagnostics. The `studio` variant
+prints the KIP-0026 read-only management snapshot with artifact-panel
+availability and a management root. All variants are read-only.
 
 ### ICP Canister Workflow (LIVE)
 
@@ -152,10 +168,9 @@ This ensures:
 
 ## 🗺 Roadmap
 
-* Watch mode
-* Incremental indexing
-* Rust-powered build engine
-* WASM build output
+The active roadmap is maintained in [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
+The current release focuses on V5 verification, migration, diagnostics, and
+read-only Studio management while preserving the V4 CLI behavior.
 
 ---
 
