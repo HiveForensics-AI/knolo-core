@@ -129,6 +129,79 @@ test('V5 host deployment discovers and verifies one peer through the reference a
   );
 });
 
+test('V5 host deployment does not retry after checkpoint persistence fails post-exchange', async () => {
+  const value = fixture();
+  const replayCache = new KnowledgeSyncReplayCacheV1();
+  let calls = 0;
+  const adapter = new InMemoryKnowledgeSyncHostAdapterV5([
+    {
+      peerId: 'remote',
+      handler: () => {
+        calls += 1;
+        return responseFor(value);
+      },
+    },
+  ]);
+
+  await assert.rejects(
+    () =>
+      executeKnowledgeSyncHostDeploymentV5({
+        request: value.request,
+        discovery: adapter,
+        transport: adapter,
+        verification: verification(replayCache),
+        now: 150,
+        peerId: 'remote',
+        maxAttempts: 3,
+        checkpointStore: {
+          load: () => undefined,
+          save: () => {
+            throw new Error('checkpoint persistence failed');
+          },
+        },
+      }),
+    /checkpoint persistence failed/
+  );
+  assert.equal(calls, 1);
+  assert.equal(replayCache.size, 1);
+});
+
+test('V5 host deployment does not retry after success monitoring fails post-exchange', async () => {
+  const value = fixture();
+  const replayCache = new KnowledgeSyncReplayCacheV1();
+  let calls = 0;
+  const adapter = new InMemoryKnowledgeSyncHostAdapterV5([
+    {
+      peerId: 'remote',
+      handler: () => {
+        calls += 1;
+        return responseFor(value);
+      },
+    },
+  ]);
+
+  await assert.rejects(
+    () =>
+      executeKnowledgeSyncHostDeploymentV5({
+        request: value.request,
+        discovery: adapter,
+        transport: adapter,
+        verification: verification(replayCache),
+        now: 150,
+        peerId: 'remote',
+        maxAttempts: 3,
+        monitor: (event) => {
+          if (event.kind === 'deployment.succeeded') {
+            throw new Error('success monitoring failed');
+          }
+        },
+      }),
+    /success monitoring failed/
+  );
+  assert.equal(calls, 1);
+  assert.equal(replayCache.size, 1);
+});
+
 test('V5 host deployment retries from the last transfer checkpoint', async () => {
   const value = fixture();
   const replayCache = new KnowledgeSyncReplayCacheV1();

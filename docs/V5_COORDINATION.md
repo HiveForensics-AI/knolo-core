@@ -19,6 +19,9 @@ const store = DurableKnowledgeImageStoreV5.open('./knowledge.v5', image, {
 The lease is recorded beside the image in the existing `.lock` path. A second
 writer is rejected while the lease is live. Store operations check the lease
 before reading or mutating state, and `renew()` must be called before expiry.
+Renewal is fenced to the private record created by the owning process, so a
+stale owner cannot overwrite a successor after explicit recovery replaces the
+published lease record.
 The image itself is still replaced with a temp-file, fsync, and rename sequence;
 the committed bytes are never updated in place.
 

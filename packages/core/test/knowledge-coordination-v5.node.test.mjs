@@ -96,6 +96,33 @@ test('V5 durable writer leases exclude live writers and require explicit stale r
     });
     assert.throws(() => first.snapshot(), /ownership was lost|expired/i);
     recovered.close();
+
+    const fencedPath = join(directory, 'fenced.lease');
+    let fenceNow = 0;
+    const staleOwner = DurableKnowledgeWriterLeaseV5.acquire(fencedPath, {
+      ownerId: 'stale-owner',
+      token: 'stale-token',
+      ttlMs: 10,
+      now: () => fenceNow,
+    });
+    fenceNow = 11;
+    assert.equal(
+      recoverStaleWriterLeaseV5(fencedPath, () => fenceNow),
+      true
+    );
+    const successor = DurableKnowledgeWriterLeaseV5.acquire(fencedPath, {
+      ownerId: 'successor-owner',
+      token: 'successor-token',
+      ttlMs: 100,
+      now: () => fenceNow,
+    });
+    assert.throws(() => staleOwner.renew(), /ownership was lost/i);
+    assert.deepEqual(
+      JSON.parse(readFileSync(fencedPath, 'utf8')),
+      successor.snapshot()
+    );
+    assert.throws(() => staleOwner.release(), /ownership was lost/i);
+    successor.release();
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

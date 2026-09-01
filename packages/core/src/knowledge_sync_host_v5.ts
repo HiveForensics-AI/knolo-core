@@ -219,8 +219,9 @@ export async function executeKnowledgeSyncHostDeploymentV5(
       resumeOffset: checkpoint?.offset ?? 0,
     });
 
+    let exchanged: KnowledgeSyncImageTransportExchangeResultV1;
     try {
-      const exchanged = await exchangeKnowledgeSyncImageOverTransportV5(
+      exchanged = await exchangeKnowledgeSyncImageOverTransportV5(
         options.request,
         {
           ...options.verification,
@@ -231,28 +232,6 @@ export async function executeKnowledgeSyncHostDeploymentV5(
           },
         }
       );
-      const nextCheckpoint = {
-        requestId: options.request.requestId,
-        offset: exchanged.imageBytes.length,
-        totalBytes: exchanged.imageBytes.length,
-      } satisfies KnowledgeSyncTransferCheckpointV1;
-      await options.checkpointStore?.save(
-        { requestId: options.request.requestId, peerId: peer.peerId },
-        nextCheckpoint
-      );
-      await options.monitor?.({
-        kind: 'deployment.succeeded',
-        requestId: options.request.requestId,
-        peerId: peer.peerId,
-        attempts: attempt,
-        bytes: exchanged.imageBytes.length,
-      });
-      return {
-        ...exchanged,
-        peer,
-        attempts: attempt,
-        checkpoint: nextCheckpoint,
-      };
     } catch (error) {
       lastError = error;
       if (isExpiredError(error)) {
@@ -303,6 +282,33 @@ export async function executeKnowledgeSyncHostDeploymentV5(
       });
       throw error;
     }
+
+    // The exchange admits the request to the replay cache before returning.
+    // These callbacks therefore must not share the retry catch: a persistence
+    // or monitoring failure must surface as-is without retransmitting the
+    // already-admitted request.
+    const nextCheckpoint = {
+      requestId: options.request.requestId,
+      offset: exchanged.imageBytes.length,
+      totalBytes: exchanged.imageBytes.length,
+    } satisfies KnowledgeSyncTransferCheckpointV1;
+    await options.checkpointStore?.save(
+      { requestId: options.request.requestId, peerId: peer.peerId },
+      nextCheckpoint
+    );
+    await options.monitor?.({
+      kind: 'deployment.succeeded',
+      requestId: options.request.requestId,
+      peerId: peer.peerId,
+      attempts: attempt,
+      bytes: exchanged.imageBytes.length,
+    });
+    return {
+      ...exchanged,
+      peer,
+      attempts: attempt,
+      checkpoint: nextCheckpoint,
+    };
   }
 
   throw lastError instanceof Error
