@@ -372,22 +372,54 @@ async function testHardConstraintsSurviveQueryExpansion() {
     namespace: 'public',
     queryExpansion: { enabled: true, docs: 2, terms: 4, weight: 1 },
   });
-  assert.ok(hits.length > 0, 'expected the scoped seed document to remain searchable');
-  assert.ok(hits.every((hit) => hit.namespace === 'public'), 'expansion must not widen namespace scope');
-  assert.ok(!hits.some((hit) => hit.source === 'blocked'), 'expansion must not reintroduce blocked sources');
+  assert.ok(
+    hits.length > 0,
+    'expected the scoped seed document to remain searchable'
+  );
+  assert.ok(
+    hits.every((hit) => hit.namespace === 'public'),
+    'expansion must not widen namespace scope'
+  );
+  assert.ok(
+    !hits.some((hit) => hit.source === 'blocked'),
+    'expansion must not reintroduce blocked sources'
+  );
 }
 
 async function testSourceTextIsPreserved() {
-  const source = '# API\n\n```ts\nconst path = `a/b`;\n```\n\nUse [the path](https://example.test).';
-  const pack = await mountPack({ src: await buildPack([{ id: 'raw', text: source }]) });
-  assert.equal(pack.blocks[0], source, 'pack blocks must preserve raw source text for evidence');
+  const source =
+    '# API\n\n```ts\nconst path = `a/b`;\n```\n\nUse [the path](https://example.test).';
+  const pack = await mountPack({
+    src: await buildPack([{ id: 'raw', text: source }]),
+  });
+  assert.equal(
+    pack.blocks[0],
+    source,
+    'pack blocks must preserve raw source text for evidence'
+  );
 }
 
 async function testPhase3AnalyzerAndRetrievalPlan() {
-  const docs = [{ id: 'code', heading: 'TypeScript paths', namespace: 'docs', text: '# TypeScript paths\n\n```ts\nconst resolver = "./src/index.ts";\n```' }];
-  const pack = await mountPack({ src: await buildPack(docs, { analyzer: 'knolo-analyzer/code-typescript-v1' }) });
+  const docs = [
+    {
+      id: 'code',
+      heading: 'TypeScript paths',
+      namespace: 'docs',
+      text: '# TypeScript paths\n\n```ts\nconst resolver = "./src/index.ts";\n```',
+    },
+  ];
+  const pack = await mountPack({
+    src: await buildPack(docs, {
+      analyzer: 'knolo-analyzer/code-typescript-v1',
+    }),
+  });
   assert.equal(pack.meta.analyzer.id, 'knolo-analyzer/code-typescript-v1');
-  assert.equal(pack.meta.analyzer.digest, analyzerProfileDigest(ANALYZER_PROFILES['knolo-analyzer/code-typescript-v1']));
+  assert.equal(
+    pack.meta.analyzer.digest,
+    analyzerProfileDigest(
+      ANALYZER_PROFILES['knolo-analyzer/code-typescript-v1']
+    )
+  );
   assert.ok(pack.chunks?.[0]?.codeSymbols?.includes('resolver'));
   assert.ok(pack.chunks?.[0]?.paths?.includes('./src/index.ts'));
 
@@ -399,8 +431,18 @@ async function testPhase3AnalyzerAndRetrievalPlan() {
 }
 
 async function testPhase4ReceiptVerification() {
-  const pack = await mountPack({ src: await buildPack([{ id: 'receipt-doc', text: 'Receipt verification requires exact evidence.' }]) });
-  const result = queryWithReceipt(pack, 'receipt verification', { topK: 2, policy: { minAnswerability: 0.1 } });
+  const pack = await mountPack({
+    src: await buildPack([
+      {
+        id: 'receipt-doc',
+        text: 'Receipt verification requires exact evidence.',
+      },
+    ]),
+  });
+  const result = queryWithReceipt(pack, 'receipt verification', {
+    topK: 2,
+    policy: { minAnswerability: 0.1 },
+  });
   assert.equal(result.receipt.version, 'receipt-v1');
   assert.equal(result.receipt.decision, 'answer');
   assert.ok(result.receipt.replayHash.startsWith('sha256-'));
@@ -408,19 +450,41 @@ async function testPhase4ReceiptVerification() {
   verifyReceipt(result.receipt, pack);
   const tampered = structuredClone(result.receipt);
   tampered.hits[0].spans[0].text = 'tampered';
-  assert.throws(() => verifyReceipt(tampered, pack), /evidence span mismatch|replay hash mismatch/);
+  assert.throws(
+    () => verifyReceipt(tampered, pack),
+    /evidence span mismatch|replay hash mismatch/
+  );
 }
 
 async function testRetrievalIdentityBindsOptionsAndPackState() {
-  const pack = await mountPack({ src: await buildPack([{ id: 'identity-doc', text: 'Identity binding protects retrieval replay.' }]) });
+  const pack = await mountPack({
+    src: await buildPack([
+      {
+        id: 'identity-doc',
+        text: 'Identity binding protects retrieval replay.',
+      },
+    ]),
+  });
   const defaultPlan = queryWithPlan(pack, 'identity binding', { topK: 2 }).plan;
-  const constrainedPlan = queryWithPlan(pack, 'identity binding', { topK: 3, minScore: 0.25 }).plan;
-  assert.notEqual(defaultPlan.planHash, constrainedPlan.planHash, 'result-affecting query options must change the plan hash');
+  const constrainedPlan = queryWithPlan(pack, 'identity binding', {
+    topK: 3,
+    minScore: 0.25,
+  }).plan;
+  assert.notEqual(
+    defaultPlan.planHash,
+    constrainedPlan.planHash,
+    'result-affecting query options must change the plan hash'
+  );
 
-  const receipt = queryWithReceipt(pack, 'identity binding', { topK: 2 }).receipt;
+  const receipt = queryWithReceipt(pack, 'identity binding', {
+    topK: 2,
+  }).receipt;
   const alteredPack = { ...pack, postings: new Uint32Array(pack.postings) };
   alteredPack.postings[0] = alteredPack.postings[0] + 1;
-  assert.throws(() => verifyReceipt(receipt, alteredPack), /Receipt pack digest mismatch/);
+  assert.throws(
+    () => verifyReceipt(receipt, alteredPack),
+    /Receipt pack digest mismatch/
+  );
 }
 
 async function testMinScoreFiltering() {
@@ -532,7 +596,9 @@ async function testMountPackFromLocalPathAndFileUrl() {
       'expected @knolo/core/node mountPack to load plain filesystem paths'
     );
 
-    const fromFileUrl = await mountPackNode({ src: pathToFileURL(packPath).href });
+    const fromFileUrl = await mountPackNode({
+      src: pathToFileURL(packPath).href,
+    });
     const fileUrlHits = query(fromFileUrl, 'local path loading', { topK: 1 });
     assert.equal(
       fileUrlHits[0]?.source,
@@ -739,7 +805,10 @@ async function testSemanticSidecarRerankAndValidation() {
     ],
   };
 
-  const lexical = query(pack, 'alpha beta', { topK: 2, queryExpansion: { enabled: false } });
+  const lexical = query(pack, 'alpha beta', {
+    topK: 2,
+    queryExpansion: { enabled: false },
+  });
   const reranked = query(pack, 'alpha beta', {
     topK: 2,
     queryExpansion: { enabled: false },
@@ -753,20 +822,38 @@ async function testSemanticSidecarRerankAndValidation() {
     },
   });
 
-  assert.notEqual(reranked[0]?.source, lexical[0]?.source, 'expected sidecar rerank to update ordering');
+  assert.notEqual(
+    reranked[0]?.source,
+    lexical[0]?.source,
+    'expected sidecar rerank to update ordering'
+  );
   assert.equal(reranked[0]?.evidence?.retrieval, 'hybrid');
 
   assert.throws(
-    () => validateSidecarForPack({ sidecar: { ...sidecar, modelId: 'other' }, pack, modelId: 'qwen3-embedding:4b' }),
+    () =>
+      validateSidecarForPack({
+        sidecar: { ...sidecar, modelId: 'other' },
+        pack,
+        modelId: 'qwen3-embedding:4b',
+      }),
     /Semantic model mismatch/
   );
   assert.throws(
-    () => validateSidecarForPack({ sidecar: { ...sidecar, packFingerprint: 'fnv1a-deadbeef' }, pack, modelId: 'qwen3-embedding:4b' }),
+    () =>
+      validateSidecarForPack({
+        sidecar: { ...sidecar, packFingerprint: 'fnv1a-deadbeef' },
+        pack,
+        modelId: 'qwen3-embedding:4b',
+      }),
     /pack fingerprint mismatch/
   );
 
   const loaded = parseSidecar(serializeSidecar(sidecar));
-  assert.deepEqual(loaded, sidecar, 'expected semantic sidecar round trip to remain stable');
+  assert.deepEqual(
+    loaded,
+    sidecar,
+    'expected semantic sidecar round trip to remain stable'
+  );
 }
 
 async function testSemanticEvidenceScoresRemainCorrectAfterRerank() {
@@ -789,7 +876,9 @@ async function testSemanticEvidenceScoresRemainCorrectAfterRerank() {
     topK: 2,
     queryExpansion: { enabled: false },
   });
-  const lexicalScores = new Map(lexical.map((h) => [h.blockId, h.evidence?.lexicalScore ?? h.score]));
+  const lexicalScores = new Map(
+    lexical.map((h) => [h.blockId, h.evidence?.lexicalScore ?? h.score])
+  );
   const reranked = query(pack, 'alpha beta', {
     topK: 2,
     queryExpansion: { enabled: false },
@@ -842,8 +931,14 @@ async function testCosineHelpers() {
   const a = normalizeVector(new Float32Array([3, 4]));
   const b = normalizeVector(new Float32Array([3, 4]));
   const c = normalizeVector(new Float32Array([4, -3]));
-  assert.ok(Math.abs(cosineSimilarity(a, b) - 1) < 1e-6, 'expected same vector cosine to be 1');
-  assert.ok(Math.abs(cosineSimilarity(a, c)) < 1e-6, 'expected orthogonal vector cosine to be ~0');
+  assert.ok(
+    Math.abs(cosineSimilarity(a, b) - 1) < 1e-6,
+    'expected same vector cosine to be 1'
+  );
+  assert.ok(
+    Math.abs(cosineSimilarity(a, c)) < 1e-6,
+    'expected orthogonal vector cosine to be ~0'
+  );
 }
 
 async function testSemanticFixtureAndHelpers() {
@@ -1566,7 +1661,6 @@ async function testSemanticTopNMicroBenchmark() {
   );
 }
 
-
 async function testAgentRoutingProfileParsing() {
   const agent = {
     id: 'routing.agent',
@@ -1574,7 +1668,10 @@ async function testAgentRoutingProfileParsing() {
     description: 'Routes shopping tasks',
     systemPrompt: ['routing agent'],
     retrievalDefaults: { namespace: ['shopping', 'billing'] },
-    toolPolicy: { mode: 'allow', tools: ['search_docs', 'search_docs', 'lookup'] },
+    toolPolicy: {
+      mode: 'allow',
+      tools: ['search_docs', 'search_docs', 'lookup'],
+    },
     metadata: {
       heading: 'Shopping Router',
       tags: 'checkout, shopping , checkout',
@@ -1591,11 +1688,20 @@ async function testAgentRoutingProfileParsing() {
   assert.deepEqual(profile.examples, ['buy shoes', 'track order']);
   assert.deepEqual(profile.capabilities, ['order_lookup', 'refunds']);
   assert.equal(profile.toolPolicySummary?.mode, 'mixed');
-  assert.deepEqual(profile.toolPolicySummary?.allowed, ['search_docs', 'search_docs', 'lookup']);
+  assert.deepEqual(profile.toolPolicySummary?.allowed, [
+    'search_docs',
+    'search_docs',
+    'lookup',
+  ]);
 
   const jsonTagsAgent = {
     ...agent,
-    metadata: { ...agent.metadata, tags: '["a","b"]', examples: '[oops]', capabilities: 'a,b,a' },
+    metadata: {
+      ...agent.metadata,
+      tags: '["a","b"]',
+      examples: '[oops]',
+      capabilities: 'a,b,a',
+    },
   };
   const jsonTags = getAgentRoutingProfileV1(jsonTagsAgent);
   assert.deepEqual(jsonTags.tags, ['a', 'b']);
@@ -1604,7 +1710,9 @@ async function testAgentRoutingProfileParsing() {
 }
 
 async function testPackRoutingProfilesExtraction() {
-  const docs = [{ id: 'doc', namespace: 'mobile', text: 'routing profile pack' }];
+  const docs = [
+    { id: 'doc', namespace: 'mobile', text: 'routing profile pack' },
+  ];
   const pack = await mountPack({
     src: await buildPack(docs, {
       agents: [
@@ -1628,7 +1736,10 @@ async function testPackRoutingProfilesExtraction() {
 
   const profiles = getPackRoutingProfilesV1(pack);
   assert.equal(profiles.length, 2);
-  assert.deepEqual(profiles.map((p) => p.agentId), ['one.agent', 'two.agent']);
+  assert.deepEqual(
+    profiles.map((p) => p.agentId),
+    ['one.agent', 'two.agent']
+  );
 }
 
 async function testRouteDecisionTypeGuardAndValidation() {
@@ -1645,7 +1756,11 @@ async function testRouteDecisionTypeGuardAndValidation() {
   assert.equal(isRouteDecisionV1(decision), true);
 
   assert.equal(
-    isRouteDecisionV1({ type: 'route_decision', selected: 'one.agent', candidates: [] }),
+    isRouteDecisionV1({
+      type: 'route_decision',
+      selected: 'one.agent',
+      candidates: [],
+    }),
     false,
     'expected missing candidates to fail'
   );
@@ -1739,7 +1854,10 @@ async function testRouteDecisionSelectionHelper() {
     },
     registry
   );
-  assert.deepEqual(topCandidate, { agentId: 'c.agent', reason: 'top_candidate' });
+  assert.deepEqual(topCandidate, {
+    agentId: 'c.agent',
+    reason: 'top_candidate',
+  });
 
   const fallback = selectAgentIdFromRouteDecisionV1(
     {
@@ -1760,10 +1878,11 @@ async function testRouteDecisionSelectionHelper() {
     },
     registry
   );
-  assert.deepEqual(deterministicDefault, { agentId: 'a.agent', reason: 'fallback' });
+  assert.deepEqual(deterministicDefault, {
+    agentId: 'a.agent',
+    reason: 'fallback',
+  });
 }
-
-
 
 function claimGraphFixtureDocs() {
   return [
@@ -1803,11 +1922,16 @@ async function testClaimGraphPackRoundTrip() {
   assert.ok(graph, 'expected claim graph to be mounted');
   assert.ok((pack.meta.claimGraph?.nodes ?? 0) > 0);
   assert.ok((pack.meta.claimGraph?.edges ?? 0) > 0);
-  assert.ok(graph.edges.some((e) => e.p === 'ref'), 'expected markdown link edge');
+  assert.ok(
+    graph.edges.some((e) => e.p === 'ref'),
+    'expected markdown link edge'
+  );
 }
 
 async function testClaimGraphMountToleratesUnknownTrailingBytes() {
-  const base = await buildPack([{ id: 'x', text: 'plain text' }], { graph: { enabled: false } });
+  const base = await buildPack([{ id: 'x', text: 'plain text' }], {
+    graph: { enabled: false },
+  });
   const extra = new Uint8Array(base.length + 6);
   extra.set(base, 0);
   extra.set([1, 2, 3, 4, 5, 6], base.length);
@@ -1856,9 +1980,15 @@ async function testClaimGraphQueryExpansionDeterministic() {
   const expandedA = expandQueryWithGraph(pack, 'knolo', { maxExtraTerms: 5 });
   const expandedB = expandQueryWithGraph(pack, 'knolo', { maxExtraTerms: 5 });
   assert.equal(expandedA, expandedB);
-  assert.ok(expandedA.includes('example com spec') || expandedA.includes('deterministic'));
+  assert.ok(
+    expandedA.includes('example com spec') ||
+      expandedA.includes('deterministic')
+  );
 
-  const hits = query(pack, 'knolo', { topK: 5, graph: { expand: true, maxExtraTerms: 5 } });
+  const hits = query(pack, 'knolo', {
+    topK: 5,
+    graph: { expand: true, maxExtraTerms: 5 },
+  });
   assert.ok(hits.length > 0);
 }
 

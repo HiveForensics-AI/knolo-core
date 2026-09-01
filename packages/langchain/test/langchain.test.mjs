@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildPack, mountPack } from '@knolo/core';
+import { buildPack, createKnowledgeImageV5, mountPack } from '@knolo/core';
 import { KnoLoRetriever } from '../src/index.js';
 
 test('KnoLoRetriever returns LangChain-style document metadata', async () => {
@@ -19,4 +19,24 @@ test('KnoLoRetriever returns LangChain-style document metadata', async () => {
   assert.equal(docs[0].metadata.source, 'doc-1');
   assert.equal(docs[0].metadata.namespace, 'docs');
   assert.equal(typeof docs[0].metadata.id, 'number');
+});
+
+test('KnoLoRetriever exposes V5 query roots in adapted document metadata', async () => {
+  const image = createKnowledgeImageV5({
+    objects: [
+      {
+        kind: 'chunk',
+        bytes: new TextEncoder().encode('V5 adapter evidence'),
+        meta: {},
+      },
+    ],
+  });
+  const retriever = new KnoLoRetriever({ image, topK: 2 });
+  const docs = await retriever.getRelevantDocuments('adapter evidence');
+
+  assert.equal(docs.length, 1);
+  assert.equal(docs[0].metadata.compatibility, 'knowledge-image-v5');
+  assert.equal(docs[0].metadata.v5Query.stateRoot, image.stateRoot);
+  assert.match(docs[0].metadata.v5Query.planRoot, /^sha256-[0-9a-f]{64}$/);
+  assert.match(docs[0].metadata.v5Query.resultRoot, /^sha256-[0-9a-f]{64}$/);
 });

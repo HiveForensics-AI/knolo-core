@@ -2,6 +2,15 @@
 
 All notable changes to the ICP canister adapter will be documented in this file.
 
+## [5.1.0] - 2026-09-01
+
+### Changed
+
+- Coordinated the ICP adapter and bundled Rust template with the V5.1.0
+  release line.
+- Preserved the documented legacy pack Candid profile while the native V5
+  verifier remains in the Rust core boundary.
+
 ## [5.0.0] - 2026-08-28
 
 ### Added

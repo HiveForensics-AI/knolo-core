@@ -1,7 +1,13 @@
 // src/index.ts
 export { mountPack, hasSemantic } from './pack.runtime.js';
 export { mountPackFromBuffer } from './pack.runtime.js';
-export { isPackV4, inspectPackV4, parsePackV4, serializePackV4, PACK_V4_MAGIC } from './pack.v4.js';
+export {
+  isPackV4,
+  inspectPackV4,
+  parsePackV4,
+  serializePackV4,
+  PACK_V4_MAGIC,
+} from './pack.v4.js';
 export {
   canonicalCbor,
   decodeCanonicalCbor,
@@ -18,9 +24,21 @@ export {
   KNOWLEDGE_IMAGE_V5_VERSION,
   knowledgePolicyRootV5,
 } from './knowledge_image_v5.js';
-export { KnowledgeImageStoreV5, KnowledgeTransactionV5 } from './knowledge_store_v5.js';
-export type { KnowledgeSnapshotV5, KnowledgeTransactionOptionsV5 } from './knowledge_store_v5.js';
-export { compareKnowledgeSyncImagesV5, createKnowledgeSyncSummaryV1, fastForwardKnowledgeImageV5, syncSummaryRootV1, verifyKnowledgeSyncSummaryV5 } from './knowledge_sync_v5.js';
+export {
+  KnowledgeImageStoreV5,
+  KnowledgeTransactionV5,
+} from './knowledge_store_v5.js';
+export type {
+  KnowledgeSnapshotV5,
+  KnowledgeTransactionOptionsV5,
+} from './knowledge_store_v5.js';
+export {
+  compareKnowledgeSyncImagesV5,
+  createKnowledgeSyncSummaryV1,
+  fastForwardKnowledgeImageV5,
+  syncSummaryRootV1,
+  verifyKnowledgeSyncSummaryV5,
+} from './knowledge_sync_v5.js';
 export {
   createKnowledgeSyncRequestV1,
   createKnowledgeSyncResponseV1,
@@ -100,9 +118,43 @@ export {
   verifyKnowledgeRunAuthorityV5,
   verifyKnowledgeRunAuthorityV5Async,
 } from './knowledge_run_authority_v5.js';
-export { inspectKnowledgeRuntimeV5, verifyKnowledgeRuntimeDiagnosticsV5 } from './knowledge_runtime_diagnostics_v5.js';
-export { inspectKnowledgeStudioManagementV5, verifyKnowledgeStudioManagementV5 } from './knowledge_studio_v5.js';
-export { authoritySessionRootV1, verifyKnowledgeAuthoritySessionWithEd25519 } from './knowledge_authority_session_v5.js';
+export {
+  inspectKnowledgeRuntimeV5,
+  verifyKnowledgeRuntimeDiagnosticsV5,
+} from './knowledge_runtime_diagnostics_v5.js';
+export {
+  inspectKnowledgeStudioManagementV5,
+  verifyKnowledgeStudioManagementV5,
+} from './knowledge_studio_v5.js';
+export {
+  executeKnowledgeSyncHostDeploymentV5,
+  KnowledgeSyncTransferErrorV1,
+} from './knowledge_sync_host_v5.js';
+export { executeKnowledgeAuthorizedOperationV5 } from './knowledge_authorized_operations_v5.js';
+export type {
+  KnowledgeSyncHostDeploymentOptionsV1,
+  KnowledgeSyncHostDeploymentResultV1,
+  KnowledgeSyncHostImageTransferV1,
+  KnowledgeSyncHostImageTransportV1,
+  KnowledgeSyncHostMonitorEventV1,
+  KnowledgeSyncHostMonitorV1,
+  KnowledgeSyncTransferCheckpointKeyV1,
+  KnowledgeSyncTransferCheckpointStoreV1,
+  KnowledgeSyncPeerDiscoveryInputV1,
+  KnowledgeSyncPeerDiscoveryV1,
+  KnowledgeSyncPeerV1,
+  KnowledgeSyncTransferCheckpointV1,
+} from './knowledge_sync_host_v5.js';
+export type {
+  KnowledgeAuthorizedOperationV1,
+  KnowledgeAuthorizedOperationRequestV1,
+  KnowledgeAuthorizedOperationAuditEventV1,
+  KnowledgeAuthorizedOperationBoundaryV1,
+} from './knowledge_authorized_operations_v5.js';
+export {
+  authoritySessionRootV1,
+  verifyKnowledgeAuthoritySessionWithEd25519,
+} from './knowledge_authority_session_v5.js';
 export {
   applyKnowledgeKeyRotationV5,
   authorityKeyPayloadV1,
@@ -114,7 +166,11 @@ export {
   verifyKnowledgeKeyRotationV5,
   verifyKnowledgeKeyRotationV5Async,
 } from './knowledge_key_rotation_v5.js';
-export { ANALYZER_PROFILES, analyzerProfileDigest, resolveAnalyzerProfile } from './analyzer.js';
+export {
+  ANALYZER_PROFILES,
+  analyzerProfileDigest,
+  resolveAnalyzerProfile,
+} from './analyzer.js';
 export {
   query,
   lexConfidence,
@@ -149,7 +205,10 @@ export {
   validateSidecarForPack,
 } from './semantic/sidecar.js';
 export { rerankCandidates } from './semantic/rerank.js';
-export { assertProviderCompatible, ensureProviderModelId } from './semantic/provider.js';
+export {
+  assertProviderCompatible,
+  ensureProviderModelId,
+} from './semantic/provider.js';
 export {
   listAgents,
   getAgent,
@@ -160,10 +219,7 @@ export {
   validateAgentRegistry,
   validateAgentDefinition,
 } from './agent.js';
-export {
-  getClaimGraph,
-  validateClaimGraph,
-} from './graph/claim_graph.js';
+export { getClaimGraph, validateClaimGraph } from './graph/claim_graph.js';
 export { buildClaimGraph } from './graph/build_claim_graph.js';
 export {
   createGraphLog,
@@ -175,10 +231,20 @@ export {
 } from './graph/log.js';
 export { expandQueryWithGraph } from './graph/query_expand.js';
 export * from './memory/index.js';
-export type { MountOptions, PackMeta, Pack, PackChunk } from './pack.runtime.js';
+export type {
+  MountOptions,
+  PackMeta,
+  Pack,
+  PackChunk,
+} from './pack.runtime.js';
 export type { QueryOptions, Hit, QueryWithPlanResult } from './query.js';
 export type { RetrievalPlan } from './retrieval_plan.js';
-export type { QueryReceipt, ReceiptOptions, ReceiptDecision, EvidenceSpan } from './receipt.js';
+export type {
+  QueryReceipt,
+  ReceiptOptions,
+  ReceiptDecision,
+  EvidenceSpan,
+} from './receipt.js';
 export type {
   CreateKnowledgeImageOptions,
   Digest,
@@ -204,8 +270,14 @@ export type {
   KnowledgeQueryScalarV1,
 } from './knowledge_query_v5.js';
 export type { KnowledgeQueryIndexV1 } from './knowledge_query_index_v5.js';
-export type { KnowledgeQueryHistoryEntryV1, KnowledgeQueryHistoryV1 } from './knowledge_query_history_v5.js';
-export type { KnowledgeStudioManagementInputV1, KnowledgeStudioManagementV1 } from './knowledge_studio_v5.js';
+export type {
+  KnowledgeQueryHistoryEntryV1,
+  KnowledgeQueryHistoryV1,
+} from './knowledge_query_history_v5.js';
+export type {
+  KnowledgeStudioManagementInputV1,
+  KnowledgeStudioManagementV1,
+} from './knowledge_studio_v5.js';
 export type {
   KnowledgeAuthorizationDecisionV1,
   KnowledgeAuthorizationResultV1,
@@ -241,7 +313,10 @@ export type {
   KnowledgeRunAuthorityVerificationOptionsV1,
   KnowledgeRunAuthorityVerificationV1,
 } from './knowledge_run_authority_v5.js';
-export type { KnowledgeRuntimeDiagnosticsInputV1, KnowledgeRuntimeDiagnosticsV1 } from './knowledge_runtime_diagnostics_v5.js';
+export type {
+  KnowledgeRuntimeDiagnosticsInputV1,
+  KnowledgeRuntimeDiagnosticsV1,
+} from './knowledge_runtime_diagnostics_v5.js';
 export type {
   KnowledgeFastForwardResultV1,
   KnowledgeSyncPlanV1,
@@ -311,8 +386,19 @@ export type {
   KnowledgeSyncReplayStateV1,
 } from './knowledge_sync_exchange_v5.js';
 export type { LivePackOptions } from './live.js';
-export type { PatchPack, PatchPackV1, PatchOpV1, PatchUpsertV1, PatchRemoveV1 } from './patch_pack.js';
-export type { EmbeddingProvider, SemanticSidecar, SemanticQueryOptions, RetrievalEvidence } from './semantic/types.js';
+export type {
+  PatchPack,
+  PatchPackV1,
+  PatchOpV1,
+  PatchUpsertV1,
+  PatchRemoveV1,
+} from './patch_pack.js';
+export type {
+  EmbeddingProvider,
+  SemanticSidecar,
+  SemanticQueryOptions,
+  RetrievalEvidence,
+} from './semantic/types.js';
 export type { ContextPatch } from './patch.js';
 export type { BuildInputDoc, BuildPackOptions } from './builder.js';
 export type { AnalyzerProfile } from './analyzer.js';

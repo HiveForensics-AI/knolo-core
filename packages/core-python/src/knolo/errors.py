@@ -8,3 +8,6 @@ class KnoloError(Exception):
 class InvalidPackError(KnoloError):
     """Raised when a .knolo pack cannot be parsed or validated."""
 
+
+class InvalidKnowledgeImageError(KnoloError):
+    """Raised when a V5 Knowledge Image cannot be parsed or verified."""

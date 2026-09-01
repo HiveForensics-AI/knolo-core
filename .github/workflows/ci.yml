@@ -14,7 +14,13 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - name: Run V5 release gate
+        run: npm run release:check
+      - name: Check V5 formatting policy
+        run: npm run format:check:all
+      - name: Check cross-runtime golden vectors
+        run: npm run test:rust
       - run: npm test
       - run: npm run trustbench:test
-      - run: npm run release:metadata
+      - name: Run clean-environment V5 smoke
+        run: npm run smoke:v5

@@ -8,6 +8,10 @@ scripts/*
 !scripts/check-icp-template-sync.sh
 !scripts/check-v5-release.mjs
 !scripts/check-release-metadata.mjs
+!scripts/check-doc-links.mjs
+!scripts/check-package-publication.mjs
+!scripts/check-package-archives.sh
+!scripts/smoke-v5.mjs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -75,6 +79,9 @@ Desktop.ini
 # Local rollout notes (not part of the public repository)
 LIVE_KBS_MVP.md
 /upcoming feature.md
+
+# Local V6 design materials (not part of the V5 release branch)
+/docs/v6/
 
 # ICP local harness generated seed data / runtime (also covered by tests/icp-local/.gitignore)
 tests/icp-local/data/

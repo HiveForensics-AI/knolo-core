@@ -2,8 +2,8 @@
 
 This roadmap describes the staged path from the V4 retrieval ecosystem to the
 full V5 verifiable knowledge runtime. The `5.0.0` release is the bounded V5
-foundation; V4 remains supported while the remaining V5 contracts are
-introduced incrementally.
+foundation; V4 remains supported and the pre-V6 V5 contract work is now
+complete locally.
 
 ## Delivered: V5 foundation
 
@@ -23,7 +23,7 @@ introduced incrementally.
 - CLI inspection surfaces: `knolo v5 info`, `knolo v5 health`, and
   `knolo v5 studio`.
 
-## Current release hardening
+## Completed V5 release hardening
 
 - Keep V4 APIs, fixtures, TrustBench behavior, and compatibility profiles
   unchanged.
@@ -35,27 +35,38 @@ introduced incrementally.
 - Publish the foundation branch only after the working tree contains the
   release gate, specifications, fixtures, and documentation.
 
+The release gate, formatting baseline, documentation audit, publication-source
+checks, and clean V5 smoke are now implemented and passing locally. The
+configured GitHub workflow remains the hosted confirmation point.
+
+## Active pre-V6 development plan
+
+The pre-V6 V5 work and completion gate are tracked in the
+[V5 pre-V6 development plan](V5_PRE_V6_DEVELOPMENT_PLAN.md). Phases 1 and 2
+are complete locally, including the read-only Node Studio service, native root
+parity, shared diagnostics/management fixtures, and host-owned transport
+adapters. Phases 3–5 are now complete locally as well, including durable writer
+leases, explicit authorization gates, production sync application, the Python
+and adapter V5 profiles, frozen interoperability evidence, and the written
+V5-to-V6 handoff. The remaining items are external release-gate activities:
+hosted CI confirmation, publication verification, and release-operator sign-off.
+
+The V6 CESR specification is deliberately deferred until these phases and the
+V5 completion gate are finished.
+
 ## Next implementation wave
 
-1. Build a Studio UI/service that consumes KIP-0026 snapshots and keeps all
-   mutations behind explicit host authorization.
-2. Add Rust parity for runtime diagnostics and Studio snapshot roots where the
-   native runtime needs to serve those views.
-3. Add host adapters for durable transport deployment, peer discovery, and
-   operational monitoring without putting sockets or credentials in the core.
-4. Add release CI jobs for the documentation link audit, formatting policy,
-   cross-runtime golden vectors, and package publication checks.
+1. Run the configured hosted V5 release workflow and record its result.
+2. Verify publication artifacts and record the V5 release/operator sign-off.
+3. After the gate closes, create the separate V6 implementation workstream.
 
 ## Later V5 capabilities
 
-- Multi-writer coordination, leases, and stale-writer recovery.
-- Authorized Studio mutation workflows for commits, merges, policy, and
-  authority administration.
-- Production sync orchestration, peer discovery, and resumable deployment.
-- More complete agent-host integrations for model providers and external tools.
-- Python and additional runtime profiles consuming the V5 contracts.
-- WASM and embedded distribution profiles after the byte and root contracts are
-  stable.
+- Durable writer leases, authorized operations, and production sync
+  orchestration are complete locally; see
+  [`V5_COORDINATION.md`](V5_COORDINATION.md).
+- More complete agent-host integrations for model providers and external tools
+  remain host-owned extensions, not a V5 core requirement.
 
 ## Scope boundary
 

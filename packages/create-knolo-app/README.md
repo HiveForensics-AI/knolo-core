@@ -2,8 +2,9 @@
 
 Generated applications target the Knolo V4 TypeScript retrieval path, with the
 V5 foundation available beside it. Packs are V4 by default and can be checked
-with `knolo verify`; Python and ICP remain legacy profiles, while Rust provides
-the native V5 verification foundation.
+with `knolo verify`; Python provides the read-only V5 verifier/query profile,
+ICP remains a legacy canister profile, and Rust provides the native V5
+verification foundation.
 
 V5 Knowledge Image inspection is available after generation with
 `knolo v5 info`, `knolo v5 health`, and `knolo v5 studio`. See the

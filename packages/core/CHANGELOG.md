@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.1.0] - 2026-09-01
+
+### v5.1.0 / V5 Completion and Interoperability Hardening
+
+- Added bounded durable writer leases, renewal, expiry, explicit stale recovery,
+  and host-authorized production sync application.
+- Added read-only V5 Studio/diagnostics service boundaries and cross-runtime
+  diagnostics/management fixtures.
+- Added Python V5 Knowledge Image verification/query support and V5 image
+  support to the LangChain and LlamaIndex adapters.
+- Added shared V5 interoperability vectors, receipt/root rules, trust-boundary
+  documentation, and the conditional V5-to-V6 handoff.
+- Bumped the coordinated JavaScript runtime and adapter packages to `5.1.0`;
+  the existing V4 APIs remain compatible.
+
 ## [5.0.0] - 2026-08-28
 
 ### v5.0.0 / V5 Foundation

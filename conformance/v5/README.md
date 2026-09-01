@@ -14,6 +14,11 @@ The base64 fixtures are checked-in byte fixtures, not generated test output:
 - `migrated-v4-claims-agents.fixture.base64` proves claims and agent registry
   preservation. Its state root is
   `sha256-fbd098cf220b414a1dea60fe237da2bfbe4728831db6bd6f43b3c8125987d059`.
+- `runtime-diagnostics-studio-v1.fixture.json` binds the shared image to the
+  TypeScript and Rust KIP-0025 diagnostics root and KIP-0026 management root.
 
 TypeScript and Rust tests load these exact bytes and compare verification or
-migration output byte-for-byte.
+migration output byte-for-byte, including the diagnostics and Studio snapshot
+roots. The Python verifier/query profile consumes the same image and checks the
+shared state, commit, plan, and result roots. The full interoperability and
+trust boundary is documented in [`../../docs/V5_INTEROPERABILITY.md`](../../docs/V5_INTEROPERABILITY.md).

@@ -15,7 +15,11 @@ import { validateAgentRegistry } from './agent.js';
 import { buildClaimGraph } from './graph/build_claim_graph.js';
 import { mountPackFromBuffer } from './pack.runtime.js';
 import { serializePackV4 } from './pack.v4.js';
-import { analyzerProfileDigest, resolveAnalyzerProfile, type AnalyzerProfile } from './analyzer.js';
+import {
+  analyzerProfileDigest,
+  resolveAnalyzerProfile,
+  type AnalyzerProfile,
+} from './analyzer.js';
 
 export type BuildInputDoc = {
   id?: string;
@@ -64,13 +68,19 @@ export async function buildPack(
   const agents = normalizeAgents(opts.agents);
   const graphEnabled = opts.graph?.enabled ?? true;
   const claimGraph = graphEnabled
-    ? buildClaimGraph(normalizedDocs, { maxEdgesPerDoc: opts.graph?.maxEdgesPerDoc })
+    ? buildClaimGraph(normalizedDocs, {
+        maxEdgesPerDoc: opts.graph?.maxEdgesPerDoc,
+      })
     : null;
 
   const analyzer = resolveAnalyzerProfile(opts.analyzer);
   const meta = {
     version: 3,
-    analyzer: { id: analyzer.id, version: analyzer.version, digest: analyzerProfileDigest(analyzer) },
+    analyzer: {
+      id: analyzer.id,
+      version: analyzer.version,
+      digest: analyzerProfileDigest(analyzer),
+    },
     stats: {
       docs: normalizedDocs.length,
       blocks: blocks.length,
@@ -113,7 +123,9 @@ export async function buildPack(
     ? enc.encode(JSON.stringify(semanticSection.semJson))
     : undefined;
   const semBlob = semanticSection?.semBlob;
-  const graphBytes = claimGraph ? enc.encode(JSON.stringify(claimGraph)) : undefined;
+  const graphBytes = claimGraph
+    ? enc.encode(JSON.stringify(claimGraph))
+    : undefined;
 
   const totalLength =
     4 +

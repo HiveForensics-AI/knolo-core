@@ -1,7 +1,7 @@
-# Knolo V5 release guide
+# Knolo V5.1.0 release guide
 
-This guide publishes the V5 foundation runtime as `5.0.0` while preserving the
-existing V4 retrieval behavior.
+This guide publishes the V5.1.0 hardening release while preserving the already
+live V5.0.0 foundation and existing V4 retrieval behavior.
 
 ## Release set
 
@@ -16,12 +16,13 @@ The V5 npm release set is:
 
 The Rust release set is:
 
-- `knolo-core-rust` `5.0.0`
-- `knolo-icp-canister` `5.0.0`
+- `knolo-core-rust` `5.1.0`
+- `knolo-icp-canister` `5.1.0`
 
-The Python distribution remains a legacy V1–V3 reader/query profile at
-`4.0.0`. It must not be published as a V5 runtime until it consumes the V5
-Knowledge Image contracts.
+The Python distribution is `5.1.0` and provides read-only V5 Knowledge Image
+verification and lexical object queries while preserving its legacy V1–V3
+pack APIs. It does not provide V5 writes, Studio, authority administration,
+or synchronization.
 
 ## 1. Clean-room preflight
 
@@ -89,12 +90,12 @@ Verify the release from a clean temporary project:
 tmp_dir="$(mktemp -d)"
 cd "$tmp_dir"
 npm init -y
-npm install @knolo/core@5.0.0 @knolo/cli@5.0.0
+npm install @knolo/core@5.1.0 @knolo/cli@5.1.0
 npx knolo --help
 node --input-type=module -e "import('@knolo/core').then(m => console.log(typeof m.verifyKnowledgeImageV5))"
 ```
 
-Use `npm view <package>@5.0.0 version dist.tarball` to confirm each package is
+Use `npm view <package>@5.1.0 version dist.tarball` to confirm each package is
 available before moving to the next ecosystem.
 
 ## 4. Publish Rust crates
@@ -107,7 +108,7 @@ cargo publish --manifest-path packages/core-rust/Cargo.toml --dry-run
 cargo publish --manifest-path packages/core-rust/Cargo.toml
 ```
 
-Wait for `knolo-core-rust 5.0.0` to be indexed, then publish the adapter:
+Wait for `knolo-core-rust 5.1.0` to be indexed, then publish the adapter:
 
 ```bash
 cargo publish --manifest-path packages/icp-canister/Cargo.toml --dry-run
@@ -119,8 +120,8 @@ pack Candid API. Its V5 Knowledge Image integration is a later adapter wave.
 
 ## 5. Python package boundary
 
-Python is intentionally not part of the V5 runtime publication. Its safe
-validation commands are:
+Python is now part of the V5 read-only verifier/query profile. Its validation
+commands are:
 
 ```bash
 cd packages/core-python
@@ -131,20 +132,20 @@ python -m build --outdir "$python_dist" .
 python -m twine check "$python_dist"/*
 ```
 
-Do not run `python -m twine upload` for this V5 release. Publish a new Python
-version only after the Python implementation supports and passes the shared V5
-fixtures; see [`packages/core-python/RELEASE.md`](../packages/core-python/RELEASE.md).
+Run the Python publication checks for this V5 release. Publish a new Python
+version only after the shared image fixture and clean-wheel checks pass; see
+[`packages/core-python/RELEASE.md`](../packages/core-python/RELEASE.md).
 
 ## 6. GitHub release
 
 After the package registries are verified:
 
 ```bash
-git tag -a v5.0.0 -m "Knolo V5 foundation"
-git push origin v5.0.0
+git tag -a v5.1.0 -m "Knolo V5.1.0 hardening release"
+git push origin v5.1.0
 ```
 
-Create a GitHub release from `v5.0.0` and include the V5 foundation scope,
-V4 compatibility statement, registry links, and the Python/ICP boundaries
+Create a GitHub release from `v5.1.0` and include the V5 hardening scope,
+V5.0.0 compatibility statement, registry links, and the Python/ICP boundaries
 above. The existing Python publish workflow is release-triggered, so do not
 publish a GitHub release until its package decision is intentional.

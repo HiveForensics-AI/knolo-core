@@ -579,6 +579,47 @@ pub struct KnowledgeImageVerification {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct KnowledgeRuntimeDiagnosticsImageV1 {
+    pub state_root: String,
+    pub commit_digest: String,
+    pub sequence: u64,
+    pub object_count: usize,
+    pub event_count: usize,
+    pub segment_count: usize,
+    pub active_superblock: char,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct KnowledgeRuntimeDiagnosticsV1 {
+    pub version: u64,
+    pub valid: bool,
+    pub image: KnowledgeRuntimeDiagnosticsImageV1,
+    pub diagnostics_root: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct KnowledgeStudioCapabilitiesV1 {
+    pub inspect_image: bool,
+    pub verify_image: bool,
+    pub inspect_query_index: bool,
+    pub inspect_query_history: bool,
+    pub inspect_run: bool,
+    pub inspect_replay: bool,
+    pub mutate_image: bool,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct KnowledgeStudioManagementV1 {
+    pub version: u64,
+    pub surface: String,
+    pub valid: bool,
+    pub read_only: bool,
+    pub diagnostics: KnowledgeRuntimeDiagnosticsV1,
+    pub capabilities: KnowledgeStudioCapabilitiesV1,
+    pub management_root: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct MigrationMapping {
     pub legacy_block_id: usize,
     pub source_object: String,
@@ -623,6 +664,101 @@ pub fn inspect_knowledge_image(bytes: &[u8]) -> Result<KnowledgeImageVerificatio
 
 pub fn verify_knowledge_image(bytes: &[u8]) -> Result<KnowledgeImageVerification, KnoloError> {
     inspect_knowledge_image(bytes)
+}
+
+pub fn inspect_knowledge_runtime_v5(bytes: &[u8]) -> Result<KnowledgeRuntimeDiagnosticsV1, KnoloError> {
+    let image = mount_knowledge_image(bytes)?;
+    let diagnostics = KnowledgeRuntimeDiagnosticsV1 {
+        version: 1,
+        valid: true,
+        image: KnowledgeRuntimeDiagnosticsImageV1 {
+            state_root: image.state_root,
+            commit_digest: image.commit_digest,
+            sequence: image.commit.sequence,
+            object_count: image.objects.len(),
+            event_count: image.events.len(),
+            segment_count: image.segments.len(),
+            active_superblock: image.active_superblock,
+        },
+        diagnostics_root: String::new(),
+    };
+    let diagnostics_root = runtime_diagnostics_root_v5(&diagnostics);
+    Ok(KnowledgeRuntimeDiagnosticsV1 { diagnostics_root, ..diagnostics })
+}
+
+pub fn runtime_diagnostics_root_v5(diagnostics: &KnowledgeRuntimeDiagnosticsV1) -> String {
+    digest_domain("runtime-diagnostics", &encode_cbor(&runtime_diagnostics_body(diagnostics)))
+}
+
+pub fn inspect_knowledge_studio_management_v5(bytes: &[u8]) -> Result<KnowledgeStudioManagementV1, KnoloError> {
+    let diagnostics = inspect_knowledge_runtime_v5(bytes)?;
+    let management = KnowledgeStudioManagementV1 {
+        version: 1,
+        surface: "studio-management".into(),
+        valid: true,
+        read_only: true,
+        diagnostics,
+        capabilities: KnowledgeStudioCapabilitiesV1 {
+            inspect_image: true,
+            verify_image: true,
+            inspect_query_index: false,
+            inspect_query_history: false,
+            inspect_run: false,
+            inspect_replay: false,
+            mutate_image: false,
+        },
+        management_root: String::new(),
+    };
+    let management_root = studio_management_root_v5(&management);
+    Ok(KnowledgeStudioManagementV1 { management_root, ..management })
+}
+
+pub fn studio_management_root_v5(management: &KnowledgeStudioManagementV1) -> String {
+    digest_domain("studio-management", &encode_cbor(&CborValue::Map(vec![
+        ("capabilities".into(), studio_capabilities_value(&management.capabilities)),
+        ("diagnostics".into(), runtime_diagnostics_value(&management.diagnostics)),
+        ("readOnly".into(), CborValue::Bool(management.read_only)),
+        ("surface".into(), CborValue::Text(management.surface.clone())),
+        ("valid".into(), CborValue::Bool(management.valid)),
+        ("version".into(), CborValue::UInt(management.version)),
+    ])))
+}
+
+fn runtime_diagnostics_body(diagnostics: &KnowledgeRuntimeDiagnosticsV1) -> CborValue {
+    CborValue::Map(vec![
+        ("image".into(), CborValue::Map(vec![
+            ("activeSuperblock".into(), CborValue::Text(diagnostics.image.active_superblock.to_string())),
+            ("commitDigest".into(), CborValue::Text(diagnostics.image.commit_digest.clone())),
+            ("eventCount".into(), CborValue::UInt(diagnostics.image.event_count as u64)),
+            ("objectCount".into(), CborValue::UInt(diagnostics.image.object_count as u64)),
+            ("segmentCount".into(), CborValue::UInt(diagnostics.image.segment_count as u64)),
+            ("sequence".into(), CborValue::UInt(diagnostics.image.sequence)),
+            ("stateRoot".into(), CborValue::Text(diagnostics.image.state_root.clone())),
+        ])),
+        ("valid".into(), CborValue::Bool(diagnostics.valid)),
+        ("version".into(), CborValue::UInt(diagnostics.version)),
+    ])
+}
+
+fn runtime_diagnostics_value(diagnostics: &KnowledgeRuntimeDiagnosticsV1) -> CborValue {
+    let mut entries = match runtime_diagnostics_body(diagnostics) {
+        CborValue::Map(entries) => entries,
+        _ => Vec::new(),
+    };
+    entries.push(("diagnosticsRoot".into(), CborValue::Text(diagnostics.diagnostics_root.clone())));
+    CborValue::Map(entries)
+}
+
+fn studio_capabilities_value(capabilities: &KnowledgeStudioCapabilitiesV1) -> CborValue {
+    CborValue::Map(vec![
+        ("inspectImage".into(), CborValue::Bool(capabilities.inspect_image)),
+        ("inspectQueryHistory".into(), CborValue::Bool(capabilities.inspect_query_history)),
+        ("inspectQueryIndex".into(), CborValue::Bool(capabilities.inspect_query_index)),
+        ("inspectReplay".into(), CborValue::Bool(capabilities.inspect_replay)),
+        ("inspectRun".into(), CborValue::Bool(capabilities.inspect_run)),
+        ("mutateImage".into(), CborValue::Bool(capabilities.mutate_image)),
+        ("verifyImage".into(), CborValue::Bool(capabilities.verify_image)),
+    ])
 }
 
 pub fn state_root(image: &KnowledgeImage) -> &str {

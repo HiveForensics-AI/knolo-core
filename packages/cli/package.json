@@ -1,6 +1,6 @@
 {
   "name": "@knolo/cli",
-  "version": "5.0.0",
+  "version": "5.1.0",
   "type": "module",
   "bin": {
     "knolo": "bin/knolo.mjs"
@@ -31,7 +31,7 @@
     "test": "npm run build --prefix ../core && node --test test/cli.test.mjs"
   },
   "dependencies": {
-    "@knolo/core": "^5.0.0"
+    "@knolo/core": "^5.1.0"
   },
   "private": false
 }

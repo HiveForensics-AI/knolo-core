@@ -77,7 +77,8 @@ export async function mountPack(opts: MountOptions): Promise<Pack> {
 
 export function mountPackFromBuffer(buf: ArrayBuffer): Pack {
   if (isPackV4(buf)) return parsePackV4(buf);
-  if (buf.byteLength < 16) throw new Error('Invalid or truncated pack: missing legacy header.');
+  if (buf.byteLength < 16)
+    throw new Error('Invalid or truncated pack: missing legacy header.');
   const dv = new DataView(buf);
   const dec = getTextDecoder();
   let offset = 0;
@@ -87,7 +88,15 @@ export function mountPackFromBuffer(buf: ArrayBuffer): Pack {
   const metaJson = dec.decode(new Uint8Array(buf, offset, metaLen));
   offset += metaLen;
   const meta: PackMeta = JSON.parse(metaJson);
-  if (!meta || !Number.isInteger(meta.version) || meta.version < 1 || meta.version > 3) throw new Error(`Unsupported legacy pack version: ${String(meta?.version)}.`);
+  if (
+    !meta ||
+    !Number.isInteger(meta.version) ||
+    meta.version < 1 ||
+    meta.version > 3
+  )
+    throw new Error(
+      `Unsupported legacy pack version: ${String(meta?.version)}.`
+    );
   if (meta.agents) {
     validateAgentRegistry(meta.agents);
   }
@@ -100,7 +109,8 @@ export function mountPackFromBuffer(buf: ArrayBuffer): Pack {
   const lexicon = new Map<string, number>(lexEntries);
 
   const postCount = readLength(dv, offset, buf.byteLength, 'postings');
-  if (postCount > 128 * 1024 * 1024) throw new Error('Legacy postings declaration exceeds safety limit.');
+  if (postCount > 128 * 1024 * 1024)
+    throw new Error('Legacy postings declaration exceeds safety limit.');
   offset += 4;
   const postings = new Uint32Array(postCount);
   for (let i = 0; i < postCount; i++) {
@@ -195,7 +205,11 @@ export function mountPackFromBuffer(buf: ArrayBuffer): Pack {
     break;
   }
 
-  if (blocks.length > 10_000_000 || (meta.stats?.blocks ?? blocks.length) !== blocks.length) throw new Error('Invalid legacy pack block count.');
+  if (
+    blocks.length > 10_000_000 ||
+    (meta.stats?.blocks ?? blocks.length) !== blocks.length
+  )
+    throw new Error('Invalid legacy pack block count.');
   return {
     meta,
     lexicon,
@@ -210,10 +224,17 @@ export function mountPackFromBuffer(buf: ArrayBuffer): Pack {
   };
 }
 
-function readLength(dv: DataView, offset: number, total: number, label: string): number {
-  if (offset < 0 || offset + 4 > total) throw new Error(`Invalid or truncated pack: missing ${label} length.`);
+function readLength(
+  dv: DataView,
+  offset: number,
+  total: number,
+  label: string
+): number {
+  if (offset < 0 || offset + 4 > total)
+    throw new Error(`Invalid or truncated pack: missing ${label} length.`);
   const length = dv.getUint32(offset, true);
-  if (length > total - offset - 4) throw new Error(`Invalid or truncated pack: ${label} exceeds payload.`);
+  if (length > total - offset - 4)
+    throw new Error(`Invalid or truncated pack: ${label} exceeds payload.`);
   return length;
 }
 
