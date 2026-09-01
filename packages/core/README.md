@@ -350,7 +350,7 @@ const snapshot = await live.serialize();
 
 `LivePack.serializePatchPack()` exports the mutations made since the overlay was created. Each upsert is a complete document replacement and each remove is a tombstone; replay rejects a patch whose base fingerprint does not match.
 
-For the rollout notes and constraints, see [`../../LIVE_KBS_MVP.md`](../../LIVE_KBS_MVP.md).
+For the rollout notes and constraints, see [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
 
 ---
 
@@ -478,7 +478,7 @@ const rebuilt = await mountPack({ src: snapshot });
 const roundTripHits = query(rebuilt, 'beta note', { topK: 5 });
 ```
 
-For the phase-1 rollout notes and test matrix, see [`../../LIVE_KBS_MVP.md`](../../LIVE_KBS_MVP.md).
+For the phase-1 rollout notes and test matrix, see [`../../docs/V5_PRE_V6_DEVELOPMENT_PLAN.md`](../../docs/V5_PRE_V6_DEVELOPMENT_PLAN.md).
 
 ---
 

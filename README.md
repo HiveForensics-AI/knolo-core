@@ -238,7 +238,7 @@ The current scope is intentionally a foundation release. It proves the portable 
 - [Rust kernel](packages/core-rust/README.md)
 - [Conformance fixtures](conformance/README.md)
 - [Examples](examples/langchain-basic/README.md)
-- [Architecture document](docs/Knolo_V5_Verifiable_Knowledge_Runtime_Architecture.docx)
+- [Architecture and design materials](docs/README.md)
 
 ## Repository layout
 
