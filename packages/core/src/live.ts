@@ -1,4 +1,8 @@
-import { buildPack, type BuildInputDoc, type BuildPackOptions } from './builder.js';
+import {
+  buildPack,
+  type BuildInputDoc,
+  type BuildPackOptions,
+} from './builder.js';
 import type { Pack } from './pack.runtime.js';
 import { mountPack } from './pack.runtime.js';
 import {
@@ -155,8 +159,8 @@ export class LivePack {
           graph: {
             enabled: true,
             ...(this.graph.maxEdgesPerDoc !== undefined
-            ? { maxEdgesPerDoc: this.graph.maxEdgesPerDoc }
-            : {}),
+              ? { maxEdgesPerDoc: this.graph.maxEdgesPerDoc }
+              : {}),
           },
           ...(this.base.meta.agents ? { agents: this.base.meta.agents } : {}),
         }
@@ -171,7 +175,8 @@ export class LivePack {
   /** Return the append-only mutation stream since this LivePack was created. */
   public async serializePatchPack(): Promise<Uint8Array> {
     await this.mutationQueue;
-    const { createPatchPack, serializePatchPack } = await import('./patch_pack.js');
+    const { createPatchPack, serializePatchPack } =
+      await import('./patch_pack.js');
     return serializePatchPack(createPatchPack(this.base, this.patchOps));
   }
 
@@ -200,7 +205,10 @@ export class LivePack {
   }
 
   private async enqueueMutation(task: () => Promise<void>): Promise<this> {
-    const run = this.mutationQueue.then(() => task(), () => task());
+    const run = this.mutationQueue.then(
+      () => task(),
+      () => task()
+    );
     this.mutationQueue = run.then(
       () => undefined,
       () => undefined
@@ -219,7 +227,11 @@ export class LivePack {
   }
 
   private collectMergedDocs(): BuildInputDoc[] {
-    return collectMergedDocsFromState(this.baseEntries, this.overlay, this.tombstones);
+    return collectMergedDocsFromState(
+      this.baseEntries,
+      this.overlay,
+      this.tombstones
+    );
   }
 }
 
@@ -249,7 +261,9 @@ function normalizeLiveGraphOptions(
   const graphRequested = opts.graph?.enabled;
   const inferredEnabled =
     graphRequested ??
-    (opts.graph?.maxEdgesPerDoc !== undefined ? true : Boolean(base.meta.claimGraph));
+    (opts.graph?.maxEdgesPerDoc !== undefined
+      ? true
+      : Boolean(base.meta.claimGraph));
 
   if (!inferredEnabled) {
     return { enabled: false };
@@ -313,7 +327,9 @@ function normalizeLiveDocument(doc: LiveDoc): LiveDoc {
 
 function normalizeLivePatch(patch: LiveDocumentPatch): LiveDocumentPatch {
   if (!patch || typeof patch !== 'object') {
-    throw new Error('LivePack.updateDocument(...) expects an object with an id.');
+    throw new Error(
+      'LivePack.updateDocument(...) expects an object with an id.'
+    );
   }
 
   const id = normalizeLiveId(patch.id, 'LivePack.updateDocument(...)');
@@ -339,7 +355,9 @@ function mergeLiveDoc(current: LiveDoc, patch: LiveDocumentPatch): LiveDoc {
     id: current.id,
     text: current.text,
     ...(current.heading !== undefined ? { heading: current.heading } : {}),
-    ...(current.namespace !== undefined ? { namespace: current.namespace } : {}),
+    ...(current.namespace !== undefined
+      ? { namespace: current.namespace }
+      : {}),
   };
 
   if (patch.text !== undefined) next.text = patch.text;

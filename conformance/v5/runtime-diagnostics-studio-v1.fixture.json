@@ -1,0 +1,33 @@
+{
+  "image": "knowledge-image-v5.fixture.base64",
+  "diagnostics": {
+    "version": 1,
+    "valid": true,
+    "image": {
+      "stateRoot": "sha256-bc419264f60822bb8c601f01eb3020671e78056f4e6403ab6db087911d25d694",
+      "commitDigest": "sha256-7a6ed0a7e488ee085053d6d8d885141e0a8b6abd5c40bd552e4d2b10b721b177",
+      "sequence": 1,
+      "objectCount": 1,
+      "eventCount": 1,
+      "segmentCount": 3,
+      "activeSuperblock": "A"
+    },
+    "diagnosticsRoot": "sha256-ba488f235ca6e6df08de7100f607c8e713f840f50305b5fea028a8ed9f0ecd7b"
+  },
+  "studio": {
+    "version": 1,
+    "surface": "studio-management",
+    "valid": true,
+    "readOnly": true,
+    "capabilities": {
+      "inspectImage": true,
+      "verifyImage": true,
+      "inspectQueryIndex": false,
+      "inspectQueryHistory": false,
+      "inspectRun": false,
+      "inspectReplay": false,
+      "mutateImage": false
+    },
+    "managementRoot": "sha256-911b45a02b1e868d54bea035acfa345e604f3d68224f00b0661b2a9d3cf25285"
+  }
+}

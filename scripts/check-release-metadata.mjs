@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const releaseVersion = '5.0.0';
+const releaseVersion = '5.1.0';
 
 function readJson(relativePath) {
   return JSON.parse(readFileSync(path.join(root, relativePath), 'utf8'));
@@ -95,13 +95,13 @@ const pythonInit = readFileSync(
   path.join(root, 'packages/core-python/src/knolo/__init__.py'),
   'utf8'
 );
-assert.match(pythonProject, /version = "4\.0\.0"/);
-assert.match(pythonInit, /__version__ = "4\.0\.0"/);
+assert.match(pythonProject, /version = "5\.1\.0"/);
+assert.match(pythonInit, /__version__ = "5\.1\.0"/);
 assert.match(
   readFileSync(path.join(root, 'packages/core-python/README.md'), 'utf8'),
-  /not a V5 image verifier/i
+  /V5 Knowledge Image verification/i
 );
 
 console.log(
-  `Release metadata passed for npm/Rust ${releaseVersion}; Python remains explicitly legacy v4.`
+  `Release metadata passed for npm/Rust/Python ${releaseVersion}.`
 );

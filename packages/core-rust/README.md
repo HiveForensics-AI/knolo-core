@@ -33,6 +33,12 @@ verifier callbacks; cryptographic algorithms and external identity resolution
 remain host responsibilities. Optional key IDs are included in canonical
 envelope payloads for rotation parity.
 
+Native inspection consumers can use `inspect_knowledge_runtime_v5` and
+`inspect_knowledge_studio_management_v5` for the verified base diagnostics and
+KIP-0026 management snapshot. Their diagnostics and management roots match the
+shared TypeScript fixture; optional query, history, run, and replay panels stay
+host/runtime extensions until their native contracts are added.
+
 ```rust
 use knolo_core_rust::{mount_knowledge_image, query_knowledge_image_v5};
 

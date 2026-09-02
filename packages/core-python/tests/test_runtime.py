@@ -115,6 +115,7 @@ def test_non_editable_wheel_uses_top_level_package_paths(tmp_path):
     assert "knolo/errors.py" in names
     assert "knolo/models.py" in names
     assert "knolo/runtime.py" in names
+    assert "knolo/v5.py" in names
     assert "knolo/tokenize.py" in names
     assert "knolo/py.typed" in names
     assert not any(name.startswith("src/knolo/") for name in names)

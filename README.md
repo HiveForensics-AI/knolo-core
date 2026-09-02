@@ -187,7 +187,7 @@ Corruption is treated as a normal operating condition to test: truncation, inval
 | ---------------------- | ----------------------------------------------------------------------------- |
 | TypeScript             | V4 reference implementation and complete V5 foundation APIs                   |
 | Rust                   | Native V5 byte contracts, verification, migration, and future embedded kernel |
-| Python                 | Legacy compatibility profile for existing V1–V3 integrations                  |
+| Python                 | Read-only V5 verifier/query with preserved V1–V3 pack APIs                    |
 | Internet Computer      | Legacy compatibility profile with a synchronized Rust template                |
 | LangChain / LlamaIndex | Adapter examples for application adoption                                     |
 | CLI                    | Human and automation entry point for artifact inspection and diagnostics      |
@@ -221,11 +221,9 @@ The active roadmap is maintained in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ### Next product wave
 
-- Studio UI/service over the management snapshot;
-- Rust diagnostics and Studio parity;
-- host transport and deployment adapters;
-- release CI and published compatibility artifacts;
-- later: authorized mutations, multi-writer coordination, production sync orchestration, Python V5, WASM, and embedded deployments.
+- hosted CI confirmation and publication verification for the V5 release;
+- written V5-to-V6 handoff against the reviewed V6 specification;
+- host-owned extensions for model providers and external tools.
 
 The current scope is intentionally a foundation release. It proves the portable artifact and verification layer before adding broader mutation, coordination, and hosted-management surfaces.
 
@@ -240,7 +238,7 @@ The current scope is intentionally a foundation release. It proves the portable 
 - [Rust kernel](packages/core-rust/README.md)
 - [Conformance fixtures](conformance/README.md)
 - [Examples](examples/langchain-basic/README.md)
-- [Architecture document](docs/Knolo_V5_Verifiable_Knowledge_Runtime_Architecture.docx)
+- [Architecture and design materials](docs/README.md)
 
 ## Repository layout
 
@@ -248,7 +246,7 @@ The current scope is intentionally a foundation release. It proves the portable 
 packages/core/       TypeScript V4 and V5 knowledge runtime
 packages/core-rust/  Native Rust V5 kernel and verifier
 packages/cli/        Knolo command-line interface
-packages/core-python/ Legacy Python compatibility package
+packages/core-python/ Python V5 verifier/query package with legacy pack APIs
 packages/icp-canister/ Internet Computer compatibility package
 examples/            Framework and product integration examples
 spec/                KIP contracts and normative schemas

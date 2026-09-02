@@ -8,13 +8,21 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
       - run: npm ci
-      - run: npm run build
+      - name: Run V5 release gate
+        run: npm run release:check
+      - name: Check V5 formatting policy
+        run: npm run format:check:all
+      - name: Check cross-runtime golden vectors
+        run: npm run test:rust
       - run: npm test
       - run: npm run trustbench:test
-      - run: npm run release:metadata
+      - name: Run clean-environment V5 smoke
+        run: npm run smoke:v5

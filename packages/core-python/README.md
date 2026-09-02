@@ -1,24 +1,25 @@
-# `knolo` — legacy v3-compatible runtime
+# `knolo` — V5-compatible Python runtime
 
-**Compatibility status:** legacy v1–v3 Python reader/query profile. The V4
-retrieval path and V5 Knowledge Image foundation are implemented in TypeScript
-first; Python does not yet consume V5 images.
+**Compatibility status:** V5 Knowledge Image verification and deterministic
+lexical object queries, with the existing V1–V3 `.knolo` reader/query APIs
+preserved for compatibility. Python does not implement V5 mutation,
+coordination, Studio, network transport, or model execution.
 
 The staged cross-runtime plan is [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
 
 `knolo` is the pure-Python runtime for mounting existing `.knolo` packs and running deterministic lexical queries locally.
 
-It is intentionally release-scoped for the legacy compatibility profile:
+It is intentionally release-scoped for a portable, read-only V5 profile:
 
 - local-first retrieval
 - deterministic lexical retrieval
 - no vector database
 - no embeddings on the default query path
-- no Python pack builder
+- no Python pack builder or V5 mutation API
 - no LangChain or LlamaIndex integration
 - no Node.js runtime dependency for mount/query
-- not certified as v4-equivalent in `conformance/`
-- not a V5 image verifier or Studio management runtime
+- no V4 receipt or analyzer-profile compatibility claim
+- no V5 Studio management runtime
 
 Packs are still built with `@knolo/core` in TypeScript, then mounted and queried from Python.
 
@@ -56,6 +57,30 @@ from knolo import mount_pack_from_bytes
 
 pack = mount_pack_from_bytes(Path("tests/fixtures/simple.knolo").read_bytes())
 ```
+
+## V5 Knowledge Images
+
+The Python runtime mounts and verifies the shared V5 image contract without a
+Node.js dependency at query time:
+
+```python
+import base64
+from pathlib import Path
+
+from knolo import mount_knowledge_image_v5, query_knowledge_image_v5
+
+fixture = Path("conformance/v5/knowledge-image-v5.fixture.base64")
+image = mount_knowledge_image_v5(base64.b64decode(fixture.read_text()))
+hits = query_knowledge_image_v5(image, "hello", top_k=5)
+print(image.state_root, hits[0].text)
+```
+
+`verify_knowledge_image_v5()` returns the verified state root, commit digest,
+and active superblock. V5 verification is fail-closed for truncated images,
+invalid superblocks, non-canonical CBOR, segment digest mismatches, object or
+event identity mismatches, and root mismatches. `query_knowledge_image_v5()`
+is a deterministic lexical query over UTF-8 object payloads; policy, authority,
+receipts, synchronization, and writes remain host/runtime responsibilities.
 
 ## Release Readiness
 
@@ -103,14 +128,23 @@ The public package exports:
 - `Pack`
 - `QueryOptions`
 - `Hit`
+- `mount_knowledge_image_v5(source)`
+- `query_knowledge_image_v5(image, query, ...)`
+- `verify_knowledge_image_v5(source)`
+- `KnowledgeImageV5`
+- `KnowledgeImageVerificationV5`
+- `KnowledgeObjectV5`
+- `KnowledgeHitV5`
+- `InvalidKnowledgeImageError`
 - `tokenize()`
 - `normalize()`
 - `__version__`
 
 ## Current Scope
 
-- No Python pack builder yet
+- No Python pack builder or V5 writer
 - No semantic reranking
 - No embeddings or vector database integration on the default path
 - No Node.js runtime dependency at query time
 - No LangChain or LlamaIndex adapters in this package
+- No V5 Studio, sync transport, authorization, or authority administration

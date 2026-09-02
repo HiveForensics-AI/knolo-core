@@ -8,11 +8,11 @@ current TypeScript runtime surface.
 
 It lets you:
 
-* Build structured knowledge packs
-* Mount portable `.knolo` artifacts
-* Run deterministic lexical retrieval
-* Optionally apply hybrid semantic reranking
-* Enforce strict runtime contracts for advanced workflows
+- Build structured knowledge packs
+- Mount portable `.knolo` artifacts
+- Run deterministic lexical retrieval
+- Optionally apply hybrid semantic reranking
+- Enforce strict runtime contracts for advanced workflows
 
 No vector database required.
 No cloud dependency required.
@@ -35,7 +35,11 @@ import {
 const { image, receipt } = await migrateV4ToV5(v4Bytes);
 const verification = verifyKnowledgeImageV5(image);
 const mounted = mountKnowledgeImageV5(image);
-console.log(verification.stateRoot, receipt.objectMappings.length, mounted.objects.length);
+console.log(
+  verification.stateRoot,
+  receipt.objectMappings.length,
+  mounted.objects.length
+);
 ```
 
 Single-writer transactions with detached snapshot readers are available through
@@ -46,7 +50,11 @@ import { KnowledgeImageStoreV5 } from '@knolo/core';
 
 const store = new KnowledgeImageStoreV5(image);
 const tx = store.beginTransaction({ actor: 'writer-a' });
-tx.addObject({ kind: 'source', bytes: new TextEncoder().encode('alpha'), meta: {} });
+tx.addObject({
+  kind: 'source',
+  bytes: new TextEncoder().encode('alpha'),
+  meta: {},
+});
 const next = tx.commit();
 ```
 
@@ -65,7 +73,11 @@ import { DurableKnowledgeImageStoreV5 } from '@knolo/core/node';
 
 const store = DurableKnowledgeImageStoreV5.open('./knowledge.v5', image);
 const tx = store.beginTransaction({ actor: 'disk-writer' });
-tx.addObject({ kind: 'source', bytes: new TextEncoder().encode('alpha'), meta: {} });
+tx.addObject({
+  kind: 'source',
+  bytes: new TextEncoder().encode('alpha'),
+  meta: {},
+});
 const next = tx.commit();
 store.close();
 ```
@@ -76,7 +88,10 @@ verifiable plan and result roots:
 ```ts
 import { queryKnowledgeImageV5 } from '@knolo/core';
 
-const result = queryKnowledgeImageV5(image, 'FROM chunk SEARCH "retention" LIMIT 20');
+const result = queryKnowledgeImageV5(
+  image,
+  'FROM chunk SEARCH "retention" LIMIT 20'
+);
 console.log(result.planRoot, result.resultRoot, result.hits);
 ```
 
@@ -131,6 +146,37 @@ complete transferred image before replay admission, and
 `DurableKnowledgeSyncReplayStoreV5` persists replay state atomically through
 the Node entry point.
 
+For host-owned deployment orchestration, `executeKnowledgeSyncHostDeploymentV5`
+combines explicit peer discovery, bounded retries, resumable transfer
+checkpoints, and monitoring events with the existing verified image exchange.
+The Node entry point includes `InMemoryKnowledgeSyncHostAdapterV5` as a
+deterministic reference adapter for local development and integration tests.
+Production adapters provide their own sockets, endpoint routing, credentials,
+checkpoint persistence, and monitoring sink; none are created by the core:
+
+```ts
+import {
+  executeKnowledgeSyncHostDeploymentV5,
+  KnowledgeSyncReplayCacheV1,
+} from '@knolo/core';
+import { InMemoryKnowledgeSyncHostAdapterV5 } from '@knolo/core/node';
+
+const adapter = new InMemoryKnowledgeSyncHostAdapterV5();
+const result = await executeKnowledgeSyncHostDeploymentV5({
+  request,
+  discovery: adapter,
+  transport: adapter,
+  peerId: 'peer-a',
+  now: () => Date.now(),
+  verification: {
+    replayCache: new KnowledgeSyncReplayCacheV1(),
+    resolveKey,
+    verifySignature,
+  },
+});
+console.log(result.peer.peerId, result.checkpoint.offset);
+```
+
 Durable agent run state is available through the pure lifecycle functions and
 the Node-only `DurableKnowledgeRunStoreV5`. Runs are bound to an image state
 root, checkpointable, resumable, and journal-verified; model and tool
@@ -150,13 +196,38 @@ responsibilities.
 
 `inspectKnowledgeRuntimeV5` provides a deterministic, read-only health snapshot
 for the image and optional query index, query history, durable run, and sync
-replay state. Its diagnostics root is suitable for CLI/service health checks
-and future Studio management views; inspection never mutates runtime state.
+replay state. Its diagnostics root is suitable for CLI, service, and Studio
+health views; inspection never mutates runtime state.
 
 `inspectKnowledgeStudioManagementV5` wraps those verified diagnostics in a
 deterministic, read-only management snapshot with explicit artifact-panel
-availability and a `managementRoot`. It is suitable as the data contract for a
-future Studio UI; it exposes no mutation or authority capability.
+availability and a `managementRoot`. The Node-only entry point also exposes
+`createKnowledgeStudioServiceV5`, a host-facing GET/HEAD service for this
+snapshot. Hosts can supply explicit read authorization; POST and other write
+methods are rejected, and no mutation or authority capability is exposed:
+
+```ts
+import { createKnowledgeStudioServiceV5 } from '@knolo/core/node';
+
+const studio = createKnowledgeStudioServiceV5({
+  load: () => ({ image }),
+  authorizeRead: ({ method }) => method === 'GET' || method === 'HEAD',
+});
+
+const response = await studio.handle(
+  new Request('https://studio.example/studio/v5')
+);
+```
+
+Durable stores support opt-in bounded writer leases through the Node entry
+point. Live writers are excluded, lease renewal is explicit, and stale lease
+recovery must be requested by the host; legacy unleased opens remain
+compatible. `executeKnowledgeAuthorizedOperationV5` provides the shared audit
+gate for host-owned commit, merge, policy, authority, and sync handlers. The
+Node-only `executeKnowledgeSyncHostFastForwardV5` composes that gate with
+verified host deployment and applies only a direct remote-ahead image. See
+[`V5_COORDINATION.md`](../../docs/V5_COORDINATION.md) for recovery and
+production-boundary details.
 
 Divergent branches can be compared with `planKnowledgeSyncMergeV5`, which
 returns a deterministic, read-only conflict plan covering branch-only objects,
@@ -180,18 +251,18 @@ required V5 specification coverage. The active implementation roadmap is
 
 `@knolo/core` is **not**:
 
-* A vector database wrapper
-* A hosted RAG service
-* A probabilistic similarity engine
+- A vector database wrapper
+- A hosted RAG service
+- A probabilistic similarity engine
 
 It is:
 
-* A versioned binary pack format
-* A deterministic lexical retrieval engine
-* A deterministic `LivePack` overlay for mounted packs
-* An optional semantic rerank layer
-* A portable knowledge runtime
-* A separate append-only Cortex memory layer
+- A versioned binary pack format
+- A deterministic lexical retrieval engine
+- A deterministic `LivePack` overlay for mounted packs
+- An optional semantic rerank layer
+- A portable knowledge runtime
+- A separate append-only Cortex memory layer
 
 You build once.
 You mount anywhere — Node, browser, React Native, serverless, offline.
@@ -202,22 +273,22 @@ You mount anywhere — Node, browser, React Native, serverless, offline.
 
 Lexical retrieval is:
 
-* Deterministic
-* Reproducible
-* Stable across runs
-* Independent of embeddings
+- Deterministic
+- Reproducible
+- Stable across runs
+- Independent of embeddings
 
 Hybrid reranking is:
 
-* Optional
-* Deterministic for fixed vectors
-* Lexical-first (semantic never replaces grounding)
+- Optional
+- Deterministic for fixed vectors
+- Lexical-first (semantic never replaces grounding)
 
 In benchmark testing (March 2026):
 
-* **Recall@5:** 1.000
-* **MRR@5:** 0.867
-* **nDCG@5:** 0.900
+- **Recall@5:** 1.000
+- **MRR@5:** 0.867
+- **nDCG@5:** 0.900
 
 Strong ranking quality without requiring a vector database.
 
@@ -237,22 +308,22 @@ npm install @knolo/core
 
 Use it when you want stable-id document edits without rebuilding the immutable base pack first:
 
-* `addDocument()` inserts or replaces a live doc by stable id
-* `updateDocument()` merges partial fields onto the last known full doc
-* `removeDocument()` tombstones a doc id and hides the base copy
-* `serialize()` materializes the merged live state as a normal `.knolo` snapshot
+- `addDocument()` inserts or replaces a live doc by stable id
+- `updateDocument()` merges partial fields onto the last known full doc
+- `removeDocument()` tombstones a doc id and hides the base copy
+- `serialize()` materializes the merged live state as a normal `.knolo` snapshot
 
 ```ts
-import { createLivePack, mountPack } from "@knolo/core";
+import { createLivePack, mountPack } from '@knolo/core';
 
-const base = await mountPack({ src: "./dist/knowledge.knolo" });
+const base = await mountPack({ src: './dist/knowledge.knolo' });
 const live = await createLivePack(base, [
-  { id: "notes.alpha", text: "alpha note", namespace: "notes" },
+  { id: 'notes.alpha', text: 'alpha note', namespace: 'notes' },
 ]);
 
-await live.updateDocument({ id: "notes.alpha", text: "alpha note v2" });
-await live.removeDocument("notes.alpha");
-await live.addDocument({ id: "notes.alpha", text: "alpha note restored" });
+await live.updateDocument({ id: 'notes.alpha', text: 'alpha note v2' });
+await live.removeDocument('notes.alpha');
+await live.addDocument({ id: 'notes.alpha', text: 'alpha note restored' });
 
 const snapshot = await live.serialize();
 const rebuilt = await mountPack({ src: snapshot });
@@ -265,21 +336,21 @@ Live querying in v1 stays lexical/graph-only. Semantic live options are rejected
 Use patch packs to ship only stable-id document mutations instead of rebuilding and distributing a full snapshot. Patch packs are deterministic JSON bytes, carry a fingerprint of their base pack, and can be merged or replayed safely:
 
 ```ts
-import {
-  applyPatchPack,
-  deserializePatchPack,
-  mountPack,
-} from "@knolo/core";
+import { applyPatchPack, deserializePatchPack, mountPack } from '@knolo/core';
 
-const base = await mountPack({ src: "./dist/knowledge.knolo" });
-const patch = deserializePatchPack(new Uint8Array(await fetch("./updates.knolo.patch").then(r => r.arrayBuffer())));
+const base = await mountPack({ src: './dist/knowledge.knolo' });
+const patch = deserializePatchPack(
+  new Uint8Array(
+    await fetch('./updates.knolo.patch').then((r) => r.arrayBuffer())
+  )
+);
 const live = await applyPatchPack(base, patch);
 const snapshot = await live.serialize();
 ```
 
 `LivePack.serializePatchPack()` exports the mutations made since the overlay was created. Each upsert is a complete document replacement and each remove is a tombstone; replay rejects a patch whose base fingerprint does not match.
 
-For the rollout notes and constraints, see [`../../LIVE_KBS_MVP.md`](../../LIVE_KBS_MVP.md).
+For the rollout notes and constraints, see [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
 
 ---
 
@@ -288,12 +359,12 @@ For the rollout notes and constraints, see [`../../LIVE_KBS_MVP.md`](../../LIVE_
 ## 1️⃣ Build a Pack
 
 ```ts
-import { buildPack } from "@knolo/core";
+import { buildPack } from '@knolo/core';
 
 const bytes = await buildPack(docs, {
   semantic: {
-    enabled: false
-  }
+    enabled: false,
+  },
 });
 ```
 
@@ -311,17 +382,17 @@ You can write it to disk or store it in object storage.
 ### Node.js (local path convenience)
 
 ```ts
-import { mountPack } from "@knolo/core/node";
+import { mountPack } from '@knolo/core/node';
 
 const pack = await mountPack({
-  src: "./dist/knowledge.knolo"
+  src: './dist/knowledge.knolo',
 });
 ```
 
 ### React Native / Expo (URL or bytes)
 
 ```ts
-import { mountPack } from "@knolo/core";
+import { mountPack } from '@knolo/core';
 
 const ab = await (await fetch(PACK_URL)).arrayBuffer();
 const pack = await mountPack({ src: new Uint8Array(ab) });
@@ -329,26 +400,26 @@ const pack = await mountPack({ src: new Uint8Array(ab) });
 
 You can mount from:
 
-* URL string (runtime-safe entry)
-* Buffer / Uint8Array
-* Local file path in Node via `@knolo/core/node`
-* Object storage download
+- URL string (runtime-safe entry)
+- Buffer / Uint8Array
+- Local file path in Node via `@knolo/core/node`
+- Object storage download
 
 Mount-time validation ensures:
 
-* Pack version compatibility
-* Metadata integrity
-* Optional agent registry validation
+- Pack version compatibility
+- Metadata integrity
+- Optional agent registry validation
 
 ---
 
 ## 3️⃣ Query (Deterministic Lexical Retrieval)
 
 ```ts
-import { query } from "@knolo/core";
+import { query } from '@knolo/core';
 
-const hits = query(pack, "debounce vs throttle", {
-  topK: 5
+const hits = query(pack, 'debounce vs throttle', {
+  topK: 5,
 });
 
 for (const hit of hits) {
@@ -359,10 +430,10 @@ for (const hit of hits) {
 
 Properties:
 
-* Fully deterministic
-* No embedding dependency
-* Namespace-aware
-* Evaluation-friendly scoring
+- Fully deterministic
+- No embedding dependency
+- Namespace-aware
+- Evaluation-friendly scoring
 
 For iterative pack builds, use `knolo dev` as the watch/rebuild workflow. We are keeping that flow instead of introducing `build --watch` in this phase.
 
@@ -378,12 +449,12 @@ Construction accepts `LivePackOptions` for graph settings such as `maxEdgesPerDo
 
 It is designed for document-style live updates:
 
-* `addDocument()` inserts or replaces a live doc by stable id
-* `updateDocument()` merges partial fields onto the last known full doc and shadows any base copy
-* `removeDocument()` tombstones a doc id and hides the base copy
-* `query()` returns the same `Hit[]` shape as `query(pack, ...)`
-* `serialize()` materializes the merged live state as a normal `.knolo` snapshot
-* repeated `serialize()` calls on the same state are byte-identical
+- `addDocument()` inserts or replaces a live doc by stable id
+- `updateDocument()` merges partial fields onto the last known full doc and shadows any base copy
+- `removeDocument()` tombstones a doc id and hides the base copy
+- `query()` returns the same `Hit[]` shape as `query(pack, ...)`
+- `serialize()` materializes the merged live state as a normal `.knolo` snapshot
+- repeated `serialize()` calls on the same state are byte-identical
 
 Live querying in v1 stays lexical/graph-only.
 Semantic build or query options are rejected until live embeddings are added.
@@ -407,7 +478,7 @@ const rebuilt = await mountPack({ src: snapshot });
 const roundTripHits = query(rebuilt, 'beta note', { topK: 5 });
 ```
 
-For the phase-1 rollout notes and test matrix, see [`../../LIVE_KBS_MVP.md`](../../LIVE_KBS_MVP.md).
+For the phase-1 rollout notes and test matrix, see [`../../docs/V5_PRE_V6_DEVELOPMENT_PLAN.md`](../../docs/V5_PRE_V6_DEVELOPMENT_PLAN.md).
 
 ---
 
@@ -423,40 +494,40 @@ It never replaces lexical grounding.
 const bytes = await buildPack(docs, {
   semantic: {
     enabled: true,
-    modelId: "text-embedding-3-small",
+    modelId: 'text-embedding-3-small',
     embeddings,
     quantization: {
-      type: "int8_l2norm",
-      perVectorScale: true
-    }
-  }
+      type: 'int8_l2norm',
+      perVectorScale: true,
+    },
+  },
 });
 ```
 
 ## Query with rerank
 
 ```ts
-import { hasSemantic } from "@knolo/core";
+import { hasSemantic } from '@knolo/core';
 
-const hits = query(pack, "react native throttling issue", {
+const hits = query(pack, 'react native throttling issue', {
   topK: 8,
   semantic: {
     enabled: hasSemantic(pack),
-    mode: "rerank",
+    mode: 'rerank',
     topN: 50,
     minLexConfidence: 0.35,
     blend: { enabled: true, wLex: 0.75, wSem: 0.25 },
-    queryEmbedding
-  }
+    queryEmbedding,
+  },
 });
 ```
 
 Design principles:
 
-* Lexical-first
-* Deterministic scoring
-* No external vector store
-* Quantized embedding storage inside pack
+- Lexical-first
+- Deterministic scoring
+- No external vector store
+- Quantized embedding storage inside pack
 
 ---
 
@@ -466,10 +537,10 @@ Knolo is a knowledge engine first.
 
 However, packs may optionally embed structured metadata for:
 
-* System prompts
-* Namespace restrictions
-* Tool policies
-* Routing hints
+- System prompts
+- Namespace restrictions
+- Tool policies
+- Routing hints
 
 Agent registries are validated once at `mountPack()`.
 
@@ -485,7 +556,7 @@ For strict deterministic workflows:
 
 ```ts
 type RouteDecisionV1 = {
-  type: "route_decision";
+  type: 'route_decision';
   intent?: string;
   entities?: Record<string, unknown>;
   candidates: { agentId: string; score: number }[];
@@ -497,7 +568,7 @@ type RouteDecisionV1 = {
 
 ```ts
 type ToolCallV1 = {
-  type: "tool_call";
+  type: 'tool_call';
   callId: string;
   tool: string;
   args: Record<string, unknown>;
@@ -511,16 +582,16 @@ import {
   isRouteDecisionV1,
   validateRouteDecisionV1,
   isToolAllowed,
-  assertToolCallAllowed
-} from "@knolo/core";
+  assertToolCallAllowed,
+} from '@knolo/core';
 ```
 
 Enables:
 
-* Deterministic routing validation
-* Policy enforcement
-* Tool permission checks
-* Structured AI pipelines
+- Deterministic routing validation
+- Policy enforcement
+- Tool permission checks
+- Structured AI pipelines
 
 These are optional — not required for standard retrieval usage.
 
@@ -540,34 +611,34 @@ Binary layout:
 
 Properties:
 
-* Versioned
-* Compact
-* Immutable
-* Semantic section auto-detected
-* Designed for fast mount + query
+- Versioned
+- Compact
+- Immutable
+- Semantic section auto-detected
+- Designed for fast mount + query
 
 ---
 
 # ⚙️ Design Guarantees
 
-* Deterministic lexical retrieval
-* Deterministic hybrid rerank (fixed vectors)
-* No vector database required
-* No cloud dependency required
-* Works offline
-* Works in React Native / Expo
-* Portable binary artifacts
+- Deterministic lexical retrieval
+- Deterministic hybrid rerank (fixed vectors)
+- No vector database required
+- No cloud dependency required
+- Works offline
+- Works in React Native / Expo
+- Portable binary artifacts
 
 ---
 
 # 🔐 Ideal For
 
-* Local-first AI systems
-* Offline assistants
-* On-device LLM retrieval
-* Secure / air-gapped environments
-* Deterministic RAG pipelines
-* Evaluation-heavy workflows
+- Local-first AI systems
+- Offline assistants
+- On-device LLM retrieval
+- Secure / air-gapped environments
+- Deterministic RAG pipelines
+- Evaluation-heavy workflows
 
 ---
 
@@ -577,11 +648,11 @@ Knolo Cortex is a local-first overlay memory layer for `.knolo` packs.
 
 It gives you:
 
-* Deterministic append-only memory writes
-* Lexical-first recall with label and namespace filters
-* Portable memory logs you can serialize and replay
-* Consolidation back into pack docs without mutating the pack itself
-* Deterministic graph export via `memoryToClaimOps()`
+- Deterministic append-only memory writes
+- Lexical-first recall with label and namespace filters
+- Portable memory logs you can serialize and replay
+- Consolidation back into pack docs without mutating the pack itself
+- Deterministic graph export via `memoryToClaimOps()`
 
 ## Example
 
@@ -593,18 +664,18 @@ import {
   mountPack,
   recall,
   remember,
-} from "@knolo/core";
+} from '@knolo/core';
 
-const cortex = createCortex({ actor: "notes-app" });
+const cortex = createCortex({ actor: 'notes-app' });
 const { cortex: next, memory } = remember(cortex, {
-  kind: "note",
-  text: "Project alpha uses a local-first memory overlay.",
-  labels: ["project.alpha"],
-  namespace: "project.alpha",
+  kind: 'note',
+  text: 'Project alpha uses a local-first memory overlay.',
+  labels: ['project.alpha'],
+  namespace: 'project.alpha',
 });
 
-const hits = recall(next, "project alpha");
-const docs = consolidateMemories(next, { namespacePrefix: "memory" });
+const hits = recall(next, 'project alpha');
+const docs = consolidateMemories(next, { namespacePrefix: 'memory' });
 const bytes = await buildPack(docs);
 const pack = await mountPack({ src: bytes });
 ```
@@ -623,17 +694,17 @@ import {
   recall,
   consolidateMemories,
   memoryToClaimOps,
-} from "@knolo/core";
+} from '@knolo/core';
 ```
 
-* `createCortex({ actor?, now?, log? })` creates an immutable memory runtime
-* `remember()` appends a new memory entry
-* `forget()` tombstones a memory
-* `labelMemory()` adds labels without mutating the original cortex
-* `linkMemories()` records deterministic memory relationships
-* `recall()` ranks memories with lexical-first scoring
-* `consolidateMemories()` converts selected memories back into `BuildInputDoc[]`
-* `memoryToClaimOps()` emits deterministic ClaimGraph ops for memory nodes, labels, and links
+- `createCortex({ actor?, now?, log? })` creates an immutable memory runtime
+- `remember()` appends a new memory entry
+- `forget()` tombstones a memory
+- `labelMemory()` adds labels without mutating the original cortex
+- `linkMemories()` records deterministic memory relationships
+- `recall()` ranks memories with lexical-first scoring
+- `consolidateMemories()` converts selected memories back into `BuildInputDoc[]`
+- `memoryToClaimOps()` emits deterministic ClaimGraph ops for memory nodes, labels, and links
 
 The full example lives in [`examples/memory-overlay/README.md`](../../examples/memory-overlay/README.md).
 
@@ -641,11 +712,11 @@ The full example lives in [`examples/memory-overlay/README.md`](../../examples/m
 
 # 🗺 Roadmap
 
-* Incremental pack updates
-* Evaluation tooling
-* Performance introspection APIs
-* WASM builds
-* Continued local-first optimization
+- Incremental pack updates
+- Evaluation tooling
+- Performance introspection APIs
+- WASM builds
+- Continued local-first optimization
 
 ---
 
@@ -692,21 +763,21 @@ import {
 
 Types:
 
-* `ClaimNode`
-* `ClaimEdge`
-* `ClaimGraph`
-* `ClaimOp`
-* `ClaimGraphLog`
+- `ClaimNode`
+- `ClaimEdge`
+- `ClaimGraph`
+- `ClaimOp`
+- `ClaimGraphLog`
 
 ## Notes on determinism and bounds
 
-* Node IDs are hash-derived from normalized labels.
-* Edge IDs are hash-derived from `(from, predicate, to, evidence)`.
-* Node labels are normalized and deterministically truncated.
-* Evidence arrays are sorted + unique.
-* Node/edge arrays are sorted by ID in final graph.
-* Extraction is bounded with `maxEdgesPerDoc`.
-* Query expansion is bounded with `maxExtraTerms` and stable ordering.
+- Node IDs are hash-derived from normalized labels.
+- Edge IDs are hash-derived from `(from, predicate, to, evidence)`.
+- Node labels are normalized and deterministically truncated.
+- Evidence arrays are sorted + unique.
+- Node/edge arrays are sorted by ID in final graph.
+- Extraction is bounded with `maxEdgesPerDoc`.
+- Query expansion is bounded with `maxExtraTerms` and stable ordering.
 
 ## Pack format note
 

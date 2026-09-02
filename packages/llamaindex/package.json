@@ -1,6 +1,6 @@
 {
   "name": "@knolo/llamaindex",
-  "version": "5.0.0",
+  "version": "5.1.0",
   "private": false,
   "type": "module",
   "main": "./src/index.js",
@@ -28,7 +28,7 @@
     "test": "node --test test/llamaindex.test.mjs"
   },
   "dependencies": {
-    "@knolo/core": "^5.0.0"
+    "@knolo/core": "^5.1.0"
   },
   "description": "LlamaIndex-style retriever interface for KnoLo."
 }

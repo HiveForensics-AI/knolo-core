@@ -1,4 +1,4 @@
-use knolo_core_rust::{authority_envelope_root_v1, authority_keyring_root_v1, authority_session_root_v1, evaluate_knowledge_query_policy_v5, inspect_knowledge_image, key_rotation_root_v1, mount_pack_from_bytes, migrate_v4_to_v5, mount_knowledge_image, query, query_knowledge_image_v5, sync_request_root_v1, sync_response_root_v1, sync_summary_root_v1, verify_knowledge_authority_envelope_v5, verify_knowledge_authority_envelope_with_keyring_root_v5, KnowledgeAuthorityEnvelopeV1, KnowledgeAuthorityKeyV1, KnowledgeAuthorityKeyringV1, KnowledgeKeyRotationRecordV1, KnowledgePolicyV1, QueryOptions};
+use knolo_core_rust::{authority_envelope_root_v1, authority_keyring_root_v1, authority_session_root_v1, evaluate_knowledge_query_policy_v5, inspect_knowledge_image, inspect_knowledge_runtime_v5, inspect_knowledge_studio_management_v5, key_rotation_root_v1, mount_pack_from_bytes, migrate_v4_to_v5, mount_knowledge_image, query, query_knowledge_image_v5, sync_request_root_v1, sync_response_root_v1, sync_summary_root_v1, verify_knowledge_authority_envelope_v5, verify_knowledge_authority_envelope_with_keyring_root_v5, KnowledgeAuthorityEnvelopeV1, KnowledgeAuthorityKeyV1, KnowledgeAuthorityKeyringV1, KnowledgeKeyRotationRecordV1, KnowledgePolicyV1, QueryOptions};
 
 fn build_test_pack_bytes() -> Vec<u8> {
     let meta = b"{\"version\":3,\"stats\":{\"docs\":2,\"blocks\":2,\"terms\":4,\"avgBlockLen\":2.5}}".to_vec();
@@ -117,6 +117,24 @@ fn verifies_shared_v5_binary_fixture() {
     assert_eq!(verified.state_root, "sha256-bc419264f60822bb8c601f01eb3020671e78056f4e6403ab6db087911d25d694");
     assert_eq!(verified.commit_digest, "sha256-7a6ed0a7e488ee085053d6d8d885141e0a8b6abd5c40bd552e4d2b10b721b177");
     assert_eq!(verified.segments.len(), 3);
+}
+
+#[test]
+fn v5_runtime_diagnostics_and_studio_roots_match_shared_fixture() {
+    let bytes = decode_base64(include_str!("../../../conformance/v5/knowledge-image-v5.fixture.base64"));
+    let diagnostics = inspect_knowledge_runtime_v5(&bytes).expect("shared V5 fixture diagnostics should verify");
+    assert_eq!(diagnostics.image.object_count, 1);
+    assert_eq!(diagnostics.image.event_count, 1);
+    assert_eq!(diagnostics.image.segment_count, 3);
+    assert_eq!(diagnostics.diagnostics_root, "sha256-ba488f235ca6e6df08de7100f607c8e713f840f50305b5fea028a8ed9f0ecd7b");
+
+    let studio = inspect_knowledge_studio_management_v5(&bytes).expect("shared V5 Studio snapshot should verify");
+    assert!(studio.read_only);
+    assert!(!studio.capabilities.mutate_image);
+    assert_eq!(studio.management_root, "sha256-911b45a02b1e868d54bea035acfa345e604f3d68224f00b0661b2a9d3cf25285");
+    let fixture = include_str!("../../../conformance/v5/runtime-diagnostics-studio-v1.fixture.json");
+    assert!(fixture.contains(&diagnostics.diagnostics_root));
+    assert!(fixture.contains(&studio.management_root));
 }
 
 #[test]
