@@ -1,6 +1,6 @@
 # V5.2 Hub CLI release record
 
-**Status:** Local implementation complete; package release decision pending
+**Status:** CLI-only `@knolo/cli@5.2.0` release candidate
 
 **Date:** 2026-09-04
 
@@ -48,11 +48,23 @@ npm run test:hub --workspace @knolo/cli
 Add `KNOLO_HUB_INSTALL=1` to exercise manifest, Blob, and local artifact
 verification as well. CI remains independent of a deployed Hub.
 
+## Publication checklist
+
+The already-published V5.1.0 packages remain unchanged. Publish only the new
+CLI package after the release checks pass:
+
+```bash
+npm publish --workspace @knolo/cli --access public
+npm view @knolo/cli@5.2.0 version dist.tarball
+```
+
+Do not publish `@knolo/core`, the adapters, `create-knolo-app`, Rust crates,
+or Python `knolo` for this CLI-only release.
+
 ## Release boundary
 
 This work is additive and does not change the V4 or V5 artifact formats. Hub
 Bearer authentication, CLI upload, draft/release/verify jobs, yank, and pull
-increments remain Hub-owned follow-ups. The repository package metadata is
-still `5.1.0`; changing the synchronized monorepo release line to `5.2.0`
-requires the release-owner decision recorded in the internal V5.2 Hub CLI
-integration plan.
+increments remain Hub-owned follow-ups. `@knolo/cli@5.2.0` depends on the
+existing compatible `@knolo/core@^5.1.0`; all other package, crate, and Python
+metadata remains on the already-published `5.1.0` line.

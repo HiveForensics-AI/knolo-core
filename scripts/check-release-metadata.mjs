@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const releaseVersion = '5.1.0';
+const cliReleaseVersion = '5.2.0';
 
 function readJson(relativePath) {
   return JSON.parse(readFileSync(path.join(root, relativePath), 'utf8'));
@@ -21,10 +22,13 @@ const npmPackages = [
 
 for (const relativePath of npmPackages) {
   const pkg = readJson(relativePath);
+  const expectedVersion = relativePath === 'packages/cli/package.json'
+    ? cliReleaseVersion
+    : releaseVersion;
   assert.equal(
     pkg.version,
-    releaseVersion,
-    `${relativePath} must be ${releaseVersion}.`
+    expectedVersion,
+    `${relativePath} must be ${expectedVersion}.`
   );
   assert.notEqual(pkg.private, true, `${relativePath} is marked private.`);
   assert.equal(
@@ -103,5 +107,5 @@ assert.match(
 );
 
 console.log(
-  `Release metadata passed for npm/Rust/Python ${releaseVersion}.`
+  `Release metadata passed for npm/Rust/Python ${releaseVersion} with CLI-only @knolo/cli ${cliReleaseVersion}.`
 );
