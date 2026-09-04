@@ -115,7 +115,7 @@ function printCommandHelp(command) {
     login: 'Usage: knolo login [--token kno_…] [--stdin] [--registry <url>]\n\nStores the raw token locally. Hub write calls send Authorization: Bearer kno_….\nMint tokens at https://hub.knolo.dev/dashboard/tokens; login does not call POST /api/v1/tokens.',
     whoami: 'Usage: knolo whoami',
     logout: 'Usage: knolo logout',
-    publish: 'Usage: knolo publish <pack.knolo> --slug <slug> --version <version> --license <SPDX> [--publisher <handle>] [--readme <text>] [--sources <text>] [--intended-use <text>] [--json] [--registry <url>]\n\nUses the stored token as Authorization: Bearer kno_…. Uploads go directly to a public Blob URL; Hub verifies before release.\nOlder @knolo/cli 5.2.0 builds were unimplemented; Hub has always accepted Bearer CLI tokens.',
+    publish: 'Usage: knolo publish <pack.knolo> --slug <slug> --version <version> --license <SPDX> [--publisher <handle>] [--readme <text>] [--sources <text>] [--intended-use <text>] [--json] [--registry <url>]\n\nUses the stored dashboard token as Authorization: Bearer kno_…. Hub issues a public Blob PUT grant; the CLI never needs PACKS_READ_WRITE_TOKEN.\nUploads go to the grant URL without the kno_ token. Complete sends the public Blob URL, then Hub verifies before release.',
     yank: 'Usage: knolo yank <publisher>/<slug>@<version> [--json] [--registry <url>]\n\nUses the stored token as Authorization: Bearer kno_…. Yank is owner-only and leaves the public Blob in place.',
     build: 'Usage: knolo build',
     query: 'Usage: knolo query <question> [--pack <path>] [--k <number>] [--receipt <file>] [--json]',

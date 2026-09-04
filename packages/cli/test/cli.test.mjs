@@ -533,16 +533,16 @@ test('hub publish uses Bearer auth for Hub calls and never sends the token to Bl
   const env = {
     KNOLO_HUB_URL: 'https://hub.example.test',
     XDG_CONFIG_HOME: path.join(homeDir, '.config'),
-    PACKS_READ_WRITE_TOKEN: 'vercel_blob_rw_test',
   };
   const token = 'kno_PublishToken012345678901234567890';
   const bytes = Buffer.from('tiny knolo artifact');
   const packPath = path.join(cwd, 'tiny.knolo');
   writeFileSync(packPath, bytes);
   const digest = createHash('sha256').update(bytes).digest('hex');
-  const blobUrl = `https://blob-123.public.blob.vercel-storage.com/sha256/${digest}.knolo`;
+  const pathname = `sha256/${digest}.knolo`;
+  const grantUrl = `https://vercel.com/api/blob/?pathname=${encodeURIComponent(pathname)}`;
+  const blobUrl = `https://blob-123.public.blob.vercel-storage.com/${pathname}`;
   const calls = [];
-  const blobPuts = [];
   const printed = [];
 
   await runHubLogin(['--token', token], { env, homeDir, print: () => {} });
@@ -563,31 +563,35 @@ test('hub publish uses Bearer auth for Hub calls and never sends the token to Bl
       pollIntervalMs: 1,
       sleep: async (milliseconds) => assert.equal(milliseconds, 1),
       print: (value) => printed.push(value),
-      putImpl: async (pathname, body, options) => {
-        blobPuts.push({ pathname, body, options });
-        assert.equal(options.access, 'public');
-        assert.equal(options.addRandomSuffix, false);
-        assert.equal(options.allowOverwrite, true);
-        assert.equal(options.contentType, 'application/octet-stream');
-        assert.equal(options.cacheControlMaxAge, 31536000);
-        assert.equal(options.token, env.PACKS_READ_WRITE_TOKEN);
-        assert.notEqual(options.token, token);
-        assert.equal(pathname, `sha256/${digest}.knolo`);
-        assert.deepEqual(Buffer.from(body), bytes);
-        return { url: blobUrl, pathname };
-      },
       fetchImpl: async (url, init = {}) => {
         const call = { url: String(url), init };
         calls.push(call);
         if (call.url.endsWith('/api/v1/account'))
-          return jsonResponse({ publisher: { handle: 'acme' } }, 200);
+          return jsonResponse({ account: { handle: 'acme' } }, 200);
+        if (call.url.endsWith('/api/upload/token')) {
+          assert.equal(init.headers.Authorization, `Bearer ${token}`);
+          assert.deepEqual(JSON.parse(init.body), {
+            sha256: digest,
+            contentLength: bytes.length,
+          });
+          return jsonResponse(
+            { upload: { url: grantUrl, pathname }, pathname },
+            201
+          );
+        }
+        if (call.url === grantUrl) {
+          assert.equal(init.method, 'PUT');
+          assert.equal(init.headers.Authorization, undefined);
+          assert.deepEqual(Buffer.from(init.body), bytes);
+          return jsonResponse({ url: blobUrl, pathname }, 200);
+        }
         if (call.url.endsWith('/api/upload/complete')) {
           assert.equal(init.headers.Authorization, `Bearer ${token}`);
           assert.deepEqual(JSON.parse(init.body), {
             sha256: digest,
             url: blobUrl,
             sizeBytes: bytes.length,
-            pathname: `sha256/${digest}.knolo`,
+            pathname,
           });
           return jsonResponse({ url: blobUrl }, 200);
         }
@@ -629,11 +633,13 @@ test('hub publish uses Bearer auth for Hub calls and never sends the token to Bl
   assert.equal(result.name, 'acme/tiny');
   assert.equal(result.sha256, digest);
   assert.equal(result.url, blobUrl);
-  assert.equal(blobPuts.length, 1);
+  assert.equal(env.PACKS_READ_WRITE_TOKEN, undefined);
   assert.deepEqual(
     calls.map(({ url }) => url),
     [
       'https://hub.example.test/api/v1/account',
+      'https://hub.example.test/api/upload/token',
+      grantUrl,
       'https://hub.example.test/api/upload/complete',
       'https://hub.example.test/api/v1/publish/verify',
       'https://hub.example.test/api/v1/publish/jobs/job-1',
@@ -657,12 +663,12 @@ test('hub publish refuses private Blob upload URLs before sending bytes', async 
   const env = {
     KNOLO_HUB_URL: 'https://hub.example.test',
     XDG_CONFIG_HOME: path.join(homeDir, '.config'),
-    PACKS_READ_WRITE_TOKEN: 'vercel_blob_rw_test',
   };
   const token = 'kno_PrivateToken012345678901234567890';
   const bytes = Buffer.from('private blob must fail');
   writeFileSync(path.join(cwd, 'private.knolo'), bytes);
   const digest = createHash('sha256').update(bytes).digest('hex');
+  const pathname = `sha256/${digest}.knolo`;
   const calls = [];
   await runHubLogin(['--token', token], { env, homeDir, print: () => {} });
 
@@ -685,18 +691,32 @@ test('hub publish refuses private Blob upload URLs before sending bytes', async 
           fetchImpl: async (url, init = {}) => {
             calls.push({ url: String(url), init });
             if (String(url).endsWith('/api/v1/account'))
-              return jsonResponse({ publisher: { handle: 'acme' } }, 200);
+              return jsonResponse({ account: { handle: 'acme' } }, 200);
+            if (String(url).endsWith('/api/upload/token')) {
+              return jsonResponse(
+                {
+                  pathname,
+                  upload: {
+                    url: `https://store.private.blob.vercel-storage.com/${pathname}`,
+                    pathname,
+                  },
+                },
+                201
+              );
+            }
             throw new Error(`Unexpected Hub request: ${url}`);
           },
-          putImpl: async () => ({
-            url: `https://blob.private.blob.vercel-storage.com/sha256/${digest}.knolo`,
-            pathname: `sha256/${digest}.knolo`,
-          }),
         }
       ),
     /Refusing private Blob URL.*public Blob URL/
   );
-  assert.equal(calls.length, 1);
+  assert.deepEqual(
+    calls.map(({ url }) => url),
+    [
+      'https://hub.example.test/api/v1/account',
+      'https://hub.example.test/api/upload/token',
+    ]
+  );
 });
 
 test('hub publish requires the public Blob pathname to match the artifact digest', async () => {
@@ -710,7 +730,6 @@ test('hub publish requires the public Blob pathname to match the artifact digest
   const env = {
     KNOLO_HUB_URL: 'https://hub.example.test',
     XDG_CONFIG_HOME: path.join(homeDir, '.config'),
-    PACKS_READ_WRITE_TOKEN: 'vercel_blob_rw_test',
   };
   const token = 'kno_PathnameToken01234567890123456789';
   const bytes = Buffer.from('pathname must be checked');
@@ -738,20 +757,31 @@ test('hub publish requires the public Blob pathname to match the artifact digest
           fetchImpl: async (url, init = {}) => {
             calls.push({ url: String(url), init });
             if (String(url).endsWith('/api/v1/account'))
-              return jsonResponse({ publisher: { handle: 'acme' } }, 200);
+              return jsonResponse({ account: { handle: 'acme' } }, 200);
+            if (String(url).endsWith('/api/upload/token')) {
+              return jsonResponse(
+                {
+                  pathname: `sha256/${digest}.knolo.wrong`,
+                  upload: {
+                    url: 'https://vercel.com/api/blob/?pathname=wrong',
+                    pathname: `sha256/${digest}.knolo.wrong`,
+                  },
+                },
+                201
+              );
+            }
             throw new Error(`Unexpected Hub request: ${url}`);
           },
-          putImpl: async (pathname, body) => ({
-            url: 'https://blob.public.blob.vercel-storage.com/other.knolo',
-            pathname: `${pathname}.wrong`,
-          }),
         }
       ),
-    /Public Blob upload pathname is not locked/
+    /Hub upload pathname is not locked/
   );
   assert.deepEqual(
     calls.map(({ url }) => url),
-    ['https://hub.example.test/api/v1/account']
+    [
+      'https://hub.example.test/api/v1/account',
+      'https://hub.example.test/api/upload/token',
+    ]
   );
 });
 
@@ -776,12 +806,13 @@ test('hub publish rejects loopback, private, link-local, and local-only Blob hos
     const env = {
       KNOLO_HUB_URL: 'https://hub.example.test',
       XDG_CONFIG_HOME: path.join(homeDir, '.config'),
-      PACKS_READ_WRITE_TOKEN: 'vercel_blob_rw_test',
     };
     const token = 'kno_LocalHostToken0123456789012345678';
     const bytes = Buffer.from(`local Blob host ${host}`);
     writeFileSync(path.join(cwd, 'local.knolo'), bytes);
     const digest = createHash('sha256').update(bytes).digest('hex');
+    const pathname = `sha256/${digest}.knolo`;
+    const grantUrl = `https://vercel.com/api/blob/?pathname=${encodeURIComponent(pathname)}`;
     await runHubLogin(['--token', token], { env, homeDir, print: () => {} });
 
     await assert.rejects(
@@ -800,19 +831,29 @@ test('hub publish rejects loopback, private, link-local, and local-only Blob hos
             env,
             cwd,
             homeDir,
-            fetchImpl: async (url) =>
-              String(url).endsWith('/api/v1/account')
-                ? jsonResponse({ publisher: { handle: 'acme' } }, 200)
-                : (() => {
-                    throw new Error(`Unexpected Hub request: ${url}`);
-                  })(),
-            putImpl: async () => ({
-              url: `https://${host}/sha256/${digest}.knolo`,
-              pathname: `sha256/${digest}.knolo`,
-            }),
+            fetchImpl: async (url) => {
+              if (String(url).endsWith('/api/v1/account'))
+                return jsonResponse({ account: { handle: 'acme' } }, 200);
+              if (String(url).endsWith('/api/upload/token')) {
+                return jsonResponse(
+                  { pathname, upload: { url: grantUrl, pathname } },
+                  201
+                );
+              }
+              if (String(url) === grantUrl) {
+                return jsonResponse(
+                  {
+                    url: `https://${host}/sha256/${digest}.knolo`,
+                    pathname,
+                  },
+                  200
+                );
+              }
+              throw new Error(`Unexpected Hub request: ${url}`);
+            },
           }
         ),
-      /Blob URL.*public Blob URL/
+      /Blob URL.*public Blob URL|must be a public Vercel Blob pack URL/
     );
   }
 });

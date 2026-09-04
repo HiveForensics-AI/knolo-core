@@ -1,6 +1,6 @@
 {
   "name": "@knolo/cli",
-  "version": "5.2.2",
+  "version": "5.2.3",
   "type": "module",
   "bin": {
     "knolo": "bin/knolo.mjs"
@@ -32,8 +32,7 @@
     "test:hub": "node --test test/hub.integration.test.mjs"
   },
   "dependencies": {
-    "@knolo/core": "^5.1.0",
-    "@vercel/blob": "2.8.0"
+    "@knolo/core": "^5.1.0"
   },
   "private": false
 }
