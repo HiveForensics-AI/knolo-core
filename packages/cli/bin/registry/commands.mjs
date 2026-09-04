@@ -332,6 +332,9 @@ export async function runHubPublish(
   const uploaded = await putImpl(pathname, bytes, {
     access: 'public',
     addRandomSuffix: false,
+    // The pathname is content-addressed by the already-computed SHA-256.
+    // Allowing overwrite makes a retry safe after a partial Hub publish.
+    allowOverwrite: true,
     contentType: 'application/octet-stream',
     cacheControlMaxAge: 31536000,
     token: packsReadWriteToken(env),

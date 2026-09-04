@@ -567,6 +567,7 @@ test('hub publish uses Bearer auth for Hub calls and never sends the token to Bl
         blobPuts.push({ pathname, body, options });
         assert.equal(options.access, 'public');
         assert.equal(options.addRandomSuffix, false);
+        assert.equal(options.allowOverwrite, true);
         assert.equal(options.contentType, 'application/octet-stream');
         assert.equal(options.cacheControlMaxAge, 31536000);
         assert.equal(options.token, env.PACKS_READ_WRITE_TOKEN);
