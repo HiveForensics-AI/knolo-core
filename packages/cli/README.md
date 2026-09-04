@@ -57,16 +57,23 @@ knolo login --token kno_…
 # write requests use: Authorization: Bearer kno_…
 ```
 
-`knolo publish` uploads bytes directly to the public Blob URL returned by Hub,
-waits for verification, creates an attested draft, and releases it. The
-`--slug`, `--version`, and SPDX `--license` are required:
+`knolo publish` uploads bytes with `@vercel/blob` to the public store, waits
+for verification, creates an attested draft, and releases it. Set
+`PACKS_READ_WRITE_TOKEN` from the production `knolo-hub` Vercel environment
+before publishing; do not substitute `BLOB_READ_WRITE_TOKEN`:
 
 ```bash
+cd /path/to/knolo-hub
+npx vercel env pull /tmp/knolo-env-prod --environment=production --yes
+export PACKS_READ_WRITE_TOKEN="$(awk -F= '$1 == "PACKS_READ_WRITE_TOKEN" {sub(/^[^=]*=/, ""); gsub(/^\"|\"$/, ""); print; exit}' /tmp/knolo-env-prod)"
+
 knolo publish ./dist/knowledge.knolo \
   --slug refund-policy --version 1.2.0 --license Apache-2.0
 knolo yank acme/refund-policy@1.2.0
 ```
 
+The upload uses pathname `sha256/<64-lowercase-hex>.knolo`, public access,
+`addRandomSuffix: false`, `application/octet-stream`, and a one-year cache.
 Only public Blob URLs are accepted because Hub verification fetches the
 artifact itself. The CLI never sends the `kno_…` token to Blob, in a query
 string, cookie, or pack bytes. A 401 usually means the `Bearer` word is
@@ -98,7 +105,6 @@ knolo add acme/refund-policy@1.2.0
 Successful installs are cached by SHA-256 and recorded in
 `knolo.lock.json`. A yanked version or an existing conflicting pin requires
 `--force`; digest and artifact validation cannot be bypassed.
-
 
 ---
 
@@ -167,11 +173,11 @@ curl -sS "http://127.0.0.1:8787/search?q=billing&k=5"
 
 These commands stay local-first:
 
-* No hosted service
-* No vector database
-* Lexical retrieval by default
-* Controller-only pack mutation; 2 MiB pack limit
-* Pack state survives canister upgrades
+- No hosted service
+- No vector database
+- Lexical retrieval by default
+- Controller-only pack mutation; 2 MiB pack limit
+- Pack state survives canister upgrades
 
 ---
 
@@ -192,8 +198,8 @@ knolo.config.ts
 
 ```ts
 export default {
-  input: "./knowledge",
-  output: "./dist/knowledge.knolo"
+  input: './knowledge',
+  output: './dist/knowledge.knolo',
 };
 ```
 
@@ -201,12 +207,12 @@ export default {
 
 ## 🧱 What the CLI Does
 
-* Parses structured documents
-* Normalizes metadata
-* Indexes namespaces
-* Extracts agent routing profiles
-* Validates agent registry
-* Generates compact `.knolo` bundle
+- Parses structured documents
+- Normalizes metadata
+- Indexes namespaces
+- Extracts agent routing profiles
+- Validates agent registry
+- Generates compact `.knolo` bundle
 
 All builds are deterministic.
 
@@ -216,11 +222,11 @@ All builds are deterministic.
 
 Current v4 features include:
 
-* Routing profile extraction
-* Tool policy validation
-* Mount-time registry validation
-* Deterministic selection logic
-* Pack manifests, analyzer identities, retrieval plans, receipts, and evidence spans
+- Routing profile extraction
+- Tool policy validation
+- Mount-time registry validation
+- Deterministic selection logic
+- Pack manifests, analyzer identities, retrieval plans, receipts, and evidence spans
 
 ---
 
@@ -228,16 +234,16 @@ Current v4 features include:
 
 KnoLo intentionally avoids:
 
-* Vector databases
-* Similarity search
-* External inference APIs
+- Vector databases
+- Similarity search
+- External inference APIs
 
 This ensures:
 
-* Reproducibility
-* Security
-* Low memory usage
-* Predictable results
+- Reproducibility
+- Security
+- Low memory usage
+- Predictable results
 
 ---
 
