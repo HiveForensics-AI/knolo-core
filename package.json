@@ -19,7 +19,7 @@
     "release:packages": "node scripts/check-package-publication.mjs",
     "release:archives": "bash scripts/check-package-archives.sh",
     "smoke:v5": "npm run build --workspace @knolo/core && node scripts/smoke-v5.mjs",
-    "format:check:all": "npm run format:check --workspace @knolo/core && npx prettier --check scripts/check-doc-links.mjs scripts/check-package-publication.mjs scripts/smoke-v5.mjs package.json .github/workflows/ci.yml docs/V5_PRE_V6_DEVELOPMENT_PLAN.md docs/V5_COORDINATION.md docs/V5_HOST_DEPLOYMENT.md docs/V5_INTEROPERABILITY.md docs/V5_TO_V6_HANDOFF.md docs/V5_1_0_RELEASE_RECORD.md docs/V5_2_0_HUB_CLI_RELEASE_RECORD.md",
+    "format:check:all": "npm run format:check --workspace @knolo/core && npx prettier --check scripts/check-doc-links.mjs scripts/check-package-publication.mjs scripts/smoke-v5.mjs package.json .github/workflows/ci.yml docs/V5_PRE_V6_DEVELOPMENT_PLAN.md docs/V5_COORDINATION.md docs/V5_HOST_DEPLOYMENT.md docs/V5_INTEROPERABILITY.md docs/V5_TO_V6_HANDOFF.md docs/V5_1_0_RELEASE_RECORD.md",
     "release:metadata": "node scripts/check-release-metadata.mjs",
     "release:check": "npm run build --workspaces --if-present && node scripts/check-v5-release.mjs && node scripts/check-release-metadata.mjs && npm run docs:check && npm run release:packages && npm run release:archives",
     "icp:local": "bash tests/icp-local/run-local.sh"
