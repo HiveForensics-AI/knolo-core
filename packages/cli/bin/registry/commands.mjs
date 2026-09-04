@@ -162,6 +162,10 @@ export function runHubPublishStub() {
   throw new Error('Hub write APIs do not accept CLI tokens yet');
 }
 
+export function runHubYankStub() {
+  throw new Error('Hub write APIs do not accept CLI tokens yet');
+}
+
 export function parseAddArgs(args) {
   const positional = [];
   const flags = {};

@@ -60,6 +60,10 @@ Successful installs are cached by SHA-256 and recorded in
 `knolo.lock.json`. A yanked version or an existing conflicting pin requires
 `--force`; digest and artifact validation cannot be bypassed.
 
+Hub write APIs do not yet accept CLI Bearer tokens, so `knolo publish` and
+`knolo yank` remain explicit stubs until the Hub upload, verification, release,
+and owner-only yank endpoints are available.
+
 ---
 
 ## 🚀 Commands

@@ -310,6 +310,7 @@ test('hub commands are registered without loading the core runtime for help', ()
   assert.match(runCli(['info', '--help'], cwd), /Usage: knolo info/);
   assert.match(runCli(['login', '--help'], cwd), /Usage: knolo login/);
   assert.match(runCli(['publish', '--help'], cwd), /not available until Hub write APIs/);
+  assert.match(runCli(['yank', '--help'], cwd), /not available until Hub write APIs/);
 });
 
 test('hub credentials are local, restrictive, and offline', async () => {
@@ -355,6 +356,14 @@ test('hub publish fails with the contract capability boundary', async () => {
   const { runHubPublishStub } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
   assert.throws(
     () => runHubPublishStub(),
+    (error) => error.message === 'Hub write APIs do not accept CLI tokens yet'
+  );
+});
+
+test('hub yank is registered but fails with the contract capability boundary', async () => {
+  const { runHubYankStub } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  assert.throws(
+    () => runHubYankStub(),
     (error) => error.message === 'Hub write APIs do not accept CLI tokens yet'
   );
 });
