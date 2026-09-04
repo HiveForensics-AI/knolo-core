@@ -21,6 +21,9 @@ materials for Knolo.
   rules, and remaining release gates.
 - [V5.1.0 release record](V5_1_0_RELEASE_RECORD.md) — candidate contents,
   local evidence, and the external publication checklist.
+- [V5.2 Hub CLI release record](V5_2_0_HUB_CLI_RELEASE_RECORD.md) — local Hub
+  read-path implementation, smoke commands, evidence, and remaining release
+  decision.
 - [V5 specification index](../spec/README.md) — KIP byte, root, runtime, and
   management contracts.
 - [V5 conformance fixtures](../conformance/v5/README.md) — shared binary

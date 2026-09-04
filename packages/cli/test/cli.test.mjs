@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { chmodSync, mkdtempSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdtempSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
@@ -117,6 +118,9 @@ test('packed @knolo/cli tarball includes expected runtime files only', () => {
     .filter(Boolean);
 
   assert.ok(entries.includes('package/bin/knolo.mjs'));
+  assert.ok(entries.includes('package/bin/registry/commands.mjs'));
+  assert.ok(entries.includes('package/bin/registry/credentials.mjs'));
+  assert.ok(entries.includes('package/bin/registry/http.mjs'));
   assert.ok(entries.includes('package/package.json'));
   assert.ok(entries.includes('package/templates/icp-knowledge-canister/dfx.json'));
   assert.equal(entries.some((entry) => entry.startsWith('package/test/')), false);
@@ -166,6 +170,541 @@ test('inspect and verify expose the v4 container', () => {
   const verified = JSON.parse(runCli(['verify', './dist/knowledge.knolo'], cwd));
   assert.equal(verified.verified, true);
 });
+
+test('hub search maps filters and renders compact pack rows', async () => {
+  const { runHubSearch } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  let requestUrl;
+  const printed = [];
+  const responseBody = {
+    packs: [{
+      id: 'acme/refund-policy',
+      version: '1.2.0',
+      format: 'V5',
+      license: 'Apache-2.0',
+      pulls: 18420,
+      description: 'Customer support policy',
+    }],
+  };
+  const output = await runHubSearch(
+    ['refund policy', '--format', 'v5', '--license', 'Apache-2.0', '--official', '--agents'],
+    {
+      env: { KNOLO_HUB_URL: 'https://fixture.example' },
+      fetchImpl: async (url) => {
+        requestUrl = new URL(url);
+        return { ok: true, status: 200, text: async () => JSON.stringify(responseBody) };
+      },
+      print: (value) => printed.push(value),
+    }
+  );
+  assert.equal(output.registry, 'https://fixture.example');
+  assert.equal(requestUrl.pathname, '/api/v1/packs');
+  assert.equal(requestUrl.searchParams.get('q'), 'refund policy');
+  assert.equal(requestUrl.searchParams.get('format'), 'V5');
+  assert.equal(requestUrl.searchParams.get('license'), 'Apache-2.0');
+  assert.equal(requestUrl.searchParams.get('official'), 'true');
+  assert.equal(requestUrl.searchParams.get('agents'), 'true');
+  assert.match(printed[0], /NAME\s+VERSION\s+FORMAT\s+LICENSE\s+PULLS\s+DESCRIPTION/);
+  assert.match(printed[0], /acme\/refund-policy/);
+  assert.match(printed[0], /Customer support policy/);
+});
+
+test('hub search json mode preserves the response object', async () => {
+  const { runHubSearch } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const responseBody = {
+    packs: [{ id: 'knolo/docs', version: '1.0.0', format: 'V5', topics: ['docs'] }],
+  };
+  const printed = [];
+  await runHubSearch(['docs', '--json', '--registry', 'https://fixture.example'], {
+    fetchImpl: async () => ({ ok: true, status: 200, text: async () => JSON.stringify(responseBody) }),
+    print: (value) => printed.push(value),
+  });
+  assert.deepEqual(JSON.parse(printed[0]), responseBody);
+});
+
+test('hub info renders the listing and supports json mode', async () => {
+  const { runHubInfo } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const responseBody = {
+    name: 'acme/refund-policy',
+    publisher: 'acme',
+    slug: 'refund-policy',
+    description: 'Customer support policy',
+    pack: {
+      format: 'V5',
+      version: '1.2.0',
+      license: 'Apache-2.0',
+      sizeBytes: 323584,
+      docs: 12,
+      blocks: 18,
+      namespaces: ['support'],
+      pulls: 18420,
+      stars: 42,
+      topics: ['refunds'],
+    },
+    latest: {
+      version: '1.2.0',
+      sha256: '21a9d04ea66f8a7da0b6427c6936e714d9e6b1f7d5c2a0b319f6e3d7a5b87a12',
+      url: 'https://blob.example.test/sha256/21a9.knolo',
+    },
+  };
+  const printed = [];
+  await runHubInfo(['acme/refund-policy', '--registry', 'https://fixture.example'], {
+    fetchImpl: async () => ({ ok: true, status: 200, text: async () => JSON.stringify(responseBody) }),
+    print: (value) => printed.push(value),
+  });
+  assert.match(printed[0], /name\s+acme\/refund-policy/);
+  assert.match(printed[0], /format\s+V5/);
+  assert.match(printed[0], /sha256\s+21a9d04ea66f8a7da0b6427c6936e714d9e6b1f7d5c2a0b319f6e3d7a5b87a12/);
+
+  await runHubInfo(['acme/refund-policy', '--json', '--registry', 'https://fixture.example'], {
+    fetchImpl: async () => ({ ok: true, status: 200, text: async () => JSON.stringify(responseBody) }),
+    print: (value) => printed.push(value),
+  });
+  assert.deepEqual(JSON.parse(printed[1]), responseBody);
+});
+
+test('hub pack specs support omitted, exact, and latest versions', async () => {
+  const { parsePackSpec } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/specs.mjs')).href);
+  assert.deepEqual(parsePackSpec('acme/refund-policy'), {
+    name: 'acme/refund-policy',
+    publisher: 'acme',
+    slug: 'refund-policy',
+    version: 'latest',
+  });
+  assert.equal(parsePackSpec('acme/refund-policy@1.2.0').version, '1.2.0');
+  assert.equal(parsePackSpec('acme/refund-policy@latest').version, 'latest');
+});
+
+test('hub registry configuration honors overrides and development defaults', async () => {
+  const { normalizeRegistryUrl, registryApiUrl, resolveRegistryUrl } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/config.mjs')).href);
+  assert.equal(resolveRegistryUrl({ env: { KNOLO_HUB_URL: 'https://example.test/' } }), 'https://example.test');
+  assert.equal(resolveRegistryUrl({ value: 'https://override.test/', env: { KNOLO_HUB_URL: 'https://ignored.test' } }), 'https://override.test');
+  assert.equal(resolveRegistryUrl({ env: { NODE_ENV: 'development' } }), 'http://localhost:3000');
+  assert.equal(registryApiUrl('https://example.test', ['packs', 'acme', 'refund-policy'], { q: 'refund policy' }).toString(), 'https://example.test/api/v1/packs/acme/refund-policy?q=refund+policy');
+  assert.throws(() => normalizeRegistryUrl('https://example.test/api'), /origin without a path/);
+});
+
+test('hub http client preserves structured errors', async () => {
+  const { RegistryError } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/errors.mjs')).href);
+  const { getJson } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/http.mjs')).href);
+  await assert.rejects(
+    () => getJson('https://fixture.example/api/v1/packs/missing', {
+      fetchImpl: async () => ({
+        ok: false,
+        status: 404,
+        text: async () => JSON.stringify({ error: 'Pack not found.', code: 'not_found' }),
+      }),
+    }),
+    (error) => {
+      assert.equal(error instanceof RegistryError, true);
+      assert.equal(error.status, 404);
+      assert.equal(error.code, 'not_found');
+      assert.equal(error.message, 'Pack not found.');
+      return true;
+    }
+  );
+});
+
+test('hub commands are registered without loading the core runtime for help', () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-help-'));
+  assert.match(runCli(['search', '--help'], cwd), /Usage: knolo search/);
+  assert.match(runCli(['info', '--help'], cwd), /Usage: knolo info/);
+  assert.match(runCli(['login', '--help'], cwd), /Usage: knolo login/);
+  assert.match(runCli(['publish', '--help'], cwd), /not available until Hub write APIs/);
+});
+
+test('hub credentials are local, restrictive, and offline', async () => {
+  const { runHubLogin, runHubLogout, runHubWhoami } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-credentials-'));
+  const env = {
+    KNOLO_HUB_URL: 'https://hub.example.test',
+    XDG_CONFIG_HOME: path.join(homeDir, '.config'),
+  };
+  const token = 'kno_AbCdEfGhIjKlMnOpQrStUvWxYz0123456789';
+  const printed = [];
+
+  await runHubLogin(['--token', ` ${token} `], {
+    env,
+    homeDir,
+    print: (value) => printed.push(value),
+  });
+
+  const credentialsPath = path.join(homeDir, '.config', 'knolo', 'credentials.json');
+  assert.equal(statSync(credentialsPath).mode & 0o777, 0o600);
+  assert.deepEqual(JSON.parse(readFileSync(credentialsPath, 'utf8')), {
+    registry: 'https://hub.example.test',
+    token,
+    prefix: token.slice(0, 12),
+  });
+  assert.equal(printed.join('\n').includes(token), false);
+
+  const whoamiOutput = [];
+  const identity = await runHubWhoami([], { env, homeDir, print: (value) => whoamiOutput.push(value) });
+  assert.deepEqual(identity, { registry: 'https://hub.example.test', prefix: token.slice(0, 12) });
+  assert.match(whoamiOutput.join('\n'), /registry https:\/\/hub\.example\.test/);
+  assert.equal(whoamiOutput.join('\n').includes(token), false);
+
+  const logoutOutput = [];
+  const logout = await runHubLogout([], { env, homeDir, print: (value) => logoutOutput.push(value) });
+  assert.equal(logout.removed, true);
+  assert.equal(existsSync(credentialsPath), false);
+  assert.match(logoutOutput[0], /logged out/);
+  await assert.rejects(() => runHubWhoami([], { env, homeDir, print: () => {} }), /Not logged in/);
+});
+
+test('hub publish fails with the contract capability boundary', async () => {
+  const { runHubPublishStub } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  assert.throws(
+    () => runHubPublishStub(),
+    (error) => error.message === 'Hub write APIs do not accept CLI tokens yet'
+  );
+});
+
+test('hub add fetches the manifest then Blob, verifies bytes, caches, and locks atomically', async () => {
+  const { runHubAdd } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const core = await import(pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href);
+  const bytes = await core.buildPack([{ id: 'refund.md', text: '# Refund policy\n\nCustomers may request a refund.' }]);
+  const digest = createHash('sha256').update(bytes).digest('hex');
+  const manifest = {
+    name: 'acme/refund-policy',
+    version: '1.2.0',
+    sha256: digest,
+    url: `https://blob.example.test/sha256/${digest}.knolo`,
+    license: 'Apache-2.0',
+    sizeBytes: bytes.length,
+    yanked: false,
+    format: 'V4',
+  };
+  const calls = [];
+  const printed = [];
+  const warnings = [];
+  const fetchImpl = async (url, init) => {
+    calls.push({ url: String(url), init });
+    if (calls.length === 1) return jsonResponse(manifest, 200);
+    return {
+      ok: true,
+      status: 200,
+      url: manifest.url,
+      headers: new Headers({ 'content-length': String(bytes.length) }),
+      arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+    };
+  };
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-add-'));
+  const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-home-'));
+
+  const result = await runHubAdd(
+    ['acme/refund-policy@1.2.0', '--registry', 'https://hub.example.test', '--out', './dist/refund.knolo'],
+    { core, cwd, homeDir, fetchImpl, print: (value) => printed.push(value), warn: (value) => warnings.push(value) }
+  );
+
+  const cacheFile = path.join(homeDir, '.knolo', 'cache', 'sha256', `${digest}.knolo`);
+  const lockfile = JSON.parse(readFileSync(path.join(cwd, 'knolo.lock.json'), 'utf8'));
+  assert.equal(result.version, '1.2.0');
+  assert.equal(result.path, path.join(cwd, 'dist/refund.knolo'));
+  assert.deepEqual(lockfile, {
+    registry: 'https://hub.example.test',
+    packs: {
+      'acme/refund-policy': {
+        version: '1.2.0',
+        sha256: digest,
+        license: 'Apache-2.0',
+      },
+    },
+  });
+  assert.deepEqual(readFileSync(cacheFile), Buffer.from(bytes));
+  assert.deepEqual(readFileSync(result.path), Buffer.from(bytes));
+  assert.equal(statSync(cacheFile).mode & 0o777, 0o644);
+  assert.equal(calls.length, 2);
+  assert.match(calls[0].url, /^https:\/\/hub\.example\.test\/api\/v1\/packs\/acme\/refund-policy\/1\.2\.0$/);
+  assert.equal(calls[1].url, manifest.url);
+  assert.equal(calls[1].init.headers, undefined);
+  assert.match(printed.join('\n'), /added acme\/refund-policy@1\.2\.0/);
+  assert.equal(warnings.length, 0);
+});
+
+test('hub add validates and locks a V5 Knowledge Image', async () => {
+  const { runHubAdd } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const core = await import(pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href);
+  const image = core.createKnowledgeImageV5({
+    objects: [{ kind: 'metadata', bytes: new TextEncoder().encode('hub add v5 test'), meta: {} }],
+  });
+  const bytes = image.bytes;
+  const digest = createHash('sha256').update(bytes).digest('hex');
+  const manifest = {
+    name: 'knolo/v5-test',
+    version: '5.0.0',
+    sha256: digest,
+    stateRoot: image.stateRoot,
+    url: `https://blob.example.test/sha256/${digest}.knolo`,
+    license: 'Apache-2.0',
+    sizeBytes: bytes.length,
+    yanked: false,
+    format: 'V5',
+  };
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-add-v5-'));
+  const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-home-v5-'));
+  const calls = [];
+  await runHubAdd(['knolo/v5-test@5.0.0', '--registry', 'https://hub.example.test'], {
+    core,
+    cwd,
+    homeDir,
+    fetchImpl: async (url, init) => {
+      calls.push({ url: String(url), init });
+      if (calls.length === 1) return jsonResponse(manifest, 200);
+      return { ok: true, status: 200, url: manifest.url, headers: new Headers({ 'content-length': String(bytes.length) }), arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) };
+    },
+    print: () => {},
+  });
+  const lockfile = JSON.parse(readFileSync(path.join(cwd, 'knolo.lock.json'), 'utf8'));
+  assert.equal(calls.length, 2);
+  assert.equal(lockfile.packs['knolo/v5-test'].stateRoot, image.stateRoot);
+});
+
+test('hub add fails closed on digest mismatch without writing a lockfile', async () => {
+  const { runHubAdd } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const core = await import(pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href);
+  const bytes = await core.buildPack([{ id: 'doc.md', text: 'digest mismatch test' }]);
+  const manifest = {
+    name: 'acme/digest-test',
+    version: '1.0.0',
+    sha256: '0'.repeat(64),
+    url: 'https://blob.example.test/sha256/0000000000000000000000000000000000000000000000000000000000000000.knolo',
+    sizeBytes: bytes.length,
+    yanked: false,
+  };
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-add-mismatch-'));
+  const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-home-mismatch-'));
+  await assert.rejects(
+    () => runHubAdd(['acme/digest-test@1.0.0', '--registry', 'https://hub.example.test'], {
+      core,
+      cwd,
+      homeDir,
+      fetchImpl: async (url) => String(url).includes('/api/')
+        ? jsonResponse(manifest, 200)
+        : { ok: true, status: 200, url: manifest.url, headers: new Headers({ 'content-length': String(bytes.length) }), arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) },
+    }),
+    /artifact sha256 mismatch/
+  );
+  assert.equal(existsSync(path.join(cwd, 'knolo.lock.json')), false);
+});
+
+test('hub add rejects advertised and actual Blob size mismatches', async () => {
+  const { runHubAdd } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const core = await import(pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href);
+  const bytes = await core.buildPack([{ id: 'doc.md', text: 'size validation test' }]);
+  const digest = createHash('sha256').update(bytes).digest('hex');
+  const makeManifest = (sizeBytes) => ({
+    name: 'acme/size-test',
+    version: '1.0.0',
+    sha256: digest,
+    url: `https://blob.example.test/sha256/${digest}.knolo`,
+    sizeBytes,
+    yanked: false,
+  });
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-add-size-'));
+  const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-home-size-'));
+  await assert.rejects(
+    () => runHubAdd(['acme/size-test@1.0.0', '--registry', 'https://hub.example.test'], {
+      core,
+      cwd,
+      homeDir,
+      fetchImpl: async (url) => String(url).includes('/api/')
+        ? jsonResponse(makeManifest(bytes.length), 200)
+        : { ok: true, status: 200, url: makeManifest(bytes.length).url, headers: new Headers({ 'content-length': String(bytes.length + 1) }), arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) },
+    }),
+    /Content-Length.*does not match manifest/
+  );
+
+  await assert.rejects(
+    () => runHubAdd(['acme/size-test@1.0.0', '--registry', 'https://hub.example.test'], {
+      core,
+      cwd: mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-add-body-size-')),
+      homeDir: mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-home-body-size-')),
+      fetchImpl: async (url) => String(url).includes('/api/')
+        ? jsonResponse(makeManifest(bytes.length + 1), 200)
+        : { ok: true, status: 200, url: makeManifest(bytes.length + 1).url, headers: new Headers(), arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) },
+    }),
+    /body length.*does not match manifest/
+  );
+});
+
+test('hub add rejects non-HTTPS Blob URLs and invalid Knowledge Images', async () => {
+  const { runHubAdd } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const core = await import(pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href);
+  const invalidBytes = Buffer.from('not a Knowledge Image');
+  const digest = createHash('sha256').update(invalidBytes).digest('hex');
+  const baseManifest = {
+    name: 'acme/invalid-test',
+    version: '1.0.0',
+    sha256: digest,
+    sizeBytes: invalidBytes.length,
+    yanked: false,
+  };
+
+  await assert.rejects(
+    () => runHubAdd(['acme/invalid-test@1.0.0', '--registry', 'https://hub.example.test'], {
+      core,
+      homeDir: mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-home-http-')),
+      fetchImpl: async (url) => jsonResponse({ ...baseManifest, url: 'http://blob.example.test/artifact.knolo' }, 200),
+    }),
+    /Blob URL must use HTTPS/
+  );
+
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-add-invalid-'));
+  const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-home-invalid-'));
+  await assert.rejects(
+    () => runHubAdd(['acme/invalid-test@1.0.0', '--registry', 'https://hub.example.test'], {
+      core,
+      cwd,
+      homeDir,
+      fetchImpl: async (url) => String(url).includes('/api/')
+        ? jsonResponse({ ...baseManifest, url: `https://blob.example.test/sha256/${digest}.knolo` }, 200)
+        : { ok: true, status: 200, url: `https://blob.example.test/sha256/${digest}.knolo`, headers: new Headers({ 'content-length': String(invalidBytes.length) }), arrayBuffer: async () => invalidBytes.buffer.slice(invalidBytes.byteOffset, invalidBytes.byteOffset + invalidBytes.byteLength) },
+    }),
+    /not a Knowledge Image/
+  );
+  assert.equal(existsSync(path.join(cwd, 'knolo.lock.json')), false);
+  assert.equal(existsSync(path.join(homeDir, '.knolo', 'cache', 'sha256', `${digest}.knolo`)), false);
+});
+
+test('hub add refuses missing artifacts and does not fetch an empty URL', async () => {
+  const { runHubAdd } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const core = await import(pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href);
+  const manifest = {
+    name: 'acme/not-uploaded',
+    version: '1.0.0',
+    sha256: '1'.repeat(64),
+    url: '',
+    sizeBytes: 0,
+    yanked: false,
+  };
+  const calls = [];
+  await assert.rejects(
+    () => runHubAdd(['acme/not-uploaded', '--registry', 'https://hub.example.test'], {
+      core,
+      homeDir: mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-home-empty-')),
+      fetchImpl: async (url, init) => {
+        calls.push({ url: String(url), init });
+        return jsonResponse(manifest, 200);
+      },
+    }),
+    /artifact bytes are not stored yet/
+  );
+  assert.equal(calls.length, 1);
+});
+
+test('hub add refuses yanked versions unless forced', async () => {
+  const { runHubAdd } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const core = await import(pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href);
+  const bytes = await core.buildPack([{ id: 'doc.md', text: 'yanked test' }]);
+  const digest = createHash('sha256').update(bytes).digest('hex');
+  const manifest = {
+    name: 'acme/yanked',
+    version: '1.0.0',
+    sha256: digest,
+    url: `https://blob.example.test/sha256/${digest}.knolo`,
+    sizeBytes: bytes.length,
+    yanked: true,
+  };
+  const response = () => ({
+    ok: false,
+    status: 410,
+    text: async () => JSON.stringify({ ...manifest, error: 'Version yanked.', code: 'yanked' }),
+  });
+  const refusedCalls = [];
+  await assert.rejects(
+    () => runHubAdd(['acme/yanked@1.0.0', '--registry', 'https://hub.example.test'], {
+      core,
+      homeDir: mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-home-yanked-')),
+      fetchImpl: async (url, init) => {
+        refusedCalls.push({ url: String(url), init });
+        return response();
+      },
+    }),
+    /version yanked.*--force/i
+  );
+  assert.equal(refusedCalls.length, 1);
+
+  const warnings = [];
+  const forcedCalls = [];
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-add-forced-'));
+  await runHubAdd(['acme/yanked@1.0.0', '--force', '--registry', 'https://hub.example.test'], {
+    core,
+    cwd,
+    homeDir: mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-home-forced-')),
+    fetchImpl: async (url, init) => {
+      forcedCalls.push({ url: String(url), init });
+      if (forcedCalls.length === 1) return response();
+      return { ok: true, status: 200, url: manifest.url, headers: new Headers({ 'content-length': String(bytes.length) }), arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) };
+    },
+    warn: (value) => warnings.push(value),
+    print: () => {},
+  });
+  assert.equal(forcedCalls.length, 2);
+  assert.match(warnings[0], /downloading yanked version/);
+});
+
+test('hub add maps a missing manifest to a stable not-found error', async () => {
+  const { runHubAdd } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const core = await import(pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href);
+  await assert.rejects(
+    () => runHubAdd(['acme/missing@9.9.9', '--registry', 'https://hub.example.test'], {
+      core,
+      fetchImpl: async () => jsonResponse({ error: 'Pack version not found.', code: 'not_found' }, 404),
+      homeDir: mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-home-404-')),
+    }),
+    /pack version not found/
+  );
+});
+
+test('hub add refuses a conflicting lockfile digest without force', async () => {
+  const { runHubAdd } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const core = await import(pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href);
+  const bytes = await core.buildPack([{ id: 'doc.md', text: 'lock conflict test' }]);
+  const digest = createHash('sha256').update(bytes).digest('hex');
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-add-lock-conflict-'));
+  const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-home-lock-conflict-'));
+  const lockPath = path.join(cwd, 'knolo.lock.json');
+  const original = {
+    registry: 'https://hub.example.test',
+    packs: { 'acme/locked': { version: '0.9.0', sha256: 'f'.repeat(64), license: 'MIT' } },
+  };
+  writeFileSync(lockPath, `${JSON.stringify(original, null, 2)}\n`, 'utf8');
+  const manifest = {
+    name: 'acme/locked',
+    version: '1.0.0',
+    sha256: digest,
+    url: `https://blob.example.test/sha256/${digest}.knolo`,
+    sizeBytes: bytes.length,
+    yanked: false,
+  };
+  const calls = [];
+  await assert.rejects(
+    () => runHubAdd(['acme/locked@1.0.0', '--registry', 'https://hub.example.test'], {
+      core,
+      cwd,
+      homeDir,
+      fetchImpl: async (url) => {
+        calls.push(String(url));
+        return String(url).includes('/api/')
+          ? jsonResponse(manifest, 200)
+          : { ok: true, status: 200, url: manifest.url, headers: new Headers({ 'content-length': String(bytes.length) }), arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) };
+      },
+      print: () => {},
+    }),
+    /different digest.*--force/
+  );
+  assert.equal(calls.length, 1);
+  assert.equal(existsSync(path.join(homeDir, '.knolo', 'cache', 'sha256', `${digest}.knolo`)), false);
+  assert.deepEqual(JSON.parse(readFileSync(lockPath, 'utf8')), original);
+});
+
+function jsonResponse(value, status) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    text: async () => JSON.stringify(value),
+  };
+}
 
 test('v5 info and health expose verified runtime diagnostics', async () => {
   const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-v5-diagnostics-'));

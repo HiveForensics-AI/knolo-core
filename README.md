@@ -143,6 +143,24 @@ npm run knolo -- v5 health ./dist/knowledge.v5
 npm run knolo -- v5 studio ./dist/knowledge.v5
 ```
 
+### Discover and install a Hub pack
+
+The CLI can discover published packs at the production Hub and install one
+only after verifying its manifest, Blob bytes, digest, size, and local V4/V5
+Knowledge Image structure:
+
+```bash
+npm install -g @knolo/cli
+knolo search "refund policy"
+knolo info acme/refund-policy
+knolo add acme/refund-policy@1.2.0
+```
+
+Installs are content-addressed and recorded in `knolo.lock.json`. Use
+`KNOLO_HUB_URL` or `--registry` when testing a local or partner Hub. The
+current CLI Hub surface is read-only discovery and installation; publish and
+yank remain Hub-owned until CLI-safe write APIs are available.
+
 ### Use the V5 kernel directly
 
 ```ts
