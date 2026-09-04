@@ -304,13 +304,30 @@ test('hub http client preserves structured errors', async () => {
   );
 });
 
+test('hub 401 errors explain the Bearer header instead of blaming CLI tokens', async () => {
+  const { getJson } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/http.mjs')).href);
+  await assert.rejects(
+    () => getJson('https://fixture.example/api/v1/account', {
+      headers: { Authorization: 'Bearer kno_example' },
+      fetchImpl: async () => jsonResponse({ error: 'Sign in required.', code: 'unauthenticated' }, 401),
+    }),
+    (error) => {
+      assert.match(error.message, /Authorization: Bearer kno_/);
+      assert.match(error.message, /GitHub sign-in is only required to mint tokens/);
+      assert.doesNotMatch(error.message, /do not accept CLI tokens/);
+      return true;
+    }
+  );
+});
+
 test('hub commands are registered without loading the core runtime for help', () => {
   const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-help-'));
   assert.match(runCli(['search', '--help'], cwd), /Usage: knolo search/);
   assert.match(runCli(['info', '--help'], cwd), /Usage: knolo info/);
   assert.match(runCli(['login', '--help'], cwd), /Usage: knolo login/);
-  assert.match(runCli(['publish', '--help'], cwd), /not available until Hub write APIs/);
-  assert.match(runCli(['yank', '--help'], cwd), /not available until Hub write APIs/);
+  assert.match(runCli(['publish', '--help'], cwd), /Authorization: Bearer kno_/);
+  assert.match(runCli(['publish', '--help'], cwd), /public Blob URL/);
+  assert.match(runCli(['yank', '--help'], cwd), /Authorization: Bearer kno_/);
 });
 
 test('hub credentials are local, restrictive, and offline', async () => {
@@ -337,6 +354,7 @@ test('hub credentials are local, restrictive, and offline', async () => {
     prefix: token.slice(0, 12),
   });
   assert.equal(printed.join('\n').includes(token), false);
+  assert.match(printed.join('\n'), /Authorization: Bearer kno_…/);
 
   const whoamiOutput = [];
   const identity = await runHubWhoami([], { env, homeDir, print: (value) => whoamiOutput.push(value) });
@@ -352,20 +370,171 @@ test('hub credentials are local, restrictive, and offline', async () => {
   await assert.rejects(() => runHubWhoami([], { env, homeDir, print: () => {} }), /Not logged in/);
 });
 
-test('hub publish fails with the contract capability boundary', async () => {
-  const { runHubPublishStub } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
-  assert.throws(
-    () => runHubPublishStub(),
-    (error) => error.message === 'Hub write APIs do not accept CLI tokens yet'
-  );
+test('hub publish uses Bearer auth for Hub calls and never sends the token to Blob', async () => {
+  const { runHubLogin, runHubPublish } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-publish-'));
+  const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-publish-home-'));
+  const env = {
+    KNOLO_HUB_URL: 'https://hub.example.test',
+    XDG_CONFIG_HOME: path.join(homeDir, '.config'),
+  };
+  const token = 'kno_PublishToken012345678901234567890';
+  const bytes = Buffer.from('tiny knolo artifact');
+  const packPath = path.join(cwd, 'tiny.knolo');
+  writeFileSync(packPath, bytes);
+  const digest = createHash('sha256').update(bytes).digest('hex');
+  const blobUrl = `https://blob-123.public.blob.vercel-storage.com/sha256/${digest}.knolo`;
+  const uploadUrl = blobUrl;
+  const calls = [];
+  const printed = [];
+
+  await runHubLogin(['--token', token], { env, homeDir, print: () => {} });
+  const result = await runHubPublish([
+    './tiny.knolo',
+    '--slug', 'tiny',
+    '--version', '1.0.0',
+    '--license', 'MIT',
+  ], {
+    env,
+    cwd,
+    homeDir,
+    pollIntervalMs: 1,
+    sleep: async (milliseconds) => assert.equal(milliseconds, 1),
+    print: (value) => printed.push(value),
+    fetchImpl: async (url, init = {}) => {
+      const call = { url: String(url), init };
+      calls.push(call);
+      if (call.url.endsWith('/api/v1/account')) return jsonResponse({ publisher: { handle: 'acme' } }, 200);
+      if (call.url.endsWith('/api/upload/token')) {
+        assert.equal(init.headers.Authorization, `Bearer ${token}`);
+        assert.deepEqual(JSON.parse(init.body), { sha256: digest, contentLength: bytes.length });
+        return jsonResponse({ upload: { url: uploadUrl, pathname: `sha256/${digest}.knolo` } }, 200);
+      }
+      if (call.url === uploadUrl) {
+        assert.equal(init.method, 'PUT');
+        assert.equal(init.headers.Authorization, undefined);
+        assert.equal(init.headers['content-length'], String(bytes.length));
+        assert.deepEqual(Buffer.from(init.body), bytes);
+        return { ok: true, status: 200, url: uploadUrl };
+      }
+      if (call.url.endsWith('/api/upload/complete')) {
+        assert.equal(init.headers.Authorization, `Bearer ${token}`);
+        assert.deepEqual(JSON.parse(init.body), {
+          sha256: digest,
+          url: uploadUrl,
+          sizeBytes: bytes.length,
+          pathname: `sha256/${digest}.knolo`,
+        });
+        return jsonResponse({ url: blobUrl }, 200);
+      }
+      if (call.url.endsWith('/api/v1/publish/verify')) {
+        assert.equal(init.headers.Authorization, `Bearer ${token}`);
+        assert.deepEqual(JSON.parse(init.body), { sha256: digest });
+        return jsonResponse({ jobId: 'job-1' }, 200);
+      }
+      if (call.url.endsWith('/api/v1/publish/jobs/job-1')) {
+        return jsonResponse(calls.filter(({ url: candidate }) => candidate.endsWith('/api/v1/publish/jobs/job-1')).length === 1
+          ? { status: 'running' }
+          : { status: 'passed' }, 200);
+      }
+      if (call.url.endsWith('/api/v1/publish/drafts')) {
+        assert.equal(init.headers.Authorization, `Bearer ${token}`);
+        assert.deepEqual(JSON.parse(init.body), {
+          sha256: digest,
+          slug: 'tiny',
+          version: '1.0.0',
+          license: 'MIT',
+          attested: true,
+        });
+        return jsonResponse({ id: 'draft-1' }, 200);
+      }
+      if (call.url.endsWith('/api/v1/publish/drafts/draft-1/release')) {
+        assert.equal(init.headers.Authorization, `Bearer ${token}`);
+        return jsonResponse({ released: true }, 200);
+      }
+      throw new Error(`Unexpected Hub request: ${call.url}`);
+    },
+  });
+
+  assert.equal(result.name, 'acme/tiny');
+  assert.equal(result.sha256, digest);
+  assert.equal(result.url, blobUrl);
+  assert.deepEqual(calls.map(({ url }) => url), [
+    'https://hub.example.test/api/v1/account',
+    'https://hub.example.test/api/upload/token',
+    uploadUrl,
+    'https://hub.example.test/api/upload/complete',
+    'https://hub.example.test/api/v1/publish/verify',
+    'https://hub.example.test/api/v1/publish/jobs/job-1',
+    'https://hub.example.test/api/v1/publish/jobs/job-1',
+    'https://hub.example.test/api/v1/publish/drafts',
+    'https://hub.example.test/api/v1/publish/drafts/draft-1/release',
+  ]);
+  assert.equal(printed.join('\n').includes(token), false);
+  assert.match(printed.join('\n'), /published acme\/tiny@1\.0\.0/);
 });
 
-test('hub yank is registered but fails with the contract capability boundary', async () => {
-  const { runHubYankStub } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
-  assert.throws(
-    () => runHubYankStub(),
-    (error) => error.message === 'Hub write APIs do not accept CLI tokens yet'
+test('hub publish refuses private Blob upload URLs before sending bytes', async () => {
+  const { runHubLogin, runHubPublish } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-private-'));
+  const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-private-home-'));
+  const env = {
+    KNOLO_HUB_URL: 'https://hub.example.test',
+    XDG_CONFIG_HOME: path.join(homeDir, '.config'),
+  };
+  const token = 'kno_PrivateToken012345678901234567890';
+  const bytes = Buffer.from('private blob must fail');
+  writeFileSync(path.join(cwd, 'private.knolo'), bytes);
+  const digest = createHash('sha256').update(bytes).digest('hex');
+  const calls = [];
+  await runHubLogin(['--token', token], { env, homeDir, print: () => {} });
+
+  await assert.rejects(
+    () => runHubPublish(['./private.knolo', '--slug', 'private', '--version', '1.0.0', '--license', 'MIT'], {
+      env,
+      cwd,
+      homeDir,
+      fetchImpl: async (url, init = {}) => {
+        calls.push({ url: String(url), init });
+        if (String(url).endsWith('/api/v1/account')) return jsonResponse({ publisher: { handle: 'acme' } }, 200);
+        return jsonResponse({ upload: {
+          url: `https://blob.private.blob.vercel-storage.com/sha256/${digest}.knolo`,
+          pathname: `sha256/${digest}.knolo`,
+        } }, 200);
+      },
+    }),
+    /Refusing private Blob URL.*public Blob URL/
   );
+  assert.equal(calls.length, 2);
+  assert.equal(calls.some(({ init }) => init.method === 'PUT'), false);
+});
+
+test('hub yank posts to the owner-only Bearer endpoint', async () => {
+  const { runHubLogin, runHubYank } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-yank-home-'));
+  const env = {
+    KNOLO_HUB_URL: 'https://hub.example.test',
+    XDG_CONFIG_HOME: path.join(homeDir, '.config'),
+  };
+  const token = 'kno_YankToken012345678901234567890';
+  const calls = [];
+  await runHubLogin(['--token', token], { env, homeDir, print: () => {} });
+  const result = await runHubYank(['acme/tiny@1.0.0'], {
+    env,
+    homeDir,
+    fetchImpl: async (url, init) => {
+      calls.push({ url: String(url), init });
+      return jsonResponse({ yanked: true }, 200);
+    },
+    print: () => {},
+  });
+
+  assert.equal(result.name, 'acme/tiny');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, 'https://hub.example.test/api/v1/packs/acme/tiny/1.0.0/yank');
+  assert.equal(calls[0].init.method, 'POST');
+  assert.equal(calls[0].init.headers.Authorization, `Bearer ${token}`);
+  assert.equal(calls[0].init.body, undefined);
 });
 
 test('hub add fetches the manifest then Blob, verifies bytes, caches, and locks atomically', async () => {
@@ -466,6 +635,66 @@ test('hub add validates and locks a V5 Knowledge Image', async () => {
   const lockfile = JSON.parse(readFileSync(path.join(cwd, 'knolo.lock.json'), 'utf8'));
   assert.equal(calls.length, 2);
   assert.equal(lockfile.packs['knolo/v5-test'].stateRoot, image.stateRoot);
+});
+
+test('hub add rejects V5 manifests without a stateRoot before downloading bytes', async () => {
+  const { runHubAdd } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const core = await import(pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href);
+  const manifest = {
+    name: 'knolo/v5-missing-state-root',
+    version: '5.0.0',
+    sha256: 'a'.repeat(64),
+    url: 'https://blob.example.test/sha256/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.knolo',
+    sizeBytes: 1,
+    yanked: false,
+    format: 'V5',
+  };
+  const calls = [];
+  await assert.rejects(
+    () => runHubAdd(['knolo/v5-missing-state-root@5.0.0', '--registry', 'https://hub.example.test'], {
+      core,
+      homeDir: mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-home-v5-missing-root-')),
+      fetchImpl: async (url, init) => {
+        calls.push({ url: String(url), init });
+        return jsonResponse(manifest, 200);
+      },
+    }),
+    /stateRoot is required for V5 manifests/
+  );
+  assert.equal(calls.length, 1);
+});
+
+test('hub add rejects a V5 artifact when the manifest omits its stateRoot', async () => {
+  const { runHubAdd } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const core = await import(pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href);
+  const image = core.createKnowledgeImageV5({
+    objects: [{ kind: 'metadata', bytes: new TextEncoder().encode('missing manifest state root'), meta: {} }],
+  });
+  const bytes = image.bytes;
+  const digest = createHash('sha256').update(bytes).digest('hex');
+  const manifest = {
+    name: 'knolo/v5-missing-state-root',
+    version: '5.0.0',
+    sha256: digest,
+    url: `https://blob.example.test/sha256/${digest}.knolo`,
+    sizeBytes: bytes.length,
+    yanked: false,
+  };
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-add-v5-runtime-check-'));
+  const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-home-v5-runtime-check-'));
+  await assert.rejects(
+    () => runHubAdd(['knolo/v5-missing-state-root@5.0.0', '--registry', 'https://hub.example.test'], {
+      core,
+      cwd,
+      homeDir,
+      fetchImpl: async (url) => String(url).includes('/api/')
+        ? jsonResponse(manifest, 200)
+        : { ok: true, status: 200, url: manifest.url, headers: new Headers({ 'content-length': String(bytes.length) }), arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) },
+    }),
+    /V5 artifact requires manifest stateRoot/
+  );
+  assert.equal(existsSync(path.join(cwd, 'knolo.lock.json')), false);
+  assert.equal(existsSync(path.join(homeDir, '.knolo', 'cache', 'sha256', `${digest}.knolo`)), false);
 });
 
 test('hub add fails closed on digest mismatch without writing a lockfile', async () => {
@@ -705,6 +934,46 @@ test('hub add refuses a conflicting lockfile digest without force', async () => 
   assert.equal(calls.length, 1);
   assert.equal(existsSync(path.join(homeDir, '.knolo', 'cache', 'sha256', `${digest}.knolo`)), false);
   assert.deepEqual(JSON.parse(readFileSync(lockPath, 'utf8')), original);
+});
+
+test('hub add leaves cache and lockfile unchanged when output staging cannot replace a directory', async () => {
+  const { runHubAdd } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const core = await import(pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href);
+  const bytes = await core.buildPack([{ id: 'doc.md', text: 'transactional install test' }]);
+  const digest = createHash('sha256').update(bytes).digest('hex');
+  const manifest = {
+    name: 'acme/transactional',
+    version: '1.0.0',
+    sha256: digest,
+    url: `https://blob.example.test/sha256/${digest}.knolo`,
+    sizeBytes: bytes.length,
+    yanked: false,
+  };
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-add-transactional-'));
+  const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-home-transactional-'));
+  const lockPath = path.join(cwd, 'knolo.lock.json');
+  const original = {
+    registry: 'https://hub.example.test',
+    packs: { 'acme/transactional': { version: '0.9.0', sha256: 'f'.repeat(64), license: 'MIT' } },
+  };
+  writeFileSync(lockPath, `${JSON.stringify(original, null, 2)}\n`, 'utf8');
+  mkdirSync(path.join(cwd, 'dist'));
+
+  await assert.rejects(
+    () => runHubAdd(['acme/transactional@1.0.0', '--force', '--out', './dist', '--registry', 'https://hub.example.test'], {
+      core,
+      cwd,
+      homeDir,
+      fetchImpl: async (url) => String(url).includes('/api/')
+        ? jsonResponse(manifest, 200)
+        : { ok: true, status: 200, url: manifest.url, headers: new Headers({ 'content-length': String(bytes.length) }), arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) },
+    }),
+    /Cannot replace directory/
+  );
+
+  assert.deepEqual(JSON.parse(readFileSync(lockPath, 'utf8')), original);
+  assert.equal(existsSync(path.join(homeDir, '.knolo', 'cache', 'sha256', `${digest}.knolo`)), false);
+  assert.equal(statSync(path.join(cwd, 'dist')).isDirectory(), true);
 });
 
 function jsonResponse(value, status) {

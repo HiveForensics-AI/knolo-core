@@ -20,6 +20,12 @@ export function validatePackManifest(value, { expectedName, requestedVersion } =
   if (value.stateRoot !== undefined && typeof value.stateRoot !== 'string') {
     throw new Error('Registry manifest stateRoot must be a string when present.');
   }
+  if (value.format !== undefined && !['V4', 'V5'].includes(value.format)) {
+    throw new Error('Registry manifest format must be V4 or V5 when present.');
+  }
+  if (value.format === 'V5' && (!value.stateRoot || typeof value.stateRoot !== 'string')) {
+    throw new Error('Registry manifest stateRoot is required for V5 manifests.');
+  }
   if (value.license !== undefined && typeof value.license !== 'string') {
     throw new Error('Registry manifest license must be a string when present.');
   }

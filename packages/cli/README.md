@@ -47,10 +47,49 @@ An explicit `--registry` value takes precedence over `KNOLO_HUB_URL`. In
 development mode (`NODE_ENV=development`), the default is
 `http://localhost:3000`; otherwise the default is `https://hub.knolo.dev`.
 
-The current Hub surface is read-only discovery and verified installation. Local
-`knolo add <name> <path>` continues to update a project’s local source
-configuration. A Hub pack is installed only after its manifest, Blob bytes,
-digest, size, and local Knowledge Image structure have all been verified:
+Hub writes use a dashboard token as an HTTP Bearer credential. GitHub sign-in
+is needed only to mint that token at
+`https://hub.knolo.dev/dashboard/tokens`; `knolo login` is local-only and does
+not call a Hub login or token-minting endpoint:
+
+```bash
+knolo login --token kno_…
+# write requests use: Authorization: Bearer kno_…
+```
+
+`knolo publish` uploads bytes directly to the public Blob URL returned by Hub,
+waits for verification, creates an attested draft, and releases it. The
+`--slug`, `--version`, and SPDX `--license` are required:
+
+```bash
+knolo publish ./dist/knowledge.knolo \
+  --slug refund-policy --version 1.2.0 --license Apache-2.0
+knolo yank acme/refund-policy@1.2.0
+```
+
+Only public Blob URLs are accepted because Hub verification fetches the
+artifact itself. The CLI never sends the `kno_…` token to Blob, in a query
+string, cookie, or pack bytes. A 401 usually means the `Bearer` word is
+missing or the token was revoked; it does not mean the Hub write API requires
+a GitHub browser session.
+
+The older `@knolo/cli@5.2.0` publish/yank command was an unimplemented stub;
+current versions use the live Hub HTTP sequence. For a direct smoke test of a
+stored credential, request the account endpoint with the same header:
+
+```bash
+curl -sS \
+  -H "Authorization: Bearer kno_…" \
+  -H "Accept: application/json" \
+  https://hub.knolo.dev/api/v1/account
+```
+
+Do not use `POST /api/v1/tokens` as a CLI login endpoint; it is for the
+dashboard/GitHub session that mints tokens.
+
+Hub pack installation remains available without credentials and only happens
+after its manifest, Blob bytes, digest, size, and local Knowledge Image
+structure have all been verified:
 
 ```bash
 knolo add acme/refund-policy@1.2.0
@@ -60,9 +99,6 @@ Successful installs are cached by SHA-256 and recorded in
 `knolo.lock.json`. A yanked version or an existing conflicting pin requires
 `--force`; digest and artifact validation cannot be bypassed.
 
-Hub write APIs do not yet accept CLI Bearer tokens, so `knolo publish` and
-`knolo yank` remain explicit stubs until the Hub upload, verification, release,
-and owner-only yank endpoints are available.
 
 ---
 

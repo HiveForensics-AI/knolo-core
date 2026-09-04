@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { createWriteStream } from 'node:fs';
-import { chmod, mkdir, readFile, rename, unlink } from 'node:fs/promises';
+import { chmod, copyFile, mkdir, readFile, rename, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 
@@ -86,11 +86,27 @@ export async function readArtifact(tempPath) {
 }
 
 export async function installCachedArtifact(tempPath, cachePath) {
+  const stagedPath = await stageCachedArtifact(tempPath, cachePath);
+  try {
+    await rename(stagedPath, cachePath);
+    await chmod(cachePath, 0o644);
+    return cachePath;
+  } finally {
+    await unlink(stagedPath).catch(() => {});
+  }
+}
+
+export async function stageCachedArtifact(sourcePath, cachePath) {
   await mkdir(path.dirname(cachePath), { recursive: true });
-  await chmod(tempPath, 0o644);
-  await rename(tempPath, cachePath);
-  await chmod(cachePath, 0o644);
-  return cachePath;
+  const stagedPath = `${cachePath}.tmp-${process.pid}-${randomUUID()}`;
+  try {
+    await copyFile(sourcePath, stagedPath);
+    await chmod(stagedPath, 0o644);
+    return stagedPath;
+  } catch (error) {
+    await unlink(stagedPath).catch(() => {});
+    throw error;
+  }
 }
 
 async function writeChunk(stream, chunk) {
