@@ -1,8 +1,9 @@
 import { chmod, copyFile, lstat, mkdir, readFile, rename, unlink } from 'node:fs/promises';
 import { createHash, randomUUID } from 'node:crypto';
+import { isIP } from 'node:net';
 import { homedir } from 'node:os';
 import path from 'node:path';
-import { registryApiUrl, resolveRegistryUrl } from './config.mjs';
+import { normalizeRegistryUrl, registryApiUrl, resolveRegistryUrl } from './config.mjs';
 import { downloadBlobToTemp, MAX_ARTIFACT_BYTES, readArtifact, stageCachedArtifact } from './artifacts.mjs';
 import { RegistryError } from './errors.mjs';
 import { getJson, postJson, putBytes } from './http.mjs';
@@ -12,6 +13,15 @@ import { parsePackName, parsePackSpec } from './specs.mjs';
 import { loadCredentials, promptForToken, removeCredentials, saveCredentials, validateToken } from './credentials.mjs';
 
 const PACK_SHA256_PATTERN = /^[0-9a-f]{64}$/;
+const LOCAL_ONLY_HOSTNAMES = new Set([
+  'localhost',
+  'localhost.localdomain',
+  'ip6-localhost',
+  'ip6-loopback',
+  'broadcasthost',
+  'local',
+  'internal',
+]);
 
 export async function runHubSearch(args, { env = process.env, fetchImpl = globalThis.fetch, print = console.log } = {}) {
   const { query, flags } = parseSearchArgs(args);
@@ -181,7 +191,7 @@ export async function runHubPublish(args, {
 } = {}) {
   const { packPath, flags } = parsePublishArgs(args);
   const credentials = await loadCredentials({ env, homeDir });
-  const registry = resolveRegistryUrl({ value: flags.registry || credentials.registry, env });
+  const registry = resolveCredentialRegistry(flags.registry, credentials.registry);
   const authHeaders = authorizationHeaders(credentials.token);
 
   // This request is deliberately first: it proves the stored dashboard token
@@ -207,6 +217,7 @@ export async function runHubPublish(args, {
   const uploaded = await putBytes(upload.url, bytes, {
     fetchImpl,
     headers: { 'content-length': String(bytes.length) },
+    validateRedirect: (redirectedUrl) => assertPublicBlobUrl(redirectedUrl, 'Blob redirect'),
   });
   assertPublicBlobUrl(uploaded.url, 'uploaded artifact');
 
@@ -289,7 +300,7 @@ export async function runHubYank(args, {
 } = {}) {
   const { spec, flags } = parseYankArgs(args);
   const credentials = await loadCredentials({ env, homeDir });
-  const registry = resolveRegistryUrl({ value: flags.registry || credentials.registry, env });
+  const registry = resolveCredentialRegistry(flags.registry, credentials.registry);
   const response = await postJson(registryApiUrl(registry, ['packs', spec.publisher, spec.slug, spec.version, 'yank']), undefined, {
     fetchImpl,
     headers: authorizationHeaders(credentials.token),
@@ -372,6 +383,16 @@ function authorizationHeaders(token) {
   return { Authorization: `Bearer ${token}` };
 }
 
+function resolveCredentialRegistry(requestedRegistry, storedRegistry) {
+  const stored = normalizeRegistryUrl(storedRegistry);
+  if (!requestedRegistry) return stored;
+  const requested = normalizeRegistryUrl(requestedRegistry);
+  if (requested !== stored) {
+    throw new Error(`Stored credentials belong to ${stored}; refusing to send them to ${requested}. Log in to the requested registry first.`);
+  }
+  return requested;
+}
+
 function hubApiUrl(registry, segments) {
   const url = new URL(registry);
   url.pathname = `/api/${segments.map((segment) => encodeURIComponent(String(segment))).join('/')}`;
@@ -438,10 +459,84 @@ function assertPublicBlobUrl(value, label) {
   }
   const hostname = url.hostname.toLowerCase();
   if (url.protocol !== 'https:') throw new Error(`Hub ${label} URL must use HTTPS.`);
-  if (hostname.includes('.private.') || hostname.startsWith('private.')) {
+  if (hostname.includes('.private.') || hostname.startsWith('private.') || isPrivateOrLocalIp(hostname)) {
     throw new Error(`Refusing private Blob URL for ${label}; Hub verification requires a public Blob URL.`);
   }
+  if (isLocalOnlyHostname(hostname)) {
+    throw new Error(`Refusing local-only Blob URL for ${label}; Hub verification requires a public Blob URL.`);
+  }
   return url;
+}
+
+function isLocalOnlyHostname(hostname) {
+  const normalized = hostname.replace(/^\[|\]$/g, '').replace(/\.$/, '');
+  return LOCAL_ONLY_HOSTNAMES.has(normalized)
+    || normalized.endsWith('.localhost')
+    || normalized.endsWith('.local')
+    || normalized.endsWith('.internal')
+    || normalized.endsWith('.home.arpa');
+}
+
+function isPrivateOrLocalIp(hostname) {
+  const normalized = hostname.replace(/^\[|\]$/g, '');
+  const version = isIP(normalized);
+  if (version === 4) return isPrivateIpv4(normalized);
+  if (version !== 6) return false;
+
+  const words = parseIpv6Words(normalized);
+  if (!words) return false;
+  const first = words[0];
+  const allZero = words.every((word) => word === 0);
+  const loopback = words.slice(0, 7).every((word) => word === 0) && words[7] === 1;
+  const uniqueLocal = (first & 0xfe00) === 0xfc00;
+  const linkLocal = (first & 0xffc0) === 0xfe80;
+  const mappedIpv4 = words.slice(0, 5).every((word) => word === 0) && words[5] === 0xffff;
+  const mappedAddress = mappedIpv4
+    ? `${words[6] >> 8}.${words[6] & 0xff}.${words[7] >> 8}.${words[7] & 0xff}`
+    : undefined;
+  return allZero || loopback || uniqueLocal || linkLocal || (mappedAddress ? isPrivateIpv4(mappedAddress) : false);
+}
+
+function isPrivateIpv4(value) {
+  const octets = value.split('.').map(Number);
+  if (octets.length !== 4 || octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)) return false;
+  const [first, second] = octets;
+  return first === 0
+    || first === 10
+    || first === 127
+    || (first === 100 && second >= 64 && second <= 127)
+    || (first === 169 && second === 254)
+    || (first === 172 && second >= 16 && second <= 31)
+    || (first === 192 && (second === 0 || second === 168))
+    || (first === 198 && (second === 18 || second === 19))
+    || first >= 224;
+}
+
+function parseIpv6Words(value) {
+  const sections = value.toLowerCase().split('::');
+  if (sections.length > 2) return undefined;
+  const left = parseIpv6Section(sections[0]);
+  const right = sections.length === 2 ? parseIpv6Section(sections[1]) : [];
+  if (!left || !right) return undefined;
+  const zeroCount = sections.length === 2 ? 8 - left.length - right.length : 0;
+  if (zeroCount < (sections.length === 2 ? 1 : 0) || left.length + right.length + zeroCount !== 8) return undefined;
+  return [...left, ...new Array(zeroCount).fill(0), ...right];
+}
+
+function parseIpv6Section(section) {
+  if (!section) return [];
+  const words = [];
+  for (const part of section.split(':')) {
+    if (part.includes('.')) {
+      const octets = part.split('.').map(Number);
+      if (octets.length !== 4 || octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)) return undefined;
+      words.push((octets[0] << 8) | octets[1], (octets[2] << 8) | octets[3]);
+    } else {
+      if (!/^[0-9a-f]{1,4}$/.test(part)) return undefined;
+      words.push(Number.parseInt(part, 16));
+    }
+  }
+  return words;
 }
 
 function extractId(body, keys) {

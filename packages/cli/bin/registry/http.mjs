@@ -8,31 +8,55 @@ export async function postJson(url, body, { fetchImpl = globalThis.fetch, header
   return requestJson(url, { fetchImpl, headers, method: 'POST', body });
 }
 
-export async function putBytes(url, bytes, { fetchImpl = globalThis.fetch, headers = {} } = {}) {
+export async function putBytes(url, bytes, {
+  fetchImpl = globalThis.fetch,
+  headers = {},
+  validateRedirect,
+  maxRedirects = 5,
+} = {}) {
   if (typeof fetchImpl !== 'function') throw new Error('This Node runtime does not provide fetch.');
+  if (!Number.isSafeInteger(maxRedirects) || maxRedirects < 0) throw new Error('maxRedirects must be a non-negative integer.');
 
-  let response;
-  try {
-    response = await fetchImpl(url, {
-      method: 'PUT',
-      redirect: 'follow',
-      headers: { 'content-type': 'application/octet-stream', ...headers },
-      body: bytes,
-    });
-  } catch (error) {
-    throw new RegistryNetworkError(`Could not upload artifact to ${new URL(url).origin}.`, { url: String(url), cause: error });
+  let destination = String(url);
+  for (let redirectCount = 0; ; redirectCount++) {
+    let response;
+    try {
+      response = await fetchImpl(destination, {
+        method: 'PUT',
+        redirect: 'manual',
+        headers: { 'content-type': 'application/octet-stream', ...headers },
+        body: bytes,
+      });
+    } catch (error) {
+      throw new RegistryNetworkError(`Could not upload artifact to ${new URL(destination).origin}.`, { url: destination, cause: error });
+    }
+
+    if (response.status >= 300 && response.status < 400) {
+      if (redirectCount >= maxRedirects) throw new Error(`Blob upload exceeded the ${maxRedirects}-redirect limit.`);
+      const location = readHeader(response.headers, 'location');
+      if (!location) throw new Error(`Blob upload redirect from ${destination} did not include a Location header.`);
+      let redirectedUrl;
+      try {
+        redirectedUrl = new URL(location, destination);
+      } catch {
+        throw new Error(`Blob upload redirect from ${destination} has an invalid Location header.`);
+      }
+      if (typeof validateRedirect === 'function') validateRedirect(redirectedUrl, new URL(destination));
+      destination = redirectedUrl.toString();
+      continue;
+    }
+
+    if (!response.ok) {
+      const detail = await readResponseText(response, destination);
+      throw new RegistryError(`Blob upload failed with HTTP ${response.status}${detail ? `: ${detail}` : '.'}`, {
+        status: response.status,
+        url: destination,
+        body: detail,
+      });
+    }
+
+    return { status: response.status, url: response.url || destination };
   }
-
-  if (!response.ok) {
-    const detail = await readResponseText(response, url);
-    throw new RegistryError(`Blob upload failed with HTTP ${response.status}${detail ? `: ${detail}` : '.'}`, {
-      status: response.status,
-      url: String(url),
-      body: detail,
-    });
-  }
-
-  return { status: response.status, url: response.url || String(url) };
 }
 
 async function requestJson(url, { fetchImpl = globalThis.fetch, headers = {}, method = 'GET', body: requestBody } = {}) {
@@ -91,4 +115,10 @@ async function readResponseText(response, url) {
   } catch (error) {
     throw new RegistryNetworkError(`Could not read registry response from ${new URL(url).origin}.`, { url: String(url), cause: error });
   }
+}
+
+function readHeader(headers, name) {
+  if (!headers) return undefined;
+  if (typeof headers.get === 'function') return headers.get(name) || undefined;
+  return headers[name] || headers[name.toLowerCase()] || headers[name[0].toUpperCase() + name.slice(1)] || undefined;
 }
