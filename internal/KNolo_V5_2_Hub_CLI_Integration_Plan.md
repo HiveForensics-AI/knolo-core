@@ -1,6 +1,6 @@
 # Knolo V5.2 Hub CLI integration plan
 
-**Status:** Local implementation complete; synchronized release decision pending
+**Status:** Local implementation complete; CLI-only release selected
 
 **Target:** `@knolo/cli` 5.2.0, as an additive V5.2 interoperability and trust
 workstream
@@ -11,13 +11,13 @@ routes or browser upload behavior in `knolo-hub`.
 
 **Progress:** PR 1 (registry foundation), PR 2 (discovery commands), PR 3
 (verified Hub installation), PR 4 (local credentials and capability boundary),
-and the local portion of PR 5 (docs, smoke harness, and release checks) are
-implemented in the current worktree. The synchronized package version decision
-and external publication remain release-owner actions.
+and PR 5 (docs, smoke harness, and release checks) are implemented. The
+selected release is `@knolo/cli@5.2.0` only; existing `5.1.0` packages remain
+untouched.
 
 ## Recommendation
 
-Ship the Hub read path in V5.2 first:
+Ship the Hub read path as a CLI-only V5.2 release:
 
 - `knolo search`
 - `knolo info`
@@ -407,16 +407,16 @@ deployed service.
 
 ## Release and version decision
 
-The current `scripts/check-release-metadata.mjs` requires the npm workspace
-packages and their internal `@knolo/*` ranges to share one release version.
-Recommendation: release this as the synchronized V5.2.0 line, updating the
-release metadata and package dependency ranges together, even though the
-material feature lives in `@knolo/cli`.
+The current `scripts/check-release-metadata.mjs` validates the published
+`5.1.0` workspace line plus the explicit CLI-only `5.2.0` wave.
+Decision for this workstream: release `@knolo/cli@5.2.0` only, keeping its
+compatible `@knolo/core` range at `^5.1.0`. Do not republish the already-live
+core, adapters, starter app, Rust crates, or Python distribution.
 
-If the team wants a CLI-only 5.2.0 release, make that a separate release-process
-change first: teach the metadata checker about independently versioned package
-waves, update the release guide, and decide whether `@knolo/cli` may depend on
-`@knolo/core@5.1.x`. Do not bypass the current release check informally.
+The release metadata checker now explicitly validates this CLI-only wave and
+keeps the other packages on the published `5.1.0` line. The CLI depends on
+`@knolo/core@^5.1.0`, which is sufficient because the Hub integration is
+implemented in the CLI package.
 
 The Hub read path itself is additive and does not require a core format bump.
 `@knolo/core` should only be bumped for unrelated V5.2 interoperability work or
@@ -439,8 +439,7 @@ When those contracts ship, add a later CLI workstream for `publish` and
 ## Start checklist
 
 - [x] Confirm `https://hub.knolo.dev` is the production Hub origin.
-- [ ] Confirm whether V5.2 is a synchronized monorepo release or a deliberate
-      CLI-only release-process change.
+- [x] Select a deliberate CLI-only `@knolo/cli@5.2.0` release.
 - [x] Confirm the lockfile filename `knolo.lock.json` and registry-mixing rule.
 - [x] Implement PR 1 with no Hub dependency in CI.
 - [x] Implement PR 2 discovery commands with deterministic fixture coverage.
