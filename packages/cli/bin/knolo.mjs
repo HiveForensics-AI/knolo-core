@@ -20,6 +20,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
+import { isHubAddInvocation, runHubAdd, runHubInfo, runHubLogin, runHubLogout, runHubPublishStub, runHubSearch, runHubWhoami } from './registry/commands.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -33,7 +34,7 @@ const DEFAULT_CONFIG = {
 };
 const SUPPORTED_EXTENSIONS = new Set(['.md', '.txt', '.json']);
 const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', '.dfx', '.cargo-target']);
-const SUBCOMMANDS = new Set(['init', 'add', 'build', 'query', 'inspect', 'migrate', 'verify', 'explain', 'diff', 'dev', 'v5', 'semantic:index', 'semantic:inspect', 'semantic:validate']);
+const SUBCOMMANDS = new Set(['init', 'add', 'build', 'query', 'inspect', 'migrate', 'verify', 'explain', 'diff', 'dev', 'v5', 'search', 'info', 'login', 'whoami', 'logout', 'publish', 'semantic:index', 'semantic:inspect', 'semantic:validate']);
 const ICP_SUBCOMMANDS = new Set(['init', 'build-pack', 'upload', 'query', 'health', 'info', 'clear']);
 const ICP_TEMPLATE_CANDIDATES = [
   path.resolve(__dirname, '../templates/icp-knowledge-canister'),
@@ -79,7 +80,13 @@ Usage:
 
 Commands:
   init                    Initialize knolo.config.json and starter docs
-  add <name> <path>       Add or update a source entry in config
+  add <name> <path>       Add or update a local source entry, or install a Hub pack
+  search <query>          Search the Knolo Hub registry
+  info <publisher>/<slug> Show a Hub registry pack
+  login                   Store a Hub token locally
+  whoami                  Show the stored Hub token prefix
+  logout                  Remove the stored Hub token
+  publish                 Publish support is waiting for Hub write APIs
   build                   Build a .knolo pack from configured sources
   query <question>        Query a built pack and print top hits
   inspect <pack>          Inspect pack format, sections, and manifest
@@ -101,7 +108,13 @@ Run "knolo <command> --help" for command details.`);
 function printCommandHelp(command) {
   const help = {
     init: 'Usage: knolo init',
-    add: 'Usage: knolo add <name> <path>',
+    add: 'Usage: knolo add <name> <path> | <publisher>/<slug>[@<version>] [--out <path>] [--force] [--json] [--registry <url>]',
+    search: 'Usage: knolo search <query> [--format V4|V5] [--license <id>] [--official] [--agents] [--json] [--registry <url>]',
+    info: 'Usage: knolo info <publisher>/<slug> [--json] [--registry <url>]',
+    login: 'Usage: knolo login [--token kno_…] [--stdin] [--registry <url>]',
+    whoami: 'Usage: knolo whoami',
+    logout: 'Usage: knolo logout',
+    publish: 'Usage: knolo publish <pack.knolo>  (not available until Hub write APIs support CLI tokens)',
     build: 'Usage: knolo build',
     query: 'Usage: knolo query <question> [--pack <path>] [--k <number>] [--receipt <file>] [--json]',
     inspect: 'Usage: knolo inspect <pack.knolo>',
@@ -272,6 +285,14 @@ async function cmdInit() {
 }
 
 async function cmdAdd(args) {
+  if (isHubAddInvocation(args)) {
+    const core = await loadCore();
+    return await runHubAdd(args, { core });
+  }
+  return await cmdAddLocal(args);
+}
+
+async function cmdAddLocal(args) {
   const [name, sourcePath] = args;
   if (!name || !sourcePath) throw createError('Usage: knolo add <name> <path>');
 
@@ -1169,6 +1190,12 @@ async function main() {
       if (commandArgs.includes('--help') || commandArgs.includes('-h')) return printCommandHelp(command);
       if (command === 'init') return await cmdInit();
       if (command === 'add') return await cmdAdd(commandArgs);
+      if (command === 'search') return await runHubSearch(commandArgs);
+      if (command === 'info') return await runHubInfo(commandArgs);
+      if (command === 'login') return await runHubLogin(commandArgs);
+      if (command === 'whoami') return await runHubWhoami(commandArgs);
+      if (command === 'logout') return await runHubLogout(commandArgs);
+      if (command === 'publish') return runHubPublishStub(commandArgs);
 
       const core = await loadCore();
       if (command === 'build') return await cmdBuild(core);

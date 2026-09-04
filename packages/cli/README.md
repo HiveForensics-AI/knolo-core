@@ -25,6 +25,41 @@ Or use via npx:
 npx knolo build
 ```
 
+## Hub Registry Discovery (V5.2)
+
+The CLI can search the public Knolo Hub and inspect a published pack without
+changing the local pack workflow:
+
+```bash
+knolo search "refund policy"
+knolo info acme/refund-policy
+```
+
+The production registry is `https://hub.knolo.dev`. Use `--registry` for a
+one-off override, or set `KNOLO_HUB_URL` for the current environment:
+
+```bash
+knolo search docs --registry https://hub.knolo.dev
+KNOLO_HUB_URL=http://localhost:3000 knolo search docs
+```
+
+An explicit `--registry` value takes precedence over `KNOLO_HUB_URL`. In
+development mode (`NODE_ENV=development`), the default is
+`http://localhost:3000`; otherwise the default is `https://hub.knolo.dev`.
+
+The current Hub surface is read-only discovery and verified installation. Local
+`knolo add <name> <path>` continues to update a project’s local source
+configuration. A Hub pack is installed only after its manifest, Blob bytes,
+digest, size, and local Knowledge Image structure have all been verified:
+
+```bash
+knolo add acme/refund-policy@1.2.0
+```
+
+Successful installs are cached by SHA-256 and recorded in
+`knolo.lock.json`. A yanked version or an existing conflicting pin requires
+`--force`; digest and artifact validation cannot be bypassed.
+
 ---
 
 ## 🚀 Commands
