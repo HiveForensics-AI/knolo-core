@@ -468,6 +468,66 @@ test('hub add validates and locks a V5 Knowledge Image', async () => {
   assert.equal(lockfile.packs['knolo/v5-test'].stateRoot, image.stateRoot);
 });
 
+test('hub add rejects V5 manifests without a stateRoot before downloading bytes', async () => {
+  const { runHubAdd } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const core = await import(pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href);
+  const manifest = {
+    name: 'knolo/v5-missing-state-root',
+    version: '5.0.0',
+    sha256: 'a'.repeat(64),
+    url: 'https://blob.example.test/sha256/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.knolo',
+    sizeBytes: 1,
+    yanked: false,
+    format: 'V5',
+  };
+  const calls = [];
+  await assert.rejects(
+    () => runHubAdd(['knolo/v5-missing-state-root@5.0.0', '--registry', 'https://hub.example.test'], {
+      core,
+      homeDir: mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-home-v5-missing-root-')),
+      fetchImpl: async (url, init) => {
+        calls.push({ url: String(url), init });
+        return jsonResponse(manifest, 200);
+      },
+    }),
+    /stateRoot is required for V5 manifests/
+  );
+  assert.equal(calls.length, 1);
+});
+
+test('hub add rejects a V5 artifact when the manifest omits its stateRoot', async () => {
+  const { runHubAdd } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const core = await import(pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href);
+  const image = core.createKnowledgeImageV5({
+    objects: [{ kind: 'metadata', bytes: new TextEncoder().encode('missing manifest state root'), meta: {} }],
+  });
+  const bytes = image.bytes;
+  const digest = createHash('sha256').update(bytes).digest('hex');
+  const manifest = {
+    name: 'knolo/v5-missing-state-root',
+    version: '5.0.0',
+    sha256: digest,
+    url: `https://blob.example.test/sha256/${digest}.knolo`,
+    sizeBytes: bytes.length,
+    yanked: false,
+  };
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-add-v5-runtime-check-'));
+  const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-home-v5-runtime-check-'));
+  await assert.rejects(
+    () => runHubAdd(['knolo/v5-missing-state-root@5.0.0', '--registry', 'https://hub.example.test'], {
+      core,
+      cwd,
+      homeDir,
+      fetchImpl: async (url) => String(url).includes('/api/')
+        ? jsonResponse(manifest, 200)
+        : { ok: true, status: 200, url: manifest.url, headers: new Headers({ 'content-length': String(bytes.length) }), arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) },
+    }),
+    /V5 artifact requires manifest stateRoot/
+  );
+  assert.equal(existsSync(path.join(cwd, 'knolo.lock.json')), false);
+  assert.equal(existsSync(path.join(homeDir, '.knolo', 'cache', 'sha256', `${digest}.knolo`)), false);
+});
+
 test('hub add fails closed on digest mismatch without writing a lockfile', async () => {
   const { runHubAdd } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
   const core = await import(pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href);
@@ -705,6 +765,46 @@ test('hub add refuses a conflicting lockfile digest without force', async () => 
   assert.equal(calls.length, 1);
   assert.equal(existsSync(path.join(homeDir, '.knolo', 'cache', 'sha256', `${digest}.knolo`)), false);
   assert.deepEqual(JSON.parse(readFileSync(lockPath, 'utf8')), original);
+});
+
+test('hub add leaves cache and lockfile unchanged when output staging cannot replace a directory', async () => {
+  const { runHubAdd } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const core = await import(pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href);
+  const bytes = await core.buildPack([{ id: 'doc.md', text: 'transactional install test' }]);
+  const digest = createHash('sha256').update(bytes).digest('hex');
+  const manifest = {
+    name: 'acme/transactional',
+    version: '1.0.0',
+    sha256: digest,
+    url: `https://blob.example.test/sha256/${digest}.knolo`,
+    sizeBytes: bytes.length,
+    yanked: false,
+  };
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-add-transactional-'));
+  const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-home-transactional-'));
+  const lockPath = path.join(cwd, 'knolo.lock.json');
+  const original = {
+    registry: 'https://hub.example.test',
+    packs: { 'acme/transactional': { version: '0.9.0', sha256: 'f'.repeat(64), license: 'MIT' } },
+  };
+  writeFileSync(lockPath, `${JSON.stringify(original, null, 2)}\n`, 'utf8');
+  mkdirSync(path.join(cwd, 'dist'));
+
+  await assert.rejects(
+    () => runHubAdd(['acme/transactional@1.0.0', '--force', '--out', './dist', '--registry', 'https://hub.example.test'], {
+      core,
+      cwd,
+      homeDir,
+      fetchImpl: async (url) => String(url).includes('/api/')
+        ? jsonResponse(manifest, 200)
+        : { ok: true, status: 200, url: manifest.url, headers: new Headers({ 'content-length': String(bytes.length) }), arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) },
+    }),
+    /Cannot replace directory/
+  );
+
+  assert.deepEqual(JSON.parse(readFileSync(lockPath, 'utf8')), original);
+  assert.equal(existsSync(path.join(homeDir, '.knolo', 'cache', 'sha256', `${digest}.knolo`)), false);
+  assert.equal(statSync(path.join(cwd, 'dist')).isDirectory(), true);
 });
 
 function jsonResponse(value, status) {

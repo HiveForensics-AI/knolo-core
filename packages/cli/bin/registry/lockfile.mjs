@@ -37,13 +37,23 @@ export async function validateLockfileUpdate({ cwd = process.cwd(), registry, ma
 }
 
 export async function upsertLockfile({ cwd = process.cwd(), registry, manifest, force = false } = {}) {
+  const staged = await stageLockfileUpdate({ cwd, registry, manifest, force });
+  try {
+    await rename(staged.tempPath, staged.path);
+  } finally {
+    await unlink(staged.tempPath).catch(() => {});
+  }
+  return { path: staged.path, entry: staged.entry };
+}
+
+export async function stageLockfileUpdate({ cwd = process.cwd(), registry, manifest, force = false } = {}) {
   const { targetPath, entry, packs } = await validateLockfileUpdate({ cwd, registry, manifest, force });
   const next = {
     registry,
     packs: { ...packs, [manifest.name]: entry },
   };
-  await atomicWriteJson(targetPath, next);
-  return { path: targetPath, entry };
+  const tempPath = await writeJsonTemp(targetPath, next);
+  return { path: targetPath, tempPath, entry };
 }
 
 async function readLockfile(filePath) {
@@ -66,13 +76,14 @@ async function readLockfile(filePath) {
   return value;
 }
 
-async function atomicWriteJson(filePath, value) {
+async function writeJsonTemp(filePath, value) {
   await mkdir(path.dirname(filePath), { recursive: true });
   const tempPath = `${filePath}.tmp-${process.pid}-${randomUUID()}`;
   try {
     await writeFile(tempPath, `${JSON.stringify(value, null, 2)}\n`, { mode: 0o644 });
-    await rename(tempPath, filePath);
-  } finally {
+    return tempPath;
+  } catch (error) {
     await unlink(tempPath).catch(() => {});
+    throw error;
   }
 }

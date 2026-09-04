@@ -1,11 +1,12 @@
-import { copyFile, mkdir, rename, unlink } from 'node:fs/promises';
+import { chmod, copyFile, lstat, mkdir, rename, unlink } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import { registryApiUrl, resolveRegistryUrl } from './config.mjs';
-import { downloadBlobToTemp, installCachedArtifact, readArtifact } from './artifacts.mjs';
+import { downloadBlobToTemp, readArtifact, stageCachedArtifact } from './artifacts.mjs';
 import { RegistryError } from './errors.mjs';
 import { getJson } from './http.mjs';
-import { cachePath, upsertLockfile, validateLockfileUpdate } from './lockfile.mjs';
+import { cachePath, stageLockfileUpdate, validateLockfileUpdate } from './lockfile.mjs';
 import { validatePackManifest } from './manifest.mjs';
 import { parsePackName, parsePackSpec } from './specs.mjs';
 import { loadCredentials, promptForToken, removeCredentials, saveCredentials, validateToken } from './credentials.mjs';
@@ -91,7 +92,7 @@ export async function runHubAdd(args, {
     expectedSize: manifest.sizeBytes,
     fetchImpl,
   });
-  let installed = false;
+  const stagedFiles = [];
   try {
     if (download.sha256 !== manifest.sha256) {
       throw new Error(`artifact sha256 mismatch: expected ${manifest.sha256}, got ${download.sha256}`);
@@ -101,16 +102,24 @@ export async function runHubAdd(args, {
     if (manifest.format && String(manifest.format).toUpperCase() !== validation.format) {
       throw new Error(`artifact format mismatch: manifest=${manifest.format}, bytes=${validation.format}`);
     }
+    if (validation.format === 'V5' && !manifest.stateRoot) {
+      throw new Error('V5 artifact requires manifest stateRoot.');
+    }
     if (manifest.stateRoot !== undefined && manifest.stateRoot !== validation.stateRoot) {
       throw new Error(`artifact stateRoot mismatch: expected ${manifest.stateRoot}, got ${validation.stateRoot || 'none'}`);
     }
-    const cache = await installCachedArtifact(download.tempPath, finalCachePath);
-    installed = true;
-    const lock = await upsertLockfile({ cwd, registry, manifest, force: flags.force });
-    let outputPath = cache;
+    const stagedCachePath = await stageCachedArtifact(download.tempPath, finalCachePath);
+    stagedFiles.push({ targetPath: finalCachePath, tempPath: stagedCachePath });
+    let outputPath = finalCachePath;
     if (flags.out) {
-      outputPath = await copyArtifact(cache, flags.out, cwd);
+      const stagedOutput = await stageArtifactCopy(download.tempPath, flags.out, cwd);
+      stagedFiles.push(stagedOutput);
+      outputPath = stagedOutput.targetPath;
     }
+    const stagedLock = await stageLockfileUpdate({ cwd, registry, manifest, force: flags.force });
+    stagedFiles.push({ targetPath: stagedLock.path, tempPath: stagedLock.tempPath });
+    await commitStagedFiles(stagedFiles);
+    const lock = { path: stagedLock.path, entry: stagedLock.entry };
     const result = { ...manifest, path: outputPath, lockfile: lock.path };
     if (flags.json) print(JSON.stringify(result, null, 2));
     else {
@@ -121,7 +130,8 @@ export async function runHubAdd(args, {
     }
     return result;
   } finally {
-    if (!installed) await unlinkIfPresent(download.tempPath);
+    await unlinkIfPresent(download.tempPath);
+    await Promise.all(stagedFiles.map(({ tempPath }) => unlinkIfPresent(tempPath)));
   }
 }
 
@@ -314,17 +324,75 @@ async function validateKnowledgeImage(core, bytes) {
   throw new Error('not a Knowledge Image');
 }
 
-async function copyArtifact(sourcePath, outputPath, cwd) {
+async function stageArtifactCopy(sourcePath, outputPath, cwd) {
   const targetPath = path.resolve(cwd, outputPath);
-  const tempPath = `${targetPath}.tmp-${process.pid}-${Date.now()}`;
   await mkdir(path.dirname(targetPath), { recursive: true });
+  const tempPath = `${targetPath}.tmp-${process.pid}-${randomUUID()}`;
   try {
     await copyFile(sourcePath, tempPath);
-    await rename(tempPath, targetPath);
-  } finally {
+    await chmod(tempPath, 0o644);
+    return { targetPath, tempPath };
+  } catch (error) {
     await unlinkIfPresent(tempPath);
+    throw error;
   }
-  return targetPath;
+}
+
+async function commitStagedFiles(entries) {
+  const targets = new Set();
+  const records = entries.map((entry) => {
+    if (targets.has(entry.targetPath)) throw new Error(`Install paths must be unique: ${entry.targetPath}`);
+    targets.add(entry.targetPath);
+    return {
+      ...entry,
+      backupPath: `${entry.targetPath}.backup-${process.pid}-${randomUUID()}`,
+      hadOriginal: false,
+      committed: false,
+    };
+  });
+
+  try {
+    for (const record of records) {
+      const existing = await statIfPresent(record.targetPath);
+      if (existing?.isDirectory()) throw new Error(`Cannot replace directory at ${record.targetPath}.`);
+    }
+
+    for (const record of records) {
+      if (await pathExists(record.targetPath)) {
+        record.hadOriginal = true;
+        await rename(record.targetPath, record.backupPath);
+      }
+      await rename(record.tempPath, record.targetPath);
+      record.committed = true;
+    }
+
+  } catch (error) {
+    for (const record of [...records].reverse()) {
+      if (record.committed) await unlinkIfPresent(record.targetPath);
+      if (record.hadOriginal && await pathExists(record.backupPath)) {
+        await unlinkIfPresent(record.targetPath);
+        await rename(record.backupPath, record.targetPath);
+      }
+    }
+    throw error;
+  }
+
+  for (const record of records) {
+    if (record.hadOriginal) await unlinkIfPresent(record.backupPath).catch(() => {});
+  }
+}
+
+async function statIfPresent(filePath) {
+  try {
+    return await lstat(filePath);
+  } catch (error) {
+    if (error?.code === 'ENOENT') return undefined;
+    throw error;
+  }
+}
+
+async function pathExists(filePath) {
+  return Boolean(await statIfPresent(filePath));
 }
 
 async function unlinkIfPresent(filePath) {
