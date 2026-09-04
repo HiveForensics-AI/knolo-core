@@ -32,7 +32,8 @@
     "test:hub": "node --test test/hub.integration.test.mjs"
   },
   "dependencies": {
-    "@knolo/core": "^5.1.0"
+    "@knolo/core": "^5.1.0",
+    "@vercel/blob": "2.8.0"
   },
   "private": false
 }
