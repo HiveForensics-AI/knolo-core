@@ -1,14 +1,50 @@
 import { RegistryError, RegistryNetworkError, registryErrorMessage } from './errors.mjs';
 
 export async function getJson(url, { fetchImpl = globalThis.fetch, headers = {} } = {}) {
+  return requestJson(url, { fetchImpl, headers, method: 'GET' });
+}
+
+export async function postJson(url, body, { fetchImpl = globalThis.fetch, headers = {} } = {}) {
+  return requestJson(url, { fetchImpl, headers, method: 'POST', body });
+}
+
+export async function putBytes(url, bytes, { fetchImpl = globalThis.fetch, headers = {} } = {}) {
   if (typeof fetchImpl !== 'function') throw new Error('This Node runtime does not provide fetch.');
 
   let response;
   try {
     response = await fetchImpl(url, {
-      method: 'GET',
+      method: 'PUT',
       redirect: 'follow',
-      headers: { accept: 'application/json', ...headers },
+      headers: { 'content-type': 'application/octet-stream', ...headers },
+      body: bytes,
+    });
+  } catch (error) {
+    throw new RegistryNetworkError(`Could not upload artifact to ${new URL(url).origin}.`, { url: String(url), cause: error });
+  }
+
+  if (!response.ok) {
+    const detail = await readResponseText(response, url);
+    throw new RegistryError(`Blob upload failed with HTTP ${response.status}${detail ? `: ${detail}` : '.'}`, {
+      status: response.status,
+      url: String(url),
+      body: detail,
+    });
+  }
+
+  return { status: response.status, url: response.url || String(url) };
+}
+
+async function requestJson(url, { fetchImpl = globalThis.fetch, headers = {}, method = 'GET', body: requestBody } = {}) {
+  if (typeof fetchImpl !== 'function') throw new Error('This Node runtime does not provide fetch.');
+
+  let response;
+  try {
+    response = await fetchImpl(url, {
+      method,
+      redirect: 'follow',
+      headers: { accept: 'application/json', ...(requestBody !== undefined ? { 'content-type': 'application/json' } : {}), ...headers },
+      ...(requestBody !== undefined ? { body: JSON.stringify(requestBody) } : {}),
     });
   } catch (error) {
     throw new RegistryNetworkError(`Could not reach registry at ${new URL(url).origin}.`, { url: String(url), cause: error });

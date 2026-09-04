@@ -157,9 +157,36 @@ knolo add acme/refund-policy@1.2.0
 ```
 
 Installs are content-addressed and recorded in `knolo.lock.json`. Use
-`KNOLO_HUB_URL` or `--registry` when testing a local or partner Hub. The
-current CLI Hub surface is read-only discovery and installation; publish and
-yank remain Hub-owned until CLI-safe write APIs are available.
+`KNOLO_HUB_URL` or `--registry` when testing a local or partner Hub.
+
+Hub write APIs accept dashboard `kno_…` tokens with the required
+`Authorization: Bearer kno_…` header. `knolo login` stores the raw secret
+locally; GitHub sign-in is needed only to mint a token at
+https://hub.knolo.dev/dashboard/tokens. The current CLI publishes by sending
+JSON requests to Hub, PUTting bytes directly to the returned public Blob URL,
+and waiting for verification before draft release:
+
+```bash
+knolo login --token kno_…
+knolo publish ./dist/knowledge.knolo --slug refund-policy \
+  --version 1.2.0 --license Apache-2.0
+knolo yank acme/refund-policy@1.2.0
+```
+
+The CLI rejects private Blob hosts because Hub verification must fetch the
+artifact. It never sends the `kno_…` token to Blob, in query strings, cookies,
+or pack bytes. A 401 normally means the `Bearer` word is missing or the token
+was revoked—not that Hub requires a GitHub browser session. To smoke-test the
+stored credential, use:
+
+```bash
+curl -sS -H "Authorization: Bearer kno_…" \
+  -H "Accept: application/json" \
+  https://hub.knolo.dev/api/v1/account
+```
+
+`POST /api/v1/tokens` is not a CLI login endpoint; it is dashboard/session
+token minting only.
 
 ### Use the V5 kernel directly
 
