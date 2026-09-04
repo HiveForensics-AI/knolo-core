@@ -11,7 +11,6 @@ import { createHash, randomUUID } from 'node:crypto';
 import { isIP } from 'node:net';
 import { homedir } from 'node:os';
 import path from 'node:path';
-import { put as putBlob } from '@vercel/blob';
 import {
   normalizeRegistryUrl,
   registryApiUrl,
@@ -24,7 +23,7 @@ import {
   stageCachedArtifact,
 } from './artifacts.mjs';
 import { RegistryError } from './errors.mjs';
-import { getJson, postJson } from './http.mjs';
+import { getJson, postJson, putBytes } from './http.mjs';
 import {
   cachePath,
   stageLockfileUpdate,
@@ -291,7 +290,6 @@ export async function runHubPublish(
     homeDir,
     print = console.log,
     sleep = wait,
-    putImpl = putBlob,
     pollIntervalMs = 1000,
     maxPollAttempts = 120,
   } = {}
@@ -329,28 +327,35 @@ export async function runHubPublish(
   const sha256 = createSha256(bytes);
   const pathname = `sha256/${sha256}.knolo`;
 
-  const uploaded = await putImpl(pathname, bytes, {
-    access: 'public',
-    addRandomSuffix: false,
-    // The pathname is content-addressed by the already-computed SHA-256.
-    // Allowing overwrite makes a retry safe after a partial Hub publish.
-    allowOverwrite: true,
-    contentType: 'application/octet-stream',
-    cacheControlMaxAge: 31536000,
-    token: packsReadWriteToken(env),
-  });
-  if (!uploaded || typeof uploaded.url !== 'string' || !uploaded.url) {
-    throw new Error('Public Blob upload did not return a URL.');
+  const grant = await postJson(
+    hubApiUrl(registry, ['upload', 'token']),
+    { sha256, contentLength: bytes.length },
+    { fetchImpl, headers: authHeaders }
+  );
+  const upload = resolveUploadGrant(grant, sha256);
+  let blobUrl;
+  if (upload.reused) {
+    blobUrl = assertPublicPackBlobUrl(upload.url, 'reused artifact').toString();
+  } else {
+    assertGrantPutUrl(upload.putUrl, 'upload grant');
+    const uploaded = await putBytes(upload.putUrl, bytes, {
+      fetchImpl,
+      headers: {
+        'content-type': 'application/octet-stream',
+        ...(upload.putHeaders || {}),
+        'content-length': String(bytes.length),
+      },
+    });
+    if (uploaded.pathname !== undefined && uploaded.pathname !== pathname) {
+      throw new Error(
+        `Public Blob upload pathname is not locked to ${pathname}.`
+      );
+    }
+    blobUrl = assertPublicPackBlobUrl(
+      uploaded.url,
+      'uploaded artifact'
+    ).toString();
   }
-  if (uploaded.pathname !== undefined && uploaded.pathname !== pathname) {
-    throw new Error(
-      `Public Blob upload pathname is not locked to ${pathname}.`
-    );
-  }
-  const blobUrl = assertPublicBlobUrl(
-    uploaded.url,
-    'uploaded artifact'
-  ).toString();
 
   await postJson(
     hubApiUrl(registry, ['upload', 'complete']),
@@ -593,16 +598,59 @@ function createSha256(bytes) {
   return createHash('sha256').update(bytes).digest('hex');
 }
 
-function packsReadWriteToken(env) {
-  const token =
-    typeof env?.PACKS_READ_WRITE_TOKEN === 'string'
-      ? env.PACKS_READ_WRITE_TOKEN.trim()
-      : '';
-  if (!token)
+function resolveUploadGrant(body, sha256) {
+  const pathname = body?.pathname || body?.upload?.pathname;
+  const expectedPathname = `sha256/${sha256}.knolo`;
+  if (typeof pathname !== 'string' || pathname !== expectedPathname) {
+    throw new Error(`Hub upload pathname is not locked to ${expectedPathname}.`);
+  }
+
+  const reusedUrl =
+    (body?.reused && (body?.artifact?.url || body?.url)) ||
+    body?.artifact?.url;
+  if (typeof reusedUrl === 'string' && reusedUrl) {
+    return { reused: true, pathname, url: reusedUrl };
+  }
+
+  const upload = body?.upload && typeof body.upload === 'object' ? body.upload : body;
+  if (!upload || typeof upload.url !== 'string' || !upload.url) {
+    if (body?.clientToken || upload?.clientToken) {
+      throw new Error(
+        'Hub returned a Blob client token without upload.url. This CLI PUTs to upload.url; it does not use PACKS_READ_WRITE_TOKEN.'
+      );
+    }
+    throw new Error('Hub upload token response is missing upload.url.');
+  }
+  return {
+    reused: false,
+    pathname,
+    putUrl: upload.url,
+    putHeaders:
+      upload.headers && typeof upload.headers === 'object' ? upload.headers : {},
+  };
+}
+
+function assertGrantPutUrl(value, label) {
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error(`Hub ${label} URL is invalid.`);
+  }
+  if (url.protocol !== 'https:')
+    throw new Error(`Hub ${label} URL must use HTTPS.`);
+  const hostname = url.hostname.toLowerCase();
+  if (
+    hostname.includes('.private.') ||
+    hostname.startsWith('private.') ||
+    isPrivateOrLocalIp(hostname) ||
+    isLocalOnlyHostname(hostname)
+  ) {
     throw new Error(
-      'PACKS_READ_WRITE_TOKEN is required for public Blob uploads.'
+      `Refusing private Blob URL for ${label}; Hub verification requires a public Blob URL.`
     );
-  return token;
+  }
+  return url;
 }
 
 function extractPublisherHandle(account) {
@@ -611,8 +659,10 @@ function extractPublisherHandle(account) {
     account?.publisher?.handle,
     account?.publisher?.slug,
     account?.handle,
+    account?.account?.handle,
     account?.account?.publisherHandle,
     account?.account?.publisher?.handle,
+    account?.user?.handle,
     account?.user?.publisherHandle,
     account?.publishers?.[0]?.handle,
     account?.publishers?.[0]?.slug,
@@ -650,6 +700,20 @@ function assertPublicBlobUrl(value, label) {
   if (isLocalOnlyHostname(hostname)) {
     throw new Error(
       `Refusing local-only Blob URL for ${label}; Hub verification requires a public Blob URL.`
+    );
+  }
+  return url;
+}
+
+function assertPublicPackBlobUrl(value, label) {
+  const url = assertPublicBlobUrl(value, label);
+  const hostname = url.hostname.toLowerCase();
+  const blobHost =
+    hostname === 'blob.vercel-storage.com' ||
+    hostname.endsWith('.blob.vercel-storage.com');
+  if (!blobHost || hostname.includes('.private.')) {
+    throw new Error(
+      `Hub ${label} URL must be a public Vercel Blob pack URL (not a signed grant URL).`
     );
   }
   return url;

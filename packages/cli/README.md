@@ -57,28 +57,23 @@ knolo login --token kno_…
 # write requests use: Authorization: Bearer kno_…
 ```
 
-`knolo publish` uploads bytes with `@vercel/blob` to the public store, waits
-for verification, creates an attested draft, and releases it. Set
-`PACKS_READ_WRITE_TOKEN` from the production `knolo-hub` Vercel environment
-before publishing; do not substitute `BLOB_READ_WRITE_TOKEN`:
+`knolo publish` asks Hub for a Blob PUT grant with the dashboard token, PUTs
+bytes to that grant URL, then completes with the public pack URL from the PUT
+response. A `kno_…` token is the only credential. Do not set
+`PACKS_READ_WRITE_TOKEN` — that is Hub’s store secret, not a publisher token.
 
 ```bash
-cd /path/to/knolo-hub
-npx vercel env pull /tmp/knolo-env-prod --environment=production --yes
-export PACKS_READ_WRITE_TOKEN="$(awk -F= '$1 == "PACKS_READ_WRITE_TOKEN" {sub(/^[^=]*=/, ""); gsub(/^\"|\"$/, ""); print; exit}' /tmp/knolo-env-prod)"
-
+knolo login --token kno_…
 knolo publish ./dist/knowledge.knolo \
   --slug refund-policy --version 1.2.0 --license Apache-2.0
 knolo yank acme/refund-policy@1.2.0
 ```
 
-The upload uses pathname `sha256/<64-lowercase-hex>.knolo`, public access,
-`addRandomSuffix: false`, `application/octet-stream`, and a one-year cache.
-Only public Blob URLs are accepted because Hub verification fetches the
-artifact itself. The CLI never sends the `kno_…` token to Blob, in a query
-string, cookie, or pack bytes. A 401 usually means the `Bearer` word is
-missing or the token was revoked; it does not mean the Hub write API requires
-a GitHub browser session.
+The grant pathname is `sha256/<64-lowercase-hex>.knolo`. Only public Blob URLs
+(`*.public.blob.vercel-storage.com`) are sent to `/api/upload/complete`. The
+CLI never sends the `kno_…` token to Blob, in a query string, cookie, or pack
+bytes. A 401 usually means the `Bearer` word is missing or the token was
+revoked; it does not mean the Hub write API requires a GitHub browser session.
 
 The older `@knolo/cli@5.2.0` publish/yank command was an unimplemented stub;
 current versions use the live Hub HTTP sequence. For a direct smoke test of a

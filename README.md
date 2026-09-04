@@ -162,29 +162,24 @@ Installs are content-addressed and recorded in `knolo.lock.json`. Use
 Hub write APIs accept dashboard `kno_…` tokens with the required
 `Authorization: Bearer kno_…` header. `knolo login` stores the raw secret
 locally; GitHub sign-in is needed only to mint a token at
-https://hub.knolo.dev/dashboard/tokens. The current CLI publishes by sending
-JSON requests to Hub, uploading bytes with `@vercel/blob` to the public Blob
-store using `PACKS_READ_WRITE_TOKEN`, and waiting for verification before draft
-release. `BLOB_READ_WRITE_TOKEN` is not a substitute for the public pack-store
-token:
+https://hub.knolo.dev/dashboard/tokens. `knolo publish` uses that token to ask
+Hub for a public Blob PUT grant, uploads bytes to the grant URL (never with
+the `kno_…` token), then completes with the public pack URL. Do not set
+`PACKS_READ_WRITE_TOKEN` in the CLI — that is Hub’s store secret.
 
 ```bash
-cd /path/to/knolo-hub
-npx vercel env pull /tmp/knolo-env-prod --environment=production --yes
-export PACKS_READ_WRITE_TOKEN="$(awk -F= '$1 == "PACKS_READ_WRITE_TOKEN" {sub(/^[^=]*=/, ""); gsub(/^\"|\"$/, ""); print; exit}' /tmp/knolo-env-prod)"
-
 knolo login --token kno_…
 knolo publish ./dist/knowledge.knolo --slug refund-policy \
   --version 1.2.0 --license Apache-2.0
 knolo yank acme/refund-policy@1.2.0
 ```
 
-The CLI uses pathname `sha256/<64-lowercase-hex>.knolo` with public access and
-no random suffix. It rejects private Blob hosts because Hub verification must
-fetch the artifact. It never sends the `kno_…` token to Blob, in query strings,
-cookies, or pack bytes. A 401 normally means the `Bearer` word is missing or
-the token was revoked—not that Hub requires a GitHub browser session. To
-smoke-test the stored credential, use:
+The CLI uses pathname `sha256/<64-lowercase-hex>.knolo`. It rejects private
+Blob hosts because Hub verification must fetch the artifact. It never sends
+the `kno_…` token to Blob, in query strings, cookies, or pack bytes. A 401
+normally means the `Bearer` word is missing or the token was revoked—not that
+Hub requires a GitHub browser session. To smoke-test the stored credential,
+use:
 
 ```bash
 curl -sS -H "Authorization: Bearer kno_…" \
