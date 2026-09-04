@@ -509,6 +509,121 @@ test('hub publish refuses private Blob upload URLs before sending bytes', async 
   assert.equal(calls.some(({ init }) => init.method === 'PUT'), false);
 });
 
+test('hub publish validates Blob redirects before replaying the PUT', async () => {
+  const { runHubLogin, runHubPublish } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-redirect-'));
+  const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-redirect-home-'));
+  const env = {
+    KNOLO_HUB_URL: 'https://hub.example.test',
+    XDG_CONFIG_HOME: path.join(homeDir, '.config'),
+  };
+  const token = 'kno_RedirectToken01234567890123456789';
+  const bytes = Buffer.from('redirect must be checked');
+  writeFileSync(path.join(cwd, 'redirect.knolo'), bytes);
+  const digest = createHash('sha256').update(bytes).digest('hex');
+  const uploadUrl = `https://blob.public.blob.vercel-storage.com/sha256/${digest}.knolo`;
+  const privateUrl = `https://blob.private.blob.vercel-storage.com/sha256/${digest}.knolo`;
+  const calls = [];
+  await runHubLogin(['--token', token], { env, homeDir, print: () => {} });
+
+  await assert.rejects(
+    () => runHubPublish(['./redirect.knolo', '--slug', 'redirect', '--version', '1.0.0', '--license', 'MIT'], {
+      env,
+      cwd,
+      homeDir,
+      fetchImpl: async (url, init = {}) => {
+        calls.push({ url: String(url), init });
+        if (String(url).endsWith('/api/v1/account')) return jsonResponse({ publisher: { handle: 'acme' } }, 200);
+        if (String(url).endsWith('/api/upload/token')) return jsonResponse({ upload: { url: uploadUrl, pathname: `sha256/${digest}.knolo` } }, 200);
+        if (String(url) === uploadUrl) {
+          assert.equal(init.method, 'PUT');
+          assert.equal(init.headers.Authorization, undefined);
+          return {
+            ok: false,
+            status: 307,
+            headers: new Headers({ location: privateUrl }),
+          };
+        }
+        throw new Error(`Unexpected replayed or unrelated request: ${url}`);
+      },
+    }),
+    /Refusing private Blob URL.*public Blob URL/
+  );
+  assert.deepEqual(calls.map(({ url }) => url), [
+    'https://hub.example.test/api/v1/account',
+    'https://hub.example.test/api/upload/token',
+    uploadUrl,
+  ]);
+});
+
+test('hub publish rejects loopback, private, link-local, and local-only Blob hosts', async () => {
+  const { runHubLogin, runHubPublish } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const hosts = ['localhost', '127.0.0.1', '192.168.1.20', '169.254.1.20', '[::1]', 'service.internal'];
+
+  for (const host of hosts) {
+    const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-local-blob-'));
+    const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-local-blob-home-'));
+    const env = {
+      KNOLO_HUB_URL: 'https://hub.example.test',
+      XDG_CONFIG_HOME: path.join(homeDir, '.config'),
+    };
+    const token = 'kno_LocalHostToken0123456789012345678';
+    const bytes = Buffer.from(`local Blob host ${host}`);
+    writeFileSync(path.join(cwd, 'local.knolo'), bytes);
+    const digest = createHash('sha256').update(bytes).digest('hex');
+    await runHubLogin(['--token', token], { env, homeDir, print: () => {} });
+
+    await assert.rejects(
+      () => runHubPublish(['./local.knolo', '--slug', 'local', '--version', '1.0.0', '--license', 'MIT'], {
+        env,
+        cwd,
+        homeDir,
+        fetchImpl: async (url) => String(url).endsWith('/api/v1/account')
+          ? jsonResponse({ publisher: { handle: 'acme' } }, 200)
+          : jsonResponse({ upload: {
+            url: `https://${host}/sha256/${digest}.knolo`,
+            pathname: `sha256/${digest}.knolo`,
+          } }, 200),
+      }),
+      /Blob URL.*public Blob URL/
+    );
+  }
+});
+
+test('hub write credentials cannot be sent to a different registry', async () => {
+  const { runHubLogin, runHubPublish, runHubYank } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
+  const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-registry-binding-home-'));
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-registry-binding-'));
+  const env = {
+    KNOLO_HUB_URL: 'https://hub.example.test',
+    XDG_CONFIG_HOME: path.join(homeDir, '.config'),
+  };
+  const token = 'kno_RegistryBindingToken01234567890123456';
+  writeFileSync(path.join(cwd, 'bound.knolo'), Buffer.from('registry binding'));
+  await runHubLogin(['--token', token], { env, homeDir, print: () => {} });
+
+  const fetchImpl = async () => {
+    throw new Error('The mismatched registry must be rejected before fetch.');
+  };
+  await assert.rejects(
+    () => runHubPublish(['./bound.knolo', '--slug', 'bound', '--version', '1.0.0', '--license', 'MIT', '--registry', 'https://other.example.test'], {
+      env,
+      cwd,
+      homeDir,
+      fetchImpl,
+    }),
+    /Stored credentials belong to https:\/\/hub\.example\.test; refusing to send them to https:\/\/other\.example\.test/
+  );
+  await assert.rejects(
+    () => runHubYank(['acme/bound@1.0.0', '--registry', 'https://other.example.test'], {
+      env,
+      homeDir,
+      fetchImpl,
+    }),
+    /Stored credentials belong to https:\/\/hub\.example\.test; refusing to send them to https:\/\/other\.example\.test/
+  );
+});
+
 test('hub yank posts to the owner-only Bearer endpoint', async () => {
   const { runHubLogin, runHubYank } = await import(pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href);
   const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-yank-home-'));
