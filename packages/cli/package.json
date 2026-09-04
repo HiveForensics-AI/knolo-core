@@ -1,6 +1,6 @@
 {
   "name": "@knolo/cli",
-  "version": "5.2.0",
+  "version": "5.2.2",
   "type": "module",
   "bin": {
     "knolo": "bin/knolo.mjs"
