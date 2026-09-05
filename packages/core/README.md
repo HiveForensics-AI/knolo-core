@@ -478,7 +478,7 @@ const rebuilt = await mountPack({ src: snapshot });
 const roundTripHits = query(rebuilt, 'beta note', { topK: 5 });
 ```
 
-For the phase-1 rollout notes and test matrix, see [`../../docs/V5_PRE_V6_DEVELOPMENT_PLAN.md`](../../docs/V5_PRE_V6_DEVELOPMENT_PLAN.md).
+For the staged rollout and remaining release work, see [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
 
 ---
 

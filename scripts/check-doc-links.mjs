@@ -21,9 +21,13 @@ function collectMarkdownFiles(directory) {
   const files = [];
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
     if (entry.isDirectory() && ignoredDirectories.has(entry.name)) continue;
+    const relativeDirectory = path.relative(
+      root,
+      path.join(directory, entry.name)
+    );
     if (
       entry.isDirectory() &&
-      path.relative(root, path.join(directory, entry.name)) === 'docs/v6'
+      (relativeDirectory === 'docs/v6' || relativeDirectory === 'docs/v5.5')
     )
       continue;
 
