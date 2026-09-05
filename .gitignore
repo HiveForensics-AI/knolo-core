@@ -80,12 +80,16 @@ Desktop.ini
 LIVE_KBS_MVP.md
 /upcoming feature.md
 
-# Local V6 design materials (not part of the V5 release branch)
+# Local design, planning, and unreleased specification materials
 /docs/v6/
+/docs/v5.5/
+/docs/*.docx
+/docs/V5_PRE_V6_DEVELOPMENT_PLAN.md
+/docs/V5_TO_V6_HANDOFF.md
+/docs/V5_1_0_RELEASE_RECORD.md
 
 # ICP local harness generated seed data / runtime (also covered by tests/icp-local/.gitignore)
 tests/icp-local/data/
 tests/icp-local/generated/
 tests/icp-local/.runtime/
 tests/icp-local/**/*.knolo
-docs/Knolo_V5_Verifiable_Knowledge_Runtime_Architecture.docx

@@ -41,15 +41,13 @@ configured GitHub workflow remains the hosted confirmation point.
 
 ## Active pre-V6 development plan
 
-The pre-V6 V5 work and completion gate are tracked in the
-[V5 pre-V6 development plan](V5_PRE_V6_DEVELOPMENT_PLAN.md). Phases 1 and 2
-are complete locally, including the read-only Node Studio service, native root
-parity, shared diagnostics/management fixtures, and host-owned transport
-adapters. Phases 3–5 are now complete locally as well, including durable writer
-leases, explicit authorization gates, production sync application, the Python
-and adapter V5 profiles, frozen interoperability evidence, and the written
-V5-to-V6 handoff. The remaining items are external release-gate activities:
-hosted CI confirmation, publication verification, and release-operator sign-off.
+The pre-V6 V5 work is complete locally, including the read-only Node Studio
+service, native root parity, shared diagnostics/management fixtures, and
+host-owned transport adapters. Durable writer leases, explicit authorization
+gates, production sync application, the Python and adapter V5 profiles, and
+frozen interoperability evidence are also complete locally. The remaining
+items are external release-gate activities: hosted CI confirmation,
+publication verification, and release-operator sign-off.
 
 The V6 CESR specification is deliberately deferred until these phases and the
 V5 completion gate are finished.
