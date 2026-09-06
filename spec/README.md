@@ -34,7 +34,7 @@ transactions, EQL, authority, or durable agent execution.
 | KIP-0024 | Signed run authority bound to durable run roots                                                                                                                |
 | KIP-0025 | Deterministic runtime diagnostics and health snapshots                                                                                                         |
 | KIP-0026 | Read-only Studio management snapshots and capability panels                                                                                                    |
-| KIP-0027 | Draft: VQF-1 physical compression; opt-in object/event transcode, optional query-index sidecar, and V4 lexical postings adapter implemented, format not frozen |
+| KIP-0027 | Draft: VQF-1 physical compression; opt-in object/event transcode, optional query-index sidecar, V4 lexical adapter and native varint postings/lexicon/microblocks implemented, format not frozen |
 
 The TypeScript and Rust implementations must consume the same vectors under
 `conformance/v5/` and reject malformed input fail-closed.

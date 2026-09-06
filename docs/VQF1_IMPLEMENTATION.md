@@ -1,11 +1,13 @@
 # VQF-1 implementation status
 
-Phases 0–7 establish the baseline, internal binary primitives, deterministic
+Phases 0–8 establish the baseline, internal binary primitives, deterministic
 tables, exact byte factoring, exact object/event payload codecs, an opt-in V5
 physical transcode, a compressed query-index sidecar with optional kind 129,
-and a lexical postings reader with a V4 compatibility adapter. Ordinary
-V3/V4/V5 writing remains the default; query and retrieval behavior remain
-unchanged.
+a lexical postings reader with a V4 compatibility adapter, and a native
+varint lexical-index artifact with front-coded lexicon pages and bounded
+microblocks. Ordinary V3/V4/V5 writing remains the default; query and
+retrieval behavior remain unchanged unless a runtime pack carries the
+optional VQF lexical index.
 
 See [KIP-0027](../spec/KIP-0027-vqf1-compression.md) for the draft contract and
 [baseline benchmarks](VQF1_BENCHMARKS.md) for reproducible measurements and
@@ -277,5 +279,38 @@ The [recorded Phase 7 checks](benchmarks/vqf1/phase7-checks.json) cover the core
 regression, TrustBench, V5 smoke, release/archive, formatting, documentation
 and exact Phase 0 baseline-identity gates.
 
-Next implementation work is direct varint postings, lexicon pages and bounded
-microblocks.
+## Phase 8
+
+`lexicon.ts` stores UTF-8-sorted terms in front-coded pages of 128 terms by
+default. Page leaders support binary search; a lookup decodes at most one
+page. `postings.ts` writes varint posting lists (document frequency, document
+deltas, term frequency, position deltas), a per-term directory and a
+microblock directory whose ranges never split a posting list. Microblock
+payloads are digested with `knolo:vqf-microblock:v1`. Decoding re-encodes
+and requires exact equality.
+
+`createVqfLexicalPostingsReader` implements the existing postings interface
+from that artifact. Construction validates the whole body; query-time reads
+decode only the requested term slice. `query.ts` uses this reader when a pack
+has runtime-only `vqfLexicalIndex` bytes. V4 pack serializers are unchanged.
+
+Reproduce the focused checks with:
+
+```sh
+node --test packages/core/test/vqf-postings.test.mjs packages/core/test/vqf-lexical-index.test.mjs
+```
+
+The [Phase 8 measurements](benchmarks/vqf1/phase8-postings.json) compare the
+complete artifact with V4 sentinel postings plus JSON lexicon bytes.
+Reproduce with:
+
+```sh
+npm run benchmark:vqf:postings -- --output /tmp/vqf-postings.json
+```
+
+The [recorded Phase 8 checks](benchmarks/vqf1/phase8-checks.json) cover the core
+regression, TrustBench, V5 smoke, release/archive, formatting, documentation
+and exact Phase 0 baseline-identity gates.
+
+Next implementation work is optional shared phrase factoring and completed
+profiles.

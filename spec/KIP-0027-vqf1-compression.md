@@ -2,8 +2,9 @@
 
 Status: draft for prototype; integer, bounded byte-I/O, digest/string tables,
 exact byte factoring, internal object/event/query-index payload codecs, an
-opt-in V5 physical transcode including optional kind-129 indexes, and a
-lexical postings reader with a V4 sentinel-array adapter are implemented.
+opt-in V5 physical transcode including optional kind-129 indexes, a lexical
+postings reader with a V4 sentinel-array adapter, and a native varint lexical
+index with front-coded lexicon pages and bounded microblocks are implemented.
 The interoperable byte format is not frozen.
 
 ## Purpose and compatibility
@@ -147,12 +148,14 @@ identical scoring inputs in the same deterministic order.
 
 The TypeScript prototype now has that reader interface. Query evaluation uses
 it through a V4 adapter that indexes the existing sentinel `Uint32Array` once
-and then reads only requested term streams. Pack serializers are unchanged.
-Term processing order follows stored stream order so BM25 sums, phrase
-positions, expansion, ranking and block-id tie-breaks remain identical.
-Construction may inspect the whole array; query-time accounting MUST show that
-unrelated posting lists are not reread. Direct varint postings, lexicon pages
-and microblocks remain a later increment.
+and then reads only requested term streams. An opt-in native reader consumes
+the prototype varint lexical-index artifact instead. Pack serializers are
+unchanged. Term processing order follows stored stream order so BM25 sums,
+phrase positions, expansion, ranking and block-id tie-breaks remain identical.
+Construction may inspect the whole array or artifact; query-time accounting
+MUST show that unrelated posting lists are not reread. Direct varint postings,
+lexicon pages and microblock directories are implemented as a prototype
+artifact; they are not a V4 pack section and are not frozen.
 
 Phrase references must preserve every offset for repeated terms, remain within
 block boundaries and reconstruct exact sorted unique positional lists. Disable
@@ -180,8 +183,10 @@ Rehash malformed physical bodies in tests to exercise inner validation too.
 Then add Rust/Python decoding parity for the TypeScript golden fixtures.
 
 Open wire decisions before freeze: complete profile defaults;
-lexical artifact placement and evidence mapping; lexicon pages and microblock
-directories; phrase selection and authenticated lazy verification. No VQF
+lexical artifact placement as a pack/image section and evidence mapping;
+phrase selection and authenticated lazy verification. Lexicon pages and
+microblock directories exist as a tested prototype, not a frozen layout.
+No VQF
 container conformance bytes are published by this draft.
 
 ## Phase 2 prototype table encoding
@@ -368,3 +373,46 @@ the ordinary physical payload digest so older readers can verify and skip it.
 Required VQF object/event segments remain incompatible with those older
 readers. Ordinary CBOR sidecars remain the durable-store default; deserializers
 accept a `VQF1` envelope when present.
+
+## Phase 8 prototype lexical-index body
+
+The internal lexical-index artifact encodes a V4 lexicon and posting streams
+without changing pack serializers. Query evaluation may consume it through
+`createVqfLexicalPostingsReader` when a runtime pack carries
+`vqfLexicalIndex`. Ordinary V4 writing remains the default.
+
+```text
+u8 codecVersion = 1
+u8 flags = 0
+uvarint pageSize
+uvarint microblockTargetBytes
+uvarint termCount
+uvarint pageCount
+  repeated: firstTerm bytes; pageOffset; pageLength
+uvarint lexiconPagesLength; lexiconPages
+  page: first term UTF-8; remaining terms as sharedPrefixLength,
+        suffixLength, suffixBytes
+repeated uvarint streamOrderTermId
+for each lexicon ordinal:
+  uvarint termId; postingOffset; postingLength; documentFrequency
+uvarint microblockCount
+  repeated: firstOrdinal; lastOrdinal; physicalOffset; physicalLength;
+            32-byte knolo:vqf-microblock:v1 digest
+uvarint postingStreamLength; postingStream
+  list: df; for each document: documentDelta, tf, firstPosition+1,
+        positionDelta...
+```
+
+Lexicon pages sort terms by UTF-8 bytes. Page size defaults to 128 terms.
+Lookup binary-searches page leaders and decodes at most one page.
+Stream order preserves the original V4 posting-array order so BM25
+accumulation order is unchanged. Documents and positions are stored in
+strictly increasing order using first-value-plus-one then positive deltas.
+A posting list never crosses a microblock boundary. Microblock target size
+defaults to 65,536 posting-stream bytes and is recorded in the artifact;
+a single oversized list becomes its own microblock.
+
+Decoding verifies page leaders, contiguous directories, microblock digests
+and document-frequency agreement, then requires the physical body to equal
+deterministic re-encoding. Query-time reads decode only the requested term
+slice and count posting lists, posting bytes and microblocks actually used.

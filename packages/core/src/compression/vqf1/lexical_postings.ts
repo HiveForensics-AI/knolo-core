@@ -1,7 +1,7 @@
 /**
  * Directly addressable lexical postings. The V4 adapter preserves existing
- * sentinel-array block-ID and position conventions. Varint streams belong to
- * a later increment.
+ * sentinel-array block-ID and position conventions. Native varint streams,
+ * lexicon pages and microblocks live in postings.ts.
  */
 
 export type LexicalPosting = {
@@ -24,6 +24,9 @@ export type LexicalPostingsStats = {
   documentsVisited: number;
   positionsCopied: number;
   missingTermLookups: number;
+  microblockCount: number;
+  microblocksRead: number;
+  postingBytesRead: number;
 };
 
 export interface LexicalPostingsReader {
@@ -123,6 +126,7 @@ class LegacyLexicalPostingsReader implements LexicalPostingsReader {
     documentPostingCount: number;
     positionCount: number;
     constructionIntegers: number;
+    microblockCount: number;
   };
   private query = emptyQueryStats();
 
@@ -162,6 +166,7 @@ class LegacyLexicalPostingsReader implements LexicalPostingsReader {
       documentPostingCount,
       positionCount,
       constructionIntegers,
+      microblockCount: 0,
     };
   }
 
@@ -225,6 +230,8 @@ function emptyQueryStats(): {
   documentsVisited: number;
   positionsCopied: number;
   missingTermLookups: number;
+  microblocksRead: number;
+  postingBytesRead: number;
 } {
   return {
     termsLookedUp: 0,
@@ -232,5 +239,7 @@ function emptyQueryStats(): {
     documentsVisited: 0,
     positionsCopied: 0,
     missingTermLookups: 0,
+    microblocksRead: 0,
+    postingBytesRead: 0,
   };
 }

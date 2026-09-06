@@ -223,13 +223,41 @@ Kind 129 uses outer flags 0 so older readers can verify and skip it.
 npm run benchmark:vqf:index -- --output /tmp/vqf-index.json
 ```
 
+Phase 8 adds [lexical-index measurements](benchmarks/vqf1/phase8-postings.json).
+Complete-artifact ratios include lexicon pages, directories and microblock
+headers versus V4 sentinel postings plus JSON lexicon bytes. Posting-stream
+ratios compare only the varint lists with the V4 `Uint32Array`. These corpora
+are generated for lexical measurement; they are not the Phase 0 image baseline.
+
+| Corpus         | Docs | Terms | V4 postings | Posting stream | Stream ratio | V4 lexical | VQF artifact | Artifact ratio |
+| -------------- | ---: | ----: | ----------: | -------------: | -----------: | ---------: | -----------: | -------------: |
+| low-redundancy |   32 |  3072 |     61440 B |        12288 B |        5.00× |   114033 B |      57113 B |          2.00× |
+| low-redundancy |  128 | 12288 |    245760 B |        49248 B |        4.99× |   461835 B |     232147 B |          1.99× |
+| enterprise     |   32 |    52 |      8480 B |         2068 B |        4.10× |     9059 B |       2643 B |          3.43× |
+| enterprise     |  128 |   148 |     33440 B |         8233 B |        4.06× |    35056 B |       9763 B |          3.59× |
+| repetitive     |   32 |     5 |      2856 B |          709 B |        4.03× |     2918 B |        836 B |          3.49× |
+| repetitive     |  128 |     5 |     11304 B |         2826 B |        4.00× |    11366 B |       2958 B |          3.84× |
+| repository     |   32 |    70 |      3632 B |          838 B |        4.33× |     4486 B |       1524 B |          2.94× |
+| repository     |  128 |   262 |     14384 B |         3342 B |        4.30× |    17857 B |       6065 B |          2.94× |
+
+Every case reconstructed exact positions, tf and df, and matched ordinary V4
+query scores. Query-time counters read one posting list for a single-term
+lookup. Default 64 KiB microblocks stay as one block on these sizes; smaller
+targets are covered by tests.
+
+```sh
+npm run benchmark:vqf:postings -- --output /tmp/vqf-postings.json
+```
+
 Keep exact logical payloads, IDs, roots and query outputs as hard gates.
 For every later codec, report complete artifact size and segment/section
 sizes, `logicalBytes / physicalBytes` and
 `1 - physicalBytes / logicalBytes`, including all codec overhead. Keep a segment
 ordinary if its encoded envelope is not smaller.
 
-The proposed 3x total, 3–8x postings and approximately 2x duplicated-text-plane
-targets remain unmeasured. Add larger corpus scales before selecting decoder
-limits or accepting scalability claims. Set mount, query and memory regression
+The proposed 3x total image and approximately 2x duplicated-text-plane
+targets remain unmeasured. Phase 8 posting streams on these corpora are
+4.0–5.0× smaller than V4 sentinel postings; that is a prototype observation,
+not a frozen or release claim. Add larger corpus scales before selecting
+decoder limits or accepting scalability claims. Set mount, query and memory regression
 budgets against repeated measurements before evaluating a codec for release.

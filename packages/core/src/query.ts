@@ -24,6 +24,7 @@ import {
   createLegacyLexicalPostingsReader,
   type LexicalPostingsReader,
 } from './compression/vqf1/lexical_postings.js';
+import { createVqfLexicalPostingsReader } from './compression/vqf1/postings.js';
 
 export type QueryOptions = {
   topK?: number;
@@ -387,9 +388,11 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
   // Query-time document frequency collection for BM25 IDF.
   const dfs = new Map<number, number>();
 
-  const postings = createLegacyLexicalPostingsReader(pack.postings, {
-    offsetBlockIds: (pack.meta?.version ?? 1) >= 3,
-  });
+  const postings = pack.vqfLexicalIndex
+    ? createVqfLexicalPostingsReader(pack.vqfLexicalIndex)
+    : createLegacyLexicalPostingsReader(pack.postings, {
+        offsetBlockIds: (pack.meta?.version ?? 1) >= 3,
+      });
 
   function scanForTermIds(
     idWeights: Map<number, number>,
