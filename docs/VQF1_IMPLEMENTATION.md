@@ -1,10 +1,11 @@
 # VQF-1 implementation status
 
-Phases 0–6 establish the baseline, internal binary primitives, deterministic
+Phases 0–7 establish the baseline, internal binary primitives, deterministic
 tables, exact byte factoring, exact object/event payload codecs, an opt-in V5
-physical transcode, and a compressed query-index sidecar with optional kind 129.
-Ordinary V3/V4/V5 writing remains the default; query and retrieval behavior
-remain unchanged.
+physical transcode, a compressed query-index sidecar with optional kind 129,
+and a lexical postings reader with a V4 compatibility adapter. Ordinary
+V3/V4/V5 writing remains the default; query and retrieval behavior remain
+unchanged.
 
 See [KIP-0027](../spec/KIP-0027-vqf1-compression.md) for the draft contract and
 [baseline benchmarks](VQF1_BENCHMARKS.md) for reproducible measurements and
@@ -250,4 +251,31 @@ The [recorded Phase 6 checks](benchmarks/vqf1/phase6-checks.json) cover the full
 local regression, cross-runtime, conformance, release, formatting and exact
 baseline-identity gates.
 
-Next implementation work is the lexical postings interface and legacy adapter.
+## Phase 7
+
+`lexical_postings.ts` is the query-facing postings reader. It exposes term
+presence, document frequency, stored-stream order and per-term document
+postings with positions and term frequency. `createLegacyLexicalPostingsReader`
+parses the existing V4 sentinel array, including one-based block IDs for
+version ≥ 3 and raw block IDs for older packs. Truncated streams and duplicate
+term IDs fail closed. The V4 serializer and on-disk postings layout are
+unchanged.
+
+`query.ts` harvests candidates through this adapter instead of scanning the
+entire posting array on every query. Requested terms are applied in stored
+stream order so BM25 sums, phrase positions, expansion, ranking and block-id
+tie-breaks stay identical. Query-time counters record posting lists actually
+read; construction still inspects the legacy array once.
+
+Reproduce the focused checks with:
+
+```sh
+node --test packages/core/test/vqf-postings.test.mjs
+```
+
+The [recorded Phase 7 checks](benchmarks/vqf1/phase7-checks.json) cover the core
+regression, TrustBench, V5 smoke, release/archive, formatting, documentation
+and exact Phase 0 baseline-identity gates.
+
+Next implementation work is direct varint postings, lexicon pages and bounded
+microblocks.

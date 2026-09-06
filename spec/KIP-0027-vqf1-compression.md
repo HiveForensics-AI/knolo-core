@@ -1,9 +1,10 @@
 # KIP-0027: VQF-1 proof-preserving physical compression
 
 Status: draft for prototype; integer, bounded byte-I/O, digest/string tables,
-exact byte factoring, internal object/event/query-index payload codecs, and an
-opt-in V5 physical transcode including optional kind-129 indexes are
-implemented. The interoperable byte format is not frozen.
+exact byte factoring, internal object/event/query-index payload codecs, an
+opt-in V5 physical transcode including optional kind-129 indexes, and a
+lexical postings reader with a V4 sentinel-array adapter are implemented.
+The interoperable byte format is not frozen.
 
 ## Purpose and compatibility
 
@@ -143,6 +144,15 @@ Future lexical readers expose directly addressable term streams with exact
 document IDs, positions, tf and df. Legacy adapters preserve existing block-ID
 offset conventions. Varint postings and optional phrase factoring MUST feed
 identical scoring inputs in the same deterministic order.
+
+The TypeScript prototype now has that reader interface. Query evaluation uses
+it through a V4 adapter that indexes the existing sentinel `Uint32Array` once
+and then reads only requested term streams. Pack serializers are unchanged.
+Term processing order follows stored stream order so BM25 sums, phrase
+positions, expansion, ranking and block-id tie-breaks remain identical.
+Construction may inspect the whole array; query-time accounting MUST show that
+unrelated posting lists are not reread. Direct varint postings, lexicon pages
+and microblocks remain a later increment.
 
 Phrase references must preserve every offset for repeated terms, remain within
 block boundaries and reconstruct exact sorted unique positional lists. Disable

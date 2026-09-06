@@ -1,0 +1,48 @@
+{
+  "date": "2026-09-06",
+  "scope": "Phase 7 working tree: lexical postings reader and V4 sentinel-array adapter",
+  "checks": [
+    {
+      "command": "npm test --workspace @knolo/core",
+      "result": "passed",
+      "evidence": "144 core Node tests including vqf-postings, plus the legacy lexical/phrase/expansion regression script"
+    },
+    {
+      "command": "npm run trustbench:test",
+      "result": "passed"
+    },
+    {
+      "command": "npm run smoke:v5",
+      "result": "passed",
+      "evidence": "create, inspect, query, verify, migrate and receipt"
+    },
+    {
+      "command": "npm run release:check",
+      "result": "passed",
+      "evidence": "build, metadata, docs, publication source and package archive checks"
+    },
+    {
+      "command": "npm run format:check:all",
+      "result": "passed"
+    },
+    {
+      "command": "npm run docs:check",
+      "result": "passed",
+      "evidence": "83 Markdown files"
+    },
+    {
+      "command": "node --test packages/core/test/vqf-postings.test.mjs",
+      "result": "passed",
+      "evidence": "exact V4 sentinel reconstruction, pre-v3 block ids, query-time unread unrelated lists, 1,000 seeded indexes, phrase/expansion/tie-order queries"
+    },
+    {
+      "command": "node packages/core/scripts/benchmark-vqf.mjs --samples 2 --warmup 0 --compare docs/benchmarks/vqf1/baseline.json --output /tmp/vqf-phase7-repeat.json",
+      "result": "passed",
+      "evidence": "all eight corpus cases retained exact corpus/artifact digests, roots and ordered query results"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ]
+}
