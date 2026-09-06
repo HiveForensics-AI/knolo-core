@@ -25,6 +25,12 @@ operational guides for Knolo.
   physical-compression measurements.
 - [VQF-1 implementation status](VQF1_IMPLEMENTATION.md) — internal codecs,
   source spans, VQF envelope semantics, limits, and validation commands.
+- [VQF-1 format freeze boundary](VQF1_FORMAT_FREEZE.md) — portable
+  object/event envelope rules and the TypeScript-only encoder boundary.
+- [VQF-1 lexical status](VQF1_LEXICAL_STATUS.md) — why lexical postings remain
+  a TypeScript runtime artifact.
+- [VQF-1 next phases](VQF1_NEXT_PHASES.md) — decoder parity, hardening, and
+  release handoff.
 
 Architecture sources, future-version specifications, and internal planning
 records are kept local and are not part of the public repository. The

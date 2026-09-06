@@ -1,9 +1,10 @@
 # knolo-core-rust
 
 **Compatibility status:** legacy v1–v3 Rust reader/query profile plus the V5
-read-only Knowledge Image verifier and deterministic migration foundation. The
-TypeScript runtime remains the V4 retrieval reference, while this crate is the
-native V5 byte-contract foundation.
+read-only Knowledge Image verifier, deterministic migration foundation, and
+VQF-1 required object/event readers. The TypeScript runtime remains the V4
+retrieval reference and canonical VQF encoder; this crate is a read-only V5
+byte-contract implementation.
 
 The shared implementation roadmap is [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
 
@@ -32,6 +33,11 @@ roots. The crate exposes canonical authority-envelope roots and injected
 verifier callbacks; cryptographic algorithms and external identity resolution
 remain host responsibilities. Optional key IDs are included in canonical
 envelope payloads for rotation parity.
+
+Required VQF-1 object and event segments are decoded with the same logical
+payload, identity, segment-root, and state-root checks as TypeScript. Native VQF
+encoding, lexical postings, and the optional query-index codec remain outside
+the portable Rust writer contract.
 
 Native inspection consumers can use `inspect_knowledge_runtime_v5` and
 `inspect_knowledge_studio_management_v5` for the verified base diagnostics and

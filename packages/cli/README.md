@@ -5,6 +5,12 @@ Image inspection. Normal builds emit V4; the ICP legacy build path explicitly
 emits V3 until the canister gains a V4 profile. V5 Studio output is a verified
 management snapshot, not a mutation interface.
 
+The CLI also exposes opt-in VQF-1 physical transcodes for V5 images. `v5
+compress` supports the `fast`, `balanced`, and `max` profiles, while `v5
+decompress` restores ordinary required segments. VQF preserves logical roots;
+the format is still draft and compressed object/event images require a VQF-aware
+reader.
+
 The official CLI for building `.knolo` knowledge packs.
 
 It indexes structured content and produces a deterministic, local-first knowledge bundle for use with `@knolo/core`.

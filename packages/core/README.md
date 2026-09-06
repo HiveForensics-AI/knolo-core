@@ -25,6 +25,12 @@ leaving V4 pack and retrieval APIs unchanged. The new APIs use deterministic
 CBOR, SHA-256 domain-separated roots, A/B superblocks, immutable segments, and
 fail-closed verification.
 
+The opt-in VQF-1 transcode can factor required object and event segments while
+preserving their logical bytes, identities, roots, and state root. TypeScript
+is the canonical VQF encoder; Rust and Python consume the shared compressed
+fixtures. VQF lexical postings and the optional query-index sidecar remain
+provisional and are not the default V5 serialization path.
+
 ```ts
 import {
   migrateV4ToV5,
