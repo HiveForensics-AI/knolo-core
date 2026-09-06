@@ -98,9 +98,40 @@ node --input-type=module -e "import('@knolo/core').then(m => console.log(typeof 
 Use `npm view <package>@5.5.0 version dist.tarball` to confirm each package is
 available before moving to the next ecosystem.
 
-## 4. Publish Rust crates
+## 4. Python package publication through GitHub
 
-Authenticate to crates.io, then publish the core crate before the ICP adapter:
+Python is now part of the V5 read-only verifier/query profile. The repository's
+`python-ci` workflow must be green before publication. The build and upload are
+performed by `python-publish` from the GitHub web UI; do not run a local
+`python -m build` or `twine upload` as the publication step.
+
+Push the release commit and confirm the branch checks:
+
+```bash
+git push origin feat/vqf1-compression
+```
+
+In GitHub, open **Releases → Draft a new release**, choose or create tag
+`v5.5.0` at the release commit, then select **Publish release**. This published
+release starts `python-publish`, which builds `knolo==5.5.0`, runs `twine check`,
+and uploads it to PyPI through the configured `pypi` environment and Trusted
+Publishing. Wait for both workflow jobs to pass before continuing.
+
+Verify the package from a clean environment:
+
+```bash
+python -m pip index versions knolo
+python_tmp="$(mktemp -d)"
+python -m venv "$python_tmp"
+"$python_tmp/bin/python" -m pip install --upgrade pip
+"$python_tmp/bin/python" -m pip install --no-cache-dir knolo==5.5.0
+"$python_tmp/bin/python" -c "import knolo; assert knolo.__version__ == '5.5.0'; print(knolo.__version__)"
+```
+
+## 5. Publish Rust crates
+
+After the GitHub Python workflow and PyPI verification pass, publish the Rust
+crates in dependency order:
 
 ```bash
 cargo login
@@ -118,34 +149,15 @@ cargo publish --manifest-path packages/icp-canister/Cargo.toml
 The ICP crate is the V5 release-line adapter but currently exposes the legacy
 pack Candid API. Its V5 Knowledge Image integration is a later adapter wave.
 
-## 5. Python package boundary
+## 6. Verify the release
 
-Python is now part of the V5 read-only verifier/query profile. Its validation
-commands are:
-
-```bash
-cd packages/core-python
-python -m pip install -e ".[dev]"
-python -m pytest
-python_dist="$(mktemp -d)"
-python -m build --outdir "$python_dist" .
-python -m twine check "$python_dist"/*
-```
-
-Run the Python publication checks for this V5 release. Publish a new Python
-version only after the shared image fixture and clean-wheel checks pass; see
-[`packages/core-python/RELEASE.md`](../packages/core-python/RELEASE.md).
-
-## 6. GitHub release
-
-After the package registries are verified:
+After npm, PyPI, and crates.io publication, verify the package registries and
+record the GitHub release URL in the release notes:
 
 ```bash
-git tag -a v5.5.0 -m "Knolo V5.5.0 hardening release"
-git push origin v5.5.0
+npm view @knolo/core@5.5.0 version
+npm view @knolo/cli@5.5.0 version
+python -m pip index versions knolo
+curl -fsSL https://crates.io/api/v1/crates/knolo-core-rust/5.5.0
+curl -fsSL https://crates.io/api/v1/crates/knolo-icp-canister/5.5.0
 ```
-
-Create a GitHub release from `v5.5.0` and include the V5 hardening scope,
-V5.0.0 compatibility statement, registry links, and the Python/ICP boundaries
-above. The existing Python publish workflow is release-triggered, so do not
-publish a GitHub release until its package decision is intentional.
