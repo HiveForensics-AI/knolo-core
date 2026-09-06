@@ -4,8 +4,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const releaseVersion = '5.1.0';
-const cliReleaseVersion = '5.2.3';
+const releaseVersion = '5.5.0';
+const cliReleaseVersion = '5.5.0';
 
 function readJson(relativePath) {
   return JSON.parse(readFileSync(path.join(root, relativePath), 'utf8'));
@@ -99,8 +99,8 @@ const pythonInit = readFileSync(
   path.join(root, 'packages/core-python/src/knolo/__init__.py'),
   'utf8'
 );
-assert.match(pythonProject, /version = "5\.1\.0"/);
-assert.match(pythonInit, /__version__ = "5\.1\.0"/);
+assert.match(pythonProject, new RegExp(`version = "${releaseVersion}"`));
+assert.match(pythonInit, new RegExp(`__version__ = "${releaseVersion}"`));
 assert.match(
   readFileSync(path.join(root, 'packages/core-python/README.md'), 'utf8'),
   /V5 Knowledge Image verification/i

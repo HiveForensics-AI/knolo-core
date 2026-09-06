@@ -1,6 +1,6 @@
-# Knolo V5.1.0 release guide
+# Knolo V5.5.0 release guide
 
-This guide publishes the V5.1.0 hardening release while preserving the already
+This guide publishes the V5.5.0 hardening release while preserving the already
 live V5.0.0 foundation and existing V4 retrieval behavior.
 
 ## Release set
@@ -16,10 +16,10 @@ The V5 npm release set is:
 
 The Rust release set is:
 
-- `knolo-core-rust` `5.1.0`
-- `knolo-icp-canister` `5.1.0`
+- `knolo-core-rust` `5.5.0`
+- `knolo-icp-canister` `5.5.0`
 
-The Python distribution is `5.1.0` and provides read-only V5 Knowledge Image
+The Python distribution is `5.5.0` and provides read-only V5 Knowledge Image
 verification and lexical object queries while preserving its legacy V1–V3
 pack APIs. It does not provide V5 writes, Studio, authority administration,
 or synchronization.
@@ -90,12 +90,12 @@ Verify the release from a clean temporary project:
 tmp_dir="$(mktemp -d)"
 cd "$tmp_dir"
 npm init -y
-npm install @knolo/core@5.1.0 @knolo/cli@5.1.0
+npm install @knolo/core@5.5.0 @knolo/cli@5.5.0
 npx knolo --help
 node --input-type=module -e "import('@knolo/core').then(m => console.log(typeof m.verifyKnowledgeImageV5))"
 ```
 
-Use `npm view <package>@5.1.0 version dist.tarball` to confirm each package is
+Use `npm view <package>@5.5.0 version dist.tarball` to confirm each package is
 available before moving to the next ecosystem.
 
 ## 4. Publish Rust crates
@@ -108,7 +108,7 @@ cargo publish --manifest-path packages/core-rust/Cargo.toml --dry-run
 cargo publish --manifest-path packages/core-rust/Cargo.toml
 ```
 
-Wait for `knolo-core-rust 5.1.0` to be indexed, then publish the adapter:
+Wait for `knolo-core-rust 5.5.0` to be indexed, then publish the adapter:
 
 ```bash
 cargo publish --manifest-path packages/icp-canister/Cargo.toml --dry-run
@@ -141,11 +141,11 @@ version only after the shared image fixture and clean-wheel checks pass; see
 After the package registries are verified:
 
 ```bash
-git tag -a v5.1.0 -m "Knolo V5.1.0 hardening release"
-git push origin v5.1.0
+git tag -a v5.5.0 -m "Knolo V5.5.0 hardening release"
+git push origin v5.5.0
 ```
 
-Create a GitHub release from `v5.1.0` and include the V5 hardening scope,
+Create a GitHub release from `v5.5.0` and include the V5 hardening scope,
 V5.0.0 compatibility statement, registry links, and the Python/ICP boundaries
 above. The existing Python publish workflow is release-triggered, so do not
 publish a GitHub release until its package decision is intentional.

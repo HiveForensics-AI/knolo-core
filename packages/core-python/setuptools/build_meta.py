@@ -13,7 +13,7 @@ from typing import Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_NAME = "knolo"
-VERSION = "5.1.0"
+VERSION = "5.5.0"
 DIST_INFO = f"{PACKAGE_NAME}-{VERSION}.dist-info"
 WHEEL_NAME = f"{PACKAGE_NAME}-{VERSION}-py3-none-any.whl"
 SDIST_NAME = f"{PACKAGE_NAME}-{VERSION}.tar.gz"

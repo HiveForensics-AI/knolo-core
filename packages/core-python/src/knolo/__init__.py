@@ -23,7 +23,7 @@ from .v5 import (
     verify_knowledge_image_v5,
 )
 
-__version__ = "5.1.0"
+__version__ = "5.5.0"
 
 __all__ = [
     "__version__",

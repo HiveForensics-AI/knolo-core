@@ -1,6 +1,6 @@
 {
   "name": "@knolo/cli",
-  "version": "5.2.3",
+  "version": "5.5.0",
   "type": "module",
   "bin": {
     "knolo": "bin/knolo.mjs"
@@ -32,7 +32,7 @@
     "test:hub": "node --test test/hub.integration.test.mjs"
   },
   "dependencies": {
-    "@knolo/core": "^5.1.0"
+    "@knolo/core": "^5.5.0"
   },
   "private": false
 }
