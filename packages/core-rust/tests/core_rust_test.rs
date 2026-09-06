@@ -120,6 +120,24 @@ fn verifies_shared_v5_binary_fixture() {
 }
 
 #[test]
+fn verifies_frozen_vqf_optional_index_fixture() {
+    let encoded = include_str!("../../../conformance/vqf1/optional-query-index.fixture.base64");
+    let image = decode_base64(encoded);
+    let verified = inspect_knowledge_image(&image).expect("VQF optional-index fixture should verify");
+    assert_eq!(verified.state_root, "sha256-979904b0ce8920b8c12717a92cdd3f777b901c34f682e4023290241089bc694a");
+    assert_eq!(verified.commit_digest, "sha256-7e7d49d8b1f69c378e3dfcc1ad013f67b8b3dc69e5b98c801ded964733582d22");
+    assert_eq!(verified.segments.len(), 4);
+    assert_eq!(verified.segments.last().unwrap().kind, 129);
+}
+
+#[test]
+fn required_vqf_fixture_is_rejected_until_decoder_parity_lands() {
+    let encoded = include_str!("../../../conformance/vqf1/required-object-vqf.fixture.base64");
+    let image = decode_base64(encoded);
+    assert!(inspect_knowledge_image(&image).is_err());
+}
+
+#[test]
 fn v5_runtime_diagnostics_and_studio_roots_match_shared_fixture() {
     let bytes = decode_base64(include_str!("../../../conformance/v5/knowledge-image-v5.fixture.base64"));
     let diagnostics = inspect_knowledge_runtime_v5(&bytes).expect("shared V5 fixture diagnostics should verify");

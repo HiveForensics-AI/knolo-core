@@ -1599,6 +1599,7 @@ fn parse_v5_image(bytes: &[u8]) -> Result<KnowledgeImage, KnoloError> {
     while offset < bytes.len() {
         let segment = read_v5_segment(bytes, offset)?;
         if !matches!(segment.kind, 1..=3) && segment.kind < 128 { return Err(KnoloError::InvalidPack("unknown non-optional V5 segment".into())); }
+        if segment.kind <= 3 && segment.flags != 0 { return Err(KnoloError::InvalidPack("unsupported required V5 segment flags".into())); }
         if segment.kind <= 3 && segment.schema != 1 { return Err(KnoloError::InvalidPack("unsupported required V5 segment schema".into())); }
         if (1..=3).contains(&segment.kind) {
             if required_seen[segment.kind as usize - 1] { return Err(KnoloError::InvalidPack("duplicate required V5 segment".into())); }

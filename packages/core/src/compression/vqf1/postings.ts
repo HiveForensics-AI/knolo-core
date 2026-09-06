@@ -796,7 +796,7 @@ function parseLexicalIndex(
     const maxPhraseFanoutPerTerm = reader.readUVarintNumber(64);
     const minPhraseGainBytes = reader.readUVarintNumber(16_000_000);
     const exactGainByte = reader.readByte();
-    if (exactGainByte > 1) {
+    if (exactGainByte !== 0) {
       throw new Error('Unsupported VQF phrase exact-gain flag.');
     }
     phraseParameters = {
@@ -805,7 +805,7 @@ function parseLexicalIndex(
       minPhraseFrequency,
       maxPhraseFanoutPerTerm,
       minPhraseGainBytes,
-      exactGain: exactGainByte === 1,
+      exactGain: false,
     };
     if (phraseParameters.minPhraseLength > phraseParameters.maxPhraseLength) {
       throw new RangeError('VQF phrase min length exceeds max length.');

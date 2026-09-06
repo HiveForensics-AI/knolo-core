@@ -1,0 +1,18 @@
+{
+  "stateRoot": "sha256-d87c0b3e0f5d1d50cd41df055b551e087113deb3ea5736d14011a7f4b60e77f4",
+  "commitDigest": "sha256-77b34a1c1e12388985b8c5d3b2a0762ac636a4b6ad30544a6a07d89f775b36e9",
+  "segments": [
+    {
+      "kind": 1,
+      "flags": 0
+    },
+    {
+      "kind": 2,
+      "flags": 1
+    },
+    {
+      "kind": 3,
+      "flags": 0
+    }
+  ]
+}

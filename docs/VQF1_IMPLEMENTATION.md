@@ -347,3 +347,34 @@ and exact Phase 0 baseline-identity gates.
 
 Next implementation work is the reader API and selective materialization after
 verification.
+
+## Phase 10
+
+`openKnowledgeImageV5` owns a copy of the input, verifies the image before
+exposing evidence, and provides `getObject`, `getObjects`, optional query-index
+access, and a fresh `materialize()` path. Returned object bytes are copied so
+callers cannot mutate reader-backed state. Existing eager mounting remains
+unchanged.
+
+## Phase 11
+
+The CLI exposes explicit V5 `compress` and `decompress` commands. Compression
+accepts the `fast`, `balanced`, and `max` profiles plus optional query-index
+attachment; decompression rewrites compressed required segments to ordinary
+payloads. Both commands require `--out`, preserve the logical roots, and emit
+JSON byte and reduction statistics. Existing commands and default pack output
+remain unchanged.
+
+## Phase 12
+
+The optional query-index fixture in `conformance/vqf1` is frozen with its
+expected state and commit roots. TypeScript, Rust, and Python mounters verify
+the same bytes and segment layout; the optional VQF payload remains
+skip-compatible for runtimes that do not decode the prototype index yet.
+Encoder parity and required-segment VQF decoding remain separate freeze gates.
+The required-segment fixture is retained in `conformance/vqf1` and is expected
+to fail closed in Rust and Python until those decoders are implemented.
+
+The post-Phase 12 implementation sequence is maintained in
+[VQF1_NEXT_PHASES.md](VQF1_NEXT_PHASES.md). It is the handoff document for
+continuing decoder parity and format freeze in a later session.

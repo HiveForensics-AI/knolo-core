@@ -1782,6 +1782,54 @@ test('v5 info and health expose verified runtime diagnostics', async () => {
   assert.equal(studio.capabilities.mutateImage, false);
 });
 
+test('v5 compress and decompress are explicit and report byte statistics', async () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-v5-compress-'));
+  const core = await import(
+    pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href
+  );
+  const image = core.createKnowledgeImageV5({
+    objects: [
+      {
+        kind: 'source',
+        bytes: new TextEncoder().encode('repeated '.repeat(200)),
+        meta: { owner: 'cli' },
+      },
+    ],
+  });
+  writeFileSync(path.join(cwd, 'input.v5'), image.bytes);
+  const compressed = JSON.parse(
+    runCli(
+      [
+        'v5',
+        'compress',
+        './input.v5',
+        '--out',
+        './compressed.v5',
+        '--mode',
+        'balanced',
+        '--attach-index',
+      ],
+      cwd
+    )
+  );
+  assert.equal(compressed.operation, 'compress');
+  assert.equal(compressed.stateRoot, image.stateRoot);
+  assert.ok(existsSync(path.join(cwd, 'compressed.v5')));
+  const decompressed = JSON.parse(
+    runCli(
+      ['v5', 'decompress', './compressed.v5', '--out', './decompressed.v5'],
+      cwd
+    )
+  );
+  assert.equal(decompressed.operation, 'decompress');
+  assert.equal(decompressed.stateRoot, image.stateRoot);
+  assert.equal(
+    core.mountKnowledgeImageV5(readFileSync(path.join(cwd, 'decompressed.v5')))
+      .stateRoot,
+    image.stateRoot
+  );
+});
+
 test('migrate converts an ICP-compatible legacy pack to v4', () => {
   const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-v4-migrate-'));
   const docsDir = path.join(cwd, 'docs');

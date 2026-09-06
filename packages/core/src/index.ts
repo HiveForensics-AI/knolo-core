@@ -19,6 +19,7 @@ export {
   isKnowledgeImageV5,
   migrateV4ToV5,
   mountKnowledgeImageV5,
+  openKnowledgeImageV5,
   stateRoot,
   verifyKnowledgeImageV5,
   KNOWLEDGE_IMAGE_V5_MAGIC,
@@ -29,6 +30,7 @@ export {
 } from './knowledge_image_v5.js';
 export type {
   CompressKnowledgeImageV5Options,
+  KnowledgeImageReaderV5,
   VqfCompressionMode,
 } from './knowledge_image_v5.js';
 export {

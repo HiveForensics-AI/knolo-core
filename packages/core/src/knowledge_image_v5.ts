@@ -11,7 +11,9 @@ import {
 } from './compression/vqf1/envelope.js';
 import {
   createKnowledgeQueryIndexV5,
+  queryIndexFromKnowledgeImageV5,
   serializeKnowledgeQueryIndexV1,
+  type KnowledgeQueryIndexV1,
 } from './knowledge_query_index_v5.js';
 
 export const KNOWLEDGE_IMAGE_V5_MAGIC = 'KNLOV5\0\0';
@@ -106,6 +108,17 @@ export type KnowledgeImageV5 = {
   segments: KnowledgeImageSegment[];
   activeSuperblock: 'A' | 'B';
 };
+
+/** A verified, immutable-backed V5 reader with selective materialization. */
+export interface KnowledgeImageReaderV5 {
+  readonly stateRoot: Digest;
+  readonly commitDigest: Digest;
+  readonly commit: KnowledgeCommitV1;
+  getObject(id: Digest): KnowledgeObjectV1 | undefined;
+  getObjects(ids: Digest[]): KnowledgeObjectV1[];
+  getQueryIndex(): KnowledgeQueryIndexV1 | undefined;
+  materialize(): KnowledgeImageV5;
+}
 
 export type KnowledgeImageSegment = {
   kind: number;
@@ -433,6 +446,46 @@ export function mountKnowledgeImageV5(
   return { bytes: bytes.slice(), ...parsed };
 }
 
+export function openKnowledgeImageV5(
+  input: ArrayBufferLike | Uint8Array
+): KnowledgeImageReaderV5 {
+  const ownedBytes = asBytes(input).slice();
+  const verified = mountKnowledgeImageV5(ownedBytes);
+  const objects = new Map(
+    verified.objects.map((object) => [object.id, object])
+  );
+  return {
+    stateRoot: verified.stateRoot,
+    commitDigest: verified.commitDigest,
+    commit: verified.commit,
+    getObject(id) {
+      const object = objects.get(id);
+      return object
+        ? { ...object, bytes: object.bytes.slice(), meta: { ...object.meta } }
+        : undefined;
+    },
+    getObjects(ids) {
+      const result: KnowledgeObjectV1[] = [];
+      for (const id of ids) {
+        const object = objects.get(id);
+        if (object)
+          result.push({
+            ...object,
+            bytes: object.bytes.slice(),
+            meta: { ...object.meta },
+          });
+      }
+      return result;
+    },
+    getQueryIndex() {
+      return queryIndexFromKnowledgeImageV5(verified);
+    },
+    materialize() {
+      return mountKnowledgeImageV5(ownedBytes);
+    },
+  };
+}
+
 /**
  * Opt-in physical VQF transcode. The commit and all logical payloads remain
  * byte-identical; segments whose complete envelope would grow are retained in
@@ -460,6 +513,10 @@ export function compressKnowledgeImageV5(
   const originalCommit = parsed.segments.find(
     (segment) => segment.kind === COMMIT_SEGMENT
   );
+  const existingQueryIndex = parsed.segments.find(
+    (segment) => segment.kind === V5_OPTIONAL_SEGMENT_VQF_QUERY_INDEX
+  );
+  let encodedCommitSegment: Uint8Array | undefined;
   if (!originalCommit) throw new Error('V5 image is missing a commit segment.');
   if (attachIndex) {
     for (const segment of parsed.segments) {
@@ -494,13 +551,17 @@ export function compressKnowledgeImageV5(
           sourceSpans: options.mode !== 'fast',
         });
         if (envelope.bytes.length < logicalPayload.length) {
-          return encodeSegment(segment.kind, envelope.bytes, {
+          const encoded = encodeSegment(segment.kind, envelope.bytes, {
             flags: V5_SEGMENT_FLAG_VQF1,
             logicalPayload,
           });
+          if (segment.kind === COMMIT_SEGMENT) encodedCommitSegment = encoded;
+          return encoded;
         }
       }
-      return encodeSegment(segment.kind, logicalPayload);
+      const encoded = encodeSegment(segment.kind, logicalPayload);
+      if (segment.kind === COMMIT_SEGMENT) encodedCommitSegment = encoded;
+      return encoded;
     });
   if (attachIndex) {
     const index = createKnowledgeQueryIndexV5({
@@ -513,11 +574,19 @@ export function compressKnowledgeImageV5(
       encodedSegments.push(
         encodeSegment(V5_OPTIONAL_SEGMENT_VQF_QUERY_INDEX, envelope.bytes)
       );
+    } else if (existingQueryIndex) {
+      encodedSegments.push(
+        original.slice(
+          existingQueryIndex.offset,
+          existingQueryIndex.offset + existingQueryIndex.length
+        )
+      );
     }
   }
-  const commitIndex = parsed.segments.findIndex(
-    (segment) => segment.kind === COMMIT_SEGMENT
-  );
+  const commitIndex = encodedCommitSegment
+    ? encodedSegments.indexOf(encodedCommitSegment)
+    : -1;
+  if (commitIndex < 0) throw new Error('V5 image is missing a commit segment.');
   const commitOffset =
     dataStart +
     encodedSegments

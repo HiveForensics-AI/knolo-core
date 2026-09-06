@@ -20,7 +20,17 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
-import { isHubAddInvocation, runHubAdd, runHubInfo, runHubLogin, runHubLogout, runHubPublish, runHubSearch, runHubWhoami, runHubYank } from './registry/commands.mjs';
+import {
+  isHubAddInvocation,
+  runHubAdd,
+  runHubInfo,
+  runHubLogin,
+  runHubLogout,
+  runHubPublish,
+  runHubSearch,
+  runHubWhoami,
+  runHubYank,
+} from './registry/commands.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -33,9 +43,45 @@ const DEFAULT_CONFIG = {
   query: { topK: 5 },
 };
 const SUPPORTED_EXTENSIONS = new Set(['.md', '.txt', '.json']);
-const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', '.dfx', '.cargo-target']);
-const SUBCOMMANDS = new Set(['init', 'add', 'build', 'query', 'inspect', 'migrate', 'verify', 'explain', 'diff', 'dev', 'v5', 'search', 'info', 'login', 'whoami', 'logout', 'publish', 'yank', 'semantic:index', 'semantic:inspect', 'semantic:validate']);
-const ICP_SUBCOMMANDS = new Set(['init', 'build-pack', 'upload', 'query', 'health', 'info', 'clear']);
+const SKIP_DIRS = new Set([
+  'node_modules',
+  'dist',
+  '.git',
+  '.dfx',
+  '.cargo-target',
+]);
+const SUBCOMMANDS = new Set([
+  'init',
+  'add',
+  'build',
+  'query',
+  'inspect',
+  'migrate',
+  'verify',
+  'explain',
+  'diff',
+  'dev',
+  'v5',
+  'search',
+  'info',
+  'login',
+  'whoami',
+  'logout',
+  'publish',
+  'yank',
+  'semantic:index',
+  'semantic:inspect',
+  'semantic:validate',
+]);
+const ICP_SUBCOMMANDS = new Set([
+  'init',
+  'build-pack',
+  'upload',
+  'query',
+  'health',
+  'info',
+  'clear',
+]);
 const ICP_TEMPLATE_CANDIDATES = [
   path.resolve(__dirname, '../templates/icp-knowledge-canister'),
   path.resolve(__dirname, '../../../examples/icp-knowledge-canister'),
@@ -47,7 +93,11 @@ function createError(message) {
 
 async function tryImport(filePath) {
   try {
-    if (filePath.startsWith('.') || filePath.startsWith('/') || /^[A-Za-z]:[\\/]/.test(filePath)) {
+    if (
+      filePath.startsWith('.') ||
+      filePath.startsWith('/') ||
+      /^[A-Za-z]:[\\/]/.test(filePath)
+    ) {
       return await import(pathToFileURL(filePath).href);
     }
     return await import(filePath);
@@ -66,9 +116,16 @@ async function loadCore() {
   for (const candidate of candidates) {
     const mod = await tryImport(candidate);
     if (mod?.buildPack && mod?.mountPack && mod?.query) return mod;
-    if (mod?.default?.buildPack && mod?.default?.mountPack && mod?.default?.query) return mod.default;
+    if (
+      mod?.default?.buildPack &&
+      mod?.default?.mountPack &&
+      mod?.default?.query
+    )
+      return mod.default;
   }
-  throw createError('Could not load @knolo/core. Build packages/core first (npm run build --workspace @knolo/core).');
+  throw createError(
+    'Could not load @knolo/core. Build packages/core first (npm run build --workspace @knolo/core).'
+  );
 }
 
 function printRootHelp() {
@@ -96,7 +153,7 @@ Commands:
   explain <receipt>       Verify and explain a query receipt
   diff <pack-a> <pack-b>  Compare pack identities and source/chunk counts
   dev                     Watch config/sources and rebuild on change
-  v5                      Inspect, health-check, and manage a V5 Knowledge Image
+  v5                      Inspect, compress, decompress, and health-check a V5 Knowledge Image
   icp                     Scaffold and operate an ICP-native knowledge canister
 
 Global options:
@@ -110,26 +167,33 @@ function printCommandHelp(command) {
   const help = {
     init: 'Usage: knolo init',
     add: 'Usage: knolo add <name> <path> | <publisher>/<slug>[@<version>] [--out <path>] [--force] [--json] [--registry <url>]',
-    search: 'Usage: knolo search <query> [--format V4|V5] [--license <id>] [--official] [--agents] [--json] [--registry <url>]',
+    search:
+      'Usage: knolo search <query> [--format V4|V5] [--license <id>] [--official] [--agents] [--json] [--registry <url>]',
     info: 'Usage: knolo info <publisher>/<slug> [--json] [--registry <url>]',
-    login: 'Usage: knolo login [--token kno_…] [--stdin] [--registry <url>]\n\nStores the raw token locally. Hub write calls send Authorization: Bearer kno_….\nMint tokens at https://hub.knolo.dev/dashboard/tokens; login does not call POST /api/v1/tokens.',
+    login:
+      'Usage: knolo login [--token kno_…] [--stdin] [--registry <url>]\n\nStores the raw token locally. Hub write calls send Authorization: Bearer kno_….\nMint tokens at https://hub.knolo.dev/dashboard/tokens; login does not call POST /api/v1/tokens.',
     whoami: 'Usage: knolo whoami',
     logout: 'Usage: knolo logout',
-    publish: 'Usage: knolo publish <pack.knolo> --slug <slug> --version <version> --license <SPDX> [--publisher <handle>] [--readme <text>] [--sources <text>] [--intended-use <text>] [--json] [--registry <url>]\n\nUses the stored dashboard token as Authorization: Bearer kno_…. Hub issues a public Blob PUT grant; the CLI never needs PACKS_READ_WRITE_TOKEN.\nUploads go to the grant URL without the kno_ token. Complete sends the public Blob URL, then Hub verifies before release.',
+    publish:
+      'Usage: knolo publish <pack.knolo> --slug <slug> --version <version> --license <SPDX> [--publisher <handle>] [--readme <text>] [--sources <text>] [--intended-use <text>] [--json] [--registry <url>]\n\nUses the stored dashboard token as Authorization: Bearer kno_…. Hub issues a public Blob PUT grant; the CLI never needs PACKS_READ_WRITE_TOKEN.\nUploads go to the grant URL without the kno_ token. Complete sends the public Blob URL, then Hub verifies before release.',
     yank: 'Usage: knolo yank <publisher>/<slug>@<version> [--json] [--registry <url>]\n\nUses the stored token as Authorization: Bearer kno_…. Yank is owner-only and leaves the public Blob in place.',
     build: 'Usage: knolo build',
-    query: 'Usage: knolo query <question> [--pack <path>] [--k <number>] [--receipt <file>] [--json]',
+    query:
+      'Usage: knolo query <question> [--pack <path>] [--k <number>] [--receipt <file>] [--json]',
     inspect: 'Usage: knolo inspect <pack.knolo>',
-    migrate: 'Usage: knolo migrate <pack.knolo> --out <new-pack.knolo> [--to 4]',
+    migrate:
+      'Usage: knolo migrate <pack.knolo> --out <new-pack.knolo> [--to 4]',
     verify: 'Usage: knolo verify <pack.knolo>',
     explain: 'Usage: knolo explain <receipt.json> --pack <pack.knolo>',
     diff: 'Usage: knolo diff <pack-a.knolo> <pack-b.knolo>',
     dev: 'Usage: knolo dev',
-    v5: 'Usage: knolo v5 <info|health|studio> <image.v5> [--index <file>] [--history <file>] [--run <file>] [--replay <file>]',
+    v5: 'Usage: knolo v5 <info|health|studio|compress|decompress> <image.v5> [--out <file>] [--mode fast|balanced|max] [--attach-index]',
     icp: 'Usage: knolo icp <command> [options]',
-    'semantic:index': 'Usage: knolo semantic:index --pack <path> [--out <path>] [--model <id>] [--endpoint <url>]',
+    'semantic:index':
+      'Usage: knolo semantic:index --pack <path> [--out <path>] [--model <id>] [--endpoint <url>]',
     'semantic:inspect': 'Usage: knolo semantic:inspect --sidecar <path>',
-    'semantic:validate': 'Usage: knolo semantic:validate --pack <path> --sidecar <path> --model <id>',
+    'semantic:validate':
+      'Usage: knolo semantic:validate --pack <path> --sidecar <path> --model <id>',
   };
   console.log(help[command] ?? 'Unknown command.');
 }
@@ -222,13 +286,16 @@ function parseArgv(argv) {
     global.debug = true;
     args.shift();
   }
-  if (args[0] === '--help' || args[0] === '-h') return { global, command: 'help', commandArgs: [] };
+  if (args[0] === '--help' || args[0] === '-h')
+    return { global, command: 'help', commandArgs: [] };
   return { global, command: args[0] || 'help', commandArgs: args.slice(1) };
 }
 
 function readConfig(configPath = path.resolve(process.cwd(), CONFIG_FILE)) {
   if (!existsSync(configPath)) {
-    throw createError(`Missing config file at ${path.relative(process.cwd(), configPath)}. Run "knolo init" first.`);
+    throw createError(
+      `Missing config file at ${path.relative(process.cwd(), configPath)}. Run "knolo init" first.`
+    );
   }
   let parsed;
   try {
@@ -241,12 +308,17 @@ function readConfig(configPath = path.resolve(process.cwd(), CONFIG_FILE)) {
 }
 
 function validateConfig(config) {
-  if (!config || typeof config !== 'object') throw createError(`${CONFIG_FILE} must be a JSON object.`);
-  if (config.version !== 1) throw createError(`${CONFIG_FILE} must include "version": 1.`);
-  if (!Array.isArray(config.sources)) throw createError(`${CONFIG_FILE} must include a "sources" array.`);
+  if (!config || typeof config !== 'object')
+    throw createError(`${CONFIG_FILE} must be a JSON object.`);
+  if (config.version !== 1)
+    throw createError(`${CONFIG_FILE} must include "version": 1.`);
+  if (!Array.isArray(config.sources))
+    throw createError(`${CONFIG_FILE} must include a "sources" array.`);
   for (const [i, s] of config.sources.entries()) {
-    if (!s?.name || typeof s.name !== 'string') throw createError(`sources[${i}].name must be a string.`);
-    if (!s?.path || typeof s.path !== 'string') throw createError(`sources[${i}].path must be a string.`);
+    if (!s?.name || typeof s.name !== 'string')
+      throw createError(`sources[${i}].name must be a string.`);
+    if (!s?.path || typeof s.path !== 'string')
+      throw createError(`sources[${i}].path must be a string.`);
   }
   if (!config.output?.path || typeof config.output.path !== 'string') {
     throw createError(`${CONFIG_FILE} must include output.path.`);
@@ -254,7 +326,10 @@ function validateConfig(config) {
 }
 
 function writeConfig(config) {
-  writeFileSync(path.resolve(process.cwd(), CONFIG_FILE), `${JSON.stringify(config, null, 2)}\n`);
+  writeFileSync(
+    path.resolve(process.cwd(), CONFIG_FILE),
+    `${JSON.stringify(config, null, 2)}\n`
+  );
 }
 
 async function cmdInit() {
@@ -277,9 +352,15 @@ async function cmdInit() {
     console.log('• kept existing docs/');
   }
 
-  const visibleEntries = readdirSync(docsDir).filter((name) => !name.startsWith('.'));
+  const visibleEntries = readdirSync(docsDir).filter(
+    (name) => !name.startsWith('.')
+  );
   if (visibleEntries.length === 0 && !existsSync(samplePath)) {
-    writeFileSync(samplePath, '# Hello from KnoLo\n\nThis is a starter document for KnoLo CLI demos.\n', 'utf8');
+    writeFileSync(
+      samplePath,
+      '# Hello from KnoLo\n\nThis is a starter document for KnoLo CLI demos.\n',
+      'utf8'
+    );
     console.log('✔ created docs/hello.md');
   } else {
     console.log('• did not create sample doc because docs/ is not empty');
@@ -299,10 +380,14 @@ async function cmdAddLocal(args) {
   if (!name || !sourcePath) throw createError('Usage: knolo add <name> <path>');
 
   const resolved = path.resolve(process.cwd(), sourcePath);
-  if (!existsSync(resolved)) throw createError(`Source path does not exist: ${sourcePath}`);
+  if (!existsSync(resolved))
+    throw createError(`Source path does not exist: ${sourcePath}`);
 
   const config = readConfig();
-  const normalized = sourcePath.startsWith('.') || path.isAbsolute(sourcePath) ? sourcePath : `./${sourcePath}`;
+  const normalized =
+    sourcePath.startsWith('.') || path.isAbsolute(sourcePath)
+      ? sourcePath
+      : `./${sourcePath}`;
   const existing = config.sources.find((s) => s.name === name);
   if (existing) {
     existing.path = normalized;
@@ -317,15 +402,21 @@ async function cmdAddLocal(args) {
 
 function resolveIcpTemplateDir() {
   for (const candidate of ICP_TEMPLATE_CANDIDATES) {
-    if (existsSync(candidate) && statSync(candidate).isDirectory()) return candidate;
+    if (existsSync(candidate) && statSync(candidate).isDirectory())
+      return candidate;
   }
-  throw createError('Bundled ICP template not found. Reinstall @knolo/cli or run from the Knolo repo checkout.');
+  throw createError(
+    'Bundled ICP template not found. Reinstall @knolo/cli or run from the Knolo repo checkout.'
+  );
 }
 
 function ensureDirectoryMissingOrEmpty(targetDir) {
   if (!existsSync(targetDir)) return;
   const stats = statSync(targetDir);
-  if (!stats.isDirectory()) throw createError(`Target path already exists and is not a directory: ${targetDir}`);
+  if (!stats.isDirectory())
+    throw createError(
+      `Target path already exists and is not a directory: ${targetDir}`
+    );
   const visibleEntries = readdirSync(targetDir);
   if (visibleEntries.length > 0) {
     throw createError(`Target directory is not empty: ${targetDir}`);
@@ -334,7 +425,9 @@ function ensureDirectoryMissingOrEmpty(targetDir) {
 
 function copyDirectoryContents(sourceDir, targetDir) {
   mkdirSync(targetDir, { recursive: true });
-  const entries = readdirSync(sourceDir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name));
+  const entries = readdirSync(sourceDir, { withFileTypes: true }).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
   for (const entry of entries) {
     const sourcePath = path.join(sourceDir, entry.name);
     const targetPath = path.join(targetDir, entry.name);
@@ -389,7 +482,9 @@ function parsePositiveInteger(value, flagName) {
 }
 
 function renderDidNat8Vec(bytes) {
-  return bytes.length ? ` ${Array.from(bytes, (value) => `${value}`).join('; ')} ` : '';
+  return bytes.length
+    ? ` ${Array.from(bytes, (value) => `${value}`).join('; ')} `
+    : '';
 }
 
 function withArgumentFile(prefix, contents, run) {
@@ -440,7 +535,10 @@ async function walkDir(dir) {
     if (entry.isDirectory()) {
       if (SKIP_DIRS.has(entry.name)) continue;
       out.push(...(await walkDir(full)));
-    } else if (entry.isFile() && SUPPORTED_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
+    } else if (
+      entry.isFile() &&
+      SUPPORTED_EXTENSIONS.has(path.extname(entry.name).toLowerCase())
+    ) {
       out.push(full);
     }
   }
@@ -451,7 +549,10 @@ async function collectSourceFiles(sources) {
   const files = [];
   for (const source of sources) {
     const resolved = path.resolve(process.cwd(), source.path);
-    if (!existsSync(resolved)) throw createError(`Configured source "${source.name}" not found at ${source.path}.`);
+    if (!existsSync(resolved))
+      throw createError(
+        `Configured source "${source.name}" not found at ${source.path}.`
+      );
     const stats = await fs.lstat(resolved);
     if (stats.isSymbolicLink()) continue;
     if (stats.isFile()) {
@@ -459,9 +560,12 @@ async function collectSourceFiles(sources) {
         files.push({ sourceName: source.name, absolutePath: resolved });
       }
     } else if (stats.isDirectory()) {
-      for (const file of await walkDir(resolved)) files.push({ sourceName: source.name, absolutePath: file });
+      for (const file of await walkDir(resolved))
+        files.push({ sourceName: source.name, absolutePath: file });
     } else {
-      throw createError(`Configured source "${source.name}" must be a file or directory.`);
+      throw createError(
+        `Configured source "${source.name}" must be a file or directory.`
+      );
     }
   }
   files.sort((a, b) => a.absolutePath.localeCompare(b.absolutePath));
@@ -472,10 +576,13 @@ async function buildFromConfig(core, { silent = false } = {}) {
   const start = Date.now();
   const config = readConfig();
   const files = await collectSourceFiles(config.sources);
-  if (files.length === 0) throw createError('No supported files found (.md, .txt, .json).');
+  if (files.length === 0)
+    throw createError('No supported files found (.md, .txt, .json).');
 
   const docs = files.map((f) => {
-    const rel = path.relative(process.cwd(), f.absolutePath).replace(/\\/g, '/');
+    const rel = path
+      .relative(process.cwd(), f.absolutePath)
+      .replace(/\\/g, '/');
     return {
       id: rel,
       heading: path.basename(rel),
@@ -503,17 +610,21 @@ async function cmdBuild(core) {
 
 async function collectNamedFiles(sourceName, inputPath) {
   const resolved = path.resolve(process.cwd(), inputPath);
-  if (!existsSync(resolved)) throw createError(`Source path not found: ${inputPath}`);
+  if (!existsSync(resolved))
+    throw createError(`Source path not found: ${inputPath}`);
 
   const stats = await fs.lstat(resolved);
   if (stats.isSymbolicLink()) return [];
   if (stats.isFile()) {
     if (!SUPPORTED_EXTENSIONS.has(path.extname(resolved).toLowerCase())) {
-      throw createError(`Unsupported file type for ${inputPath}. Expected .md, .txt, or .json.`);
+      throw createError(
+        `Unsupported file type for ${inputPath}. Expected .md, .txt, or .json.`
+      );
     }
     return [{ sourceName, absolutePath: resolved }];
   }
-  if (!stats.isDirectory()) throw createError(`Source path must be a file or directory: ${inputPath}`);
+  if (!stats.isDirectory())
+    throw createError(`Source path must be a file or directory: ${inputPath}`);
 
   return (await walkDir(resolved))
     .map((absolutePath) => ({ sourceName, absolutePath }))
@@ -548,8 +659,12 @@ async function cmdIcpInit(args) {
   console.log(`  cd ${relativeTarget}`);
   console.log('  dfx start --background');
   console.log('  dfx deploy');
-  console.log('  knolo icp build-pack ./knowledge --out ./dist/knowledge.knolo');
-  console.log('  knolo icp upload ./dist/knowledge.knolo --canister knolo_knowledge');
+  console.log(
+    '  knolo icp build-pack ./knowledge --out ./dist/knowledge.knolo'
+  );
+  console.log(
+    '  knolo icp upload ./dist/knowledge.knolo --canister knolo_knowledge'
+  );
   console.log('  knolo icp query "alpha beta" --canister knolo_knowledge');
 }
 
@@ -562,9 +677,12 @@ async function cmdIcpBuildPack(core, args) {
 
   const resolvedInput = path.resolve(process.cwd(), docsDir);
   const files = await collectNamedFiles('docs', docsDir);
-  if (!files.length) throw createError('No supported files found (.md, .txt, .json).');
+  if (!files.length)
+    throw createError('No supported files found (.md, .txt, .json).');
 
-  const rootDir = statSync(resolvedInput).isDirectory() ? resolvedInput : path.dirname(resolvedInput);
+  const rootDir = statSync(resolvedInput).isDirectory()
+    ? resolvedInput
+    : path.dirname(resolvedInput);
   const docs = buildDocsFromFiles(files, rootDir);
   const bytes = await core.buildPack(docs, { format: 3 });
   const outPath = path.resolve(process.cwd(), flags.out);
@@ -585,11 +703,16 @@ async function cmdIcpUpload(args) {
   const { positional, flags } = parseFlagArgs(args);
   const packFile = positional[0];
   if (!packFile || !flags.canister) {
-    throw createError('Usage: knolo icp upload <packFile> --canister <name-or-id> [--label <text>]');
+    throw createError(
+      'Usage: knolo icp upload <packFile> --canister <name-or-id> [--label <text>]'
+    );
   }
 
   const packPath = path.resolve(process.cwd(), packFile);
-  if (!existsSync(packPath)) throw createError(`Pack file not found at ${path.relative(process.cwd(), packPath)}.`);
+  if (!existsSync(packPath))
+    throw createError(
+      `Pack file not found at ${path.relative(process.cwd(), packPath)}.`
+    );
 
   const label = flags.label || defaultPackLabel(packPath);
   const bytes = readFileSync(packPath);
@@ -597,7 +720,16 @@ async function cmdIcpUpload(args) {
 
   withArgumentFile('knolo-icp-upload-', didArgs, (argumentFile) =>
     runDfx(
-      ['canister', 'call', flags.canister, 'set_pack', '--argument-file', argumentFile, '--output', 'json'],
+      [
+        'canister',
+        'call',
+        flags.canister,
+        'set_pack',
+        '--argument-file',
+        argumentFile,
+        '--output',
+        'json',
+      ],
       { cwd: process.cwd() }
     )
   );
@@ -607,7 +739,9 @@ async function cmdIcpQuery(args) {
   const { positional, flags } = parseFlagArgs(args);
   const question = positional.join(' ').trim();
   if (!question || !flags.canister) {
-    throw createError('Usage: knolo icp query <question> --canister <name-or-id> [--k <number>]');
+    throw createError(
+      'Usage: knolo icp query <question> --canister <name-or-id> [--k <number>]'
+    );
   }
 
   const topK = flags.k === undefined ? 5 : parsePositiveInteger(flags.k, '--k');
@@ -615,7 +749,17 @@ async function cmdIcpQuery(args) {
 
   withArgumentFile('knolo-icp-query-', didArgs, (argumentFile) =>
     runDfx(
-      ['canister', 'call', flags.canister, 'search', '--query', '--argument-file', argumentFile, '--output', 'json'],
+      [
+        'canister',
+        'call',
+        flags.canister,
+        'search',
+        '--query',
+        '--argument-file',
+        argumentFile,
+        '--output',
+        'json',
+      ],
       { cwd: process.cwd() }
     )
   );
@@ -623,33 +767,63 @@ async function cmdIcpQuery(args) {
 
 async function cmdIcpHealth(args) {
   const { flags } = parseFlagArgs(args);
-  if (!flags.canister) throw createError('Usage: knolo icp health --canister <name-or-id>');
-  runDfx(['canister', 'call', flags.canister, 'health', '--query', '--output', 'json'], {
-    cwd: process.cwd(),
-  });
+  if (!flags.canister)
+    throw createError('Usage: knolo icp health --canister <name-or-id>');
+  runDfx(
+    [
+      'canister',
+      'call',
+      flags.canister,
+      'health',
+      '--query',
+      '--output',
+      'json',
+    ],
+    {
+      cwd: process.cwd(),
+    }
+  );
 }
 
 async function cmdIcpInfo(args) {
   const { flags } = parseFlagArgs(args);
-  if (!flags.canister) throw createError('Usage: knolo icp info --canister <name-or-id>');
-  runDfx(['canister', 'call', flags.canister, 'pack_info', '--query', '--output', 'json'], {
-    cwd: process.cwd(),
-  });
+  if (!flags.canister)
+    throw createError('Usage: knolo icp info --canister <name-or-id>');
+  runDfx(
+    [
+      'canister',
+      'call',
+      flags.canister,
+      'pack_info',
+      '--query',
+      '--output',
+      'json',
+    ],
+    {
+      cwd: process.cwd(),
+    }
+  );
 }
 
 async function cmdIcpClear(args) {
   const { flags } = parseFlagArgs(args);
-  if (!flags.canister) throw createError('Usage: knolo icp clear --canister <name-or-id>');
-  runDfx(['canister', 'call', flags.canister, 'clear_pack', '--output', 'json'], {
-    cwd: process.cwd(),
-  });
+  if (!flags.canister)
+    throw createError('Usage: knolo icp clear --canister <name-or-id>');
+  runDfx(
+    ['canister', 'call', flags.canister, 'clear_pack', '--output', 'json'],
+    {
+      cwd: process.cwd(),
+    }
+  );
 }
 
 async function cmdIcp(args) {
   const [subcommand, ...rest] = args;
   if (!subcommand) return printIcpHelp();
-  if (!ICP_SUBCOMMANDS.has(subcommand)) throw createError(`Unknown ICP command: ${subcommand}`);
-  if (rest.includes('--help') || rest.includes('-h')) return printIcpCommandHelp(subcommand);
+  if (!ICP_SUBCOMMANDS.has(subcommand))
+    throw createError(`Unknown ICP command: ${subcommand}`);
+  if (rest.includes('--help') || rest.includes('-h'))
+    return printIcpCommandHelp(subcommand);
 
   if (subcommand === 'init') return await cmdIcpInit(rest);
   if (subcommand === 'upload') return await cmdIcpUpload(rest);
@@ -672,7 +846,8 @@ function parseQueryArgs(args) {
     else if (arg === '--pack') opts.pack = args[++i];
     else if (arg === '--k') opts.k = args[++i];
     else if (arg === '--receipt') opts.receipt = args[++i];
-    else if (arg.startsWith('--')) throw createError(`Unknown flag for query: ${arg}`);
+    else if (arg.startsWith('--'))
+      throw createError(`Unknown flag for query: ${arg}`);
     else positional.push(arg);
   }
   return { positional, opts };
@@ -681,21 +856,37 @@ function parseQueryArgs(args) {
 async function cmdQuery(core, args) {
   const { positional, opts } = parseQueryArgs(args);
   const question = positional.join(' ').trim();
-  if (!question) throw createError('Usage: knolo query <question> [--pack <path>] [--k <number>] [--json]');
+  if (!question)
+    throw createError(
+      'Usage: knolo query <question> [--pack <path>] [--k <number>] [--json]'
+    );
 
-  const config = existsSync(path.resolve(process.cwd(), CONFIG_FILE)) ? readConfig() : DEFAULT_CONFIG;
+  const config = existsSync(path.resolve(process.cwd(), CONFIG_FILE))
+    ? readConfig()
+    : DEFAULT_CONFIG;
   const packPath = path.resolve(process.cwd(), opts.pack || config.output.path);
-  if (!existsSync(packPath)) throw createError(`Pack file not found at ${path.relative(process.cwd(), packPath)}.`);
+  if (!existsSync(packPath))
+    throw createError(
+      `Pack file not found at ${path.relative(process.cwd(), packPath)}.`
+    );
 
-  const topK = opts.k !== undefined ? Number(opts.k) : (config.query?.topK ?? 5);
-  if (!Number.isInteger(topK) || topK <= 0) throw createError('--k must be a positive integer.');
+  const topK =
+    opts.k !== undefined ? Number(opts.k) : (config.query?.topK ?? 5);
+  if (!Number.isInteger(topK) || topK <= 0)
+    throw createError('--k must be a positive integer.');
 
   const packBuffer = readFileSync(packPath);
   const bytes = Uint8Array.from(packBuffer);
   const kb = await mountPackFromBytes(core, bytes);
-  const receiptResult = opts.receipt && core.queryWithReceipt ? core.queryWithReceipt(kb, question, { topK }) : null;
+  const receiptResult =
+    opts.receipt && core.queryWithReceipt
+      ? core.queryWithReceipt(kb, question, { topK })
+      : null;
   if (receiptResult && opts.receipt) {
-    writeFileSync(path.resolve(process.cwd(), opts.receipt), `${JSON.stringify(receiptResult.receipt, null, 2)}\n`);
+    writeFileSync(
+      path.resolve(process.cwd(), opts.receipt),
+      `${JSON.stringify(receiptResult.receipt, null, 2)}\n`
+    );
   }
   const rawHits = receiptResult?.hits ?? core.query(kb, question, { topK });
   const hits = rawHits.map((hit) => ({
@@ -707,10 +898,28 @@ async function cmdQuery(core, args) {
 
   if (opts.json) {
     const patch = core.makeContextPatch(
-      hits.map((h, i) => ({ blockId: i, score: h.score, text: h.snippet, source: h.source })),
+      hits.map((h, i) => ({
+        blockId: i,
+        score: h.score,
+        text: h.snippet,
+        source: h.source,
+      })),
       { budget: 'small' }
     );
-    console.log(JSON.stringify({ question, packPath, topK, hits, receipt: receiptResult?.receipt, contextPatch: patch }, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          question,
+          packPath,
+          topK,
+          hits,
+          receipt: receiptResult?.receipt,
+          contextPatch: patch,
+        },
+        null,
+        2
+      )
+    );
     return;
   }
 
@@ -732,8 +941,10 @@ function parsePackCommandArgs(args, command) {
   const flags = {};
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    if (arg === '--out' || arg === '--to' || arg === '--pack') flags[arg.slice(2)] = args[++i];
-    else if (arg.startsWith('--')) throw createError(`Unknown flag for ${command}: ${arg}`);
+    if (arg === '--out' || arg === '--to' || arg === '--pack')
+      flags[arg.slice(2)] = args[++i];
+    else if (arg.startsWith('--'))
+      throw createError(`Unknown flag for ${command}: ${arg}`);
     else positional.push(arg);
   }
   return { positional, flags };
@@ -741,61 +952,166 @@ function parsePackCommandArgs(args, command) {
 
 async function cmdInspect(core, args) {
   const { positional } = parsePackCommandArgs(args, 'inspect');
-  const packPath = path.resolve(process.cwd(), positional[0] || 'dist/knowledge.knolo');
-  if (!existsSync(packPath)) throw createError(`Pack file not found at ${path.relative(process.cwd(), packPath)}.`);
+  const packPath = path.resolve(
+    process.cwd(),
+    positional[0] || 'dist/knowledge.knolo'
+  );
+  if (!existsSync(packPath))
+    throw createError(
+      `Pack file not found at ${path.relative(process.cwd(), packPath)}.`
+    );
   const bytes = Uint8Array.from(readFileSync(packPath));
   const pack = await mountPackFromBytes(core, bytes);
-  const result = { format: pack.meta?.format || (pack.meta?.version === 4 ? 'v4' : `v${pack.meta?.version ?? 'unknown'}`), version: pack.meta?.version, stats: pack.meta?.stats, blocks: pack.blocks.length, semantic: Boolean(pack.semantic), claims: Boolean(pack.claimGraph) };
-  if (core.isPackV4?.(bytes.buffer)) result.container = core.inspectPackV4(bytes.buffer);
+  const result = {
+    format:
+      pack.meta?.format ||
+      (pack.meta?.version === 4 ? 'v4' : `v${pack.meta?.version ?? 'unknown'}`),
+    version: pack.meta?.version,
+    stats: pack.meta?.stats,
+    blocks: pack.blocks.length,
+    semantic: Boolean(pack.semantic),
+    claims: Boolean(pack.claimGraph),
+  };
+  if (core.isPackV4?.(bytes.buffer))
+    result.container = core.inspectPackV4(bytes.buffer);
   console.log(JSON.stringify(result, null, 2));
 }
 
 async function cmdVerify(core, args) {
   const { positional } = parsePackCommandArgs(args, 'verify');
-  const packPath = path.resolve(process.cwd(), positional[0] || 'dist/knowledge.knolo');
-  if (!existsSync(packPath)) throw createError(`Pack file not found at ${path.relative(process.cwd(), packPath)}.`);
+  const packPath = path.resolve(
+    process.cwd(),
+    positional[0] || 'dist/knowledge.knolo'
+  );
+  if (!existsSync(packPath))
+    throw createError(
+      `Pack file not found at ${path.relative(process.cwd(), packPath)}.`
+    );
   const bytes = Uint8Array.from(readFileSync(packPath));
   const pack = await mountPackFromBytes(core, bytes);
-  console.log(JSON.stringify({ verified: true, format: pack.meta?.format || (pack.meta?.version === 4 ? 'v4' : `v${pack.meta?.version}`), blocks: pack.blocks.length, terms: pack.meta?.stats?.terms ?? pack.lexicon.size }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        verified: true,
+        format:
+          pack.meta?.format ||
+          (pack.meta?.version === 4 ? 'v4' : `v${pack.meta?.version}`),
+        blocks: pack.blocks.length,
+        terms: pack.meta?.stats?.terms ?? pack.lexicon.size,
+      },
+      null,
+      2
+    )
+  );
 }
 
 async function cmdMigrate(core, args) {
   const { positional, flags } = parsePackCommandArgs(args, 'migrate');
   const input = positional[0];
-  if (!input || !flags.out) throw createError('Usage: knolo migrate <pack.knolo> --out <new-pack.knolo> --to 4');
-  if (String(flags.to || '4') !== '4') throw createError('Only migration to format 4 is currently supported.');
+  if (!input || !flags.out)
+    throw createError(
+      'Usage: knolo migrate <pack.knolo> --out <new-pack.knolo> --to 4'
+    );
+  if (String(flags.to || '4') !== '4')
+    throw createError('Only migration to format 4 is currently supported.');
   const inputPath = path.resolve(process.cwd(), input);
-  if (!existsSync(inputPath)) throw createError(`Pack file not found at ${path.relative(process.cwd(), inputPath)}.`);
+  if (!existsSync(inputPath))
+    throw createError(
+      `Pack file not found at ${path.relative(process.cwd(), inputPath)}.`
+    );
   const bytes = Uint8Array.from(readFileSync(inputPath));
   const pack = await mountPackFromBytes(core, bytes);
-  if (core.isPackV4?.(bytes.buffer)) throw createError('Input pack is already v4.');
-  const docs = pack.blocks.map((text, i) => ({ id: pack.docIds?.[i] ?? undefined, heading: pack.headings?.[i] ?? undefined, namespace: pack.namespaces?.[i] ?? undefined, text }));
+  if (core.isPackV4?.(bytes.buffer))
+    throw createError('Input pack is already v4.');
+  const docs = pack.blocks.map((text, i) => ({
+    id: pack.docIds?.[i] ?? undefined,
+    heading: pack.headings?.[i] ?? undefined,
+    namespace: pack.namespaces?.[i] ?? undefined,
+    text,
+  }));
   const migrated = core.serializePackV4(pack, docs);
   const outPath = path.resolve(process.cwd(), flags.out);
   mkdirSync(path.dirname(outPath), { recursive: true });
   writeFileSync(outPath, Buffer.from(migrated));
-  console.log(`✔ migrated ${path.relative(process.cwd(), inputPath)} to ${path.relative(process.cwd(), outPath)}`);
+  console.log(
+    `✔ migrated ${path.relative(process.cwd(), inputPath)} to ${path.relative(process.cwd(), outPath)}`
+  );
 }
 
 async function cmdExplain(core, args) {
   const { positional, flags } = parsePackCommandArgs(args, 'explain');
   const receiptPath = positional[0];
-  if (!receiptPath || !flags.out && !flags.pack) throw createError('Usage: knolo explain <receipt.json> --pack <pack.knolo>');
+  if (!receiptPath || (!flags.out && !flags.pack))
+    throw createError(
+      'Usage: knolo explain <receipt.json> --pack <pack.knolo>'
+    );
   const packPath = path.resolve(process.cwd(), flags.pack);
-  const receipt = JSON.parse(readFileSync(path.resolve(process.cwd(), receiptPath), 'utf8'));
-  const pack = await mountPackFromBytes(core, Uint8Array.from(readFileSync(packPath)));
+  const receipt = JSON.parse(
+    readFileSync(path.resolve(process.cwd(), receiptPath), 'utf8')
+  );
+  const pack = await mountPackFromBytes(
+    core,
+    Uint8Array.from(readFileSync(packPath))
+  );
   core.verifyReceipt(receipt, pack);
-  console.log(JSON.stringify({ verified: true, decision: receipt.decision, answerability: receipt.answerability, reasons: receipt.reasons, query: receipt.normalizedQuery, hits: receipt.hits.map((hit) => ({ blockId: hit.blockId, score: hit.score, source: hit.source, spans: hit.spans })) }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        verified: true,
+        decision: receipt.decision,
+        answerability: receipt.answerability,
+        reasons: receipt.reasons,
+        query: receipt.normalizedQuery,
+        hits: receipt.hits.map((hit) => ({
+          blockId: hit.blockId,
+          score: hit.score,
+          source: hit.source,
+          spans: hit.spans,
+        })),
+      },
+      null,
+      2
+    )
+  );
 }
 
 async function cmdDiff(core, args) {
   const { positional } = parsePackCommandArgs(args, 'diff');
-  if (positional.length < 2) throw createError('Usage: knolo diff <pack-a.knolo> <pack-b.knolo>');
-  const load = async (file) => { const bytes = Uint8Array.from(readFileSync(path.resolve(process.cwd(), file))); return { bytes, pack: await mountPackFromBytes(core, bytes) }; };
-  const a = await load(positional[0]); const b = await load(positional[1]);
-  const aDigest = core.packDigest(a.pack); const bDigest = core.packDigest(b.pack);
-  const aSources = new Set(a.pack.docIds?.filter(Boolean) ?? []); const bSources = new Set(b.pack.docIds?.filter(Boolean) ?? []);
-  console.log(JSON.stringify({ equal: aDigest === bDigest, a: { packDigest: aDigest, blocks: a.pack.blocks.length, terms: a.pack.lexicon.size }, b: { packDigest: bDigest, blocks: b.pack.blocks.length, terms: b.pack.lexicon.size }, addedSources: [...bSources].filter((id) => !aSources.has(id)).sort(), removedSources: [...aSources].filter((id) => !bSources.has(id)).sort() }, null, 2));
+  if (positional.length < 2)
+    throw createError('Usage: knolo diff <pack-a.knolo> <pack-b.knolo>');
+  const load = async (file) => {
+    const bytes = Uint8Array.from(
+      readFileSync(path.resolve(process.cwd(), file))
+    );
+    return { bytes, pack: await mountPackFromBytes(core, bytes) };
+  };
+  const a = await load(positional[0]);
+  const b = await load(positional[1]);
+  const aDigest = core.packDigest(a.pack);
+  const bDigest = core.packDigest(b.pack);
+  const aSources = new Set(a.pack.docIds?.filter(Boolean) ?? []);
+  const bSources = new Set(b.pack.docIds?.filter(Boolean) ?? []);
+  console.log(
+    JSON.stringify(
+      {
+        equal: aDigest === bDigest,
+        a: {
+          packDigest: aDigest,
+          blocks: a.pack.blocks.length,
+          terms: a.pack.lexicon.size,
+        },
+        b: {
+          packDigest: bDigest,
+          blocks: b.pack.blocks.length,
+          terms: b.pack.lexicon.size,
+        },
+        addedSources: [...bSources].filter((id) => !aSources.has(id)).sort(),
+        removedSources: [...aSources].filter((id) => !bSources.has(id)).sort(),
+      },
+      null,
+      2
+    )
+  );
 }
 
 function parseV5Args(args) {
@@ -803,8 +1119,19 @@ function parseV5Args(args) {
   const flags = {};
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    if (arg === '--image' || arg === '--index' || arg === '--history' || arg === '--run' || arg === '--replay') flags[arg.slice(2)] = args[++i];
-    else if (arg.startsWith('--')) throw createError(`Unknown flag for v5: ${arg}`);
+    if (arg === '--attach-index') flags.attachIndex = true;
+    else if (
+      arg === '--image' ||
+      arg === '--index' ||
+      arg === '--history' ||
+      arg === '--run' ||
+      arg === '--replay' ||
+      arg === '--out' ||
+      arg === '--mode'
+    )
+      flags[arg.slice(2)] = args[++i];
+    else if (arg.startsWith('--'))
+      throw createError(`Unknown flag for v5: ${arg}`);
     else positional.push(arg);
   }
   return { positional, flags };
@@ -812,24 +1139,106 @@ function parseV5Args(args) {
 
 async function cmdV5(core, args) {
   const subcommand = args[0] || 'info';
-  if (!['info', 'health', 'studio'].includes(subcommand)) throw createError(`Unknown V5 command: ${subcommand}`);
-  const { positional, flags } = parseV5Args(args.slice(['info', 'health', 'studio'].includes(args[0]) ? 1 : 0));
-  const imagePath = path.resolve(process.cwd(), flags.image || positional[0] || 'dist/knowledge.v5');
-  if (!existsSync(imagePath)) throw createError(`V5 image file not found at ${path.relative(process.cwd(), imagePath)}.`);
-  const readOptional = (file, decode) => file ? decode(Uint8Array.from(readFileSync(path.resolve(process.cwd(), file)))) : undefined;
+  if (
+    !['info', 'health', 'studio', 'compress', 'decompress'].includes(subcommand)
+  )
+    throw createError(`Unknown V5 command: ${subcommand}`);
+  const { positional, flags } = parseV5Args(
+    args.slice(
+      ['info', 'health', 'studio', 'compress', 'decompress'].includes(args[0])
+        ? 1
+        : 0
+    )
+  );
+  const imagePath = path.resolve(
+    process.cwd(),
+    flags.image || positional[0] || 'dist/knowledge.v5'
+  );
+  if (!existsSync(imagePath))
+    throw createError(
+      `V5 image file not found at ${path.relative(process.cwd(), imagePath)}.`
+    );
+  if (subcommand === 'compress' || subcommand === 'decompress') {
+    if (!flags.out)
+      throw createError(
+        `Usage: knolo v5 ${subcommand} <image.v5> --out <file>${subcommand === 'compress' ? ' [--mode fast|balanced|max] [--index]' : ''}`
+      );
+    const input = Uint8Array.from(readFileSync(imagePath));
+    const result =
+      subcommand === 'compress'
+        ? core.compressKnowledgeImageV5(input, {
+            mode: flags.mode,
+            index: flags.attachIndex,
+          })
+        : core.compressKnowledgeImageV5(input, {
+            objects: false,
+            events: false,
+          });
+    const outPath = path.resolve(process.cwd(), flags.out);
+    mkdirSync(path.dirname(outPath), { recursive: true });
+    writeFileSync(outPath, Buffer.from(result.bytes));
+    const before = input.length;
+    console.log(
+      JSON.stringify(
+        {
+          operation: subcommand,
+          input: path.relative(process.cwd(), imagePath),
+          output: path.relative(process.cwd(), outPath),
+          inputBytes: before,
+          outputBytes: result.bytes.length,
+          reduction: before ? 1 - result.bytes.length / before : 0,
+          stateRoot: result.stateRoot,
+          commitDigest: result.commitDigest,
+        },
+        null,
+        2
+      )
+    );
+    return;
+  }
+  const readOptional = (file, decode) =>
+    file
+      ? decode(Uint8Array.from(readFileSync(path.resolve(process.cwd(), file))))
+      : undefined;
   const input = {
     image: Uint8Array.from(readFileSync(imagePath)),
-    ...(flags.index ? { queryIndex: readOptional(flags.index, core.deserializeKnowledgeQueryIndexV1) } : {}),
-    ...(flags.history ? { queryHistory: readOptional(flags.history, core.deserializeKnowledgeQueryHistoryV1) } : {}),
-    ...(flags.run ? { run: readOptional(flags.run, core.deserializeKnowledgeRunV1) } : {}),
-    ...(flags.replay ? { replayState: readOptional(flags.replay, core.deserializeKnowledgeSyncReplayStateV1) } : {}),
+    ...(flags.index
+      ? {
+          queryIndex: readOptional(
+            flags.index,
+            core.deserializeKnowledgeQueryIndexV1
+          ),
+        }
+      : {}),
+    ...(flags.history
+      ? {
+          queryHistory: readOptional(
+            flags.history,
+            core.deserializeKnowledgeQueryHistoryV1
+          ),
+        }
+      : {}),
+    ...(flags.run
+      ? { run: readOptional(flags.run, core.deserializeKnowledgeRunV1) }
+      : {}),
+    ...(flags.replay
+      ? {
+          replayState: readOptional(
+            flags.replay,
+            core.deserializeKnowledgeSyncReplayStateV1
+          ),
+        }
+      : {}),
   };
   if (subcommand === 'studio') {
-    console.log(JSON.stringify(core.inspectKnowledgeStudioManagementV5(input), null, 2));
+    console.log(
+      JSON.stringify(core.inspectKnowledgeStudioManagementV5(input), null, 2)
+    );
     return;
   }
   const diagnostics = core.inspectKnowledgeRuntimeV5(input);
-  if (subcommand === 'health') console.log(JSON.stringify({ healthy: true, ...diagnostics }, null, 2));
+  if (subcommand === 'health')
+    console.log(JSON.stringify({ healthy: true, ...diagnostics }, null, 2));
   else console.log(JSON.stringify(diagnostics, null, 2));
 }
 
@@ -844,20 +1253,33 @@ function parseKeyValueArgs(args) {
 }
 
 async function loadOllamaProvider() {
-  const mod = await tryImport(path.resolve(__dirname, '../../semantic-ollama/dist/index.js'));
+  const mod = await tryImport(
+    path.resolve(__dirname, '../../semantic-ollama/dist/index.js')
+  );
   if (mod?.OllamaEmbeddingProvider) return mod.OllamaEmbeddingProvider;
   const pkg = await tryImport('@knolo/semantic-ollama');
   if (pkg?.OllamaEmbeddingProvider) return pkg.OllamaEmbeddingProvider;
-  throw createError('Could not load @knolo/semantic-ollama. Build packages/semantic-ollama first.');
+  throw createError(
+    'Could not load @knolo/semantic-ollama. Build packages/semantic-ollama first.'
+  );
 }
 
 async function cmdSemanticIndex(core, args) {
   const flags = parseKeyValueArgs(args);
-  const packPath = path.resolve(process.cwd(), flags.pack || 'dist/knowledge.knolo');
-  const outPath = path.resolve(process.cwd(), flags.out || `${packPath}.semantic.json`);
+  const packPath = path.resolve(
+    process.cwd(),
+    flags.pack || 'dist/knowledge.knolo'
+  );
+  const outPath = path.resolve(
+    process.cwd(),
+    flags.out || `${packPath}.semantic.json`
+  );
   const modelId = flags.model || 'qwen3-embedding:4b';
   const endpoint = flags.endpoint || 'http://localhost:11434';
-  if (!existsSync(packPath)) throw createError(`Pack file not found at ${path.relative(process.cwd(), packPath)}.`);
+  if (!existsSync(packPath))
+    throw createError(
+      `Pack file not found at ${path.relative(process.cwd(), packPath)}.`
+    );
 
   const bytes = Uint8Array.from(readFileSync(packPath));
   const pack = await mountPackFromBytes(core, bytes);
@@ -871,7 +1293,10 @@ async function cmdSemanticIndex(core, args) {
     dimension: vectors[0]?.length ?? 0,
     metric: 'cosine',
     createdAt: new Date().toISOString(),
-    blocks: vectors.map((vector, blockId) => ({ blockId, vector: Array.from(core.normalizeVector(vector)) })),
+    blocks: vectors.map((vector, blockId) => ({
+      blockId,
+      vector: Array.from(core.normalizeVector(vector)),
+    })),
   };
   writeFileSync(outPath, core.serializeSidecar(sidecar));
   console.log(`✔ wrote ${path.relative(process.cwd(), outPath)}`);
@@ -881,28 +1306,44 @@ async function cmdSemanticInspect(core, args) {
   const flags = parseKeyValueArgs(args);
   const sidecarPath = path.resolve(process.cwd(), flags.sidecar);
   const sidecar = core.parseSidecar(readFileSync(sidecarPath, 'utf8'));
-  console.log(JSON.stringify({
-    version: sidecar.version,
-    packFingerprint: sidecar.packFingerprint,
-    modelId: sidecar.modelId,
-    dimension: sidecar.dimension,
-    metric: sidecar.metric,
-    createdAt: sidecar.createdAt,
-    blocks: sidecar.blocks.length,
-  }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        version: sidecar.version,
+        packFingerprint: sidecar.packFingerprint,
+        modelId: sidecar.modelId,
+        dimension: sidecar.dimension,
+        metric: sidecar.metric,
+        createdAt: sidecar.createdAt,
+        blocks: sidecar.blocks.length,
+      },
+      null,
+      2
+    )
+  );
 }
 
 async function cmdSemanticValidate(core, args) {
   const flags = parseKeyValueArgs(args);
-  const packPath = path.resolve(process.cwd(), flags.pack || 'dist/knowledge.knolo');
+  const packPath = path.resolve(
+    process.cwd(),
+    flags.pack || 'dist/knowledge.knolo'
+  );
   const sidecarPath = path.resolve(process.cwd(), flags.sidecar);
   const modelId = flags.model;
   if (!modelId) throw createError('semantic:validate requires --model <id>.');
-  const pack = await mountPackFromBytes(core, Uint8Array.from(readFileSync(packPath)));
+  const pack = await mountPackFromBytes(
+    core,
+    Uint8Array.from(readFileSync(packPath))
+  );
   const sidecar = core.parseSidecar(readFileSync(sidecarPath, 'utf8'));
   core.validateSidecarForPack({ sidecar, pack, modelId });
-  if (sidecar.blocks.length !== pack.blocks.length) throw createError(`Semantic block count mismatch: sidecar=${sidecar.blocks.length}, pack=${pack.blocks.length}`);
-  if (sidecar.dimension <= 0) throw createError('Semantic sidecar dimension must be > 0.');
+  if (sidecar.blocks.length !== pack.blocks.length)
+    throw createError(
+      `Semantic block count mismatch: sidecar=${sidecar.blocks.length}, pack=${pack.blocks.length}`
+    );
+  if (sidecar.dimension <= 0)
+    throw createError('Semantic sidecar dimension must be > 0.');
   console.log('✔ semantic sidecar validation passed');
 }
 
@@ -951,7 +1392,10 @@ async function cmdDev(core) {
   };
 
   const closers = [];
-  const configWatcher = watch(path.resolve(process.cwd(), CONFIG_FILE), schedule);
+  const configWatcher = watch(
+    path.resolve(process.cwd(), CONFIG_FILE),
+    schedule
+  );
   closers.push(() => configWatcher.close());
 
   const config = readConfig();
@@ -1084,14 +1528,18 @@ function loadAgentsFromDir(agentsDir, core) {
   const entries = readdirSync(path.resolve(agentsDir), { withFileTypes: true })
     .filter((e) => e.isFile())
     .map((e) => e.name)
-    .filter((name) => ['.json', '.yaml', '.yml'].includes(path.extname(name).toLowerCase()))
+    .filter((name) =>
+      ['.json', '.yaml', '.yml'].includes(path.extname(name).toLowerCase())
+    )
     .sort((a, b) => a.localeCompare(b));
 
   const loaded = entries.map((file) => {
     const full = path.join(path.resolve(agentsDir), file);
     const parsed = parseAgentFileContent(readFileSync(full, 'utf8'), full);
-    const agent = parsed?.agent && typeof parsed.agent === 'object' ? parsed.agent : parsed;
-    if (typeof core.validateAgentDefinition === 'function') core.validateAgentDefinition(agent);
+    const agent =
+      parsed?.agent && typeof parsed.agent === 'object' ? parsed.agent : parsed;
+    if (typeof core.validateAgentDefinition === 'function')
+      core.validateAgentDefinition(agent);
     return { file, agent };
   });
 
@@ -1103,26 +1551,41 @@ function loadAgentsFromDir(agentsDir, core) {
   }
   for (const [id, files] of dupes.entries()) {
     if (files.length > 1) {
-      throw createError(`Duplicate agent id "${id}" found in files: ${files.sort((a, b) => a.localeCompare(b)).join(', ')}`);
+      throw createError(
+        `Duplicate agent id "${id}" found in files: ${files.sort((a, b) => a.localeCompare(b)).join(', ')}`
+      );
     }
   }
 
-  const agents = loaded.map((x) => x.agent).sort((a, b) => String(a.id).localeCompare(String(b.id)));
+  const agents = loaded
+    .map((x) => x.agent)
+    .sort((a, b) => String(a.id).localeCompare(String(b.id)));
   const registry = { version: 1, agents };
-  if (typeof core.validateAgentRegistry === 'function') core.validateAgentRegistry(registry);
+  if (typeof core.validateAgentRegistry === 'function')
+    core.validateAgentRegistry(registry);
   return registry;
 }
 
 function loadEmbeddingsFromJson(filePath, expectedCount) {
   const parsed = JSON.parse(readFileSync(filePath, 'utf8'));
-  const vectors = Array.isArray(parsed?.embeddings) ? parsed.embeddings : parsed;
-  if (!Array.isArray(vectors)) throw createError('Embeddings JSON must be an array or { embeddings: [...] }.');
-  if (vectors.length !== expectedCount) throw createError(`Embeddings length mismatch: expected ${expectedCount}, got ${vectors.length}.`);
+  const vectors = Array.isArray(parsed?.embeddings)
+    ? parsed.embeddings
+    : parsed;
+  if (!Array.isArray(vectors))
+    throw createError(
+      'Embeddings JSON must be an array or { embeddings: [...] }.'
+    );
+  if (vectors.length !== expectedCount)
+    throw createError(
+      `Embeddings length mismatch: expected ${expectedCount}, got ${vectors.length}.`
+    );
   return vectors.map((entry, i) => {
-    if (!Array.isArray(entry)) throw createError(`Embeddings[${i}] must be an array.`);
+    if (!Array.isArray(entry))
+      throw createError(`Embeddings[${i}] must be an array.`);
     const vec = new Float32Array(entry.length);
     for (let d = 0; d < entry.length; d++) {
-      if (!Number.isFinite(entry[d])) throw createError(`Embeddings[${i}][${d}] must be numeric.`);
+      if (!Number.isFinite(entry[d]))
+        throw createError(`Embeddings[${i}][${d}] must be numeric.`);
       vec[d] = entry[d];
     }
     return vec;
@@ -1147,7 +1610,9 @@ function parseDirectModeArgs(args) {
 async function runDirectMode(core, firstArg, restArgs) {
   const { positional, flags } = parseDirectModeArgs([firstArg, ...restArgs]);
   if (flags.help) {
-    console.log('Usage: knolo <input.json> [output.knolo] [--agents ./agents] [--embeddings embeddings.json --model-id model]');
+    console.log(
+      'Usage: knolo <input.json> [output.knolo] [--agents ./agents] [--embeddings embeddings.json --model-id model]'
+    );
     return;
   }
 
@@ -1155,12 +1620,18 @@ async function runDirectMode(core, firstArg, restArgs) {
   const outFile = positional[1] || 'knowledge.knolo';
   if (!inFile) throw createError('Usage: knolo <input.json> [output.knolo]');
 
-  const docs = JSON.parse(readFileSync(path.resolve(process.cwd(), inFile), 'utf8'));
-  if (!Array.isArray(docs)) throw createError('Input JSON must be an array of docs.');
+  const docs = JSON.parse(
+    readFileSync(path.resolve(process.cwd(), inFile), 'utf8')
+  );
+  if (!Array.isArray(docs))
+    throw createError('Input JSON must be an array of docs.');
 
   const options = {};
   if (flags.embeddingsPath || flags.modelId) {
-    if (!flags.embeddingsPath || !flags.modelId) throw createError('Both --embeddings and --model-id are required together.');
+    if (!flags.embeddingsPath || !flags.modelId)
+      throw createError(
+        'Both --embeddings and --model-id are required together.'
+      );
     options.semantic = {
       enabled: true,
       modelId: flags.modelId,
@@ -1182,14 +1653,19 @@ async function main() {
   try {
     if (command === 'help') return printRootHelp();
     if (command === 'icp') {
-      if (commandArgs.length === 0 || commandArgs[0] === '--help' || commandArgs[0] === '-h') {
+      if (
+        commandArgs.length === 0 ||
+        commandArgs[0] === '--help' ||
+        commandArgs[0] === '-h'
+      ) {
         return printIcpHelp();
       }
       return await cmdIcp(commandArgs);
     }
 
     if (SUBCOMMANDS.has(command)) {
-      if (commandArgs.includes('--help') || commandArgs.includes('-h')) return printCommandHelp(command);
+      if (commandArgs.includes('--help') || commandArgs.includes('-h'))
+        return printCommandHelp(command);
       if (command === 'init') return await cmdInit();
       if (command === 'add') return await cmdAdd(commandArgs);
       if (command === 'search') return await runHubSearch(commandArgs);
@@ -1210,17 +1686,24 @@ async function main() {
       if (command === 'diff') return await cmdDiff(core, commandArgs);
       if (command === 'dev') return await cmdDev(core);
       if (command === 'v5') return await cmdV5(core, commandArgs);
-      if (command === 'semantic:index') return await cmdSemanticIndex(core, commandArgs);
-      if (command === 'semantic:inspect') return await cmdSemanticInspect(core, commandArgs);
-      if (command === 'semantic:validate') return await cmdSemanticValidate(core, commandArgs);
+      if (command === 'semantic:index')
+        return await cmdSemanticIndex(core, commandArgs);
+      if (command === 'semantic:inspect')
+        return await cmdSemanticInspect(core, commandArgs);
+      if (command === 'semantic:validate')
+        return await cmdSemanticValidate(core, commandArgs);
     }
 
-    if (command.startsWith('-')) throw createError(`Unknown option: ${command}`);
+    if (command.startsWith('-'))
+      throw createError(`Unknown option: ${command}`);
     const core = await loadCore();
     return await runDirectMode(core, command, commandArgs);
   } catch (error) {
-    console.error(`knolo: ${error instanceof Error ? error.message : String(error)}`);
-    if (global.debug && error instanceof Error && error.stack) console.error(error.stack);
+    console.error(
+      `knolo: ${error instanceof Error ? error.message : String(error)}`
+    );
+    if (global.debug && error instanceof Error && error.stack)
+      console.error(error.stack);
     process.exit(1);
   }
 }

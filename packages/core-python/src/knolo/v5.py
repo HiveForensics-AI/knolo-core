@@ -462,6 +462,8 @@ def _parse_image(data: bytes) -> KnowledgeImageV5:
         segment = _read_segment(data, offset)
         if segment["kind"] not in (1, 2, 3) and segment["kind"] < 128:
             raise InvalidKnowledgeImageError(f"unknown non-optional V5 segment: {segment['kind']}")
+        if segment["kind"] <= 3 and segment["flags"] != 0:
+            raise InvalidKnowledgeImageError("unsupported required V5 segment flags")
         if segment["kind"] <= 3 and segment["schema"] != 1:
             raise InvalidKnowledgeImageError("unsupported required V5 segment schema")
         if segment["kind"] in seen and segment["kind"] < 128:

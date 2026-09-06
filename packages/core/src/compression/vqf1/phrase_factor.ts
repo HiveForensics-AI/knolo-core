@@ -25,7 +25,6 @@ export type VqfPhraseFactoringOptions = {
   minPhraseFrequency?: number;
   maxPhraseFanoutPerTerm?: number;
   minPhraseGainBytes?: number;
-  exactGain?: boolean;
 };
 
 export type VqfResolvedPhraseParameters = {
@@ -34,6 +33,7 @@ export type VqfResolvedPhraseParameters = {
   minPhraseFrequency: number;
   maxPhraseFanoutPerTerm: number;
   minPhraseGainBytes: number;
+  /** Reserved wire field; exact artifact-gain selection is not implemented. */
   exactGain: boolean;
 };
 
@@ -87,7 +87,7 @@ export const VQF_PHRASE_PROFILE_DEFAULTS: Record<
     minPhraseFrequency: 2,
     maxPhraseFanoutPerTerm: 8,
     minPhraseGainBytes: 1,
-    exactGain: true,
+    exactGain: false,
   },
 };
 
@@ -147,7 +147,7 @@ export function resolveVqfPhraseOptions(
       override.minPhraseGainBytes ?? defaults.minPhraseGainBytes,
       16_000_000
     ),
-    exactGain: (override.exactGain ?? defaults.exactGain) ? true : false,
+    exactGain: false,
   };
   if (parameters.minPhraseLength > parameters.maxPhraseLength) {
     throw new RangeError('VQF phrase min length exceeds max length.');
@@ -439,8 +439,7 @@ function candidateGain(
   references: Map<number, VqfPhraseReference[]>,
   candidate: Candidate,
   occurrences: Array<{ blockId: number; start: number }>,
-  phraseIndex: number,
-  exactGain: boolean
+  phraseIndex: number
 ): number {
   const documents = occurrencesAsDocuments(occurrences);
   const phraseBytes =
@@ -465,9 +464,7 @@ function candidateGain(
     ];
     saved += referenceListSize(currentRefs) - referenceListSize(nextRefs);
   }
-  const gain = saved - phraseBytes;
-  if (!exactGain) return gain;
-  return gain;
+  return saved - phraseBytes;
 }
 
 function markCovered(
@@ -539,8 +536,7 @@ export function factorLexicalPhrases(
         references,
         entry.candidate,
         entry.occurrences,
-        selected.length,
-        parameters.exactGain
+        selected.length
       );
     }
     ranked.sort((left, right) => {

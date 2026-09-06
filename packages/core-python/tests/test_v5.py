@@ -18,6 +18,8 @@ from knolo import (
 FIXTURE_PATH = Path(__file__).resolve().parents[3] / "conformance" / "v5" / "knowledge-image-v5.fixture.base64"
 EXPECTED_STATE_ROOT = "sha256-bc419264f60822bb8c601f01eb3020671e78056f4e6403ab6db087911d25d694"
 EXPECTED_COMMIT_DIGEST = "sha256-7a6ed0a7e488ee085053d6d8d885141e0a8b6abd5c40bd552e4d2b10b721b177"
+VQF_FIXTURE_PATH = Path(__file__).resolve().parents[3] / "conformance" / "vqf1" / "optional-query-index.fixture.base64"
+REQUIRED_VQF_FIXTURE_PATH = Path(__file__).resolve().parents[3] / "conformance" / "vqf1" / "required-object-vqf.fixture.base64"
 
 
 @pytest.fixture(scope="module")
@@ -37,6 +39,19 @@ def test_mounts_and_verifies_shared_v5_image(image_bytes: bytes):
     assert verification.valid is True
     assert verification.state_root == image.state_root
     assert verification.commit_digest == image.commit_digest
+
+
+def test_mounts_frozen_vqf_optional_index_fixture():
+    image = mount_knowledge_image_v5(base64.b64decode(VQF_FIXTURE_PATH.read_text(encoding="utf-8").strip()))
+    assert image.state_root == "sha256-979904b0ce8920b8c12717a92cdd3f777b901c34f682e4023290241089bc694a"
+    assert image.commit_digest == "sha256-7e7d49d8b1f69c378e3dfcc1ad013f67b8b3dc69e5b98c801ded964733582d22"
+    assert len(image.segments) == 4
+
+
+def test_required_vqf_fixture_is_rejected_until_decoder_parity_lands():
+    data = base64.b64decode(REQUIRED_VQF_FIXTURE_PATH.read_text(encoding="utf-8").strip())
+    with pytest.raises(InvalidKnowledgeImageError, match="flags|digest"):
+        mount_knowledge_image_v5(data)
 
 
 def test_v5_query_is_deterministic_over_utf8_objects(image_bytes: bytes):
@@ -63,6 +78,15 @@ def test_v5_query_rejects_invalid_bounds(image_bytes: bytes):
         query_knowledge_image_v5(image, "FROM metadata LIMIT 0")
     with pytest.raises(ValueError):
         query_knowledge_image_v5(image, "FROM metadata WHERE bytes = \"x\"")
+
+
+def test_v5_rejects_unsupported_required_segment_flags(image_bytes: bytes):
+    image = mount_knowledge_image_v5(image_bytes)
+    corrupted = bytearray(image_bytes)
+    object_segment = next(segment for segment in image.segments if segment["kind"] == 1)
+    corrupted[object_segment["offset"] + 6] |= 1
+    with pytest.raises(InvalidKnowledgeImageError, match="flags"):
+        mount_knowledge_image_v5(corrupted)
 
 
 def _segment_digest(payload: bytes) -> bytes:
