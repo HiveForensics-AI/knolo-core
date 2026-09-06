@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.5.0] - 2026-09-06
+
+### VQF-1 cross-runtime parity
+
+- Added shared compressed object and event fixtures with TypeScript, Rust, and
+  Python reader parity.
+- Documented the portable VQF format boundary and runtime-only lexical status.
+
 ## [5.1.0] - 2026-09-01
 
 ### v5.1.0 / V5 Completion and Interoperability Hardening

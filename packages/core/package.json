@@ -1,6 +1,6 @@
 {
   "name": "@knolo/core",
-  "version": "5.1.0",
+  "version": "5.5.0",
   "type": "module",
   "description": "Deterministic, verifiable Knowledge Images and local-first retrieval for trustworthy AI.",
   "keywords": [

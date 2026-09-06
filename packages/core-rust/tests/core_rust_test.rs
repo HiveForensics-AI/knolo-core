@@ -1,4 +1,4 @@
-use knolo_core_rust::{authority_envelope_root_v1, authority_keyring_root_v1, authority_session_root_v1, evaluate_knowledge_query_policy_v5, inspect_knowledge_image, inspect_knowledge_runtime_v5, inspect_knowledge_studio_management_v5, key_rotation_root_v1, mount_pack_from_bytes, migrate_v4_to_v5, mount_knowledge_image, query, query_knowledge_image_v5, sync_request_root_v1, sync_response_root_v1, sync_summary_root_v1, verify_knowledge_authority_envelope_v5, verify_knowledge_authority_envelope_with_keyring_root_v5, KnowledgeAuthorityEnvelopeV1, KnowledgeAuthorityKeyV1, KnowledgeAuthorityKeyringV1, KnowledgeKeyRotationRecordV1, KnowledgePolicyV1, QueryOptions};
+use knolo_core_rust::{authority_envelope_root_v1, authority_keyring_root_v1, authority_session_root_v1, evaluate_knowledge_query_policy_v5, inspect_knowledge_image, inspect_knowledge_runtime_v5, inspect_knowledge_studio_management_v5, inspect_vqf_envelope, key_rotation_root_v1, mount_pack_from_bytes, migrate_v4_to_v5, mount_knowledge_image, query, query_knowledge_image_v5, sync_request_root_v1, sync_response_root_v1, sync_summary_root_v1, verify_knowledge_authority_envelope_v5, verify_knowledge_authority_envelope_with_keyring_root_v5, KnowledgeAuthorityEnvelopeV1, KnowledgeAuthorityKeyV1, KnowledgeAuthorityKeyringV1, KnowledgeKeyRotationRecordV1, KnowledgePolicyV1, QueryOptions};
 
 fn build_test_pack_bytes() -> Vec<u8> {
     let meta = b"{\"version\":3,\"stats\":{\"docs\":2,\"blocks\":2,\"terms\":4,\"avgBlockLen\":2.5}}".to_vec();
@@ -117,6 +117,51 @@ fn verifies_shared_v5_binary_fixture() {
     assert_eq!(verified.state_root, "sha256-bc419264f60822bb8c601f01eb3020671e78056f4e6403ab6db087911d25d694");
     assert_eq!(verified.commit_digest, "sha256-7a6ed0a7e488ee085053d6d8d885141e0a8b6abd5c40bd552e4d2b10b721b177");
     assert_eq!(verified.segments.len(), 3);
+}
+
+#[test]
+fn verifies_frozen_vqf_optional_index_fixture() {
+    let encoded = include_str!("../../../conformance/vqf1/optional-query-index.fixture.base64");
+    let image = decode_base64(encoded);
+    let verified = inspect_knowledge_image(&image).expect("VQF optional-index fixture should verify");
+    assert_eq!(verified.state_root, "sha256-979904b0ce8920b8c12717a92cdd3f777b901c34f682e4023290241089bc694a");
+    assert_eq!(verified.commit_digest, "sha256-7e7d49d8b1f69c378e3dfcc1ad013f67b8b3dc69e5b98c801ded964733582d22");
+    assert_eq!(verified.segments.len(), 4);
+    assert_eq!(verified.segments.last().unwrap().kind, 129);
+}
+
+#[test]
+fn required_vqf_object_fixture_mounts_with_rust_decoder() {
+    let encoded = include_str!("../../../conformance/vqf1/required-object-vqf.fixture.base64");
+    let image = decode_base64(encoded);
+    let manifest = include_str!("../../../conformance/vqf1/manifest.json");
+    assert!(manifest.contains("sha256-b0552548736f38d52659241370db39cff2f08bc7b6bdf48260316a4458c521d7"));
+    assert!(manifest.contains("\"objectCount\": 40"));
+    let mounted = mount_knowledge_image(&image).expect("required VQF object fixture should mount");
+    assert_eq!(mounted.state_root, "sha256-e1dd5cc717c1fcb94ed999685705c87f5ef20ced62bf5dae37ad55b5a0f66fee");
+    assert_eq!(mounted.commit_digest, "sha256-dfa4142702721a52039567f9f76120a4e8c8aedcb9d2f47c11a366c03cbc3d4c");
+    assert_eq!(mounted.objects.len(), 40);
+    assert_eq!(mounted.segments.iter().map(|segment| (segment.kind, segment.flags)).collect::<Vec<_>>(), vec![(1, 1), (2, 0), (3, 0)]);
+}
+
+#[test]
+fn vqf_envelope_boundary_is_validated_before_body_decode() {
+    let image = decode_base64(include_str!("../../../conformance/vqf1/required-object-vqf.fixture.base64"));
+    let payload = &image[272 + 48..272 + 2287];
+    let (logical, physical) = inspect_vqf_envelope(payload, 1).expect("object envelope should validate");
+    assert_eq!(logical, 19858);
+    assert_eq!(physical, 2183);
+}
+
+#[test]
+fn required_vqf_event_fixture_mounts_with_rust_decoder() {
+    let image = decode_base64(include_str!("../../../conformance/vqf1/required-event-vqf.fixture.base64"));
+    let mounted = mount_knowledge_image(&image).expect("required VQF event fixture should mount");
+    assert_eq!(mounted.state_root, "sha256-c9ef511f748fe0e15191ff9020c4d3eb00e09da1b5088319c6ec3215e4868eb6");
+    assert_eq!(mounted.commit_digest, "sha256-c0c6d24c1be3e74cc004ccc83b15ed16ffaf342215db426199fbad535f44076e");
+    assert_eq!(mounted.objects.len(), 2);
+    assert_eq!(mounted.events.len(), 2);
+    assert_eq!(mounted.segments.iter().map(|segment| (segment.kind, segment.flags)).collect::<Vec<_>>(), vec![(1, 0), (2, 1), (3, 0)]);
 }
 
 #[test]
@@ -244,6 +289,49 @@ fn verifies_shared_transaction_snapshot_fixture() {
     let verified = inspect_knowledge_image(&image).expect("transaction snapshot should verify");
     assert_eq!(verified.state_root, "sha256-c9ef511f748fe0e15191ff9020c4d3eb00e09da1b5088319c6ec3215e4868eb6");
     assert_eq!(verified.commit_digest, "sha256-c0c6d24c1be3e74cc004ccc83b15ed16ffaf342215db426199fbad535f44076e");
+}
+
+fn append_optional_segment(image: &[u8], kind: u8, payload: &[u8], digest_hex: &str) -> Vec<u8> {
+    let mut out = image.to_vec();
+    out.extend_from_slice(b"KSEG");
+    out.push(kind);
+    out.push(1);
+    out.extend_from_slice(&0u16.to_le_bytes());
+    out.extend_from_slice(&(payload.len() as u64).to_le_bytes());
+    let mut digest = [0u8; 32];
+    for (i, chunk) in digest_hex.as_bytes().chunks(2).enumerate() {
+        digest[i] = u8::from_str_radix(std::str::from_utf8(chunk).unwrap(), 16).unwrap();
+    }
+    out.extend_from_slice(&digest);
+    out.extend_from_slice(payload);
+    out
+}
+
+#[test]
+fn old_reader_skips_kind_129_when_required_segments_are_ordinary() {
+    let image = decode_base64(include_str!("../../../conformance/v5/knowledge-image-v5.fixture.base64"));
+    let original = inspect_knowledge_image(&image).expect("shared V5 fixture should verify");
+    let extended = append_optional_segment(
+        &image,
+        129,
+        b"vqf-query-index-skip-test",
+        "b0d709a67c90aa275b97b78997a947d90de8c06f77b429e27ff1f49fe76e3116",
+    );
+    let verified = inspect_knowledge_image(&extended).expect("kind 129 should be skipped");
+    assert_eq!(verified.state_root, original.state_root);
+    assert_eq!(verified.segments.last().map(|segment| segment.kind), Some(129));
+    assert_eq!(verified.segments.last().map(|segment| segment.flags), Some(0));
+}
+
+#[test]
+fn old_reader_rejects_flagged_required_segment_with_changed_payload() {
+    let image = decode_base64(include_str!("../../../conformance/v5/knowledge-image-v5.fixture.base64"));
+    let mut mutated = image.clone();
+    let offset = 16 + 128 * 2;
+    mutated[offset + 6] = 1;
+    mutated[offset + 7] = 0;
+    mutated[offset + 48] ^= 1;
+    assert!(inspect_knowledge_image(&mutated).is_err());
 }
 
 fn decode_base64(value: &str) -> Vec<u8> {

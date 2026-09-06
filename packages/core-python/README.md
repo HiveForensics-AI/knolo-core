@@ -1,9 +1,10 @@
 # `knolo` — V5-compatible Python runtime
 
-**Compatibility status:** V5 Knowledge Image verification and deterministic
-lexical object queries, with the existing V1–V3 `.knolo` reader/query APIs
-preserved for compatibility. Python does not implement V5 mutation,
-coordination, Studio, network transport, or model execution.
+**Compatibility status:** V5 Knowledge Image verification, deterministic
+lexical object queries, and read-only VQF-1 required object/event decoding,
+with the existing V1–V3 `.knolo` reader/query APIs preserved for compatibility.
+Python does not implement V5 mutation, coordination, Studio, network
+transport, or model execution.
 
 The staged cross-runtime plan is [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
 
@@ -81,6 +82,10 @@ invalid superblocks, non-canonical CBOR, segment digest mismatches, object or
 event identity mismatches, and root mismatches. `query_knowledge_image_v5()`
 is a deterministic lexical query over UTF-8 object payloads; policy, authority,
 receipts, synchronization, and writes remain host/runtime responsibilities.
+
+The reader accepts the shared compressed object and event fixtures under
+`conformance/vqf1/` and verifies their logical segment digests and roots. Python
+does not emit VQF bytes; TypeScript remains the canonical encoder.
 
 ## Release Readiness
 

@@ -1,0 +1,52 @@
+{
+  "date": "2026-09-06",
+  "scope": "Phase 9 working tree: optional shared phrase factoring, fast/balanced/max lexical profiles, and image compression mode",
+  "checks": [
+    {
+      "command": "npm test --workspace @knolo/core",
+      "result": "passed",
+      "evidence": "163 core Node tests including vqf-phrase-factor, vqf-lexical-index and vqf-postings, plus the legacy lexical/phrase/expansion regression script"
+    },
+    {
+      "command": "npm run trustbench:test",
+      "result": "passed"
+    },
+    {
+      "command": "npm run smoke:v5",
+      "result": "passed",
+      "evidence": "create, inspect, query, verify, migrate and receipt"
+    },
+    {
+      "command": "npm run release:check",
+      "result": "passed",
+      "evidence": "build, metadata, docs, publication source and package archive checks"
+    },
+    {
+      "command": "npm run format:check:all",
+      "result": "passed"
+    },
+    {
+      "command": "npm run docs:check",
+      "result": "passed"
+    },
+    {
+      "command": "node --test packages/core/test/vqf-phrase-factor.test.mjs packages/core/test/vqf-lexical-index.test.mjs packages/core/test/vqf-postings.test.mjs",
+      "result": "passed",
+      "evidence": "exact reconstructed positions/tf/df, repeated-term offsets, overlaps, punctuation, block boundaries, fanout, unprofitable fallback, unread unrelated phrase streams, 1,000 seeded indexes, profile query equivalence"
+    },
+    {
+      "command": "npm run benchmark:vqf:phrases -- --output docs/benchmarks/vqf1/phase9-phrases.json",
+      "result": "passed",
+      "evidence": "eight generated corpora; low-redundancy stays unfactored; enterprise/repetitive/repository artifacts 1.22–5.23× smaller than fast when phrases help; exact query scores across fast/balanced/max"
+    },
+    {
+      "command": "node packages/core/scripts/benchmark-vqf.mjs --samples 2 --warmup 0 --compare docs/benchmarks/vqf1/baseline.json --output /tmp/vqf-phase9-repeat.json",
+      "result": "passed",
+      "evidence": "all eight corpus cases retained exact corpus/artifact digests, roots and ordered query results"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "stateRoot": "sha256-979904b0ce8920b8c12717a92cdd3f777b901c34f682e4023290241089bc694a",
+  "commitDigest": "sha256-7e7d49d8b1f69c378e3dfcc1ad013f67b8b3dc69e5b98c801ded964733582d22",
+  "hasOptionalQueryIndex": true,
+  "segmentKinds": [
+    1,
+    2,
+    3,
+    129
+  ]
+}

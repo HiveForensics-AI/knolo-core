@@ -46,6 +46,7 @@ export type Pack = {
   meta: PackMeta;
   lexicon: Map<string, number>;
   postings: Uint32Array;
+  vqfLexicalIndex?: Uint8Array;
   blocks: string[];
   headings?: (string | null)[];
   docIds?: (string | null)[];

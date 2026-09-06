@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import base64
+import hashlib
+import json
+import struct
 from pathlib import Path
 
 import pytest
@@ -16,6 +19,9 @@ from knolo import (
 FIXTURE_PATH = Path(__file__).resolve().parents[3] / "conformance" / "v5" / "knowledge-image-v5.fixture.base64"
 EXPECTED_STATE_ROOT = "sha256-bc419264f60822bb8c601f01eb3020671e78056f4e6403ab6db087911d25d694"
 EXPECTED_COMMIT_DIGEST = "sha256-7a6ed0a7e488ee085053d6d8d885141e0a8b6abd5c40bd552e4d2b10b721b177"
+VQF_FIXTURE_PATH = Path(__file__).resolve().parents[3] / "conformance" / "vqf1" / "optional-query-index.fixture.base64"
+REQUIRED_VQF_FIXTURE_PATH = Path(__file__).resolve().parents[3] / "conformance" / "vqf1" / "required-object-vqf.fixture.base64"
+VQF_MANIFEST_PATH = Path(__file__).resolve().parents[3] / "conformance" / "vqf1" / "manifest.json"
 
 
 @pytest.fixture(scope="module")
@@ -35,6 +41,45 @@ def test_mounts_and_verifies_shared_v5_image(image_bytes: bytes):
     assert verification.valid is True
     assert verification.state_root == image.state_root
     assert verification.commit_digest == image.commit_digest
+
+
+def test_mounts_frozen_vqf_optional_index_fixture():
+    image = mount_knowledge_image_v5(base64.b64decode(VQF_FIXTURE_PATH.read_text(encoding="utf-8").strip()))
+    assert image.state_root == "sha256-979904b0ce8920b8c12717a92cdd3f777b901c34f682e4023290241089bc694a"
+    assert image.commit_digest == "sha256-7e7d49d8b1f69c378e3dfcc1ad013f67b8b3dc69e5b98c801ded964733582d22"
+    assert len(image.segments) == 4
+
+
+def test_required_vqf_object_fixture_mounts_with_python_decoder():
+    data = base64.b64decode(REQUIRED_VQF_FIXTURE_PATH.read_text(encoding="utf-8").strip())
+    manifest = json.loads(VQF_MANIFEST_PATH.read_text(encoding="utf-8"))
+    image = mount_knowledge_image_v5(data)
+    assert len(data) == manifest["physicalBytes"]
+    assert "sha256-" + hashlib.sha256(data).hexdigest() == manifest["physicalDigest"]
+    assert image.state_root == manifest["stateRoot"]
+    assert image.commit_digest == manifest["commitDigest"]
+    assert len(image.objects) == manifest["objectCount"]
+    assert [
+        {"kind": segment["kind"], "flags": segment["flags"], "digest": segment["digest"]}
+        for segment in image.segments
+    ] == manifest["segments"]
+
+
+def test_required_vqf_event_fixture_mounts_with_python_decoder():
+    manifest = json.loads(VQF_MANIFEST_PATH.read_text(encoding="utf-8"))["eventFixture"]
+    path = VQF_MANIFEST_PATH.parent / manifest["fixture"]
+    data = base64.b64decode(path.read_text(encoding="utf-8").strip())
+    image = mount_knowledge_image_v5(data)
+    assert len(data) == manifest["physicalBytes"]
+    assert "sha256-" + hashlib.sha256(data).hexdigest() == manifest["physicalDigest"]
+    assert image.state_root == manifest["stateRoot"]
+    assert image.commit_digest == manifest["commitDigest"]
+    assert len(image.objects) == manifest["objectCount"]
+    assert len(image.events) == manifest["eventCount"]
+    assert [
+        {"kind": segment["kind"], "flags": segment["flags"], "digest": segment["digest"]}
+        for segment in image.segments
+    ] == manifest["segments"]
 
 
 def test_v5_query_is_deterministic_over_utf8_objects(image_bytes: bytes):
@@ -61,3 +106,44 @@ def test_v5_query_rejects_invalid_bounds(image_bytes: bytes):
         query_knowledge_image_v5(image, "FROM metadata LIMIT 0")
     with pytest.raises(ValueError):
         query_knowledge_image_v5(image, "FROM metadata WHERE bytes = \"x\"")
+
+
+def test_v5_rejects_unsupported_required_segment_flags(image_bytes: bytes):
+    image = mount_knowledge_image_v5(image_bytes)
+    corrupted = bytearray(image_bytes)
+    object_segment = next(segment for segment in image.segments if segment["kind"] == 1)
+    corrupted[object_segment["offset"] + 6] |= 1
+    with pytest.raises(InvalidKnowledgeImageError, match="flags|envelope"):
+        mount_knowledge_image_v5(corrupted)
+
+
+def _segment_digest(payload: bytes) -> bytes:
+    return hashlib.sha256(b"knolo:segment:v1\x00" + payload).digest()
+
+
+def _append_optional(image: bytes, kind: int, payload: bytes) -> bytes:
+    header = bytearray(48)
+    header[0:4] = b"KSEG"
+    header[4] = kind
+    header[5] = 1
+    struct.pack_into("<Q", header, 8, len(payload))
+    header[16:48] = _segment_digest(payload)
+    return image + bytes(header) + payload
+
+
+def test_old_reader_skips_kind_129_when_required_segments_are_ordinary(image_bytes: bytes):
+    original = mount_knowledge_image_v5(image_bytes)
+    extended = _append_optional(image_bytes, 129, b"vqf-query-index-skip-test")
+    image = mount_knowledge_image_v5(extended)
+    assert image.state_root == original.state_root
+    assert image.segments[-1]["kind"] == 129
+    assert image.segments[-1]["flags"] == 0
+
+
+def test_old_reader_rejects_flagged_required_segment_with_changed_payload(image_bytes: bytes):
+    mutated = bytearray(image_bytes)
+    offset = 16 + 128 * 2
+    struct.pack_into("<H", mutated, offset + 6, 1)
+    mutated[offset + 48] ^= 1
+    with pytest.raises(InvalidKnowledgeImageError):
+        mount_knowledge_image_v5(bytes(mutated))

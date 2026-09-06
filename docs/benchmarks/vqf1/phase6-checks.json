@@ -1,0 +1,58 @@
+{
+  "date": "2026-09-06",
+  "scope": "Phase 6 working tree: compressed query-index sidecar and optional kind-129 segment",
+  "checks": [
+    {
+      "command": "npm test",
+      "result": "passed",
+      "evidence": "138 core Node tests plus CLI, legacy runtime, create-app, LangChain and LlamaIndex suites"
+    },
+    {
+      "command": "npm run test:icp",
+      "result": "passed",
+      "evidence": "20 Rust core tests, 11 ICP canister tests and template synchronization"
+    },
+    {
+      "command": ".venv/bin/python -m pytest packages/core-python/tests",
+      "result": "passed",
+      "evidence": "23 tests on Python 3.13.5"
+    },
+    {
+      "command": "npm run trustbench:test",
+      "result": "passed"
+    },
+    {
+      "command": "npm run smoke:v5",
+      "result": "passed",
+      "evidence": "create, inspect, query, verify, migrate and receipt"
+    },
+    {
+      "command": "npm run release:check",
+      "result": "passed",
+      "evidence": "build, metadata, docs, publication source and package archive checks"
+    },
+    {
+      "command": "npm run format:check:all",
+      "result": "passed"
+    },
+    {
+      "command": "npm run docs:check",
+      "result": "passed",
+      "evidence": "83 Markdown files"
+    },
+    {
+      "command": "npm run benchmark:vqf:index -- --output /tmp/vqf-phase6-index-repeat.json",
+      "result": "passed",
+      "evidence": "all four derived V5 indexes retained exact indexRoot and canonical CBOR; sidecar and kind-129 envelopes stay smaller than ordinary CBOR"
+    },
+    {
+      "command": "node packages/core/scripts/benchmark-vqf.mjs --samples 2 --warmup 0 --compare docs/benchmarks/vqf1/baseline.json --output /tmp/knolo-vqf-phase6-repeat-20260906.json",
+      "result": "passed",
+      "evidence": "all eight corpus cases retained exact corpus/artifact digests, roots and ordered query results"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ]
+}

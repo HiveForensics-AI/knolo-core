@@ -2,6 +2,13 @@
 
 All notable changes to the ICP canister adapter will be documented in this file.
 
+## [5.5.0] - 2026-09-06
+
+### Changed
+
+- Aligned the ICP adapter and bundled Rust template with the V5.5.0 release
+  metadata and VQF-aware reader contract.
+
 ## [5.1.0] - 2026-09-01
 
 ### Changed

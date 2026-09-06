@@ -20,6 +20,11 @@ import type { RetrievalEvidence, SemanticSidecar } from "./semantic/types.js";
 import { rerankCandidates } from "./semantic/rerank.js";
 import { parseSidecar } from "./semantic/sidecar.js";
 import { createRetrievalPlan, type RetrievalPlan } from './retrieval_plan.js';
+import {
+  createLegacyLexicalPostingsReader,
+  type LexicalPostingsReader,
+} from './compression/vqf1/lexical_postings.js';
+import { createVqfLexicalPostingsReader } from './compression/vqf1/postings.js';
 
 export type QueryOptions = {
   topK?: number;
@@ -280,6 +285,38 @@ export function applyHardConstraints(
   }
 }
 
+function harvestTermPostings(
+  postings: LexicalPostingsReader,
+  idWeights: Map<number, number>,
+  candidates: Map<number, Candidate>,
+  dfs: Map<number, number>,
+  cfg: { collectPositions?: boolean; createCandidates?: boolean }
+): void {
+  const requested: Array<[number, number]> = [];
+  for (const [tid, weight] of idWeights) {
+    if (weight > 0 && postings.hasTerm(tid)) requested.push([tid, weight]);
+  }
+  requested.sort((a, b) => postings.termOrder(a[0]) - postings.termOrder(b[0]));
+  const collectPositions = cfg.collectPositions !== false;
+  const createCandidates = cfg.createCandidates !== false;
+  for (const [tid, weight] of requested) {
+    dfs.set(tid, postings.documentFrequency(tid));
+    for (const posting of postings.read(tid, { positions: collectPositions })) {
+      const bid = posting.blockId;
+      if (bid < 0) continue;
+      let entry = candidates.get(bid);
+      if (!entry && createCandidates) {
+        entry = { tf: new Map(), pos: new Map() };
+        candidates.set(bid, entry);
+      }
+      if (!entry) continue;
+      const prevTf = entry.tf.get(tid) ?? 0;
+      entry.tf.set(tid, prevTf + posting.termFrequency * weight);
+      if (collectPositions) entry.pos.set(tid, posting.positions);
+    }
+  }
+}
+
 export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
   validateQueryOptions(opts);
   const topK = opts.topK ?? 10;
@@ -351,49 +388,17 @@ export function query(pack: Pack, q: string, opts: QueryOptions = {}): Hit[] {
   // Query-time document frequency collection for BM25 IDF.
   const dfs = new Map<number, number>();
 
-  const usesOffsetBlockIds = (pack.meta?.version ?? 1) >= 3;
+  const postings = pack.vqfLexicalIndex
+    ? createVqfLexicalPostingsReader(pack.vqfLexicalIndex)
+    : createLegacyLexicalPostingsReader(pack.postings, {
+        offsetBlockIds: (pack.meta?.version ?? 1) >= 3,
+      });
 
-  // Helper to harvest postings for a given set of termIds into candidates
   function scanForTermIds(
     idWeights: Map<number, number>,
     cfg: { collectPositions?: boolean; createCandidates?: boolean } = { collectPositions: true, createCandidates: true }
   ) {
-    const p = pack.postings;
-    let i = 0;
-    while (i < p.length) {
-      const tid = p[i++];
-      if (tid === 0) continue;
-      const weight = idWeights.get(tid) ?? 0;
-      const relevant = weight > 0;
-      let termDf = 0;
-      let encodedBid = p[i++];
-      while (encodedBid !== 0) {
-        const bid = usesOffsetBlockIds ? encodedBid - 1 : encodedBid;
-        let pos = p[i++];
-        const positions: number[] = [];
-        while (pos !== 0) {
-          positions.push(pos - 1);
-          pos = p[i++];
-        }
-        termDf++;
-        if (relevant && bid >= 0) {
-          let entry = candidates.get(bid);
-          if (!entry && cfg.createCandidates !== false) {
-            entry = { tf: new Map(), pos: new Map() };
-            candidates.set(bid, entry);
-          }
-          if (entry) {
-            const prevTf = entry.tf.get(tid) ?? 0;
-            entry.tf.set(tid, prevTf + positions.length * weight);
-            if (cfg.collectPositions !== false) {
-              entry.pos.set(tid, positions);
-            }
-          }
-        }
-        encodedBid = p[i++];
-      }
-      if (relevant) dfs.set(tid, termDf);
-    }
+    harvestTermPostings(postings, idWeights, candidates, dfs, cfg);
   }
 
   // 1) Scan using tokens from q (if any)
