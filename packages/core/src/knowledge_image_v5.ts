@@ -122,10 +122,13 @@ type CborValue = CborPrimitive | CborValue[] | { [key: string]: CborValue };
 
 export const V5_OPTIONAL_SEGMENT_VQF_QUERY_INDEX = 129;
 
+export type VqfCompressionMode = 'fast' | 'balanced' | 'max';
+
 export type CompressKnowledgeImageV5Options = {
   objects?: boolean;
   events?: boolean;
   index?: boolean;
+  mode?: VqfCompressionMode;
 };
 
 export type KnowledgeObjectInput = Omit<KnowledgeObjectV1, 'id'> & {
@@ -439,6 +442,14 @@ export function compressKnowledgeImageV5(
   input: ArrayBufferLike | Uint8Array,
   options: CompressKnowledgeImageV5Options = {}
 ): KnowledgeImageV5 {
+  if (
+    options.mode !== undefined &&
+    options.mode !== 'fast' &&
+    options.mode !== 'balanced' &&
+    options.mode !== 'max'
+  ) {
+    throw new RangeError('Unsupported VQF compression profile.');
+  }
   const original = asBytes(input);
   const parsed = parseKnowledgeImage(original);
   const compressObjects = options.objects !== false;
@@ -479,7 +490,9 @@ export function compressKnowledgeImageV5(
           segment.kind === OBJECT_SEGMENT
             ? VQF_OBJECT_CODEC_KIND
             : VQF_EVENT_CODEC_KIND;
-        const envelope = encodeVqfEnvelope(codecKind, logicalPayload);
+        const envelope = encodeVqfEnvelope(codecKind, logicalPayload, {
+          sourceSpans: options.mode !== 'fast',
+        });
         if (envelope.bytes.length < logicalPayload.length) {
           return encodeSegment(segment.kind, envelope.bytes, {
             flags: V5_SEGMENT_FLAG_VQF1,

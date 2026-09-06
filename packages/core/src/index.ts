@@ -27,7 +27,10 @@ export {
   V5_SEGMENT_FLAG_VQF1,
   knowledgePolicyRootV5,
 } from './knowledge_image_v5.js';
-export type { CompressKnowledgeImageV5Options } from './knowledge_image_v5.js';
+export type {
+  CompressKnowledgeImageV5Options,
+  VqfCompressionMode,
+} from './knowledge_image_v5.js';
 export {
   KnowledgeImageStoreV5,
   KnowledgeTransactionV5,

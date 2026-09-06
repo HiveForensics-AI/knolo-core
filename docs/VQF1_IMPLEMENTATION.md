@@ -1,13 +1,14 @@
 # VQF-1 implementation status
 
-Phases 0–8 establish the baseline, internal binary primitives, deterministic
+Phases 0–9 establish the baseline, internal binary primitives, deterministic
 tables, exact byte factoring, exact object/event payload codecs, an opt-in V5
 physical transcode, a compressed query-index sidecar with optional kind 129,
-a lexical postings reader with a V4 compatibility adapter, and a native
-varint lexical-index artifact with front-coded lexicon pages and bounded
-microblocks. Ordinary V3/V4/V5 writing remains the default; query and
-retrieval behavior remain unchanged unless a runtime pack carries the
-optional VQF lexical index.
+a lexical postings reader with a V4 compatibility adapter, a native varint
+lexical-index artifact with front-coded lexicon pages and bounded microblocks,
+and optional shared phrase factoring with explicit `fast`/`balanced`/`max`
+profiles. Ordinary V3/V4/V5 writing remains the default; query and retrieval
+behavior remain unchanged unless a runtime pack carries the optional VQF
+lexical index.
 
 See [KIP-0027](../spec/KIP-0027-vqf1-compression.md) for the draft contract and
 [baseline benchmarks](VQF1_BENCHMARKS.md) for reproducible measurements and
@@ -312,5 +313,37 @@ The [recorded Phase 8 checks](benchmarks/vqf1/phase8-checks.json) cover the core
 regression, TrustBench, V5 smoke, release/archive, formatting, documentation
 and exact Phase 0 baseline-identity gates.
 
-Next implementation work is optional shared phrase factoring and completed
-profiles.
+## Phase 9
+
+`phrase_factor.ts` mines consecutive in-block n-grams and selects phrases only
+when reconstructed positions stay exact and encoded byte gain is positive.
+Literal posting lists keep unfactored positions; phrase streams store start
+offsets. Readers union `{start + offset}` reconstructions, including every
+offset of a repeated term, then sort and deduplicate. Overlapping occurrences,
+per-term fanout and unprofitable complete artifacts fall back to the unfactored
+Phase 8 layout (`flags = 0`).
+
+`fast` disables phrase mining and remains the default lexical encoding.
+`balanced` and `max` use the documented search defaults. Image
+`compressKnowledgeImageV5({ mode })` uses the same names: `fast` disables
+object source spans.
+
+Reproduce the focused checks with:
+
+```sh
+node --test packages/core/test/vqf-phrase-factor.test.mjs packages/core/test/vqf-lexical-index.test.mjs packages/core/test/vqf-postings.test.mjs
+```
+
+The [Phase 9 measurements](benchmarks/vqf1/phase9-phrases.json) compare
+balanced/max artifacts with the unfactored fast layout. Reproduce with:
+
+```sh
+npm run benchmark:vqf:phrases -- --output /tmp/vqf-phrases.json
+```
+
+The [recorded Phase 9 checks](benchmarks/vqf1/phase9-checks.json) cover the core
+regression, TrustBench, V5 smoke, release/archive, formatting, documentation
+and exact Phase 0 baseline-identity gates.
+
+Next implementation work is the reader API and selective materialization after
+verification.

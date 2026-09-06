@@ -249,6 +249,29 @@ targets are covered by tests.
 npm run benchmark:vqf:postings -- --output /tmp/vqf-postings.json
 ```
 
+Phase 9 adds [phrase-factoring measurements](benchmarks/vqf1/phase9-phrases.json).
+Ratios compare balanced/max artifacts with the unfactored `fast` layout on the
+same generated lexical corpora. Low-redundancy cases correctly keep flags 0.
+
+| Corpus         | Docs |     Fast | Balanced |      Max | Balanced phrases | Max phrases | Balanced ratio | Max ratio |
+| -------------- | ---: | -------: | -------: | -------: | ---------------: | ----------: | -------------: | --------: |
+| low-redundancy |   32 |  57113 B |  57113 B |  57113 B |                0 |           0 |          1.00× |     1.00× |
+| low-redundancy |  128 | 232147 B | 232147 B | 232147 B |                0 |           0 |          1.00× |     1.00× |
+| enterprise     |   32 |   2643 B |   1260 B |   1260 B |                3 |           3 |          2.10× |     2.10× |
+| enterprise     |  128 |   9763 B |   3859 B |   3859 B |                3 |           3 |          2.53× |     2.53× |
+| repetitive     |   32 |    836 B |    399 B |    269 B |                2 |           1 |          2.10× |     3.11× |
+| repetitive     |  128 |   2958 B |   1081 B |    566 B |                2 |           1 |          2.74× |     5.23× |
+| repository     |   32 |   1524 B |   1253 B |   1253 B |                2 |           2 |          1.22× |     1.22× |
+| repository     |  128 |   6065 B |   4835 B |   4835 B |                2 |           2 |          1.25× |     1.25× |
+
+Every case reconstructed exact positions, tf and df. Fast, balanced and max
+matched ordinary V4 query scores. Phrase streams are omitted when they do not
+reduce the complete artifact.
+
+```sh
+npm run benchmark:vqf:phrases -- --output /tmp/vqf-phrases.json
+```
+
 Keep exact logical payloads, IDs, roots and query outputs as hard gates.
 For every later codec, report complete artifact size and segment/section
 sizes, `logicalBytes / physicalBytes` and
@@ -257,7 +280,9 @@ ordinary if its encoded envelope is not smaller.
 
 The proposed 3x total image and approximately 2x duplicated-text-plane
 targets remain unmeasured. Phase 8 posting streams on these corpora are
-4.0–5.0× smaller than V4 sentinel postings; that is a prototype observation,
-not a frozen or release claim. Add larger corpus scales before selecting
+4.0–5.0× smaller than V4 sentinel postings. Phase 9 phrase factoring further
+reduces repetitive and enterprise lexical artifacts by 2.1–5.2× versus the
+unfactored fast layout; that is a prototype observation, not a frozen or
+release claim. Add larger corpus scales before selecting
 decoder limits or accepting scalability claims. Set mount, query and memory regression
 budgets against repeated measurements before evaluating a codec for release.

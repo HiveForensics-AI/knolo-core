@@ -18,7 +18,27 @@ import {
   requirePageSize,
   type VqfEncodedLexiconPages,
 } from './lexicon.js';
+import {
+  factorLexicalPhrases,
+  mergePhrasePositions,
+  resolveVqfPhraseOptions,
+  VQF_LEXICAL_PHRASE_FLAG,
+  type VqfCompressionProfile,
+  type VqfFactoredPhrases,
+  type VqfPhraseFactoringOptions,
+  type VqfPhraseReference,
+  type VqfResolvedPhraseParameters,
+  type VqfSelectedPhrase,
+} from './phrase_factor.js';
 import { compareBytes, decodeString, encodeString } from './table_utils.js';
+
+export {
+  VQF_LEXICAL_PHRASE_FLAG,
+  VQF_PHRASE_PROFILE_DEFAULTS,
+  resolveVqfPhraseOptions,
+  type VqfCompressionProfile,
+  type VqfPhraseFactoringOptions,
+} from './phrase_factor.js';
 
 const LEXICAL_INDEX_CODEC_VERSION = 1;
 export const DEFAULT_VQF_MICROBLOCK_TARGET_BYTES = 65536;
@@ -39,12 +59,15 @@ export type VqfLexicalIndexLimits = {
   maxDocuments?: number;
   maxPositions?: number;
   maxBytes?: number;
+  maxPhrases?: number;
 };
 
 export type VqfLexicalIndexOptions = {
   pageSize?: number;
   microblockTargetBytes?: number;
   limits?: VqfLexicalIndexLimits;
+  profile?: VqfCompressionProfile;
+  phraseFactoring?: boolean | VqfPhraseFactoringOptions;
 };
 
 export type VqfLexicalIndexStatistics = {
@@ -60,6 +83,10 @@ export type VqfLexicalIndexStatistics = {
   physicalBytes: number;
   v4PostingsBytes: number;
   v4LexiconBytes: number;
+  profile: VqfCompressionProfile;
+  phraseCount: number;
+  phraseStreamBytes: number;
+  phraseBytesSaved: number;
 };
 
 export type VqfEncodedLexicalIndex = {
@@ -73,6 +100,7 @@ type IndexLimits = {
   maxDocuments: number;
   maxPositions: number;
   maxBytes: number;
+  maxPhrases: number;
 };
 
 type DirectoryEntry = {
@@ -101,6 +129,16 @@ type ParsedLexicalIndex = {
   postingStream: Uint8Array;
   streams: VqfLexicalStream[];
   statistics: VqfLexicalIndexStatistics;
+  phraseParameters?: VqfResolvedPhraseParameters;
+  phrases: VqfSelectedPhrase[];
+  phraseStream: Uint8Array;
+  phraseDirectory: Array<{
+    termOrdinals: number[];
+    offset: number;
+    length: number;
+    documentFrequency: number;
+  }>;
+  termReferences: Map<number, VqfPhraseReference[]>;
 };
 
 const readerCache = new WeakMap<Uint8Array, LexicalPostingsReader>();
@@ -109,18 +147,20 @@ function codecLimits(options: VqfLexicalIndexLimits = {}): IndexLimits {
   const maxTerms = options.maxTerms ?? 1_000_000;
   const maxDocuments = options.maxDocuments ?? 1_000_000;
   const maxPositions = options.maxPositions ?? 16_000_000;
+  const maxPhrases = options.maxPhrases ?? 1_000_000;
   const maxBytes = options.maxBytes ?? 512 * 1024 * 1024;
   checkBufferLimit(maxBytes);
   for (const [name, value] of Object.entries({
     maxTerms,
     maxDocuments,
     maxPositions,
+    maxPhrases,
   })) {
     if (!Number.isSafeInteger(value) || value < 0 || value > 16_000_000) {
       throw new RangeError(`Invalid VQF lexical-index ${name} limit.`);
     }
   }
-  return { maxTerms, maxDocuments, maxPositions, maxBytes };
+  return { maxTerms, maxDocuments, maxPositions, maxBytes, maxPhrases };
 }
 
 function requireTargetBytes(value: number): number {
@@ -315,19 +355,81 @@ function sortedTerms(streams: VqfLexicalStream[]): VqfLexicalStream[] {
   );
 }
 
-function encodeBody(
-  streams: VqfLexicalStream[],
-  options: VqfLexicalIndexOptions,
+function literalDocuments(
+  stream: VqfLexicalStream,
+  literals: Map<number, VqfLexicalDocument[]> | undefined
+): VqfLexicalDocument[] {
+  if (!literals) return stream.documents;
+  return literals.get(stream.termId) ?? [];
+}
+
+function writePhraseSection(
+  writer: VqfByteWriter,
+  ordered: VqfLexicalStream[],
+  factored: VqfFactoredPhrases,
   limits: IndexLimits
-): VqfEncodedLexicalIndex {
-  if (streams.length > limits.maxTerms) {
-    throw new RangeError('VQF lexical index exceeds the term limit.');
+): number {
+  if (factored.phrases.length > limits.maxPhrases) {
+    throw new RangeError('VQF lexical index exceeds the phrase limit.');
   }
+  const parameters = factored.parameters;
+  writer.writeUVarint(parameters.minPhraseLength);
+  writer.writeUVarint(parameters.maxPhraseLength);
+  writer.writeUVarint(parameters.minPhraseFrequency);
+  writer.writeUVarint(parameters.maxPhraseFanoutPerTerm);
+  writer.writeUVarint(parameters.minPhraseGainBytes);
+  writer.writeByte(parameters.exactGain ? 1 : 0);
+  writer.writeUVarint(factored.phrases.length);
+  const phraseWriter = new VqfByteWriter(limits.maxBytes);
+  const directory: Array<{
+    termOrdinals: number[];
+    offset: number;
+    length: number;
+    documentFrequency: number;
+  }> = [];
+  for (const phrase of factored.phrases) {
+    const start = phraseWriter.length;
+    writePostingList(phraseWriter, phrase.documents);
+    directory.push({
+      termOrdinals: phrase.termOrdinals,
+      offset: start,
+      length: phraseWriter.length - start,
+      documentFrequency: phrase.documents.length,
+    });
+  }
+  const phraseStream = phraseWriter.finish();
+  for (const entry of directory) {
+    writer.writeUVarint(entry.termOrdinals.length);
+    for (const ordinal of entry.termOrdinals) writer.writeUVarint(ordinal);
+    writer.writeUVarint(entry.offset);
+    writer.writeUVarint(entry.length);
+    writer.writeUVarint(entry.documentFrequency);
+  }
+  writeLengthDelimited(writer, phraseStream);
+  for (const stream of ordered) {
+    const references = factored.references.get(stream.termId) ?? [];
+    writer.writeUVarint(references.length);
+    for (const reference of references) {
+      writer.writeUVarint(reference.phraseIndex);
+      writer.writeUVarint(reference.offsets.length);
+      for (const offset of reference.offsets) writer.writeUVarint(offset);
+    }
+  }
+  return phraseStream.length;
+}
+
+function serializeLexicalIndex(
+  canonical: VqfLexicalStream[],
+  options: VqfLexicalIndexOptions,
+  limits: IndexLimits,
+  factored: VqfFactoredPhrases | undefined,
+  profile: VqfCompressionProfile,
+  phraseBytesSaved: number
+): VqfEncodedLexicalIndex {
   const pageSize = options.pageSize ?? DEFAULT_VQF_LEXICON_PAGE_SIZE;
   const microblockTargetBytes = requireTargetBytes(
     options.microblockTargetBytes ?? DEFAULT_VQF_MICROBLOCK_TARGET_BYTES
   );
-  const canonical = canonicalizeStreams(streams);
   let documentPostingCount = 0;
   let positionCount = 0;
   for (const stream of canonical) {
@@ -347,11 +449,16 @@ function encodeBody(
     ordered.map((stream) => stream.term),
     { pageSize, maxBytes: limits.maxBytes }
   );
+  const literals = factored
+    ? new Map(
+        factored.literals.map((stream) => [stream.termId, stream.documents])
+      )
+    : undefined;
   const postingWriter = new VqfByteWriter(limits.maxBytes);
   const directory: DirectoryEntry[] = [];
   for (const stream of ordered) {
     const start = postingWriter.length;
-    writePostingList(postingWriter, stream.documents);
+    writePostingList(postingWriter, literalDocuments(stream, literals));
     directory.push({
       termId: stream.termId,
       term: stream.term,
@@ -405,7 +512,7 @@ function encodeBody(
   }
   const writer = new VqfByteWriter(limits.maxBytes);
   writer.writeByte(LEXICAL_INDEX_CODEC_VERSION);
-  writer.writeByte(0);
+  writer.writeByte(factored ? VQF_LEXICAL_PHRASE_FLAG : 0);
   writer.writeUVarint(lexicon.pageSize);
   writer.writeUVarint(microblockTargetBytes);
   writer.writeUVarint(canonical.length);
@@ -432,6 +539,9 @@ function encodeBody(
     writer.writeBytes(block.digest);
   }
   writeLengthDelimited(writer, postingStream);
+  const phraseStreamBytes = factored
+    ? writePhraseSection(writer, ordered, factored, limits)
+    : 0;
   const bytes = writer.finish();
   const v4Postings = encodeLegacyLexicalPostings(
     canonical.map((stream) => ({
@@ -459,8 +569,55 @@ function encodeBody(
       physicalBytes: bytes.length,
       v4PostingsBytes: v4Postings.byteLength,
       v4LexiconBytes,
+      profile,
+      phraseCount: factored ? factored.phrases.length : 0,
+      phraseStreamBytes,
+      phraseBytesSaved,
     },
   };
+}
+
+function encodeBody(
+  streams: VqfLexicalStream[],
+  options: VqfLexicalIndexOptions,
+  limits: IndexLimits
+): VqfEncodedLexicalIndex {
+  if (streams.length > limits.maxTerms) {
+    throw new RangeError('VQF lexical index exceeds the term limit.');
+  }
+  const canonical = canonicalizeStreams(streams);
+  const resolved = resolveVqfPhraseOptions(options);
+  const unfactored = serializeLexicalIndex(
+    canonical,
+    options,
+    limits,
+    undefined,
+    resolved.profile,
+    0
+  );
+  if (!resolved.enabled) return unfactored;
+  const ordered = sortedTerms(canonical);
+  const termOrdinals = new Map(
+    ordered.map((stream, ordinal) => [stream.termId, ordinal])
+  );
+  const factored = factorLexicalPhrases(
+    canonical,
+    resolved.parameters,
+    termOrdinals
+  );
+  if (!factored.used) return unfactored;
+  const encoded = serializeLexicalIndex(
+    canonical,
+    options,
+    limits,
+    factored,
+    resolved.profile,
+    0
+  );
+  if (encoded.bytes.length >= unfactored.bytes.length) return unfactored;
+  encoded.statistics.phraseBytesSaved =
+    unfactored.bytes.length - encoded.bytes.length;
+  return encoded;
 }
 
 export function encodeVqfLexicalIndex(
@@ -514,9 +671,11 @@ function parseLexicalIndex(
   if (reader.readByte() !== LEXICAL_INDEX_CODEC_VERSION) {
     throw new Error('Unsupported VQF lexical-index codec version.');
   }
-  if (reader.readByte() !== 0) {
+  const flags = reader.readByte();
+  if ((flags & ~VQF_LEXICAL_PHRASE_FLAG) !== 0) {
     throw new Error('Unsupported VQF lexical-index codec flags.');
   }
+  const usePhrases = (flags & VQF_LEXICAL_PHRASE_FLAG) !== 0;
   const pageSize = requirePageSize(reader.readUVarintNumber(4096));
   const microblockTargetBytes = requireTargetBytes(
     reader.readUVarintNumber(512 * 1024 * 1024)
@@ -625,6 +784,135 @@ function parseLexicalIndex(
     microblocks.push({ firstOrdinal, lastOrdinal, offset, length, digest });
   }
   const postingStream = readLengthDelimited(reader, limits.maxBytes);
+  let phraseParameters: VqfResolvedPhraseParameters | undefined;
+  const phrases: VqfSelectedPhrase[] = [];
+  let phraseStream: Uint8Array = new Uint8Array(0);
+  const phraseDirectory: ParsedLexicalIndex['phraseDirectory'] = [];
+  const termReferences = new Map<number, VqfPhraseReference[]>();
+  if (usePhrases) {
+    const minPhraseLength = reader.readUVarintNumber(64);
+    const maxPhraseLength = reader.readUVarintNumber(64);
+    const minPhraseFrequency = reader.readUVarintNumber(16_000_000);
+    const maxPhraseFanoutPerTerm = reader.readUVarintNumber(64);
+    const minPhraseGainBytes = reader.readUVarintNumber(16_000_000);
+    const exactGainByte = reader.readByte();
+    if (exactGainByte > 1) {
+      throw new Error('Unsupported VQF phrase exact-gain flag.');
+    }
+    phraseParameters = {
+      minPhraseLength,
+      maxPhraseLength,
+      minPhraseFrequency,
+      maxPhraseFanoutPerTerm,
+      minPhraseGainBytes,
+      exactGain: exactGainByte === 1,
+    };
+    if (phraseParameters.minPhraseLength > phraseParameters.maxPhraseLength) {
+      throw new RangeError('VQF phrase min length exceeds max length.');
+    }
+    const phraseCount = reader.readUVarintNumber(limits.maxPhrases);
+    if (phraseCount < 1) {
+      throw new Error('VQF phrase flag requires at least one phrase.');
+    }
+    for (let i = 0; i < phraseCount; i++) {
+      const length = reader.readUVarintNumber(phraseParameters.maxPhraseLength);
+      if (length < phraseParameters.minPhraseLength) {
+        throw new Error('VQF phrase is shorter than the encoded minimum.');
+      }
+      const termOrdinals: number[] = [];
+      for (let j = 0; j < length; j++) {
+        termOrdinals.push(
+          reader.readUVarintNumber(termCount === 0 ? 0 : termCount - 1)
+        );
+      }
+      const offset = reader.readUVarintNumber(limits.maxBytes);
+      const phraseLength = reader.readUVarintNumber(limits.maxBytes);
+      const documentFrequency = reader.readUVarintNumber(limits.maxDocuments);
+      phraseDirectory.push({
+        termOrdinals,
+        offset,
+        length: phraseLength,
+        documentFrequency,
+      });
+    }
+    phraseStream = readLengthDelimited(reader, limits.maxBytes);
+    let expectedPhraseOffset = 0;
+    for (const entry of phraseDirectory) {
+      if (entry.offset !== expectedPhraseOffset) {
+        throw new Error('VQF phrase lists are not contiguous.');
+      }
+      if (entry.offset + entry.length > phraseStream.length) {
+        throw new RangeError('VQF phrase list exceeds the phrase stream.');
+      }
+      const listReader = new VqfByteReader(
+        phraseStream.subarray(entry.offset, entry.offset + entry.length),
+        limits.maxBytes
+      );
+      const documents = readPostingList(
+        listReader,
+        limits,
+        limits.maxDocuments,
+        limits.maxPositions
+      );
+      listReader.assertFinished();
+      if (documents.length !== entry.documentFrequency) {
+        throw new Error('VQF phrase document frequency mismatch.');
+      }
+      phrases.push({
+        termIds: entry.termOrdinals.map((ordinal) => {
+          const stream = directory[ordinal];
+          if (!stream) throw new RangeError('Invalid VQF phrase term ordinal.');
+          return stream.termId;
+        }),
+        termOrdinals: entry.termOrdinals,
+        documents,
+      });
+      expectedPhraseOffset += entry.length;
+    }
+    if (expectedPhraseOffset !== phraseStream.length) {
+      throw new Error('VQF phrase stream has unused bytes.');
+    }
+    for (const entry of directory) {
+      const count = reader.readUVarintNumber(
+        phraseParameters.maxPhraseFanoutPerTerm
+      );
+      const references: VqfPhraseReference[] = [];
+      let previousPhrase = -1;
+      for (let i = 0; i < count; i++) {
+        const phraseIndex = reader.readUVarintNumber(
+          phrases.length === 0 ? 0 : phrases.length - 1
+        );
+        if (phraseIndex <= previousPhrase) {
+          throw new Error('VQF phrase references are not strictly increasing.');
+        }
+        const offsetCount = reader.readUVarintNumber(
+          phrases[phraseIndex].termIds.length
+        );
+        if (offsetCount < 1)
+          throw new Error('VQF phrase reference has no offsets.');
+        const offsets: number[] = [];
+        for (let j = 0; j < offsetCount; j++) {
+          const offset = reader.readUVarintNumber(
+            phrases[phraseIndex].termIds.length === 0
+              ? 0
+              : phrases[phraseIndex].termIds.length - 1
+          );
+          if (j > 0 && offset <= offsets[j - 1]) {
+            throw new Error('VQF phrase offsets are not strictly increasing.');
+          }
+          if (phrases[phraseIndex].termIds[offset] !== entry.termId) {
+            throw new Error(
+              'VQF phrase offset does not contain the referencing term.'
+            );
+          }
+          offsets.push(offset);
+        }
+        references.push({ phraseIndex, offsets });
+        previousPhrase = phraseIndex;
+      }
+      termReferences.set(entry.termId, references);
+    }
+  }
   reader.assertFinished();
   if (termCount === 0) {
     if (microblocks.length !== 0 || postingStream.length !== 0) {
@@ -701,12 +989,8 @@ function parseLexicalIndex(
       limits.maxPositions - positionCount
     );
     listReader.assertFinished();
-    if (documents.length !== entry.documentFrequency) {
+    if (!usePhrases && documents.length !== entry.documentFrequency) {
       throw new Error('VQF posting document frequency mismatch.');
-    }
-    documentPostingCount += documents.length;
-    for (const document of documents) {
-      positionCount += document.positions.length;
     }
     streamsById.set(entry.termId, {
       termId: entry.termId,
@@ -725,8 +1009,32 @@ function parseLexicalIndex(
     const stream = streamsById.get(termId);
     if (!stream)
       throw new Error('VQF stream order references an unknown term.');
-    return stream;
+    if (!usePhrases) return stream;
+    const reconstructed = mergePhrasePositions(
+      stream.documents,
+      phrases,
+      termReferences.get(termId) ?? []
+    );
+    if (
+      reconstructed.length !==
+      directory.find((entry) => entry.termId === termId)?.documentFrequency
+    ) {
+      throw new Error('VQF posting document frequency mismatch.');
+    }
+    return {
+      termId: stream.termId,
+      term: stream.term,
+      documents: reconstructed,
+    };
   });
+  documentPostingCount = 0;
+  positionCount = 0;
+  for (const stream of streams) {
+    documentPostingCount += stream.documents.length;
+    for (const document of stream.documents) {
+      positionCount += document.positions.length;
+    }
+  }
   const lexicon: VqfEncodedLexiconPages = {
     pageSize,
     termCount,
@@ -765,7 +1073,16 @@ function parseLexicalIndex(
       physicalBytes: bytes.length,
       v4PostingsBytes: v4Postings.byteLength,
       v4LexiconBytes,
+      profile: 'fast',
+      phraseCount: phrases.length,
+      phraseStreamBytes: phraseStream.length,
+      phraseBytesSaved: 0,
     },
+    phraseParameters,
+    phrases,
+    phraseStream,
+    phraseDirectory,
+    termReferences,
   };
 }
 
@@ -788,6 +1105,7 @@ export function decodeVqfLexicalIndex(
       pageSize: parsed.pageSize,
       microblockTargetBytes: parsed.microblockTargetBytes,
       limits,
+      phraseFactoring: parsed.phraseParameters ?? false,
     },
     limits
   );
@@ -830,12 +1148,17 @@ class VqfLexicalPostingsReader implements LexicalPostingsReader {
   private readonly streamOrder: number[];
   private readonly postingStream: Uint8Array;
   private readonly microblocks: MicroblockEntry[];
+  private readonly phrases: VqfSelectedPhrase[];
+  private readonly phraseDirectory: ParsedLexicalIndex['phraseDirectory'];
+  private readonly phraseStream: Uint8Array;
+  private readonly termReferences: Map<number, VqfPhraseReference[]>;
   private readonly construction: {
     termCount: number;
     documentPostingCount: number;
     positionCount: number;
     constructionIntegers: number;
     microblockCount: number;
+    phraseCount: number;
   };
   private query = emptyQueryStats();
   private readonly seenMicroblocks = new Set<number>();
@@ -844,6 +1167,10 @@ class VqfLexicalPostingsReader implements LexicalPostingsReader {
     this.streamOrder = parsed.streamOrder;
     this.postingStream = parsed.postingStream;
     this.microblocks = parsed.microblocks;
+    this.phrases = parsed.phrases;
+    this.phraseDirectory = parsed.phraseDirectory;
+    this.phraseStream = parsed.phraseStream;
+    this.termReferences = parsed.termReferences;
     const order = new Map(
       parsed.streamOrder.map((termId, index) => [termId, index])
     );
@@ -863,6 +1190,7 @@ class VqfLexicalPostingsReader implements LexicalPostingsReader {
       positionCount: parsed.statistics.positionCount,
       constructionIntegers: parsed.statistics.physicalBytes,
       microblockCount: parsed.statistics.microblockCount,
+      phraseCount: parsed.statistics.phraseCount,
     };
   }
 
@@ -913,13 +1241,22 @@ class VqfLexicalPostingsReader implements LexicalPostingsReader {
         maxDocuments: 1_000_000,
         maxPositions: 16_000_000,
         maxBytes: 512 * 1024 * 1024,
+        maxPhrases: 1_000_000,
       },
       1_000_000,
       16_000_000
     );
     reader.assertFinished();
+    const references = this.termReferences.get(termId) ?? [];
+    for (const reference of references) {
+      const entry = this.phraseDirectory[reference.phraseIndex];
+      if (!entry) throw new Error('VQF phrase reference is out of range.');
+      this.query.phraseStreamsRead++;
+      this.query.phraseBytesRead += entry.length;
+    }
+    const merged = mergePhrasePositions(documents, this.phrases, references);
     const out: LexicalPosting[] = [];
-    for (const document of documents) {
+    for (const document of merged) {
       this.query.documentsVisited++;
       const positions = copyPositions ? document.positions.slice() : [];
       if (copyPositions) this.query.positionsCopied += positions.length;
@@ -954,6 +1291,8 @@ function emptyQueryStats(): {
   missingTermLookups: number;
   microblocksRead: number;
   postingBytesRead: number;
+  phraseStreamsRead: number;
+  phraseBytesRead: number;
 } {
   return {
     termsLookedUp: 0,
@@ -963,6 +1302,8 @@ function emptyQueryStats(): {
     missingTermLookups: 0,
     microblocksRead: 0,
     postingBytesRead: 0,
+    phraseStreamsRead: 0,
+    phraseBytesRead: 0,
   };
 }
 
@@ -982,6 +1323,7 @@ export function createVqfLexicalPostingsReader(
       pageSize: parsed.pageSize,
       microblockTargetBytes: parsed.microblockTargetBytes,
       limits: options.limits,
+      phraseFactoring: parsed.phraseParameters ?? false,
     },
     codecLimits(options.limits)
   );

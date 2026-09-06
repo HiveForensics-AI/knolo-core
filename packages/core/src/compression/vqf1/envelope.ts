@@ -61,13 +61,18 @@ function physicalDigest(body: Uint8Array): Uint8Array {
   return digestBytes(digestDomain('vqf-physical', body));
 }
 
+export type VqfEnvelopeEncodeOptions = {
+  sourceSpans?: boolean;
+};
+
 function codecBody(
   codecKind: number,
-  logicalPayload: Uint8Array
+  logicalPayload: Uint8Array,
+  options: VqfEnvelopeEncodeOptions = {}
 ): { bytes: Uint8Array; statistics: VqfEnvelopeStatistics } {
   if (codecKind === VQF_OBJECT_CODEC_KIND) {
     const encoded = encodeVqfObjectPayload(logicalPayload, {
-      sourceSpans: true,
+      sourceSpans: options.sourceSpans !== false,
     });
     return encoded;
   }
@@ -91,12 +96,13 @@ function decodeBody(
 
 export function encodeVqfEnvelope(
   codecKind: number,
-  logicalPayload: Uint8Array
+  logicalPayload: Uint8Array,
+  options: VqfEnvelopeEncodeOptions = {}
 ): VqfEncodedEnvelope {
   if (!(logicalPayload instanceof Uint8Array))
     throw new Error('Expected VQF logical payload bytes.');
   checkBufferLimit(logicalPayload.length);
-  const encoded = codecBody(codecKind, logicalPayload);
+  const encoded = codecBody(codecKind, logicalPayload, options);
   if (encoded.bytes.length > 512 * 1024 * 1024 - VQF_ENVELOPE_HEADER_SIZE)
     throw new RangeError('VQF physical envelope exceeds the segment limit.');
   const writer = new VqfByteWriter(512 * 1024 * 1024);

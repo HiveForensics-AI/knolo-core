@@ -3,9 +3,10 @@
 Status: draft for prototype; integer, bounded byte-I/O, digest/string tables,
 exact byte factoring, internal object/event/query-index payload codecs, an
 opt-in V5 physical transcode including optional kind-129 indexes, a lexical
-postings reader with a V4 sentinel-array adapter, and a native varint lexical
-index with front-coded lexicon pages and bounded microblocks are implemented.
-The interoperable byte format is not frozen.
+postings reader with a V4 sentinel-array adapter, a native varint lexical
+index with front-coded lexicon pages and bounded microblocks, and optional
+shared phrase factoring with explicit `fast`/`balanced`/`max` profiles are
+implemented. The interoperable byte format is not frozen.
 
 ## Purpose and compatibility
 
@@ -160,7 +161,8 @@ artifact; they are not a V4 pack section and are not frozen.
 Phrase references must preserve every offset for repeated terms, remain within
 block boundaries and reconstruct exact sorted unique positional lists. Disable
 factoring when equivalence or positive total savings cannot be demonstrated.
-Profile parameters and tie-breaking rules must be explicit before freeze.
+The prototype records phrase parameters in the artifact and uses explicit
+`fast`/`balanced`/`max` defaults; those defaults are not frozen.
 
 The initial reader fully verifies the image before exposing evidence. Later
 selective materialization may use owned immutable, already-verified bytes.
@@ -184,7 +186,7 @@ Then add Rust/Python decoding parity for the TypeScript golden fixtures.
 
 Open wire decisions before freeze: complete profile defaults;
 lexical artifact placement as a pack/image section and evidence mapping;
-phrase selection and authenticated lazy verification. Lexicon pages and
+authenticated lazy verification. Phrase selection, lexicon pages and
 microblock directories exist as a tested prototype, not a frozen layout.
 No VQF
 container conformance bytes are published by this draft.
@@ -383,7 +385,7 @@ without changing pack serializers. Query evaluation may consume it through
 
 ```text
 u8 codecVersion = 1
-u8 flags = 0
+u8 flags (bit 0: optional phrase factoring)
 uvarint pageSize
 uvarint microblockTargetBytes
 uvarint termCount
@@ -416,3 +418,47 @@ Decoding verifies page leaders, contiguous directories, microblock digests
 and document-frequency agreement, then requires the physical body to equal
 deterministic re-encoding. Query-time reads decode only the requested term
 slice and count posting lists, posting bytes and microblocks actually used.
+
+## Phase 9 prototype phrase factoring
+
+Optional shared phrase streams sit on top of the Phase 8 lexical-index body.
+`fast` keeps flags 0 and the unfactored layout. `balanced` and `max` may set
+flag bit 0 when greedy selection strictly reduces the complete artifact.
+
+```text
+if flags & 0x01:
+  uvarint minPhraseLength
+  uvarint maxPhraseLength
+  uvarint minPhraseFrequency
+  uvarint maxPhraseFanoutPerTerm
+  uvarint minPhraseGainBytes
+  u8 exactGain
+  uvarint phraseCount
+    repeated: phraseLength; termOrdinals; postingOffset; postingLength; df
+  uvarint phraseStreamLength; phraseStream
+    list: df; document deltas; start-position deltas
+  for each lexicon ordinal:
+    uvarint referenceCount
+      repeated: phraseId; offsetCount; termOffsets
+```
+
+N-grams stay inside one block and require consecutive positions, so they do
+not cross block boundaries or position gaps. Selection is greedy by encoded
+byte gain, then phrase length, then UTF-8 term-ordinal order. Occurrences that
+overlap an already-selected factor are dropped. A term may reference at most
+`maxPhraseFanoutPerTerm` phrases; repeated terms store every in-phrase offset.
+Literal posting lists keep unfactored positions; readers union them with
+`{start + offset}` reconstructions, then sort and deduplicate. Directory
+`documentFrequency` remains the original reconstructed df.
+
+Prototype profile defaults:
+
+| Profile    | Phrase factoring | max length | min frequency | fanout | min gain |
+| ---------- | ---------------- | ---------: | ------------: | -----: | -------: |
+| `fast`     | disabled         |          8 |             4 |      6 |       16 |
+| `balanced` | enabled          |          8 |             4 |      6 |       16 |
+| `max`      | enabled          |         12 |             2 |      8 |        1 |
+
+Image `compressKnowledgeImageV5({ mode })` uses the same names: `fast`
+disables object source spans; `balanced` and `max` keep the current source-span
+behaviour. Query results must not depend on whether phrase factoring ran.

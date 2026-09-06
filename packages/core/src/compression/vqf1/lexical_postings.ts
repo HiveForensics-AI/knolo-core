@@ -27,6 +27,9 @@ export type LexicalPostingsStats = {
   microblockCount: number;
   microblocksRead: number;
   postingBytesRead: number;
+  phraseCount: number;
+  phraseStreamsRead: number;
+  phraseBytesRead: number;
 };
 
 export interface LexicalPostingsReader {
@@ -127,6 +130,7 @@ class LegacyLexicalPostingsReader implements LexicalPostingsReader {
     positionCount: number;
     constructionIntegers: number;
     microblockCount: number;
+    phraseCount: number;
   };
   private query = emptyQueryStats();
 
@@ -167,6 +171,7 @@ class LegacyLexicalPostingsReader implements LexicalPostingsReader {
       positionCount,
       constructionIntegers,
       microblockCount: 0,
+      phraseCount: 0,
     };
   }
 
@@ -232,6 +237,8 @@ function emptyQueryStats(): {
   missingTermLookups: number;
   microblocksRead: number;
   postingBytesRead: number;
+  phraseStreamsRead: number;
+  phraseBytesRead: number;
 } {
   return {
     termsLookedUp: 0,
@@ -241,5 +248,7 @@ function emptyQueryStats(): {
     missingTermLookups: 0,
     microblocksRead: 0,
     postingBytesRead: 0,
+    phraseStreamsRead: 0,
+    phraseBytesRead: 0,
   };
 }
