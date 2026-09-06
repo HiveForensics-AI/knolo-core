@@ -462,7 +462,7 @@ def _parse_image(data: bytes) -> KnowledgeImageV5:
         segment = _read_segment(data, offset)
         if segment["kind"] not in (1, 2, 3) and segment["kind"] < 128:
             raise InvalidKnowledgeImageError(f"unknown non-optional V5 segment: {segment['kind']}")
-        if segment["kind"] <= 3 and segment["flags"] != 0:
+        if segment["kind"] <= 3 and segment["flags"] != 0 and not (segment["kind"] in (1, 2) and segment["flags"] == 1):
             raise InvalidKnowledgeImageError("unsupported required V5 segment flags")
         if segment["kind"] <= 3 and segment["schema"] != 1:
             raise InvalidKnowledgeImageError("unsupported required V5 segment schema")
@@ -499,8 +499,20 @@ def _parse_image(data: bytes) -> KnowledgeImageV5:
 
     object_payload = data[object_segment["offset"] + _SEGMENT_HEADER_SIZE : object_segment["offset"] + object_segment["length"]]
     event_payload = data[event_segment["offset"] + _SEGMENT_HEADER_SIZE : event_segment["offset"] + event_segment["length"]]
-    objects = _decode_objects(object_payload)
-    events = _decode_events(event_payload)
+    if object_segment["flags"] & 1:
+        logical = _decode_vqf_object_envelope(object_payload)
+        if _digest_domain("segment", logical) != object_segment["digest"]:
+            raise InvalidKnowledgeImageError("VQF object logical segment digest mismatch")
+        objects = _decode_objects(logical)
+    else:
+        objects = _decode_objects(object_payload)
+    if event_segment["flags"] & 1:
+        logical = _decode_vqf_event_envelope(event_payload)
+        if _digest_domain("segment", logical) != event_segment["digest"]:
+            raise InvalidKnowledgeImageError("VQF event logical segment digest mismatch")
+        events = _decode_events(logical)
+    else:
+        events = _decode_events(event_payload)
     if _digest_domain("object-root", _cbor_encode([obj.id for obj in objects])) != commit["objectRoot"]:
         raise InvalidKnowledgeImageError("V5 object root mismatch")
     if _digest_domain("event-root", _cbor_encode([event["id"] for event in events])) != commit["eventRoot"]:
@@ -556,7 +568,7 @@ def _read_segment(data: bytes, offset: int) -> dict[str, Any]:
     length = _SEGMENT_HEADER_SIZE + payload_length
     payload = data[offset + _SEGMENT_HEADER_SIZE : offset + length]
     digest = _bytes_to_digest(raw[16:48])
-    if digest != _digest_domain("segment", payload):
+    if flags == 0 and digest != _digest_domain("segment", payload):
         raise InvalidKnowledgeImageError(f"V5 segment digest mismatch: {kind}")
     return {
         "kind": kind,
@@ -567,6 +579,197 @@ def _read_segment(data: bytes, offset: int) -> dict[str, Any]:
         "payloadLength": payload_length,
         "digest": digest,
     }
+
+
+def _vuf_read(data: bytes, offset: int) -> tuple[int, int]:
+    value = 0
+    for index in range(10):
+        if offset >= len(data):
+            raise InvalidKnowledgeImageError("truncated VQF body")
+        byte = data[offset]
+        offset += 1
+        payload = byte & 0x7F
+        if index == 9 and payload > 1:
+            raise InvalidKnowledgeImageError("VQF varint overflow")
+        value |= payload << (index * 7)
+        if not byte & 0x80:
+            if index and payload == 0:
+                raise InvalidKnowledgeImageError("noncanonical VQF varint")
+            return value, offset
+    raise InvalidKnowledgeImageError("VQF varint overflow")
+
+
+def _vuf_field(data: bytes, offset: int) -> tuple[bytes, int]:
+    length, offset = _vuf_read(data, offset)
+    end = offset + length
+    if end > len(data):
+        raise InvalidKnowledgeImageError("truncated VQF field")
+    return data[offset:end], end
+
+
+def _decode_vqf_object_envelope(payload: bytes) -> bytes:
+    if len(payload) < 56 or payload[:4] != b"VQF1" or payload[4] != 1 or payload[5] != 1:
+        raise InvalidKnowledgeImageError("unsupported VQF object envelope")
+    if payload[6:8] != b"\x00\x00":
+        raise InvalidKnowledgeImageError("unsupported VQF envelope flags")
+    logical_length = int.from_bytes(payload[8:16], "little")
+    body_length = int.from_bytes(payload[16:24], "little")
+    body = payload[56:]
+    if body_length != len(body) or hashlib.sha256(b"knolo:vqf-physical:v1\0" + body).digest() != payload[24:56]:
+        raise InvalidKnowledgeImageError("VQF physical body digest mismatch")
+    offset = 2
+    digest_table, offset = _vuf_field(body, offset)
+    string_table, offset = _vuf_field(body, offset)
+    digests = _decode_vqf_digests(digest_table)
+    strings = _decode_vqf_strings(string_table)
+    blob_count, offset = _vuf_read(body, offset)
+    blobs = []
+    for _ in range(blob_count):
+        blob, offset = _vuf_field(body, offset)
+        blobs.append(blob)
+    for left, right in zip(blobs, blobs[1:]):
+        if left >= right:
+            raise InvalidKnowledgeImageError("VQF blob table is not sorted")
+    object_count, offset = _vuf_read(body, offset)
+    records = []
+    for _ in range(object_count):
+        ordinal, offset = _vuf_read(body, offset)
+        if ordinal >= len(digests):
+            raise InvalidKnowledgeImageError("invalid VQF digest ordinal")
+        kind, offset = _decode_vqf_string_value(body, offset, strings)
+        mode = body[offset] if offset < len(body) else 255
+        offset += 1
+        blob_ordinal, offset = _vuf_read(body, offset)
+        if blob_ordinal >= len(blobs):
+            raise InvalidKnowledgeImageError("invalid VQF blob ordinal")
+        if mode == 0:
+            raw = blobs[blob_ordinal]
+        elif mode == 1:
+            span_offset, offset = _vuf_read(body, offset)
+            span_length, offset = _vuf_read(body, offset)
+            if span_offset + span_length > len(blobs[blob_ordinal]):
+                raise InvalidKnowledgeImageError("VQF source span exceeds blob")
+            raw = blobs[blob_ordinal][span_offset : span_offset + span_length]
+        else:
+            raise InvalidKnowledgeImageError("invalid VQF object byte mode")
+        meta_raw, offset = _vuf_field(body, offset)
+        extra_raw, offset = _vuf_field(body, offset)
+        meta = _decode_canonical_cbor(meta_raw)
+        extra = _decode_canonical_cbor(extra_raw)
+        if not isinstance(meta, dict) or not isinstance(extra, dict) or any(key in {"id", "kind", "bytes", "meta"} for key in extra):
+            raise InvalidKnowledgeImageError("invalid VQF object metadata or extensions")
+        object_id = digests[ordinal]
+        if _digest_domain("object", _cbor_encode({"kind": kind, "bytes": raw, "meta": meta})) != object_id:
+            raise InvalidKnowledgeImageError("VQF object identity mismatch")
+        records.append({**extra, "bytes": raw, "id": object_id, "kind": kind, "meta": meta})
+    if offset != len(body):
+        raise InvalidKnowledgeImageError("trailing VQF object bytes")
+    logical = _cbor_encode(records)
+    if len(logical) != logical_length:
+        raise InvalidKnowledgeImageError("VQF logical payload length mismatch")
+    return logical
+
+
+def _decode_vqf_digests(data: bytes) -> list[str]:
+    count, offset = _vuf_read(data, 0)
+    if count * 32 != len(data) - offset:
+        raise InvalidKnowledgeImageError("invalid VQF digest table length")
+    values = ["sha256-" + data[offset + i * 32 : offset + (i + 1) * 32].hex() for i in range(count)]
+    if values != sorted(values):
+        raise InvalidKnowledgeImageError("VQF digest table is not sorted")
+    return values
+
+
+def _decode_vqf_strings(data: bytes) -> list[str]:
+    count, offset = _vuf_read(data, 0)
+    values = []
+    for _ in range(count):
+        raw, offset = _vuf_field(data, offset)
+        values.append(raw.decode("utf-8"))
+    if offset != len(data) or values != sorted(values, key=lambda value: value.encode("utf-8")):
+        raise InvalidKnowledgeImageError("invalid VQF string table")
+    return values
+
+
+def _decode_vqf_string_value(data: bytes, offset: int, strings: list[str]) -> tuple[str, int]:
+    tag = data[offset] if offset < len(data) else 255
+    offset += 1
+    if tag == 0:
+        raw, offset = _vuf_field(data, offset)
+        return raw.decode("utf-8"), offset
+    if tag == 1:
+        ordinal, offset = _vuf_read(data, offset)
+        if ordinal >= len(strings):
+            raise InvalidKnowledgeImageError("invalid VQF string ordinal")
+        return strings[ordinal], offset
+    raise InvalidKnowledgeImageError("unknown VQF string tag")
+
+
+def _decode_vqf_event_envelope(payload: bytes) -> bytes:
+    if len(payload) < 56 or payload[:4] != b"VQF1" or payload[4] != 1 or payload[5] != 2:
+        raise InvalidKnowledgeImageError("unsupported VQF event envelope")
+    if payload[6:8] != b"\x00\x00":
+        raise InvalidKnowledgeImageError("unsupported VQF envelope flags")
+    logical_length = int.from_bytes(payload[8:16], "little")
+    body_length = int.from_bytes(payload[16:24], "little")
+    body = payload[56:]
+    if body_length != len(body) or hashlib.sha256(b"knolo:vqf-physical:v1\0" + body).digest() != payload[24:56]:
+        raise InvalidKnowledgeImageError("VQF physical body digest mismatch")
+    offset = 2
+    digest_table, offset = _vuf_field(body, offset)
+    string_table, offset = _vuf_field(body, offset)
+    digests = _decode_vqf_digests(digest_table)
+    strings = _decode_vqf_strings(string_table)
+    event_count, offset = _vuf_read(body, offset)
+    records = []
+    for _ in range(event_count):
+        version, offset = _vuf_read(body, offset)
+        ordinal, offset = _vuf_read(body, offset)
+        transaction_ordinal, offset = _vuf_read(body, offset)
+        parent_count, offset = _vuf_read(body, offset)
+        parents = []
+        for _ in range(parent_count):
+            parent_ordinal, offset = _vuf_read(body, offset)
+            if parent_ordinal >= len(digests):
+                raise InvalidKnowledgeImageError("invalid VQF digest ordinal")
+            parents.append(digests[parent_ordinal])
+        actor, offset = _decode_vqf_string_value(body, offset, strings)
+        actor_counter, offset = _vuf_read(body, offset)
+        kind, offset = _decode_vqf_string_value(body, offset, strings)
+        target_ordinal, offset = _vuf_read(body, offset)
+        payload_ordinal, offset = _vuf_read(body, offset)
+        for digest_ordinal in (ordinal, transaction_ordinal, target_ordinal, payload_ordinal):
+            if digest_ordinal >= len(digests):
+                raise InvalidKnowledgeImageError("invalid VQF digest ordinal")
+        provenance_raw, offset = _vuf_field(body, offset)
+        extra_raw, offset = _vuf_field(body, offset)
+        provenance = _decode_canonical_cbor(provenance_raw)
+        extra = _decode_canonical_cbor(extra_raw)
+        if not isinstance(provenance, dict) or not isinstance(extra, dict):
+            raise InvalidKnowledgeImageError("invalid VQF event metadata or extensions")
+        if any(key in {"version", "id", "transactionId", "parents", "actor", "actorCounter", "kind", "target", "payload", "provenance"} for key in extra):
+            raise InvalidKnowledgeImageError("VQF event extensions contain a reserved key")
+        normalized = {
+            "version": version,
+            "transactionId": digests[transaction_ordinal],
+            "parents": parents,
+            "actor": actor,
+            "actorCounter": actor_counter,
+            "kind": kind,
+            "target": digests[target_ordinal],
+            "payload": digests[payload_ordinal],
+            "provenance": provenance,
+        }
+        event_id = digests[ordinal]
+        if version != 1 or not actor or actor_counter < 1 or _digest_domain("event", _cbor_encode(normalized)) != event_id:
+            raise InvalidKnowledgeImageError("VQF event identity mismatch")
+        records.append({**extra, **normalized, "id": event_id})
+    if offset != len(body):
+        raise InvalidKnowledgeImageError("trailing VQF event bytes")
+    logical = _cbor_encode(records)
+    if len(logical) != logical_length:
+        raise InvalidKnowledgeImageError("VQF logical payload length mismatch")
+    return logical
 
 
 def _decode_objects(payload: bytes) -> list[KnowledgeObjectV5]:

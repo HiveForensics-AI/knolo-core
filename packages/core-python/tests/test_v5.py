@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import json
 import struct
 from pathlib import Path
 
@@ -20,6 +21,7 @@ EXPECTED_STATE_ROOT = "sha256-bc419264f60822bb8c601f01eb3020671e78056f4e6403ab6d
 EXPECTED_COMMIT_DIGEST = "sha256-7a6ed0a7e488ee085053d6d8d885141e0a8b6abd5c40bd552e4d2b10b721b177"
 VQF_FIXTURE_PATH = Path(__file__).resolve().parents[3] / "conformance" / "vqf1" / "optional-query-index.fixture.base64"
 REQUIRED_VQF_FIXTURE_PATH = Path(__file__).resolve().parents[3] / "conformance" / "vqf1" / "required-object-vqf.fixture.base64"
+VQF_MANIFEST_PATH = Path(__file__).resolve().parents[3] / "conformance" / "vqf1" / "manifest.json"
 
 
 @pytest.fixture(scope="module")
@@ -48,10 +50,36 @@ def test_mounts_frozen_vqf_optional_index_fixture():
     assert len(image.segments) == 4
 
 
-def test_required_vqf_fixture_is_rejected_until_decoder_parity_lands():
+def test_required_vqf_object_fixture_mounts_with_python_decoder():
     data = base64.b64decode(REQUIRED_VQF_FIXTURE_PATH.read_text(encoding="utf-8").strip())
-    with pytest.raises(InvalidKnowledgeImageError, match="flags|digest"):
-        mount_knowledge_image_v5(data)
+    manifest = json.loads(VQF_MANIFEST_PATH.read_text(encoding="utf-8"))
+    image = mount_knowledge_image_v5(data)
+    assert len(data) == manifest["physicalBytes"]
+    assert "sha256-" + hashlib.sha256(data).hexdigest() == manifest["physicalDigest"]
+    assert image.state_root == manifest["stateRoot"]
+    assert image.commit_digest == manifest["commitDigest"]
+    assert len(image.objects) == manifest["objectCount"]
+    assert [
+        {"kind": segment["kind"], "flags": segment["flags"], "digest": segment["digest"]}
+        for segment in image.segments
+    ] == manifest["segments"]
+
+
+def test_required_vqf_event_fixture_mounts_with_python_decoder():
+    manifest = json.loads(VQF_MANIFEST_PATH.read_text(encoding="utf-8"))["eventFixture"]
+    path = VQF_MANIFEST_PATH.parent / manifest["fixture"]
+    data = base64.b64decode(path.read_text(encoding="utf-8").strip())
+    image = mount_knowledge_image_v5(data)
+    assert len(data) == manifest["physicalBytes"]
+    assert "sha256-" + hashlib.sha256(data).hexdigest() == manifest["physicalDigest"]
+    assert image.state_root == manifest["stateRoot"]
+    assert image.commit_digest == manifest["commitDigest"]
+    assert len(image.objects) == manifest["objectCount"]
+    assert len(image.events) == manifest["eventCount"]
+    assert [
+        {"kind": segment["kind"], "flags": segment["flags"], "digest": segment["digest"]}
+        for segment in image.segments
+    ] == manifest["segments"]
 
 
 def test_v5_query_is_deterministic_over_utf8_objects(image_bytes: bytes):
@@ -85,7 +113,7 @@ def test_v5_rejects_unsupported_required_segment_flags(image_bytes: bytes):
     corrupted = bytearray(image_bytes)
     object_segment = next(segment for segment in image.segments if segment["kind"] == 1)
     corrupted[object_segment["offset"] + 6] |= 1
-    with pytest.raises(InvalidKnowledgeImageError, match="flags"):
+    with pytest.raises(InvalidKnowledgeImageError, match="flags|envelope"):
         mount_knowledge_image_v5(corrupted)
 
 

@@ -1,4 +1,4 @@
-use knolo_core_rust::{authority_envelope_root_v1, authority_keyring_root_v1, authority_session_root_v1, evaluate_knowledge_query_policy_v5, inspect_knowledge_image, inspect_knowledge_runtime_v5, inspect_knowledge_studio_management_v5, key_rotation_root_v1, mount_pack_from_bytes, migrate_v4_to_v5, mount_knowledge_image, query, query_knowledge_image_v5, sync_request_root_v1, sync_response_root_v1, sync_summary_root_v1, verify_knowledge_authority_envelope_v5, verify_knowledge_authority_envelope_with_keyring_root_v5, KnowledgeAuthorityEnvelopeV1, KnowledgeAuthorityKeyV1, KnowledgeAuthorityKeyringV1, KnowledgeKeyRotationRecordV1, KnowledgePolicyV1, QueryOptions};
+use knolo_core_rust::{authority_envelope_root_v1, authority_keyring_root_v1, authority_session_root_v1, evaluate_knowledge_query_policy_v5, inspect_knowledge_image, inspect_knowledge_runtime_v5, inspect_knowledge_studio_management_v5, inspect_vqf_envelope, key_rotation_root_v1, mount_pack_from_bytes, migrate_v4_to_v5, mount_knowledge_image, query, query_knowledge_image_v5, sync_request_root_v1, sync_response_root_v1, sync_summary_root_v1, verify_knowledge_authority_envelope_v5, verify_knowledge_authority_envelope_with_keyring_root_v5, KnowledgeAuthorityEnvelopeV1, KnowledgeAuthorityKeyV1, KnowledgeAuthorityKeyringV1, KnowledgeKeyRotationRecordV1, KnowledgePolicyV1, QueryOptions};
 
 fn build_test_pack_bytes() -> Vec<u8> {
     let meta = b"{\"version\":3,\"stats\":{\"docs\":2,\"blocks\":2,\"terms\":4,\"avgBlockLen\":2.5}}".to_vec();
@@ -131,10 +131,37 @@ fn verifies_frozen_vqf_optional_index_fixture() {
 }
 
 #[test]
-fn required_vqf_fixture_is_rejected_until_decoder_parity_lands() {
+fn required_vqf_object_fixture_mounts_with_rust_decoder() {
     let encoded = include_str!("../../../conformance/vqf1/required-object-vqf.fixture.base64");
     let image = decode_base64(encoded);
-    assert!(inspect_knowledge_image(&image).is_err());
+    let manifest = include_str!("../../../conformance/vqf1/manifest.json");
+    assert!(manifest.contains("sha256-b0552548736f38d52659241370db39cff2f08bc7b6bdf48260316a4458c521d7"));
+    assert!(manifest.contains("\"objectCount\": 40"));
+    let mounted = mount_knowledge_image(&image).expect("required VQF object fixture should mount");
+    assert_eq!(mounted.state_root, "sha256-e1dd5cc717c1fcb94ed999685705c87f5ef20ced62bf5dae37ad55b5a0f66fee");
+    assert_eq!(mounted.commit_digest, "sha256-dfa4142702721a52039567f9f76120a4e8c8aedcb9d2f47c11a366c03cbc3d4c");
+    assert_eq!(mounted.objects.len(), 40);
+    assert_eq!(mounted.segments.iter().map(|segment| (segment.kind, segment.flags)).collect::<Vec<_>>(), vec![(1, 1), (2, 0), (3, 0)]);
+}
+
+#[test]
+fn vqf_envelope_boundary_is_validated_before_body_decode() {
+    let image = decode_base64(include_str!("../../../conformance/vqf1/required-object-vqf.fixture.base64"));
+    let payload = &image[272 + 48..272 + 2287];
+    let (logical, physical) = inspect_vqf_envelope(payload, 1).expect("object envelope should validate");
+    assert_eq!(logical, 19858);
+    assert_eq!(physical, 2183);
+}
+
+#[test]
+fn required_vqf_event_fixture_mounts_with_rust_decoder() {
+    let image = decode_base64(include_str!("../../../conformance/vqf1/required-event-vqf.fixture.base64"));
+    let mounted = mount_knowledge_image(&image).expect("required VQF event fixture should mount");
+    assert_eq!(mounted.state_root, "sha256-c9ef511f748fe0e15191ff9020c4d3eb00e09da1b5088319c6ec3215e4868eb6");
+    assert_eq!(mounted.commit_digest, "sha256-c0c6d24c1be3e74cc004ccc83b15ed16ffaf342215db426199fbad535f44076e");
+    assert_eq!(mounted.objects.len(), 2);
+    assert_eq!(mounted.events.len(), 2);
+    assert_eq!(mounted.segments.iter().map(|segment| (segment.kind, segment.flags)).collect::<Vec<_>>(), vec![(1, 0), (2, 1), (3, 0)]);
 }
 
 #[test]

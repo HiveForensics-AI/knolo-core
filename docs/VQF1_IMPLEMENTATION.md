@@ -371,10 +371,17 @@ The optional query-index fixture in `conformance/vqf1` is frozen with its
 expected state and commit roots. TypeScript, Rust, and Python mounters verify
 the same bytes and segment layout; the optional VQF payload remains
 skip-compatible for runtimes that do not decode the prototype index yet.
-Encoder parity and required-segment VQF decoding remain separate freeze gates.
-The required-segment fixture is retained in `conformance/vqf1` and is expected
-to fail closed in Rust and Python until those decoders are implemented.
+The required object and event decoder parity gates have since passed; native
+encoding remains optional and TypeScript-only by design.
+The required-segment fixtures are retained in `conformance/vqf1`; TypeScript,
+Rust, and Python now read compressed object and event segments with matching
+roots. `manifest.json` freezes the shared physical bytes, segment digests,
+flags, and decoded counts used by the parity tests.
 
 The post-Phase 12 implementation sequence is maintained in
 [VQF1_NEXT_PHASES.md](VQF1_NEXT_PHASES.md). It is the handoff document for
-continuing decoder parity and format freeze in a later session.
+continuing format hardening and release review in a later session. The current
+portable freeze boundary is recorded in
+[VQF1_FORMAT_FREEZE.md](VQF1_FORMAT_FREEZE.md); KIP-0027 remains draft pending
+release hardening. The Phase 19 preflight currently passes; publication still
+requires a reviewed clean commit and explicit release decision.

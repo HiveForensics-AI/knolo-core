@@ -503,6 +503,263 @@ fn read_slice<'a>(bytes: &'a [u8], cursor: &mut usize, len: usize) -> Result<&'a
     Ok(slice)
 }
 
+#[allow(dead_code)]
+struct VqfReader<'a> {
+    bytes: &'a [u8],
+    cursor: usize,
+}
+
+#[allow(dead_code)]
+impl<'a> VqfReader<'a> {
+    fn new(bytes: &'a [u8]) -> Self { Self { bytes, cursor: 0 } }
+    fn remaining(&self) -> usize { self.bytes.len().saturating_sub(self.cursor) }
+    fn byte(&mut self) -> Result<u8, KnoloError> {
+        let value = *self.bytes.get(self.cursor).ok_or_else(|| KnoloError::InvalidPack("truncated VQF body".into()))?;
+        self.cursor += 1;
+        Ok(value)
+    }
+    fn bytes(&mut self, length: usize) -> Result<&'a [u8], KnoloError> {
+        let end = self.cursor.checked_add(length).ok_or_else(|| KnoloError::InvalidPack("VQF length overflow".into()))?;
+        if end > self.bytes.len() { return Err(KnoloError::InvalidPack("truncated VQF body".into())); }
+        let value = &self.bytes[self.cursor..end];
+        self.cursor = end;
+        Ok(value)
+    }
+    fn uvarint(&mut self) -> Result<u64, KnoloError> {
+        let mut value = 0u64;
+        for index in 0..10 {
+            let byte = self.byte()?;
+            let payload = (byte & 0x7f) as u64;
+            if index == 9 && (byte & 0x7f) > 1 { return Err(KnoloError::InvalidPack("VQF varint overflow".into())); }
+            value |= payload << (index * 7);
+            if byte & 0x80 == 0 {
+                if index > 0 && payload == 0 { return Err(KnoloError::InvalidPack("noncanonical VQF varint".into())); }
+                return Ok(value);
+            }
+        }
+        Err(KnoloError::InvalidPack("VQF varint overflow".into()))
+    }
+    fn finish(&self) -> Result<(), KnoloError> {
+        if self.remaining() != 0 { return Err(KnoloError::InvalidPack("trailing VQF bytes".into())); }
+        Ok(())
+    }
+}
+
+#[allow(dead_code)]
+fn decode_vqf_digest_table(bytes: &[u8], max_entries: usize) -> Result<Vec<[u8; 32]>, KnoloError> {
+    let mut reader = VqfReader::new(bytes);
+    let count = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF digest count overflow".into()))?;
+    if count > max_entries || count.checked_mul(32).unwrap_or(usize::MAX) != reader.remaining() { return Err(KnoloError::InvalidPack("invalid VQF digest table length".into())); }
+    let mut values = Vec::with_capacity(count);
+    for _ in 0..count { values.push(reader.bytes(32)?.try_into().unwrap()); }
+    for pair in values.windows(2) { if pair[0] >= pair[1] { return Err(KnoloError::InvalidPack("VQF digest table is not strictly sorted".into())); } }
+    reader.finish()?;
+    Ok(values)
+}
+
+#[allow(dead_code)]
+fn decode_vqf_string_table(bytes: &[u8], max_entries: usize, max_bytes: usize) -> Result<Vec<String>, KnoloError> {
+    let mut reader = VqfReader::new(bytes);
+    let count = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF string count overflow".into()))?;
+    if count > max_entries { return Err(KnoloError::InvalidPack("VQF string table exceeds entry limit".into())); }
+    let mut values = Vec::with_capacity(count);
+    let mut previous: Option<Vec<u8>> = None;
+    for _ in 0..count {
+        let length = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF string length overflow".into()))?;
+        if length > max_bytes { return Err(KnoloError::InvalidPack("VQF string exceeds byte limit".into())); }
+        let raw = reader.bytes(length)?.to_vec();
+        if previous.as_ref().is_some_and(|item| item.as_slice() >= raw.as_slice()) { return Err(KnoloError::InvalidPack("VQF string table is not strictly sorted".into())); }
+        let value = String::from_utf8(raw.clone()).map_err(|_| KnoloError::InvalidPack("VQF string is not UTF-8".into()))?;
+        previous = Some(raw);
+        values.push(value);
+    }
+    reader.finish()?;
+    Ok(values)
+}
+
+#[allow(dead_code)]
+fn decode_vqf_blob_table(reader: &mut VqfReader<'_>, max_entries: usize, max_bytes: usize) -> Result<Vec<Vec<u8>>, KnoloError> {
+    let count = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF blob count overflow".into()))?;
+    if count > max_entries || count > reader.remaining() { return Err(KnoloError::InvalidPack("invalid VQF blob table count".into())); }
+    let mut blobs = Vec::with_capacity(count);
+    let mut total = 0usize;
+    for _ in 0..count {
+        let length = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF blob length overflow".into()))?;
+        total = total.checked_add(length).ok_or_else(|| KnoloError::InvalidPack("VQF blob bytes overflow".into()))?;
+        if total > max_bytes { return Err(KnoloError::InvalidPack("VQF blob table exceeds byte limit".into())); }
+        let blob = reader.bytes(length)?.to_vec();
+        if blobs.last().is_some_and(|previous: &Vec<u8>| previous.as_slice() >= blob.as_slice()) { return Err(KnoloError::InvalidPack("VQF blob table is not strictly sorted".into())); }
+        blobs.push(blob);
+    }
+    Ok(blobs)
+}
+
+#[allow(dead_code)]
+fn decode_vqf_object_bytes(reader: &mut VqfReader<'_>, blobs: &[Vec<u8>], source_spans: bool) -> Result<Vec<u8>, KnoloError> {
+    let mode = reader.byte()?;
+    let ordinal = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF object blob ordinal overflow".into()))?;
+    let source = blobs.get(ordinal).ok_or_else(|| KnoloError::InvalidPack("invalid VQF object blob ordinal".into()))?;
+    match mode {
+        0 => Ok(source.clone()),
+        1 if source_spans => {
+            let offset = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF source span offset overflow".into()))?;
+            let length = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF source span length overflow".into()))?;
+            let end = offset.checked_add(length).ok_or_else(|| KnoloError::InvalidPack("VQF source span overflow".into()))?;
+            if end > source.len() { return Err(KnoloError::InvalidPack("VQF source span exceeds blob".into())); }
+            Ok(source[offset..end].to_vec())
+        }
+        _ => Err(KnoloError::InvalidPack("invalid VQF object byte mode".into())),
+    }
+}
+
+#[allow(dead_code)]
+fn decode_vqf_cbor_field(reader: &mut VqfReader<'_>, max_bytes: usize) -> Result<CborValue, KnoloError> {
+    let length = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF CBOR field length overflow".into()))?;
+    if length > max_bytes { return Err(KnoloError::InvalidPack("VQF CBOR field exceeds byte limit".into())); }
+    let raw = reader.bytes(length)?;
+    let value = decode_cbor_exact(raw)?;
+    if encode_cbor(&value) != raw { return Err(KnoloError::InvalidPack("noncanonical VQF CBOR field".into())); }
+    Ok(value)
+}
+
+#[allow(dead_code)]
+fn verify_vqf_object_identity(id: &str, kind: &str, bytes: &[u8], meta: CborValue) -> Result<(), KnoloError> {
+    if !id.starts_with("sha256-") || id.len() != 71 { return Err(KnoloError::InvalidPack("invalid VQF object digest".into())); }
+    let body = CborValue::Map(vec![
+        ("bytes".into(), CborValue::Bytes(bytes.to_vec())),
+        ("kind".into(), CborValue::Text(kind.into())),
+        ("meta".into(), meta),
+    ]);
+    if digest_domain("object", &encode_cbor(&body)) != id { return Err(KnoloError::InvalidPack("VQF object identity mismatch".into())); }
+    Ok(())
+}
+
+#[allow(dead_code)]
+fn vqf_digest_string(raw: &[u8; 32]) -> String {
+    let mut value = String::from("sha256-");
+    for byte in raw { value.push_str(&format!("{byte:02x}")); }
+    value
+}
+
+#[allow(dead_code)]
+fn decode_vqf_string_value(reader: &mut VqfReader<'_>, strings: &[String]) -> Result<String, KnoloError> {
+    match reader.byte()? {
+        0 => {
+            let length = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF string length overflow".into()))?;
+            let raw = reader.bytes(length)?;
+            String::from_utf8(raw.to_vec()).map_err(|_| KnoloError::InvalidPack("VQF string is not UTF-8".into()))
+        }
+        1 => {
+            let ordinal = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF string ordinal overflow".into()))?;
+            strings.get(ordinal).cloned().ok_or_else(|| KnoloError::InvalidPack("invalid VQF string ordinal".into()))
+        }
+        _ => Err(KnoloError::InvalidPack("unknown VQF string tag".into())),
+    }
+}
+
+#[allow(dead_code)]
+fn decode_vqf_object_records(
+    reader: &mut VqfReader<'_>,
+    digests: &[[u8; 32]],
+    strings: &[String],
+    blobs: &[Vec<u8>],
+    source_spans: bool,
+    max_objects: usize,
+) -> Result<Vec<u8>, KnoloError> {
+    let count = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF object count overflow".into()))?;
+    if count > max_objects { return Err(KnoloError::InvalidPack("VQF object count exceeds limit".into())); }
+    let mut records = Vec::with_capacity(count);
+    for _ in 0..count {
+        let id_ordinal = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF digest ordinal overflow".into()))?;
+        let id = vqf_digest_string(digests.get(id_ordinal).ok_or_else(|| KnoloError::InvalidPack("invalid VQF digest ordinal".into()))?);
+        let kind = decode_vqf_string_value(reader, strings)?;
+        let bytes = decode_vqf_object_bytes(reader, blobs, source_spans)?;
+        let meta = decode_vqf_cbor_field(reader, 512 * 1024 * 1024)?;
+        let extra = decode_vqf_cbor_field(reader, 512 * 1024 * 1024)?;
+        if let CborValue::Map(entries) = &extra {
+            if entries.iter().any(|(key, _)| matches!(key.as_str(), "id" | "kind" | "bytes" | "meta")) { return Err(KnoloError::InvalidPack("VQF object extensions contain a reserved key".into())); }
+        } else { return Err(KnoloError::InvalidPack("invalid VQF object extensions".into())); }
+        verify_vqf_object_identity(&id, &kind, &bytes, meta.clone())?;
+        let mut record = match extra { CborValue::Map(entries) => entries, _ => unreachable!() };
+        record.push(("bytes".into(), CborValue::Bytes(bytes)));
+        record.push(("id".into(), CborValue::Text(id)));
+        record.push(("kind".into(), CborValue::Text(kind)));
+        record.push(("meta".into(), meta));
+        records.push(CborValue::Map(record));
+    }
+    reader.finish()?;
+    Ok(encode_cbor(&CborValue::Array(records)))
+}
+
+#[allow(dead_code)]
+fn decode_vqf_object_body(body: &[u8]) -> Result<Vec<u8>, KnoloError> {
+    let mut reader = VqfReader::new(body);
+    if reader.byte()? != 1 { return Err(KnoloError::InvalidPack("unsupported VQF object codec version".into())); }
+    let flags = reader.byte()?;
+    if flags & !1 != 0 { return Err(KnoloError::InvalidPack("unsupported VQF object codec flags".into())); }
+    let digest_len = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF digest table length overflow".into()))?;
+    let digest_table = decode_vqf_digest_table(reader.bytes(digest_len)?, 1_000_000)?;
+    let string_len = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF string table length overflow".into()))?;
+    let string_table = decode_vqf_string_table(reader.bytes(string_len)?, 1_000_000, 512 * 1024 * 1024)?;
+    let blobs = decode_vqf_blob_table(&mut reader, 1_000_000, 512 * 1024 * 1024)?;
+    decode_vqf_object_records(&mut reader, &digest_table, &string_table, &blobs, flags & 1 != 0, 1_000_000)
+}
+
+#[allow(dead_code)]
+fn decode_vqf_event_body(body: &[u8]) -> Result<Vec<u8>, KnoloError> {
+    let mut reader = VqfReader::new(body);
+    if reader.byte()? != 1 { return Err(KnoloError::InvalidPack("unsupported VQF event codec version".into())); }
+    if reader.byte()? != 0 { return Err(KnoloError::InvalidPack("unsupported VQF event codec flags".into())); }
+    let digest_len = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF digest table length overflow".into()))?;
+    let digests = decode_vqf_digest_table(reader.bytes(digest_len)?, 1_000_000)?;
+    let string_len = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF string table length overflow".into()))?;
+    let strings = decode_vqf_string_table(reader.bytes(string_len)?, 1_000_000, 512 * 1024 * 1024)?;
+    let count = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF event count overflow".into()))?;
+    if count > 1_000_000 || count > reader.remaining() { return Err(KnoloError::InvalidPack("invalid VQF event count".into())); }
+    let mut records = Vec::with_capacity(count);
+    for _ in 0..count {
+        let version = reader.uvarint()?;
+        let digest = |reader: &mut VqfReader<'_>| -> Result<String, KnoloError> {
+            let ordinal = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF digest ordinal overflow".into()))?;
+            Ok(vqf_digest_string(digests.get(ordinal).ok_or_else(|| KnoloError::InvalidPack("invalid VQF digest ordinal".into()))?))
+        };
+        let id = digest(&mut reader)?;
+        let transaction_id = digest(&mut reader)?;
+        let parent_count = usize::try_from(reader.uvarint()?).map_err(|_| KnoloError::InvalidPack("VQF parent count overflow".into()))?;
+        if parent_count > reader.remaining() { return Err(KnoloError::InvalidPack("truncated VQF event parents".into())); }
+        let mut parents = Vec::with_capacity(parent_count);
+        for _ in 0..parent_count { parents.push(digest(&mut reader)?); }
+        let actor = decode_vqf_string_value(&mut reader, &strings)?;
+        let actor_counter = reader.uvarint()?;
+        let kind = decode_vqf_string_value(&mut reader, &strings)?;
+        let target = digest(&mut reader)?;
+        let payload = digest(&mut reader)?;
+        let provenance = decode_vqf_cbor_field(&mut reader, 512 * 1024 * 1024)?;
+        let extra = decode_vqf_cbor_field(&mut reader, 512 * 1024 * 1024)?;
+        if version != 1 || actor.is_empty() || actor_counter < 1 { return Err(KnoloError::InvalidPack("invalid VQF event identity fields".into())); }
+        let provenance_map = match provenance { CborValue::Map(_) => provenance, _ => return Err(KnoloError::InvalidPack("invalid VQF event provenance".into())) };
+        let mut identity = vec![
+            ("actor".into(), CborValue::Text(actor.clone())),
+            ("actorCounter".into(), CborValue::UInt(actor_counter)),
+            ("kind".into(), CborValue::Text(kind.clone())),
+            ("parents".into(), CborValue::Array(parents.clone().into_iter().map(CborValue::Text).collect())),
+            ("payload".into(), CborValue::Text(payload.clone())),
+            ("provenance".into(), provenance_map.clone()),
+            ("target".into(), CborValue::Text(target.clone())),
+            ("transactionId".into(), CborValue::Text(transaction_id.clone())),
+            ("version".into(), CborValue::UInt(version)),
+        ];
+        if digest_domain("event", &encode_cbor(&CborValue::Map(identity.clone()))) != id { return Err(KnoloError::InvalidPack("VQF event identity mismatch".into())); }
+        let mut record = match extra { CborValue::Map(entries) => entries, _ => return Err(KnoloError::InvalidPack("invalid VQF event extensions".into())) };
+        if record.iter().any(|(key, _)| matches!(key.as_str(), "version" | "id" | "transactionId" | "parents" | "actor" | "actorCounter" | "kind" | "target" | "payload" | "provenance")) { return Err(KnoloError::InvalidPack("VQF event extensions contain a reserved key".into())); }
+        record.append(&mut identity);
+        record.push(("id".into(), CborValue::Text(id)));
+        records.push(CborValue::Map(record));
+    }
+    reader.finish()?;
+    Ok(encode_cbor(&CborValue::Array(records)))
+}
+
 // V5 read-only Knowledge Image support. The implementation intentionally has
 // no external dependencies so the format verifier can be used in offline and
 // embedded environments.
@@ -660,6 +917,20 @@ pub fn inspect_knowledge_image(bytes: &[u8]) -> Result<KnowledgeImageVerificatio
         active_superblock: image.active_superblock,
         segments: image.segments,
     })
+}
+
+/// Validates the VQF-1 envelope boundary before a codec-specific body reader.
+pub fn inspect_vqf_envelope(bytes: &[u8], expected_codec_kind: u8) -> Result<(u64, u64), KnoloError> {
+    const HEADER: usize = 56;
+    if bytes.len() < HEADER || &bytes[0..4] != b"VQF1" { return Err(KnoloError::InvalidPack("invalid VQF envelope".into())); }
+    if bytes[4] != 1 || bytes[5] != expected_codec_kind { return Err(KnoloError::InvalidPack("unsupported VQF envelope version or codec".into())); }
+    if bytes[6] != 0 || bytes[7] != 0 { return Err(KnoloError::InvalidPack("unsupported VQF envelope flags".into())); }
+    let logical = u64::from_le_bytes(bytes[8..16].try_into().unwrap());
+    let body_len = u64::from_le_bytes(bytes[16..24].try_into().unwrap());
+    if body_len != (bytes.len() - HEADER) as u64 { return Err(KnoloError::InvalidPack("invalid VQF envelope length".into())); }
+    let body = &bytes[HEADER..];
+    if digest_raw(&digest_domain("vqf-physical", body)) != bytes[24..56] { return Err(KnoloError::InvalidPack("VQF physical body digest mismatch".into())); }
+    Ok((logical, body_len))
 }
 
 pub fn verify_knowledge_image(bytes: &[u8]) -> Result<KnowledgeImageVerification, KnoloError> {
@@ -1599,7 +1870,9 @@ fn parse_v5_image(bytes: &[u8]) -> Result<KnowledgeImage, KnoloError> {
     while offset < bytes.len() {
         let segment = read_v5_segment(bytes, offset)?;
         if !matches!(segment.kind, 1..=3) && segment.kind < 128 { return Err(KnoloError::InvalidPack("unknown non-optional V5 segment".into())); }
-        if segment.kind <= 3 && segment.flags != 0 { return Err(KnoloError::InvalidPack("unsupported required V5 segment flags".into())); }
+        if segment.kind <= 3 && segment.flags != 0 && !(matches!(segment.kind, 1 | 2) && segment.flags == 1) {
+            return Err(KnoloError::InvalidPack("unsupported required V5 segment flags".into()));
+        }
         if segment.kind <= 3 && segment.schema != 1 { return Err(KnoloError::InvalidPack("unsupported required V5 segment schema".into())); }
         if (1..=3).contains(&segment.kind) {
             if required_seen[segment.kind as usize - 1] { return Err(KnoloError::InvalidPack("duplicate required V5 segment".into())); }
@@ -1625,8 +1898,25 @@ fn parse_v5_image(bytes: &[u8]) -> Result<KnowledgeImage, KnoloError> {
     commit.commit_digest = commit_digest.clone();
     if commit_field(&commit_value, "objectSegmentDigest")? != object_segment.digest || commit_field(&commit_value, "eventSegmentDigest")? != event_segment.digest { return Err(KnoloError::InvalidPack("V5 segment digest mismatch".into())); }
 
-    let objects = parse_objects(&bytes[object_segment.offset + V5_SEGMENT_HEADER_SIZE..object_segment.offset + object_segment.length])?;
-    let events = parse_events(&bytes[event_segment.offset + V5_SEGMENT_HEADER_SIZE..event_segment.offset + event_segment.length])?;
+    let object_payload = &bytes[object_segment.offset + V5_SEGMENT_HEADER_SIZE..object_segment.offset + object_segment.length];
+    let objects = if object_segment.flags & 1 != 0 {
+        let (_, _) = inspect_vqf_envelope(object_payload, 1)?;
+        let body = &object_payload[56..];
+        let logical = decode_vqf_object_body(body)?;
+        if digest_domain("segment", &logical) != object_segment.digest { return Err(KnoloError::InvalidPack("VQF object logical segment digest mismatch".into())); }
+        parse_objects(&logical)?
+    } else {
+        parse_objects(object_payload)?
+    };
+    let event_payload = &bytes[event_segment.offset + V5_SEGMENT_HEADER_SIZE..event_segment.offset + event_segment.length];
+    let event_logical = if event_segment.flags & 1 != 0 {
+        let (_, _) = inspect_vqf_envelope(event_payload, 2)?;
+        let body = &event_payload[56..];
+        let logical = decode_vqf_event_body(body)?;
+        if digest_domain("segment", &logical) != event_segment.digest { return Err(KnoloError::InvalidPack("VQF event logical segment digest mismatch".into())); }
+        logical
+    } else { event_payload.to_vec() };
+    let events = parse_events(&event_logical)?;
     let object_ids = CborValue::Array(objects.iter().map(|object| CborValue::Text(object.id.clone())).collect());
     let event_ids = CborValue::Array(events.iter().map(|event| CborValue::Text(event.id.clone())).collect());
     if digest_domain("object-root", &encode_cbor(&object_ids)) != commit.object_root || digest_domain("event-root", &encode_cbor(&event_ids)) != commit.event_root { return Err(KnoloError::InvalidPack("V5 object/event root mismatch".into())); }
@@ -1659,7 +1949,7 @@ fn read_v5_segment(bytes: &[u8], offset: usize) -> Result<KnowledgeImageSegment,
     let length = V5_SEGMENT_HEADER_SIZE.checked_add(payload_length).ok_or_else(|| KnoloError::InvalidPack("V5 segment length overflow".into()))?;
     let payload = bytes.get(offset + V5_SEGMENT_HEADER_SIZE..offset + length).ok_or_else(|| KnoloError::InvalidPack("V5 segment exceeds file".into()))?;
     let digest = digest_from_raw(&header[16..48]);
-    if digest != digest_domain("segment", payload) { return Err(KnoloError::InvalidPack("V5 segment digest mismatch".into())); }
+    if flags == 0 && digest != digest_domain("segment", payload) { return Err(KnoloError::InvalidPack("V5 segment digest mismatch".into())); }
     Ok(KnowledgeImageSegment { kind, schema, flags, offset, length, payload_length, digest })
 }
 
