@@ -10,6 +10,7 @@ export {
 } from './pack.v4.js';
 export {
   canonicalCbor,
+  compressKnowledgeImageV5,
   decodeCanonicalCbor,
   createKnowledgeImageV5,
   digestBytes,
@@ -22,8 +23,11 @@ export {
   verifyKnowledgeImageV5,
   KNOWLEDGE_IMAGE_V5_MAGIC,
   KNOWLEDGE_IMAGE_V5_VERSION,
+  V5_OPTIONAL_SEGMENT_VQF_QUERY_INDEX,
+  V5_SEGMENT_FLAG_VQF1,
   knowledgePolicyRootV5,
 } from './knowledge_image_v5.js';
+export type { CompressKnowledgeImageV5Options } from './knowledge_image_v5.js';
 export {
   KnowledgeImageStoreV5,
   KnowledgeTransactionV5,
@@ -76,6 +80,8 @@ export {
   createKnowledgeQueryIndexV5,
   candidateObjectIdsForKnowledgeQueryIndexV1,
   deserializeKnowledgeQueryIndexV1,
+  queryIndexFromKnowledgeImageV5,
+  serializeCompressedKnowledgeQueryIndexV1,
   serializeKnowledgeQueryIndexV1,
   verifyKnowledgeQueryIndexV5,
 } from './knowledge_query_index_v5.js';

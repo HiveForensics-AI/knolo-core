@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import base64
+import hashlib
+import struct
 from pathlib import Path
 
 import pytest
@@ -61,3 +63,35 @@ def test_v5_query_rejects_invalid_bounds(image_bytes: bytes):
         query_knowledge_image_v5(image, "FROM metadata LIMIT 0")
     with pytest.raises(ValueError):
         query_knowledge_image_v5(image, "FROM metadata WHERE bytes = \"x\"")
+
+
+def _segment_digest(payload: bytes) -> bytes:
+    return hashlib.sha256(b"knolo:segment:v1\x00" + payload).digest()
+
+
+def _append_optional(image: bytes, kind: int, payload: bytes) -> bytes:
+    header = bytearray(48)
+    header[0:4] = b"KSEG"
+    header[4] = kind
+    header[5] = 1
+    struct.pack_into("<Q", header, 8, len(payload))
+    header[16:48] = _segment_digest(payload)
+    return image + bytes(header) + payload
+
+
+def test_old_reader_skips_kind_129_when_required_segments_are_ordinary(image_bytes: bytes):
+    original = mount_knowledge_image_v5(image_bytes)
+    extended = _append_optional(image_bytes, 129, b"vqf-query-index-skip-test")
+    image = mount_knowledge_image_v5(extended)
+    assert image.state_root == original.state_root
+    assert image.segments[-1]["kind"] == 129
+    assert image.segments[-1]["flags"] == 0
+
+
+def test_old_reader_rejects_flagged_required_segment_with_changed_payload(image_bytes: bytes):
+    mutated = bytearray(image_bytes)
+    offset = 16 + 128 * 2
+    struct.pack_into("<H", mutated, offset + 6, 1)
+    mutated[offset + 48] ^= 1
+    with pytest.raises(InvalidKnowledgeImageError):
+        mount_knowledge_image_v5(bytes(mutated))

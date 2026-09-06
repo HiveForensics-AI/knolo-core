@@ -21,6 +21,10 @@ operational guides for Knolo.
   fixtures consumed by TypeScript and Rust.
 - [V4 conformance fixtures](../conformance/README.md) — retrieval and TrustBench
   compatibility baseline.
+- [VQF-1 benchmarks](VQF1_BENCHMARKS.md) — reproducible ordinary and opt-in
+  physical-compression measurements.
+- [VQF-1 implementation status](VQF1_IMPLEMENTATION.md) — internal codecs,
+  source spans, VQF envelope semantics, limits, and validation commands.
 
 Architecture sources, future-version specifications, and internal planning
 records are kept local and are not part of the public repository. The

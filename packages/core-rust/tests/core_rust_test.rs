@@ -246,6 +246,49 @@ fn verifies_shared_transaction_snapshot_fixture() {
     assert_eq!(verified.commit_digest, "sha256-c0c6d24c1be3e74cc004ccc83b15ed16ffaf342215db426199fbad535f44076e");
 }
 
+fn append_optional_segment(image: &[u8], kind: u8, payload: &[u8], digest_hex: &str) -> Vec<u8> {
+    let mut out = image.to_vec();
+    out.extend_from_slice(b"KSEG");
+    out.push(kind);
+    out.push(1);
+    out.extend_from_slice(&0u16.to_le_bytes());
+    out.extend_from_slice(&(payload.len() as u64).to_le_bytes());
+    let mut digest = [0u8; 32];
+    for (i, chunk) in digest_hex.as_bytes().chunks(2).enumerate() {
+        digest[i] = u8::from_str_radix(std::str::from_utf8(chunk).unwrap(), 16).unwrap();
+    }
+    out.extend_from_slice(&digest);
+    out.extend_from_slice(payload);
+    out
+}
+
+#[test]
+fn old_reader_skips_kind_129_when_required_segments_are_ordinary() {
+    let image = decode_base64(include_str!("../../../conformance/v5/knowledge-image-v5.fixture.base64"));
+    let original = inspect_knowledge_image(&image).expect("shared V5 fixture should verify");
+    let extended = append_optional_segment(
+        &image,
+        129,
+        b"vqf-query-index-skip-test",
+        "b0d709a67c90aa275b97b78997a947d90de8c06f77b429e27ff1f49fe76e3116",
+    );
+    let verified = inspect_knowledge_image(&extended).expect("kind 129 should be skipped");
+    assert_eq!(verified.state_root, original.state_root);
+    assert_eq!(verified.segments.last().map(|segment| segment.kind), Some(129));
+    assert_eq!(verified.segments.last().map(|segment| segment.flags), Some(0));
+}
+
+#[test]
+fn old_reader_rejects_flagged_required_segment_with_changed_payload() {
+    let image = decode_base64(include_str!("../../../conformance/v5/knowledge-image-v5.fixture.base64"));
+    let mut mutated = image.clone();
+    let offset = 16 + 128 * 2;
+    mutated[offset + 6] = 1;
+    mutated[offset + 7] = 0;
+    mutated[offset + 48] ^= 1;
+    assert!(inspect_knowledge_image(&mutated).is_err());
+}
+
 fn decode_base64(value: &str) -> Vec<u8> {
     let mut output = Vec::new();
     let mut accumulator = 0u32;

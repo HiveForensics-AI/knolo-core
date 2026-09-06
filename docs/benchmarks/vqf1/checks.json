@@ -1,0 +1,94 @@
+{
+  "revision": "9312683c5cfc5248734b3f10b6d07ccb78baee5b",
+  "scope": "Local ordinary V4/V5 baseline before codec implementation; no hosted CI or live ICP e2e run.",
+  "checks": [
+    {
+      "name": "node",
+      "command": [
+        "npm",
+        "test"
+      ],
+      "exitCode": 0,
+      "seconds": 8.48,
+      "logDigest": "sha256-d97b1a99155410c47a191f5ec10a2a0ec8878174ac0b75725798d40772c2c1ff"
+    },
+    {
+      "name": "rust-icp",
+      "command": [
+        "npm",
+        "run",
+        "test:icp"
+      ],
+      "exitCode": 0,
+      "seconds": 1.666,
+      "logDigest": "sha256-5c4e191bd4c1e5e4af94eafcae9a718a5b85d18bef43090ae1c874beb1eb1233"
+    },
+    {
+      "name": "python",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "packages/core-python/tests"
+      ],
+      "exitCode": 0,
+      "seconds": 0.214,
+      "logDigest": "sha256-81b06b88b5224004f82cd6e7d524136f4b17afb543a7af24e9b5a3476e8c23a6"
+    },
+    {
+      "name": "trustbench",
+      "command": [
+        "npm",
+        "run",
+        "trustbench:test"
+      ],
+      "exitCode": 0,
+      "seconds": 1.416,
+      "logDigest": "sha256-cafdbaee2c46a8de973433891490e5c2b2d360364673be11911b6945b16cdf7a"
+    },
+    {
+      "name": "smoke",
+      "command": [
+        "npm",
+        "run",
+        "smoke:v5"
+      ],
+      "exitCode": 0,
+      "seconds": 1.416,
+      "logDigest": "sha256-20b36571f6a947f4f13b5268df04ce7d27499e0a85d3d36e81d7f18ae3f39fd3"
+    },
+    {
+      "name": "release",
+      "command": [
+        "npm",
+        "run",
+        "release:check"
+      ],
+      "exitCode": 0,
+      "seconds": 3.72,
+      "logDigest": "sha256-113a716b712a467f1561ad9abd05eb3d93bd4ed95dad59b7e4aae01d0bcc9113"
+    },
+    {
+      "name": "format",
+      "command": [
+        "npm",
+        "run",
+        "format:check:all"
+      ],
+      "exitCode": 0,
+      "seconds": 1.166,
+      "logDigest": "sha256-7c2cf1dc5aba85dae12de0e40ed2ee3a1a282529a45246a66bf7af077fdee132"
+    },
+    {
+      "name": "docs",
+      "command": [
+        "npm",
+        "run",
+        "docs:check"
+      ],
+      "exitCode": 0,
+      "seconds": 0.114,
+      "logDigest": "sha256-2be45dc3307420ae6f606f881caaedd5834f8cbdf2b95cca9fb6133129260508"
+    }
+  ]
+}

@@ -87,6 +87,7 @@ LIVE_KBS_MVP.md
 /docs/V5_PRE_V6_DEVELOPMENT_PLAN.md
 /docs/V5_TO_V6_HANDOFF.md
 /docs/V5_1_0_RELEASE_RECORD.md
+/internal/
 
 # ICP local harness generated seed data / runtime (also covered by tests/icp-local/.gitignore)
 tests/icp-local/data/
