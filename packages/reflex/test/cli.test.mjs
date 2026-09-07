@@ -17,5 +17,5 @@ test('package exposes the public Reflex CLI entrypoint', async () => {
   assert.notEqual(packageJson.private, true);
   assert.equal(packageJson.publishConfig.access, 'public');
   assert.equal(packageJson.license, 'Apache-2.0');
-  assert.equal(packageJson.bin.reflex, './bin/reflex.mjs');
+  assert.equal(packageJson.bin.reflex, 'bin/reflex.mjs');
 });
