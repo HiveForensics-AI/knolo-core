@@ -1,0 +1,38 @@
+[
+  {
+    "id": "support-001",
+    "family": "account-recovery",
+    "query": "account recovery provider",
+    "expectation": { "mode": "clarify", "requiredTerms": ["identify", "provider"] }
+  },
+  {
+    "id": "support-002",
+    "family": "account-recovery",
+    "query": "I forgot my account password, what recovery path should I use?",
+    "expectation": { "mode": "answer", "requiredTerms": ["provider", "recovery path"] }
+  },
+  {
+    "id": "support-003",
+    "family": "account-recovery",
+    "query": "Which provider handles this account recovery?",
+    "expectation": { "mode": "clarify", "requiredTerms": ["identify", "provider"] }
+  },
+  {
+    "id": "support-004",
+    "family": "account-recovery",
+    "query": "Help me recover access to my account",
+    "expectation": { "mode": "clarify", "requiredTerms": ["provider", "approved recovery"] }
+  },
+  {
+    "id": "support-005",
+    "family": "out-of-domain",
+    "query": "What is the weather forecast today?",
+    "expectation": { "mode": "abstain", "requiredTerms": ["weather", "real-time"] }
+  },
+  {
+    "id": "support-006",
+    "family": "missing-context",
+    "query": "Please help",
+    "expectation": { "mode": "clarify", "requiredTerms": ["help", "more information"] }
+  }
+]
