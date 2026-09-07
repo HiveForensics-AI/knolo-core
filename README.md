@@ -113,14 +113,15 @@ The boundary is intentional. Knolo owns the artifact, identity, evidence, roots,
 
 ## Product surface
 
-| Layer                   | Role                                                                    | Current path                   |
-| ----------------------- | ----------------------------------------------------------------------- | ------------------------------ |
-| Knowledge artifact      | Portable sources, chunks, claims, agents, metadata, objects, and events | `@knolo/core`                  |
-| Verification            | Container validation, roots, digests, receipts, and recovery            | TypeScript and Rust            |
-| Retrieval               | Lexical V4 retrieval plus bounded V5 query planning and indexes         | `@knolo/core`                  |
-| Agent boundary          | Durable runs, evidence-aware context, policy, and authority primitives  | `@knolo/core`                  |
-| Operations              | Health, diagnostics, Studio snapshot, sync, merge, and replay           | `@knolo/core` and `@knolo/cli` |
-| Application integration | LangChain, LlamaIndex, Python, ICP, and starter workspace paths         | `examples/`, `packages/`       |
+| Layer                   | Role                                                                          | Current path                   |
+| ----------------------- | ----------------------------------------------------------------------------- | ------------------------------ |
+| Knowledge artifact      | Portable sources, chunks, claims, agents, metadata, objects, and events       | `@knolo/core`                  |
+| Verification            | Container validation, roots, digests, receipts, and recovery                  | TypeScript and Rust            |
+| Retrieval               | Lexical V4 retrieval plus bounded V5 query planning and indexes               | `@knolo/core`                  |
+| Agent boundary          | Durable runs, evidence-aware context, policy, and authority primitives        | `@knolo/core`                  |
+| Operations              | Health, diagnostics, Studio snapshot, sync, merge, and replay                 | `@knolo/core` and `@knolo/cli` |
+| Application integration | LangChain, LlamaIndex, Python, ICP, and starter workspace paths               | `examples/`, `packages/`       |
+| Behavior packs          | Deterministic scoped procedures, constraints, context selection, and receipts | `@knolo/reflex`                |
 
 ## Quickstart
 
@@ -211,6 +212,37 @@ console.log({
 ```
 
 The V5 APIs are additive. Existing V4 retrieval APIs and behavior remain the compatibility default for this release.
+
+### Add deterministic behavior with Reflex
+
+[`@knolo/reflex`](packages/reflex/README.md) is a separate public package for
+building and running verifiable behavior packs above `@knolo/core`. Reflex
+packs contain scoped atoms, procedures, constraints, and renderable bundles.
+At runtime, Reflex selects bounded context for a request and returns a receipt
+with the selected IDs, roots, and token accounting. Model inference remains
+under the host application's control.
+
+```bash
+npm install @knolo/reflex @knolo/core
+```
+
+```ts
+import { openReflexSessionV1, selectReflexContextV1 } from '@knolo/reflex';
+
+const session = await openReflexSessionV1(packBytes, {
+  namespace: 'support',
+});
+const selection = selectReflexContextV1(session, 'account recovery provider');
+
+if (selection.disposition === 'ready') {
+  // Give selection.context to the model and retain selection.receipt.
+}
+```
+
+The package is independently versioned as `0.1.0`, compatible with the
+`@knolo/core` 5.5.x line, and includes an optional adapter for a local Ollama
+server. See the [Reflex package guide](packages/reflex/README.md) for the CLI,
+verification, evaluation, and security details.
 
 ## Trust and engineering proof
 
