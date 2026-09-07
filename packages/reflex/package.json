@@ -1,0 +1,51 @@
+{
+  "name": "@knolo/reflex",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Deterministic Reflex behavior packs and runtime selection for Knolo.",
+  "author": "Sam Paniagua",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HiveForensics-AI/knolo-core.git",
+    "directory": "packages/reflex"
+  },
+  "homepage": "https://github.com/HiveForensics-AI/knolo-core#readme",
+  "bugs": {
+    "url": "https://github.com/HiveForensics-AI/knolo-core/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "reflex": "./bin/reflex.mjs"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "benchmark:local": "npm run build && node scripts/benchmark-local.mjs",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "@knolo/core": "5.5.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

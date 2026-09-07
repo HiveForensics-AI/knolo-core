@@ -457,11 +457,17 @@ export function openKnowledgeImageV5(
   return {
     stateRoot: verified.stateRoot,
     commitDigest: verified.commitDigest,
-    commit: verified.commit,
+    get commit() {
+      return cloneKnowledgeCommit(verified.commit);
+    },
     getObject(id) {
       const object = objects.get(id);
       return object
-        ? { ...object, bytes: object.bytes.slice(), meta: { ...object.meta } }
+        ? {
+            ...object,
+            bytes: object.bytes.slice(),
+            meta: cloneOwnedRecord(object.meta),
+          }
         : undefined;
     },
     getObjects(ids) {
@@ -472,7 +478,7 @@ export function openKnowledgeImageV5(
           result.push({
             ...object,
             bytes: object.bytes.slice(),
-            meta: { ...object.meta },
+            meta: cloneOwnedRecord(object.meta),
           });
       }
       return result;
@@ -484,6 +490,39 @@ export function openKnowledgeImageV5(
       return mountKnowledgeImageV5(ownedBytes);
     },
   };
+}
+
+function cloneKnowledgeCommit(commit: KnowledgeCommitV1): KnowledgeCommitV1 {
+  return {
+    ...commit,
+    parents: [...commit.parents],
+    views: cloneOwnedRecord(commit.views) as Record<string, Digest>,
+  };
+}
+
+function cloneOwnedRecord(
+  record: Record<string, unknown>
+): Record<string, unknown> {
+  return cloneOwnedValue(record) as Record<string, unknown>;
+}
+
+/** Clone values crossing the verified-reader boundary, including nested data. */
+function cloneOwnedValue(value: unknown): unknown {
+  if (value instanceof Uint8Array) return value.slice();
+  if (Array.isArray(value)) return value.map((entry) => cloneOwnedValue(entry));
+  if (value && typeof value === 'object') {
+    const copy: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(value)) {
+      Object.defineProperty(copy, key, {
+        configurable: true,
+        enumerable: true,
+        value: cloneOwnedValue(entry),
+        writable: true,
+      });
+    }
+    return copy;
+  }
+  return value;
 }
 
 /**

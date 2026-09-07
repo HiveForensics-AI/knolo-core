@@ -41,6 +41,16 @@ const npmPackages = [
     directory: 'create-knolo-app',
     expected: ['README.md', 'bin/index.mjs', 'template/package.json'],
   },
+  {
+    name: '@knolo/reflex',
+    directory: 'reflex',
+    expected: [
+      'README.md',
+      'dist/index.js',
+      'dist/index.d.ts',
+      'bin/reflex.mjs',
+    ],
+  },
 ];
 
 const rustPackages = [

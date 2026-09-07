@@ -20,11 +20,20 @@ const npmPackages = [
   'packages/create-knolo-app/package.json',
 ];
 
+const reflexPackage = readJson('packages/reflex/package.json');
+assert.equal(reflexPackage.name, '@knolo/reflex');
+assert.equal(reflexPackage.version, '0.1.0');
+assert.equal(reflexPackage.license, 'Apache-2.0');
+assert.equal(reflexPackage.publishConfig?.access, 'public');
+assert.equal(reflexPackage.dependencies?.['@knolo/core'], '5.5.0');
+assert.ok(existsSync(path.join(root, 'packages/reflex/README.md')));
+
 for (const relativePath of npmPackages) {
   const pkg = readJson(relativePath);
-  const expectedVersion = relativePath === 'packages/cli/package.json'
-    ? cliReleaseVersion
-    : releaseVersion;
+  const expectedVersion =
+    relativePath === 'packages/cli/package.json'
+      ? cliReleaseVersion
+      : releaseVersion;
   assert.equal(
     pkg.version,
     expectedVersion,

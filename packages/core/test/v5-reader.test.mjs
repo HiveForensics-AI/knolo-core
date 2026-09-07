@@ -52,6 +52,32 @@ test('openKnowledgeImageV5 owns its input and rejects corruption before reads', 
   assert.throws(() => openKnowledgeImageV5(corrupt));
 });
 
+test('openKnowledgeImageV5 protects nested metadata and commit state', () => {
+  const original = createKnowledgeImageV5({
+    actor: 'reader-ownership-test',
+    objects: [
+      {
+        kind: 'metadata',
+        bytes: new TextEncoder().encode('test'),
+        meta: { nested: { allowed: true }, tags: ['original'] },
+      },
+    ],
+  });
+  const reader = openKnowledgeImageV5(original.bytes);
+  const id = original.objects[0].id;
+
+  const object = reader.getObject(id);
+  object.meta.nested.allowed = false;
+  object.meta.tags.push('changed');
+  assert.equal(reader.getObject(id).meta.nested.allowed, true);
+  assert.deepEqual(reader.getObject(id).meta.tags, ['original']);
+
+  const expectedCommit = structuredClone(reader.commit);
+  reader.commit.views.lexical = 'sha256-' + '0'.repeat(64);
+  reader.commit.parents.push('sha256-' + '1'.repeat(64));
+  assert.deepEqual(reader.commit, expectedCommit);
+});
+
 test('reader query-index access remains optional', () => {
   const reader = openKnowledgeImageV5(image().bytes);
   assert.equal(reader.getQueryIndex(), undefined);

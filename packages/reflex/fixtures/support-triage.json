@@ -1,0 +1,36 @@
+{
+  "namespace": "support",
+  "sources": [
+    {
+      "text": "Support policy: identify the account provider and never request a plaintext password."
+    }
+  ],
+  "atoms": [
+    {
+      "schema": "knolo.reflex.atom/v1",
+      "type": "procedure",
+      "key": "support.account-recovery",
+      "scope": { "namespace": "support", "locale": "en" },
+      "requires": [],
+      "conflicts": [],
+      "sourceIds": [],
+      "body": {
+        "steps": [
+          "Identify the account provider.",
+          "Use the approved recovery path."
+        ],
+        "mustNot": ["Request a plaintext password."]
+      }
+    }
+  ],
+  "bundles": [
+    {
+      "schema": "knolo.reflex.bundle/v1",
+      "key": "support.account-recovery.default",
+      "namespace": "support",
+      "atomKeys": ["support.account-recovery"],
+      "outputSchema": { "type": "object" },
+      "renderer": "reflex-renderer-v1"
+    }
+  ]
+}

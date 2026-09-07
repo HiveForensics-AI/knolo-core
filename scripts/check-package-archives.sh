@@ -10,7 +10,8 @@ for package_name in \
   '@knolo/langchain' \
   '@knolo/llamaindex' \
   '@knolo/semantic-ollama' \
-  'create-knolo-app'; do
+  'create-knolo-app' \
+  '@knolo/reflex'; do
   npm --cache "$npm_cache_dir" pack --workspace "$package_name" --dry-run --json >/dev/null
   echo "npm archive check passed: $package_name"
 done
