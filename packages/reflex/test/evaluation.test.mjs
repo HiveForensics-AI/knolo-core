@@ -72,8 +72,34 @@ test('reports evaluation counts, coverage, and a calibrated risk bound', async (
   assert.equal(report.totalInputTokens > 0, true);
   assert.equal(report.totalOutputTokens, 6);
   assert.equal(report.p95LatencyMs, 12);
+  assert.equal(report.profile.metricScale, 1_000_000);
+  assert.match(report.profile.policyDigest, /^sha256-[0-9a-f]{64}$/);
+  assert.equal(report.profile.datasetSplitDigest, null);
+  assert.equal(
+    Number.isInteger(report.profile.metrics.upperFailureBoundPpm),
+    true
+  );
 });
 
 test('returns uncertified when no task is answered', () => {
   assert.equal(clopperPearsonUpper(0, 0, 0.05), 1);
+});
+
+test('does not certify policy violations or insufficient family coverage', async () => {
+  const report = await evaluateReflexPolicyV1(
+    await session(),
+    [
+      { id: '1', family: 'recovery', query: 'recovery provider' },
+      { id: '2', family: 'out-of-domain', query: 'weather' },
+    ],
+    {
+      modelId: 'test-model',
+      revision: 'test-revision',
+      run: async () => ({ failure: false, policyViolation: true }),
+    },
+    { minCoverage: 0.5, minFamilyCoverage: { 'out-of-domain': 1 } }
+  );
+  assert.equal(report.policyViolations, 1);
+  assert.equal(report.status, 'uncertified');
+  assert.equal(report.byFamily['out-of-domain'].coverage, 0);
 });

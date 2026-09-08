@@ -1,9 +1,8 @@
 import { canonicalCbor, digestDomain } from '@knolo/core';
-import {
-  selectReflexContextV1,
-  type ReflexSelectionResult,
-  type ReflexSessionV1,
-} from './runtime.js';
+import { validateReflexOutputV1 } from './runtime.js';
+import { selectReflexContextV1, type ReflexSessionV1 } from './runtime.js';
+
+export const REFLEX_PROFILE_SCALE_V1 = 1_000_000;
 
 export type ReflexEvaluationTaskV1 = {
   id: string;
@@ -29,6 +28,7 @@ export type ReflexModelAdapterV1 = {
   }) => Promise<{
     failure: boolean;
     policyViolation?: boolean;
+    output?: unknown;
     outputTokens?: number;
     latencyMs?: number;
   }>;
@@ -42,6 +42,38 @@ export type ReflexModelProfileV1 = {
   renderer: string;
   behaviorRoot: string;
   policyId: string;
+  policyDigest: string;
+  datasetSplitDigest: string | null;
+  metricScale: typeof REFLEX_PROFILE_SCALE_V1;
+  metrics: {
+    totalTasks: number;
+    answeredTasks: number;
+    failures: number;
+    policyViolations: number;
+    outputValidationFailures: number;
+    coveragePpm: number;
+    failureRatePpm: number | null;
+    upperFailureBoundPpm: number | null;
+    totalInputTokens: number;
+    totalOutputTokens: number;
+    meanLatencyMicros: number | null;
+    p95LatencyMicros: number | null;
+  };
+  qualityByFamily: Record<
+    string,
+    {
+      total: number;
+      answered: number;
+      failures: number;
+      coveragePpm: number;
+      failureRatePpm: number | null;
+      upperFailureBoundPpm: number | null;
+    }
+  >;
+  contextBudget: {
+    maxInputTokens: number;
+    meanInputTokensMicros: number | null;
+  };
   profileDigest: string;
 };
 
@@ -49,6 +81,9 @@ export type ReflexEvaluationConfig = {
   alpha?: number;
   riskCeiling?: number;
   policyId?: string;
+  minCoverage?: number;
+  minFamilyCoverage?: Record<string, number>;
+  datasetSplitDigest?: string;
 };
 
 export type ReflexEvaluationReportV1 = {
@@ -59,19 +94,22 @@ export type ReflexEvaluationReportV1 = {
   abstainedTasks: number;
   failures: number;
   policyViolations: number;
+  outputValidationFailures: number;
   coverage: number;
   failureRate: number | null;
   upperFailureBound: number | null;
   status: 'certified' | 'uncertified';
   alpha: number;
   riskCeiling: number;
+  minCoverage: number;
+  minFamilyCoverage: Record<string, number>;
   totalInputTokens: number;
   totalOutputTokens: number;
   meanLatencyMs: number | null;
   p95LatencyMs: number | null;
   byFamily: Record<
     string,
-    { total: number; answered: number; failures: number }
+    { total: number; answered: number; failures: number; coverage: number }
   >;
 };
 
@@ -83,10 +121,25 @@ export async function evaluateReflexPolicyV1(
 ): Promise<ReflexEvaluationReportV1> {
   const alpha = config.alpha ?? 0.05;
   const riskCeiling = config.riskCeiling ?? 0.05;
+  const minCoverage = config.minCoverage ?? 1;
+  const minFamilyCoverage = { ...(config.minFamilyCoverage ?? {}) };
   if (!(alpha > 0 && alpha < 1))
     throw new Error('Evaluation alpha must be between 0 and 1.');
   if (!(riskCeiling > 0 && riskCeiling < 1))
     throw new Error('Evaluation risk ceiling must be between 0 and 1.');
+  if (!(minCoverage >= 0 && minCoverage <= 1))
+    throw new Error('Evaluation minimum coverage must be between 0 and 1.');
+  for (const [family, floor] of Object.entries(minFamilyCoverage)) {
+    if (!(floor >= 0 && floor <= 1))
+      throw new Error(
+        `Evaluation minimum coverage for ${family} must be between 0 and 1.`
+      );
+  }
+  if (
+    config.datasetSplitDigest !== undefined &&
+    !/^sha256-[0-9a-f]{64}$/.test(config.datasetSplitDigest)
+  )
+    throw new Error('Evaluation datasetSplitDigest must be a SHA-256 digest.');
   if (!Array.isArray(tasks) || tasks.some((task) => !task.id || !task.family)) {
     throw new Error('Evaluation tasks require IDs and families.');
   }
@@ -94,6 +147,7 @@ export async function evaluateReflexPolicyV1(
   let answeredTasks = 0;
   let failures = 0;
   let policyViolations = 0;
+  let outputValidationFailures = 0;
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
   const latencies: number[] = [];
@@ -102,6 +156,7 @@ export async function evaluateReflexPolicyV1(
       total: 0,
       answered: 0,
       failures: 0,
+      coverage: 0,
     });
     family.total++;
     const selection = selectReflexContextV1(session, task.query);
@@ -123,12 +178,41 @@ export async function evaluateReflexPolicyV1(
       failures++;
       family.failures++;
     }
+    if (
+      result.output !== undefined &&
+      !validateReflexOutputV1(result.output, { schema: selection.outputSchema })
+        .valid
+    ) {
+      outputValidationFailures++;
+      failures++;
+      family.failures++;
+    }
     if (result.policyViolation) policyViolations++;
+  }
+  for (const family of Object.values(byFamily)) {
+    family.coverage = family.total ? family.answered / family.total : 0;
   }
   const upperFailureBound = answeredTasks
     ? clopperPearsonUpper(failures, answeredTasks, alpha)
     : null;
   const coverage = tasks.length ? answeredTasks / tasks.length : 0;
+  const policyId = config.policyId ?? 'reflex-finite-policy-v1';
+  const policyDigest = digestDomain(
+    'reflex-policy',
+    canonicalCbor({
+      version: 1,
+      policyId,
+      alphaPpm: fixedDown(alpha),
+      riskCeilingPpm: fixedUp(riskCeiling),
+      minCoveragePpm: fixedDown(minCoverage),
+      minFamilyCoveragePpm: Object.fromEntries(
+        Object.entries(minFamilyCoverage).map(([family, floor]) => [
+          family,
+          fixedDown(floor),
+        ])
+      ),
+    } as never)
+  );
   const profileBase = {
     schema: 'knolo.reflex.profile/v1' as const,
     modelId: model.modelId,
@@ -136,7 +220,58 @@ export async function evaluateReflexPolicyV1(
     tokenizerId: session.config.tokenizerId,
     renderer: 'reflex-renderer-v1',
     behaviorRoot: session.manifest.behaviorRoot,
-    policyId: config.policyId ?? 'reflex-finite-policy-v1',
+    policyId,
+    policyDigest,
+    datasetSplitDigest: config.datasetSplitDigest ?? null,
+    metricScale: REFLEX_PROFILE_SCALE_V1 as typeof REFLEX_PROFILE_SCALE_V1,
+    metrics: {
+      totalTasks: tasks.length,
+      answeredTasks,
+      failures,
+      policyViolations,
+      outputValidationFailures,
+      coveragePpm: fixedDown(coverage),
+      failureRatePpm: answeredTasks
+        ? fixedDown(failures / answeredTasks)
+        : null,
+      upperFailureBoundPpm:
+        upperFailureBound !== null ? fixedUp(upperFailureBound) : null,
+      totalInputTokens,
+      totalOutputTokens,
+      meanLatencyMicros: latencies.length
+        ? fixedNearest(
+            latencies.reduce((sum, value) => sum + value, 0) / latencies.length
+          )
+        : null,
+      p95LatencyMicros: latencies.length
+        ? fixedNearest(percentile(latencies, 0.95))
+        : null,
+    },
+    qualityByFamily: Object.fromEntries(
+      Object.entries(byFamily).map(([family, value]) => [
+        family,
+        {
+          total: value.total,
+          answered: value.answered,
+          failures: value.failures,
+          coveragePpm: fixedDown(value.coverage),
+          failureRatePpm: value.answered
+            ? fixedDown(value.failures / value.answered)
+            : null,
+          upperFailureBoundPpm: value.answered
+            ? fixedUp(
+                clopperPearsonUpper(value.failures, value.answered, alpha)
+              )
+            : null,
+        },
+      ])
+    ),
+    contextBudget: {
+      maxInputTokens: session.config.maxInputTokens,
+      meanInputTokensMicros: answeredTasks
+        ? fixedNearest(totalInputTokens / answeredTasks)
+        : null,
+    },
   };
   const profile: ReflexModelProfileV1 = {
     ...profileBase,
@@ -145,6 +280,16 @@ export async function evaluateReflexPolicyV1(
       canonicalCbor(profileBase as never)
     ),
   };
+  const familyCoverageSatisfied = Object.entries(minFamilyCoverage).every(
+    ([family, floor]) =>
+      byFamily[family] !== undefined && byFamily[family].coverage >= floor
+  );
+  const certified =
+    upperFailureBound !== null &&
+    upperFailureBound <= riskCeiling &&
+    policyViolations === 0 &&
+    coverage >= minCoverage &&
+    familyCoverageSatisfied;
   return {
     schema: 'knolo.reflex.evaluation/v1',
     profile,
@@ -153,15 +298,15 @@ export async function evaluateReflexPolicyV1(
     abstainedTasks: tasks.length - answeredTasks,
     failures,
     policyViolations,
+    outputValidationFailures,
     coverage,
     failureRate: answeredTasks ? failures / answeredTasks : null,
     upperFailureBound,
-    status:
-      upperFailureBound !== null && upperFailureBound <= riskCeiling
-        ? 'certified'
-        : 'uncertified',
+    status: certified ? 'certified' : 'uncertified',
     alpha,
     riskCeiling,
+    minCoverage,
+    minFamilyCoverage,
     totalInputTokens,
     totalOutputTokens,
     meanLatencyMs: latencies.length
@@ -170,6 +315,18 @@ export async function evaluateReflexPolicyV1(
     p95LatencyMs: latencies.length ? percentile(latencies, 0.95) : null,
     byFamily,
   };
+}
+
+function fixedDown(value: number): number {
+  return Math.floor(value * REFLEX_PROFILE_SCALE_V1);
+}
+
+function fixedUp(value: number): number {
+  return Math.ceil(value * REFLEX_PROFILE_SCALE_V1);
+}
+
+function fixedNearest(value: number): number {
+  return Math.round(value * REFLEX_PROFILE_SCALE_V1);
 }
 
 function percentile(values: number[], quantile: number): number {

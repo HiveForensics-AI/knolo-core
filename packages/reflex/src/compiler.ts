@@ -21,10 +21,14 @@ export type ReflexSourceInput = {
 
 export type ReflexBundleBuildInput = Omit<
   ReflexBundleV1,
-  'atomIds' | 'optionalAtomIds'
+  'requiredAtomIds' | 'triggerAtomIds' | 'atomIds' | 'optionalAtomIds'
 > & {
+  requiredAtomIds?: string[];
+  triggerAtomIds?: string[];
   atomIds?: string[];
   optionalAtomIds?: string[];
+  requiredAtomKeys?: string[];
+  triggerAtomKeys?: string[];
   atomKeys?: string[];
   optionalAtomKeys?: string[];
 };
@@ -96,6 +100,10 @@ export function buildReflexImageV1(input: ReflexBuildInput): ReflexBuildResult {
     input.bundles.map((bundle) => normalizeBundle(bundle, atomObjects)),
     'bundle'
   );
+  for (const bundle of bundles) {
+    if (bundle.namespace !== input.namespace)
+      throw new Error(`Bundle outside build namespace: ${bundle.key}`);
+  }
 
   const bundleObjects = bundles.map((bundle) => {
     const bytes = canonicalCbor(bundle as never);
@@ -108,7 +116,8 @@ export function buildReflexImageV1(input: ReflexBuildInput): ReflexBuildResult {
   });
   for (const { bundle } of bundleObjects) {
     for (const atomId of [
-      ...bundle.atomIds,
+      ...(bundle.requiredAtomIds ?? []),
+      ...(bundle.triggerAtomIds ?? []),
       ...(bundle.optionalAtomIds ?? []),
     ]) {
       if (!atomIds.has(atomId))
@@ -130,27 +139,17 @@ export function buildReflexImageV1(input: ReflexBuildInput): ReflexBuildResult {
       id: objectId('chunk', bytes, meta),
     };
   });
-  const behaviorRoot = digestDomain(
-    'reflex-behavior',
-    canonicalCbor({
-      version: 1,
-      atomIds: atomObjects.map(({ id }) => id).sort(),
-      bundleIds: bundleObjects.map(({ id }) => id).sort(),
-      projectionIds: projectionObjects.map(({ id }) => id).sort(),
-      sourceIds: [...sourceIds].sort(),
-      compiler: 'knolo-reflex-compiler-v1',
-    } as never)
-  );
   const manifest: ReflexManifestV1 = {
     schema: REFLEX_SCHEMA_VERSIONS.manifest,
-    behaviorRoot,
     atomIds: atomObjects.map(({ id }) => id),
     bundleIds: bundleObjects.map(({ id }) => id),
     projectionIds: projectionObjects.map(({ id }) => id),
     sourceIds,
     profileIds: [],
     evaluationIds: [],
+    behaviorRoot: '',
   };
+  manifest.behaviorRoot = computeReflexBehaviorRootV1(manifest);
   const manifestBytes = canonicalCbor(manifest as never);
   const manifestMeta = {
     reflex_namespace: input.namespace,
@@ -180,7 +179,28 @@ export function buildReflexImageV1(input: ReflexBuildInput): ReflexBuildResult {
     actor: input.actor ?? 'knolo-reflex-compiler-v1',
     objects,
   });
-  return { image, behaviorRoot, manifest };
+  return { image, behaviorRoot: manifest.behaviorRoot, manifest };
+}
+
+export const REFLEX_COMPILER_CONTRACT_V1 = 'knolo-reflex-compiler-v1' as const;
+
+export function computeReflexBehaviorRootV1(
+  manifest: Pick<
+    ReflexManifestV1,
+    'atomIds' | 'bundleIds' | 'projectionIds' | 'sourceIds'
+  >
+): Digest {
+  return digestDomain(
+    'reflex-behavior',
+    canonicalCbor({
+      version: 1,
+      atomIds: manifest.atomIds.slice().sort(),
+      bundleIds: manifest.bundleIds.slice().sort(),
+      projectionIds: manifest.projectionIds.slice().sort(),
+      sourceIds: manifest.sourceIds.slice().sort(),
+      compiler: REFLEX_COMPILER_CONTRACT_V1,
+    } as never)
+  );
 }
 
 function normalizeBundle(
@@ -206,10 +226,25 @@ function normalizeBundle(
     schema: input.schema,
     key: input.key,
     namespace: input.namespace,
-    atomIds: resolve(input.atomIds, input.atomKeys, 'key'),
+    requiredAtomIds: resolve(
+      input.requiredAtomIds ?? input.atomIds,
+      input.requiredAtomKeys ?? input.atomKeys,
+      'key'
+    ),
     outputSchema: input.outputSchema,
     renderer: input.renderer,
+    triggerAtomIds: [],
   };
+  const triggerWasSpecified =
+    input.triggerAtomIds !== undefined || input.triggerAtomKeys !== undefined;
+  const triggerAtomIds = resolve(
+    input.triggerAtomIds,
+    input.triggerAtomKeys,
+    'trigger key'
+  );
+  bundle.triggerAtomIds = triggerWasSpecified
+    ? triggerAtomIds
+    : (bundle.requiredAtomIds ?? []).slice();
   const optionalAtomIds = resolve(
     input.optionalAtomIds,
     input.optionalAtomKeys,
@@ -217,6 +252,15 @@ function normalizeBundle(
   );
   if (optionalAtomIds.length) bundle.optionalAtomIds = optionalAtomIds;
   validateReflexBundleV1(bundle);
+  if (
+    bundle.optionalAtomIds?.some((id) =>
+      (bundle.requiredAtomIds ?? []).includes(id)
+    )
+  ) {
+    throw new Error(
+      `Reflex bundle optional atom is also required: ${bundle.key}`
+    );
+  }
   return bundle;
 }
 
@@ -246,13 +290,29 @@ function validateAtomReferences(
   atomObjects: Array<{ atom: ReflexAtomV1; id: Digest }>,
   atomIds: Set<Digest>
 ): void {
+  const idByKey = new Map(
+    atomObjects.map(({ atom, id }) => [atom.key, id] as const)
+  );
+  const resolveRelation = (relation: string, owner: ReflexAtomV1): Digest => {
+    if (isDigest(relation)) {
+      if (!atomIds.has(relation))
+        throw new Error(`Atom references missing relation: ${owner.key}`);
+      return relation;
+    }
+    const id = idByKey.get(relation);
+    if (!id)
+      throw new Error(
+        `Atom ${owner.key} references missing atom key: ${relation}`
+      );
+    return id;
+  };
   const graph = new Map<Digest, Digest[]>();
   for (const { atom, id } of atomObjects) {
-    if (atom.requires.some((dependency) => !atomIds.has(dependency)))
-      throw new Error(`Atom references missing dependency: ${atom.key}`);
-    if (atom.conflicts.some((conflict) => !atomIds.has(conflict)))
-      throw new Error(`Atom references missing conflict: ${atom.key}`);
-    graph.set(id, atom.requires);
+    graph.set(
+      id,
+      atom.requires.map((dependency) => resolveRelation(dependency, atom))
+    );
+    for (const conflict of atom.conflicts) resolveRelation(conflict, atom);
   }
   const visiting = new Set<Digest>();
   const visited = new Set<Digest>();
@@ -268,6 +328,10 @@ function validateAtomReferences(
     const id = atomObjects.find((object) => object.atom === atom)?.id;
     if (id) visit(id);
   }
+}
+
+function isDigest(value: string): value is Digest {
+  return /^sha256-[0-9a-f]{64}$/.test(value);
 }
 
 function projectionText(atom: ReflexAtomV1): string {

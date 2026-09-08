@@ -1,4 +1,9 @@
-import { decodeCanonicalCbor, openKnowledgeImageV5 } from '@knolo/core';
+import {
+  decodeCanonicalCbor,
+  openKnowledgeImageV5,
+  type KnowledgeObjectV1,
+} from '@knolo/core';
+import { computeReflexBehaviorRootV1 } from './compiler.js';
 import { type ReflexManifestV1, validateReflexManifestV1 } from './index.js';
 
 export type ReflexVerificationLimits = {
@@ -51,6 +56,11 @@ export function verifyReflexImageV1(
     maxBundles,
     maxProjections
   );
+  const recomputedBehaviorRoot = computeReflexBehaviorRootV1(manifestValue);
+  if (recomputedBehaviorRoot !== manifestValue.behaviorRoot) {
+    throw new Error('Reflex behavior root mismatch.');
+  }
+  validateObjectRoles(manifestValue, image.objects);
   for (const projectionId of manifestValue.projectionIds) {
     const projection = image.objects.find(
       (object) => object.id === projectionId
@@ -75,6 +85,35 @@ export function verifyReflexImageV1(
     bundles: manifestValue.bundleIds.length,
     projections: manifestValue.projectionIds.length,
   };
+}
+
+function validateObjectRoles(
+  manifest: ReflexManifestV1,
+  objects: KnowledgeObjectV1[]
+): void {
+  const byId = new Map(objects.map((object) => [object.id, object]));
+  for (const id of manifest.atomIds) {
+    const object = byId.get(id);
+    if (object?.kind !== 'metadata' || object.meta.reflex_role !== 'atom')
+      throw new Error('Reflex atom reference has an invalid object role.');
+  }
+  for (const id of manifest.bundleIds) {
+    const object = byId.get(id);
+    if (object?.kind !== 'metadata' || object.meta.reflex_role !== 'bundle')
+      throw new Error('Reflex bundle reference has an invalid object role.');
+  }
+  for (const id of manifest.projectionIds) {
+    const object = byId.get(id);
+    if (object?.kind !== 'chunk' || object.meta.reflex_role !== 'projection')
+      throw new Error(
+        'Reflex projection reference has an invalid object role.'
+      );
+  }
+  for (const id of manifest.sourceIds) {
+    const object = byId.get(id);
+    if (object?.kind !== 'source' || object.meta.reflex_role !== 'evidence')
+      throw new Error('Reflex source reference has an invalid object role.');
+  }
 }
 
 function validateReferences(

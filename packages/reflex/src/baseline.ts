@@ -73,9 +73,10 @@ export async function compareReflexVariantsV1(
       });
       const elapsed = performance.now() - started;
       answeredTasks++;
-      totalInputTokens += variant.session
-        ? selectReflexContextV1(variant.session, task.query).receipt.inputTokens
-        : countTokens(`${task.query}\n\n${selected.context}`);
+      totalInputTokens +=
+        variant.session && 'receipt' in selected
+          ? selected.receipt.inputTokens
+          : countTokens(`${task.query}\n\n${selected.context}`);
       totalOutputTokens += result.outputTokens ?? 0;
       latencies.push(result.latencyMs ?? elapsed);
       if (result.failure) failures++;
