@@ -123,7 +123,7 @@ and reports `search_limit` instead of claiming optimality for larger pools.
 
 ## Versioning and status
 
-`@knolo/reflex` is independently versioned and currently released as `0.1.0`.
+`@knolo/reflex` is independently versioned and currently released as `0.1.1`.
 Its V1 schemas are experimental. The package does not require a
 `@knolo/core` version bump; it is compatible with `@knolo/core` `5.5.0`.
 
