@@ -155,9 +155,11 @@ function validateProblem(problem: ReflexMRSProblemV1): void {
     throw new Error('MRS success threshold must be between 0 and 1.');
   if (
     problem.maxSearchAtoms !== undefined &&
-    (!Number.isInteger(problem.maxSearchAtoms) || problem.maxSearchAtoms < 0)
+    (!Number.isInteger(problem.maxSearchAtoms) ||
+      problem.maxSearchAtoms < 0 ||
+      problem.maxSearchAtoms > 30)
   )
-    throw new Error('MRS maxSearchAtoms must be a non-negative integer.');
+    throw new Error('MRS maxSearchAtoms must be an integer between 0 and 30.');
   const ids = new Set<string>();
   for (const atom of problem.atoms) {
     if (!atom.id || ids.has(atom.id))

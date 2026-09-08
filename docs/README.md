@@ -31,6 +31,8 @@ operational guides for Knolo.
   a TypeScript runtime artifact.
 - [VQF-1 next phases](VQF1_NEXT_PHASES.md) — decoder parity, hardening, and
   release handoff.
+- [Reflex 0.2 empirical intelligence plan](REFLEX_0.2_PLAN.md) — provenance,
+  clustering, capability calibration, MRS frontiers, and benchmark gates.
 
 Architecture sources, future-version specifications, and internal planning
 records are kept local and are not part of the public repository. The

@@ -52,6 +52,11 @@ one comparison run per model against the same task file. Parameter-count
 classes and model capabilities must be supplied and verified by the evaluation
 owner; the benchmark does not infer them from model names.
 
+Certified profiles now require a non-null dataset split digest and include a
+selection-policy digest covering runtime scope, retrieval limits, tokenizer,
+renderer, and MRS settings. Output-schema failures are counted once per task,
+even when the model's semantic judge also reports a failure.
+
 ## Release interpretation
 
 The automated package and core gates pass. Before production adoption, expand

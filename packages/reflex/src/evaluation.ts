@@ -1,6 +1,10 @@
 import { canonicalCbor, digestDomain } from '@knolo/core';
-import { validateReflexOutputV1 } from './runtime.js';
-import { selectReflexContextV1, type ReflexSessionV1 } from './runtime.js';
+import {
+  computeReflexSelectionPolicyDigestV1,
+  selectReflexContextV1,
+  type ReflexSessionV1,
+  validateReflexOutputV1,
+} from './runtime.js';
 
 export const REFLEX_PROFILE_SCALE_V1 = 1_000_000;
 
@@ -43,6 +47,7 @@ export type ReflexModelProfileV1 = {
   behaviorRoot: string;
   policyId: string;
   policyDigest: string;
+  selectionPolicyDigest: string;
   datasetSplitDigest: string | null;
   metricScale: typeof REFLEX_PROFILE_SCALE_V1;
   metrics: {
@@ -95,6 +100,7 @@ export type ReflexEvaluationReportV1 = {
   failures: number;
   policyViolations: number;
   outputValidationFailures: number;
+  selectionPolicyDigest: string;
   coverage: number;
   failureRate: number | null;
   upperFailureBound: number | null;
@@ -174,16 +180,14 @@ export async function evaluateReflexPolicyV1(
     totalOutputTokens += result.outputTokens ?? 0;
     latencies.push(result.latencyMs ?? elapsed);
     family.answered++;
-    if (result.failure) {
-      failures++;
-      family.failures++;
-    }
-    if (
+    const outputInvalid =
       result.output !== undefined &&
       !validateReflexOutputV1(result.output, { schema: selection.outputSchema })
-        .valid
-    ) {
+        .valid;
+    if (outputInvalid) {
       outputValidationFailures++;
+    }
+    if (result.failure || outputInvalid) {
       failures++;
       family.failures++;
     }
@@ -222,6 +226,7 @@ export async function evaluateReflexPolicyV1(
     behaviorRoot: session.manifest.behaviorRoot,
     policyId,
     policyDigest,
+    selectionPolicyDigest: computeReflexSelectionPolicyDigestV1(session),
     datasetSplitDigest: config.datasetSplitDigest ?? null,
     metricScale: REFLEX_PROFILE_SCALE_V1 as typeof REFLEX_PROFILE_SCALE_V1,
     metrics: {
@@ -288,6 +293,7 @@ export async function evaluateReflexPolicyV1(
     upperFailureBound !== null &&
     upperFailureBound <= riskCeiling &&
     policyViolations === 0 &&
+    config.datasetSplitDigest !== undefined &&
     coverage >= minCoverage &&
     familyCoverageSatisfied;
   return {
@@ -299,6 +305,7 @@ export async function evaluateReflexPolicyV1(
     failures,
     policyViolations,
     outputValidationFailures,
+    selectionPolicyDigest: computeReflexSelectionPolicyDigestV1(session),
     coverage,
     failureRate: answeredTasks ? failures / answeredTasks : null,
     upperFailureBound,

@@ -58,6 +58,8 @@ export type ReflexBundleV1 = {
   triggerAtomIds?: string[];
   /** Deprecated 0.1 spelling for requiredAtomIds. */
   atomIds?: string[];
+  /** Whether every trigger or any trigger activates the bundle. */
+  triggerMode?: 'any' | 'all';
   optionalAtomIds?: string[];
   outputSchema: Record<string, unknown>;
   renderer: typeof REFLEX_RENDERER_V1;
@@ -197,6 +199,7 @@ export function validateReflexBundleV1(
       'requiredAtomIds',
       'triggerAtomIds',
       'atomIds',
+      'triggerMode',
       'optionalAtomIds',
       'outputSchema',
       'renderer',
@@ -224,20 +227,81 @@ export function validateReflexBundleV1(
   }
   if (value.triggerAtomIds !== undefined)
     assertDigestArray(value.triggerAtomIds, 'bundle triggerAtomIds');
+  if (
+    value.triggerMode !== undefined &&
+    value.triggerMode !== 'any' &&
+    value.triggerMode !== 'all'
+  )
+    throw new Error('Invalid Reflex bundle triggerMode.');
   if (value.atomIds !== undefined && value.requiredAtomIds === undefined)
     assertDigestArray(value.atomIds, 'bundle atomIds');
   if (value.optionalAtomIds !== undefined)
     assertDigestArray(value.optionalAtomIds, 'bundle optionalAtomIds');
   if (value.optionalAtomIds?.some((id) => requiredAtomIds.includes(id)))
     throw new Error('Reflex bundle optional atoms overlap required atoms.');
-  if (
-    value.triggerAtomIds !== undefined &&
-    value.triggerAtomIds.some((id) => !requiredAtomIds.includes(id))
-  ) {
-    throw new Error('Reflex bundle trigger atoms must be required atoms.');
-  }
   if (!isRecord(value.outputSchema))
     throw new Error('Invalid Reflex bundle output schema.');
+  validateReflexOutputSchemaV1(value.outputSchema);
+}
+
+/** Validate the deliberately small, fail-closed output-schema subset. */
+export function validateReflexOutputSchemaV1(
+  schema: Record<string, unknown>
+): void {
+  const allowed = new Set([
+    'type',
+    'required',
+    'properties',
+    'additionalProperties',
+    'items',
+    'enum',
+    'const',
+  ]);
+  for (const key of Object.keys(schema)) {
+    if (!allowed.has(key))
+      throw new Error(`Unsupported Reflex output schema keyword: ${key}.`);
+  }
+  if (schema.type !== undefined) {
+    const types = new Set([
+      'object',
+      'array',
+      'string',
+      'number',
+      'integer',
+      'boolean',
+      'null',
+    ]);
+    if (typeof schema.type !== 'string' || !types.has(schema.type))
+      throw new Error('Invalid Reflex output schema type.');
+  }
+  if (schema.required !== undefined) {
+    if (
+      !Array.isArray(schema.required) ||
+      schema.required.some((field) => typeof field !== 'string')
+    )
+      throw new Error('Invalid Reflex output schema required fields.');
+  }
+  if (schema.properties !== undefined) {
+    if (!isRecord(schema.properties))
+      throw new Error('Invalid Reflex output schema properties.');
+    for (const child of Object.values(schema.properties)) {
+      if (!isRecord(child))
+        throw new Error('Invalid Reflex output property schema.');
+      validateReflexOutputSchemaV1(child);
+    }
+  }
+  if (
+    schema.additionalProperties !== undefined &&
+    typeof schema.additionalProperties !== 'boolean'
+  )
+    throw new Error('Invalid Reflex output additionalProperties flag.');
+  if (schema.items !== undefined) {
+    if (!isRecord(schema.items))
+      throw new Error('Invalid Reflex output array item schema.');
+    validateReflexOutputSchemaV1(schema.items);
+  }
+  if (schema.enum !== undefined && !Array.isArray(schema.enum))
+    throw new Error('Invalid Reflex output enum.');
 }
 
 function assertKnownFields(
@@ -322,6 +386,7 @@ export type {
 } from './optimizer.js';
 export {
   openReflexSessionV1,
+  computeReflexSelectionPolicyDigestV1,
   selectReflexContextV1,
   validateReflexOutputV1,
   verifyReflexSelectionReceiptV1,
@@ -330,6 +395,7 @@ export type {
   ReflexOutputValidation,
   ReflexOutputSchemaV1,
   ReflexRuntimeConfig,
+  ReflexRuntimeMRSConfigV1,
   ReflexSelectionDisposition,
   ReflexSelectionReceiptV1,
   ReflexSelectionResult,
@@ -357,6 +423,7 @@ export type {
   ReflexVariantReportV1,
 } from './baseline.js';
 export { verifyReflexImageV1 } from './verify.js';
+export { validateReflexLogicalGraphV1 } from './graph.js';
 export type {
   ReflexVerificationLimits,
   ReflexVerificationResult,

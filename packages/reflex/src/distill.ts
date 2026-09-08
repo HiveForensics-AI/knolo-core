@@ -182,6 +182,7 @@ export async function distillReflexBehaviorV1(
       triggerAtomKeys: triggerAtomKeys.length
         ? triggerAtomKeys
         : requiredAtomKeys.slice(),
+      triggerMode: 'any',
       outputSchema: config.outputSchema ?? { type: 'object' },
       renderer: config.renderer ?? REFLEX_RENDERER_V1,
     });

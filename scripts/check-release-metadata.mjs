@@ -22,7 +22,7 @@ const npmPackages = [
 
 const reflexPackage = readJson('packages/reflex/package.json');
 assert.equal(reflexPackage.name, '@knolo/reflex');
-assert.equal(reflexPackage.version, '0.1.1');
+assert.equal(reflexPackage.version, '0.1.2');
 assert.equal(reflexPackage.license, 'Apache-2.0');
 assert.equal(reflexPackage.publishConfig?.access, 'public');
 assert.equal(reflexPackage.dependencies?.['@knolo/core'], '5.5.0');

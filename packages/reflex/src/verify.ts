@@ -4,6 +4,7 @@ import {
   type KnowledgeObjectV1,
 } from '@knolo/core';
 import { computeReflexBehaviorRootV1 } from './compiler.js';
+import { validateReflexLogicalGraphV1 } from './graph.js';
 import { type ReflexManifestV1, validateReflexManifestV1 } from './index.js';
 
 export type ReflexVerificationLimits = {
@@ -61,6 +62,7 @@ export function verifyReflexImageV1(
     throw new Error('Reflex behavior root mismatch.');
   }
   validateObjectRoles(manifestValue, image.objects);
+  validateReflexLogicalGraphV1(manifestValue, image.objects);
   for (const projectionId of manifestValue.projectionIds) {
     const projection = image.objects.find(
       (object) => object.id === projectionId

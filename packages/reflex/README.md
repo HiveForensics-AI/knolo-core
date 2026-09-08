@@ -38,7 +38,9 @@ Bundle build inputs may use `requiredAtomKeys` and `triggerAtomKeys`. Trigger
 atoms activate a bundle; required atoms are then added by deterministic
 dependency closure. New atom relationships should use logical keys such as
 `support.verify-identity`; digest relationships remain readable for early
-0.1 images.
+0.1 images. Bundles use `triggerMode: "all"` by default for compatibility;
+distilled bundles use `triggerMode: "any"` so one learned intent can route to a
+small behavior bundle without requiring every trigger in the family.
 
 ## Runtime API
 
@@ -74,7 +76,9 @@ The selection result can be checked with
 `verifyReflexSelectionReceiptV1`. Model output can be checked with
 `validateReflexOutputV1` and the selected bundle's `outputSchema` before it is
 accepted by an application. Use the session-aware receipt verifier to replay
-the full selection decision.
+the full selection decision. Each receipt also commits to the complete
+selection policy, including scope, budgets, tokenizer, renderer, and MRS
+configuration.
 
 ## Ollama
 
@@ -115,15 +119,23 @@ or capability from a model name.
 Evaluation certification requires the configured risk bound, zero policy
 violations, and the configured global/per-family coverage floors. The default
 minimum coverage is 100%; lower floors must be explicit in evaluation config.
+A dataset split digest is also required for a result to be labeled
+`certified`; exploratory evaluations may omit it and remain `uncertified`.
+
+Output schemas intentionally support a small fail-closed subset: `type`,
+`required`, `properties`, `additionalProperties`, `items`, `enum`, and `const`.
+Unknown schema keywords are rejected when a bundle is built or verified.
 
 For offline research, `distillReflexBehaviorV1` converts frozen teacher records
 through an injected extractor into deduplicated atoms and bundle candidates.
 `optimizeMinimumReflexSetV1` exhaustively solves small surrogate candidate pools
 and reports `search_limit` instead of claiming optimality for larger pools.
+The exact solver caps exhaustive search at 30 atoms; production use should
+prefer an offline Pareto frontier or another bounded solver.
 
 ## Versioning and status
 
-`@knolo/reflex` is independently versioned and currently released as `0.1.1`.
+`@knolo/reflex` is independently versioned and currently released as `0.1.2`.
 Its V1 schemas are experimental. The package does not require a
 `@knolo/core` version bump; it is compatible with `@knolo/core` `5.5.0`.
 

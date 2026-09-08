@@ -62,7 +62,11 @@ test('reports evaluation counts, coverage, and a calibrated risk bound', async (
       revision: 'test-revision',
       run: async () => ({ failure: false, outputTokens: 3, latencyMs: 12 }),
     },
-    { riskCeiling: 0.8 }
+    {
+      riskCeiling: 0.8,
+      datasetSplitDigest:
+        'sha256-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    }
   );
   assert.equal(report.answeredTasks, 2);
   assert.equal(report.coverage, 1);
@@ -74,7 +78,7 @@ test('reports evaluation counts, coverage, and a calibrated risk bound', async (
   assert.equal(report.p95LatencyMs, 12);
   assert.equal(report.profile.metricScale, 1_000_000);
   assert.match(report.profile.policyDigest, /^sha256-[0-9a-f]{64}$/);
-  assert.equal(report.profile.datasetSplitDigest, null);
+  assert.match(report.profile.datasetSplitDigest, /^sha256-[0-9a-f]{64}$/);
   assert.equal(
     Number.isInteger(report.profile.metrics.upperFailureBoundPpm),
     true

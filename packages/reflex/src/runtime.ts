@@ -57,6 +57,7 @@ export type ReflexSelectionReceiptV1 = {
   inputTokens: number;
   tokenizerId: string;
   renderer: string;
+  selectionPolicyDigest: string;
   disposition: ReflexSelectionDisposition;
 };
 
@@ -262,8 +263,12 @@ export function selectReflexContextV1(
   )) {
     const requiredAtomIds = getRequiredAtomIds(bundle);
     const triggerAtomIds = getTriggerAtomIds(bundle);
+    const triggerMatched =
+      bundle.triggerMode === 'any'
+        ? triggerAtomIds.some((atomId) => candidateSet.has(atomId))
+        : triggerAtomIds.every((atomId) => candidateSet.has(atomId));
     if (
-      !triggerAtomIds.every((atomId) => candidateSet.has(atomId)) ||
+      !triggerMatched ||
       !requiredAtomIds.every((atomId) => isApplicable(session, atomId))
     )
       continue;
@@ -364,6 +369,7 @@ export function selectReflexContextV1(
     inputTokens,
     tokenizerId: session.config.tokenizerId,
     renderer,
+    selectionPolicyDigest: computeReflexSelectionPolicyDigestV1(session),
     disposition,
   };
   if (disposition === 'ready') {
@@ -450,6 +456,7 @@ function normalizeLoadedBundle(bundle: ReflexBundleV1): ReflexBundleV1 {
     ...(bundle.optionalAtomIds
       ? { optionalAtomIds: bundle.optionalAtomIds.slice() }
       : {}),
+    ...(bundle.triggerMode ? { triggerMode: bundle.triggerMode } : {}),
     outputSchema: bundle.outputSchema,
     renderer: bundle.renderer,
   };
@@ -629,6 +636,44 @@ function contextDigest(context: string): string {
   return digestDomain(
     'reflex-rendered-context',
     new TextEncoder().encode(context)
+  );
+}
+
+export function computeReflexSelectionPolicyDigestV1(
+  session: ReflexSessionV1
+): string {
+  const mrs = session.config.mrs;
+  return digestDomain(
+    'reflex-selection-policy',
+    canonicalCbor({
+      version: 1,
+      namespace: session.config.namespace,
+      locale: session.config.locale ?? null,
+      productVersion: session.config.productVersion ?? null,
+      availableInputs: [...(session.config.availableInputs ?? [])].sort(),
+      topK: session.config.topK,
+      maxContextAtoms: session.config.maxContextAtoms,
+      maxInputTokens: session.config.maxInputTokens,
+      tokenizerId: session.config.tokenizerId,
+      renderer: REFLEX_RENDERER_V1,
+      mrs: mrs
+        ? {
+            successThreshold: String(mrs.successThreshold),
+            intercept: String(mrs.intercept ?? 0),
+            maxSearchAtoms: mrs.maxSearchAtoms ?? 20,
+            coefficientDigest: digestDomain(
+              'reflex-mrs-coefficients',
+              canonicalCbor(
+                Object.fromEntries(
+                  Object.entries(mrs.contributionByAtomKey)
+                    .sort(([a], [b]) => compareBytes(a, b))
+                    .map(([key, value]) => [key, String(value)])
+                ) as never
+              )
+            ),
+          }
+        : null,
+    } as never)
   );
 }
 
