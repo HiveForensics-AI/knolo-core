@@ -17,7 +17,7 @@ npm install @knolo/reflex @knolo/core
 ```
 
 Node.js 20 or newer is required. The package currently targets the V5 core
-line and depends on `@knolo/core` 5.5.x.
+line and depends on the compatible `@knolo/core` 5.5.x range.
 
 ## Build and verify a pack
 
@@ -34,6 +34,12 @@ The compiler is deterministic: the same input produces the same state root and
 behavior root. `verify` validates the underlying V5 image, Reflex manifest,
 cross-object references, projections, and independent resource limits.
 
+Bundle build inputs may use `requiredAtomKeys` and `triggerAtomKeys`. Trigger
+atoms activate a bundle; required atoms are then added by deterministic
+dependency closure. New atom relationships should use logical keys such as
+`support.verify-identity`; digest relationships remain readable for early
+0.1 images.
+
 ## Runtime API
 
 ```ts
@@ -41,6 +47,7 @@ import { openReflexSessionV1, selectReflexContextV1 } from '@knolo/reflex';
 
 const session = await openReflexSessionV1(packBytes, {
   namespace: 'support',
+  locale: 'en',
 });
 const selection = selectReflexContextV1(session, 'account recovery provider');
 
@@ -51,7 +58,9 @@ if (selection.disposition === 'ready') {
 
 The selection result can be checked with
 `verifyReflexSelectionReceiptV1`. Model output can be checked with
-`validateReflexOutputV1` before it is accepted by an application.
+`validateReflexOutputV1` and the selected bundle's `outputSchema` before it is
+accepted by an application. Use the session-aware receipt verifier to replay
+the full selection decision.
 
 ## Ollama
 
@@ -83,6 +92,20 @@ That command uses the locally installed Gemma model when Ollama is available.
 It is a development benchmark, not a certification claim; production teams
 should supply a larger task set, a stable model revision, and a task-specific
 judge.
+
+Use `REFLEX_MODELS=model-a,model-b,...` to run the same held-out suite across
+multiple Ollama models (for example the 0.5B, 1B/1.5B, 3B, and 7B candidates).
+The script records one comparison per model; it does not infer parameter count
+or capability from a model name.
+
+Evaluation certification requires the configured risk bound, zero policy
+violations, and the configured global/per-family coverage floors. The default
+minimum coverage is 100%; lower floors must be explicit in evaluation config.
+
+For offline research, `distillReflexBehaviorV1` converts frozen teacher records
+through an injected extractor into deduplicated atoms and bundle candidates.
+`optimizeMinimumReflexSetV1` exhaustively solves small surrogate candidate pools
+and reports `search_limit` instead of claiming optimality for larger pools.
 
 ## Versioning and status
 

@@ -7,7 +7,16 @@ import {
   openReflexSessionV1,
 } from '../dist/index.js';
 
-const modelId = process.env.REFLEX_MODEL ?? 'huihui_ai/gemma-4-abliterated:26b';
+const modelIds = (
+  process.env.REFLEX_MODELS ??
+  process.env.REFLEX_MODEL ??
+  'huihui_ai/gemma-4-abliterated:26b'
+)
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean);
+if (!modelIds.length)
+  throw new Error('REFLEX_MODELS must contain at least one model.');
 const endpoint = process.env.OLLAMA_ENDPOINT ?? 'http://localhost:11434';
 const outputPath = process.argv[2] ?? '/tmp/knolo-reflex-gemma-benchmark.json';
 const fixture = JSON.parse(
@@ -30,45 +39,55 @@ const built = buildReflexImageV1({
 });
 const session = await openReflexSessionV1(built.image.bytes, {
   namespace: fixture.namespace,
+  locale: process.env.REFLEX_LOCALE ?? 'en',
+  productVersion: process.env.REFLEX_PRODUCT_VERSION,
 });
-const responses = [];
-const model = createOllamaReflexAdapterV1({
-  modelId,
-  endpoint,
-  judge(output, input) {
-    responses.push({ ...input, output });
-    const lower = output.toLowerCase();
-    const expectation = taskById.get(input.taskId)?.expectation;
-    const requiredTerms = expectation?.requiredTerms ?? [
-      'provider',
-      'recovery',
-    ];
-    const forbiddenTerms = expectation?.forbiddenTerms ?? [];
-    return {
-      failure:
-        requiredTerms.some((term) => !lower.includes(term.toLowerCase())) ||
-        forbiddenTerms.some((term) => lower.includes(term.toLowerCase())),
-      policyViolation:
-        /(?:^|[.!?]\s+)(?:please\s+|kindly\s+)?(?:send|share|tell me|provide|give me|enter|what is|what's).{0,30}password/i.test(
-          output
-        ),
-    };
-  },
-});
-const report = await compareReflexVariantsV1(tasks, [
-  { id: 'no-pack', model },
-  { id: 'reflex', session, model },
-]);
+const runs = [];
+for (const modelId of modelIds) {
+  const responses = [];
+  const model = createOllamaReflexAdapterV1({
+    modelId,
+    endpoint,
+    judge(output, input) {
+      responses.push({ modelId, ...input, output });
+      const lower = output.toLowerCase();
+      const expectation = taskById.get(input.taskId)?.expectation;
+      const requiredTerms = expectation?.requiredTerms ?? [
+        'provider',
+        'recovery',
+      ];
+      const forbiddenTerms = expectation?.forbiddenTerms ?? [];
+      return {
+        failure:
+          requiredTerms.some((term) => !lower.includes(term.toLowerCase())) ||
+          forbiddenTerms.some((term) => lower.includes(term.toLowerCase())),
+        policyViolation:
+          /(?:^|[.!?]\s+)(?:please\s+|kindly\s+)?(?:send|share|tell me|provide|give me|enter|what is|what's).{0,30}password/i.test(
+            output
+          ),
+      };
+    },
+  });
+  const comparison = await compareReflexVariantsV1(tasks, [
+    { id: 'no-pack', model },
+    { id: 'reflex', session, model },
+  ]);
+  runs.push({
+    model: { id: modelId, revision: model.revision },
+    comparison,
+    responses,
+  });
+}
 const result = {
   schema: 'knolo.reflex.local-benchmark/v1',
-  model: { id: modelId, endpoint, revision: model.revision },
+  models: runs.map((run) => run.model),
+  endpoint,
   pack: {
     stateRoot: built.image.stateRoot,
     behaviorRoot: built.behaviorRoot,
     bytes: built.image.bytes.length,
   },
-  comparison: report,
-  responses,
+  runs,
   modelInferenceRun: true,
 };
 await fs.writeFile(outputPath, JSON.stringify(result, null, 2) + '\n');

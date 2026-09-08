@@ -7,14 +7,17 @@ Date: 2026-09-07
 | Area                                                          | Result                               |
 | ------------------------------------------------------------- | ------------------------------------ |
 | `@knolo/core` build, runtime check, test suite, legacy script | 43/43 tests passed; all tests passed |
-| `@knolo/reflex` build and test suite                          | 8/8 tests passed                     |
+| `@knolo/reflex` build and test suite                          | 10/10 test files passed              |
 | TypeScript compilation                                        | Passed                               |
 | `git diff --check`                                            | Passed                               |
 | Reflex npm archive dry run                                    | Passed                               |
 
-The Reflex tests cover schema validation, deterministic compilation, runtime
-selection and receipts, evaluation/calibration, baseline comparison, verifier
-limits, CLI contracts, and the Ollama adapter without making a network call.
+The Reflex tests cover schema validation, deterministic compilation, behavior
+root verification, trigger/required closure, runtime selection and replayable
+receipts, budget dispositions, logical-key conflicts, output-schema checks,
+teacher-record distillation, finite MRS optimization, evaluation/calibration,
+baseline comparison, verifier limits, CLI contracts, and the Ollama adapter
+without making a network call.
 
 ## Local model benchmark
 
@@ -42,6 +45,11 @@ package. The current task set is intentionally small and uses a deterministic
 term-based judge. The one remaining Reflex failure is the out-of-domain
 weather case, where the model should abstain more reliably. This result must
 not be presented as a statistical production certification.
+
+The local benchmark now accepts `REFLEX_MODELS=model-a,model-b,...` and writes
+one comparison run per model against the same task file. Parameter-count
+classes and model capabilities must be supplied and verified by the evaluation
+owner; the benchmark does not infer them from model names.
 
 ## Release interpretation
 
