@@ -10,7 +10,7 @@ import {
 const modelIds = (
   process.env.REFLEX_MODELS ??
   process.env.REFLEX_MODEL ??
-  'huihui_ai/gemma-4-abliterated:26b'
+  'gemma4:e2b'
 )
   .split(',')
   .map((value) => value.trim())

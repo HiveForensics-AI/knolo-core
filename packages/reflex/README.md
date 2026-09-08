@@ -16,8 +16,8 @@ optional integration for a locally running Ollama server.
 npm install @knolo/reflex @knolo/core
 ```
 
-Node.js 20 or newer is required. The package currently targets the V5 core
-line and depends on the compatible `@knolo/core` 5.5.x range.
+Node.js 20 or newer is required. The package currently targets V5 and depends
+on `@knolo/core` `5.5.0`.
 
 ## Build and verify a pack
 
@@ -56,6 +56,20 @@ if (selection.disposition === 'ready') {
 }
 ```
 
+For a finite, explicitly configured candidate pool, runtime selection can use
+the exact MRS optimizer. Contributions are a host-owned surrogate model and do
+not claim to predict model quality outside the declared pool:
+
+```ts
+const session = await openReflexSessionV1(packBytes, {
+  namespace: 'support',
+  mrs: {
+    successThreshold: 0.7,
+    contributionByAtomKey: { 'support.account-recovery': 1.0 },
+  },
+});
+```
+
 The selection result can be checked with
 `verifyReflexSelectionReceiptV1`. Model output can be checked with
 `validateReflexOutputV1` and the selected bundle's `outputSchema` before it is
@@ -68,7 +82,7 @@ the full selection decision.
 import { createOllamaReflexAdapterV1 } from '@knolo/reflex';
 
 const model = createOllamaReflexAdapterV1({
-  modelId: 'huihui_ai/gemma-4-abliterated:26b',
+  modelId: 'gemma4:e2b',
   judge(output) {
     return { failure: output.length === 0 };
   },
@@ -85,10 +99,10 @@ adapter is invoked.
 The package includes comparison and evaluation helpers:
 
 ```bash
-npm run benchmark:reflex:local
+REFLEX_MODELS=gemma4:e2b npm run benchmark:reflex:local -- /tmp/knolo-reflex-gemma4-e2b.json
 ```
 
-That command uses the locally installed Gemma model when Ollama is available.
+That command uses `gemma4:e2b` by default when Ollama is available.
 It is a development benchmark, not a certification claim; production teams
 should supply a larger task set, a stable model revision, and a task-specific
 judge.
@@ -111,7 +125,7 @@ and reports `search_limit` instead of claiming optimality for larger pools.
 
 `@knolo/reflex` is independently versioned and currently released as `0.1.0`.
 Its V1 schemas are experimental. The package does not require a
-`@knolo/core` version bump; it is compatible with the current 5.5.x core line.
+`@knolo/core` version bump; it is compatible with `@knolo/core` `5.5.0`.
 
 ## License
 
