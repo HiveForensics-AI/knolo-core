@@ -368,13 +368,23 @@ export type {
   ReflexBuildResult,
   ReflexSourceInput,
 } from './compiler.js';
-export { distillReflexBehaviorV1 } from './distill.js';
+export {
+  computeReflexExtractionRootV1,
+  computeReflexTeacherRecordRootV1,
+  distillReflexBehaviorV1,
+  distillReflexFrozenExtractionsV1,
+  validateReflexExtractionRecordV1,
+  validateReflexTeacherRecordV1,
+} from './distill.js';
 export type {
   ReflexBehaviorExtractionV1,
   ReflexBehaviorExtractorV1,
   ReflexDistillationConfigV1,
+  ReflexFrozenDistillationConfigV1,
   ReflexDistillationRejectV1,
   ReflexDistillationResultV1,
+  ReflexExtractionRecordV1,
+  ReflexTeacherProvenanceV1,
   ReflexTeacherRecordV1,
 } from './distill.js';
 export { optimizeMinimumReflexSetV1 } from './optimizer.js';

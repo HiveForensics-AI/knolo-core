@@ -128,6 +128,11 @@ Unknown schema keywords are rejected when a bundle is built or verified.
 
 For offline research, `distillReflexBehaviorV1` converts frozen teacher records
 through an injected extractor into deduplicated atoms and bundle candidates.
+Teacher records use the versioned `knolo.reflex.teacher-record/v1` contract and
+carry model, prompt, extractor, judge, dataset-split, and evidence provenance.
+`computeReflexTeacherRecordRootV1` commits the input record, while each accepted
+record receives an `extractionRoot` committing the normalized extracted atoms
+and triggers. Records with a supplied root are verified before extraction.
 `optimizeMinimumReflexSetV1` exhaustively solves small surrogate candidate pools
 and reports `search_limit` instead of claiming optimality for larger pools.
 The exact solver caps exhaustive search at 30 atoms; production use should
