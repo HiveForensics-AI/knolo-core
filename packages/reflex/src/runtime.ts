@@ -18,6 +18,14 @@ import {
   validateReflexManifestV1,
 } from './index.js';
 import { optimizeMinimumReflexSetV1 } from './optimizer.js';
+import type { ReflexMRSProblemV1 } from './optimizer.js';
+import {
+  computeReflexMRSFrontierEntryDigestV1,
+  computeReflexMRSProblemDigestV1,
+  lookupReflexMRSFrontierV1,
+  validateReflexMRSFrontierV1,
+  type ReflexMRSFrontierV1,
+} from './frontier.js';
 import { verifyReflexImageV1 } from './verify.js';
 
 export type ReflexRuntimeMRSConfigV1 = {
@@ -38,6 +46,7 @@ export type ReflexRuntimeConfig = {
   tokenizerId?: string;
   countTokens?: (text: string) => number;
   mrs?: ReflexRuntimeMRSConfigV1;
+  mrsFrontier?: ReflexMRSFrontierV1;
 };
 
 export type ReflexSelectionReceiptV1 = {
@@ -58,6 +67,8 @@ export type ReflexSelectionReceiptV1 = {
   tokenizerId: string;
   renderer: string;
   selectionPolicyDigest: string;
+  mrsFrontierDigest: string | null;
+  mrsFrontierEntryDigest: string | null;
   disposition: ReflexSelectionDisposition;
 };
 
@@ -109,7 +120,12 @@ export type ReflexSessionV1 = {
   > &
     Pick<
       ReflexRuntimeConfig,
-      'productVersion' | 'locale' | 'availableInputs' | 'countTokens' | 'mrs'
+      | 'productVersion'
+      | 'locale'
+      | 'availableInputs'
+      | 'countTokens'
+      | 'mrs'
+      | 'mrsFrontier'
     >;
 };
 
@@ -130,6 +146,11 @@ export async function openReflexSessionV1(
   ] as const) {
     if (value !== undefined && (!Number.isInteger(value) || value < 0))
       throw new Error(`Reflex runtime ${name} must be a non-negative integer.`);
+  }
+  if (config.mrsFrontier !== undefined) {
+    if (!config.mrs)
+      throw new Error('Reflex runtime mrs is required with mrsFrontier.');
+    validateReflexMRSFrontierV1(config.mrsFrontier);
   }
 
   // Verify the behavior root before any untrusted object is used to construct
@@ -217,6 +238,7 @@ export async function openReflexSessionV1(
       tokenizerId: config.tokenizerId ?? 'reflex-whitespace-tokenizer-v1',
       countTokens: config.countTokens,
       mrs: config.mrs,
+      mrsFrontier: config.mrsFrontier,
     },
   };
 }
@@ -256,6 +278,7 @@ export function selectReflexContextV1(
   let selectedBundle: ReflexBundleV1 | null = null;
   let attemptedAtomIds: string[] = [];
   let conflictDetected = false;
+  let selectedFrontierEntryDigest: string | null = null;
 
   for (const [bundleId, bundle] of [...session.bundles.entries()].sort(
     (left, right) =>
@@ -273,6 +296,7 @@ export function selectReflexContextV1(
     )
       continue;
     const selected: string[] = [];
+    let frontierEntryDigest: string | null = null;
     try {
       for (const atomId of requiredAtomIds)
         addWithClosure(session, atomId, selected);
@@ -299,29 +323,50 @@ export function selectReflexContextV1(
             ),
           ]),
         ];
-        const count = session.config.countTokens ?? defaultCountTokens;
         const mrs = session.config.mrs;
-        const optimized = optimizeMinimumReflexSetV1({
-          atoms: candidateIds.map((atomId) => {
-            const atom = session.atoms.get(atomId) as ReflexAtomV1;
-            return {
-              id: atomId,
-              tokenCost: count(renderAtom(atom)),
-              contribution: mrs.contributionByAtomKey[atom.key] ?? 0,
-              requires: resolveRelations(session, atom.requires, atom),
-              conflicts: resolveRelations(session, atom.conflicts, atom),
-            };
-          }),
-          requiredAtomIds,
-          intercept: mrs.intercept ?? 0,
-          successThreshold: mrs.successThreshold,
-          maxTokenCost: session.config.maxInputTokens,
-          maxSearchAtoms: mrs.maxSearchAtoms,
-        });
-        if (optimized.status === 'infeasible') continue;
-        if (optimized.status === 'search_limit') continue;
-        selected.splice(0, selected.length, ...optimized.selectedAtomIds);
+        const problem = buildRuntimeMRSProblem(
+          session,
+          candidateIds,
+          requiredAtomIds
+        );
+        if (session.config.mrsFrontier) {
+          if (
+            computeReflexMRSProblemDigestV1(problem) !==
+              session.config.mrsFrontier.problemDigest ||
+            session.config.mrsFrontier.threshold !== problem.successThreshold ||
+            !sameStringSet(
+              session.config.mrsFrontier.candidateAtomIds,
+              candidateIds
+            ) ||
+            !sameStringSet(
+              session.config.mrsFrontier.requiredAtomIds,
+              requiredAtomIds
+            )
+          )
+            continue;
+          const frontierEntry = lookupReflexMRSFrontierV1(
+            session.config.mrsFrontier,
+            candidateIds,
+            {
+              maxContextAtoms: session.config.maxContextAtoms,
+              maxInputTokens: session.config.maxInputTokens,
+            }
+          );
+          if (!frontierEntry) continue;
+          selected.splice(0, selected.length, ...frontierEntry.selectedAtomIds);
+          frontierEntryDigest =
+            computeReflexMRSFrontierEntryDigestV1(frontierEntry);
+        } else {
+          const optimized = optimizeMinimumReflexSetV1({
+            ...problem,
+            maxTokenCost: session.config.maxInputTokens,
+          });
+          if (optimized.status === 'infeasible') continue;
+          if (optimized.status === 'search_limit') continue;
+          selected.splice(0, selected.length, ...optimized.selectedAtomIds);
+        }
       }
+      assertClosedSelection(session, selected);
       assertNoConflicts(session, selected);
     } catch (error) {
       if (error instanceof ReflexConflictError) {
@@ -333,6 +378,7 @@ export function selectReflexContextV1(
     selectedBundleId = bundleId;
     selectedBundle = bundle;
     attemptedAtomIds = selected;
+    selectedFrontierEntryDigest = frontierEntryDigest;
     break;
   }
 
@@ -370,6 +416,8 @@ export function selectReflexContextV1(
     tokenizerId: session.config.tokenizerId,
     renderer,
     selectionPolicyDigest: computeReflexSelectionPolicyDigestV1(session),
+    mrsFrontierDigest: session.config.mrsFrontier?.frontierDigest ?? null,
+    mrsFrontierEntryDigest: selectedFrontierEntryDigest,
     disposition,
   };
   if (disposition === 'ready') {
@@ -523,6 +571,57 @@ function addWithClosure(
   if (!selected.includes(atomId)) selected.push(atomId);
 }
 
+function buildRuntimeMRSProblem(
+  session: ReflexSessionV1,
+  candidateIds: string[],
+  requiredAtomIds: string[]
+): ReflexMRSProblemV1 {
+  const count = session.config.countTokens ?? defaultCountTokens;
+  const mrs = session.config.mrs as ReflexRuntimeMRSConfigV1;
+  return {
+    atoms: candidateIds.map((atomId) => {
+      const atom = session.atoms.get(atomId) as ReflexAtomV1;
+      return {
+        id: atomId,
+        tokenCost: count(renderAtom(atom)),
+        contribution: mrs.contributionByAtomKey[atom.key] ?? 0,
+        requires: resolveRelations(session, atom.requires, atom),
+        conflicts: resolveRelations(session, atom.conflicts, atom),
+      };
+    }),
+    requiredAtomIds,
+    intercept: mrs.intercept ?? 0,
+    successThreshold: mrs.successThreshold,
+    maxTokenCost: session.config.maxInputTokens,
+    maxSearchAtoms: mrs.maxSearchAtoms,
+  };
+}
+
+function assertClosedSelection(
+  session: ReflexSessionV1,
+  selected: string[]
+): void {
+  const selectedSet = new Set(selected);
+  for (const atomId of selected) {
+    const atom = session.atoms.get(atomId);
+    if (!atom) throw new Error('Reflex selection references a missing atom.');
+    if (!isApplicable(session, atomId))
+      throw new ReflexConflictError('Reflex atom is outside the active scope.');
+    for (const dependency of resolveRelations(session, atom.requires, atom)) {
+      if (!selectedSet.has(dependency))
+        throw new ReflexConflictError(
+          `Missing dependency for selected atom: ${atom.key}`
+        );
+    }
+  }
+}
+
+function sameStringSet(left: string[], right: string[]): boolean {
+  return (
+    left.length === right.length && left.every((value) => right.includes(value))
+  );
+}
+
 function assertNoConflicts(session: ReflexSessionV1, selected: string[]): void {
   const selectedSet = new Set(selected);
   for (const atomId of selected) {
@@ -656,6 +755,7 @@ export function computeReflexSelectionPolicyDigestV1(
       maxInputTokens: session.config.maxInputTokens,
       tokenizerId: session.config.tokenizerId,
       renderer: REFLEX_RENDERER_V1,
+      mrsFrontierDigest: session.config.mrsFrontier?.frontierDigest ?? null,
       mrs: mrs
         ? {
             successThreshold: String(mrs.successThreshold),

@@ -1,6 +1,6 @@
 # Reflex 0.2 Empirical Intelligence Plan
 
-Status: Workstream 1 in progress on 2026-09-09
+Status: Workstream 5 harness complete; production dataset pending on 2026-09-09
 Branch: `feat/reflex-0.2-empirical`
 Target: `@knolo/reflex` 0.2.0
 
@@ -144,6 +144,13 @@ Acceptance criteria:
 - lookup latency is independent of the full candidate power set;
 - tampered frontier/configuration is rejected by digest verification.
 
+Implemented in `packages/reflex/src/frontier.ts`: frontier construction shares
+the exact finite enumeration oracle, removes dominated entries deterministically,
+binds the result to a canonical MRS problem digest, and provides validated
+lookup without request-time power-set enumeration. Runtime receipts now commit
+the frontier and selected-entry digests, while runtime checks revalidate the
+problem digest, closure, conflicts, scope, and budgets.
+
 ## Workstream 5: benchmark and certification harness
 
 Create a frozen benchmark fixture with at least 500 queries when the dataset is
@@ -177,6 +184,16 @@ Acceptance criteria:
 - the report directly supports `small model + Reflex` versus `larger plain`
   comparisons.
 
+Implemented in `packages/reflex/src/benchmark.ts` and
+`packages/reflex/scripts/benchmark-local.mjs`: tasks receive deterministic
+calibration/development/test assignments and task/split digests; the harness
+runs plain, full-Reflex, and MRS-Reflex variants; reports correctness, policy,
+schema, coverage, risk-bound, token, latency, and nullable resource metrics;
+and records declared model metadata without inferring parameter classes. The
+reproducibility checker is `scripts/check-reflex-benchmark.mjs`. The bundled
+six-task run is exploratory only; a 500-query frozen fixture and verified model
+matrix remain required for production certification.
+
 ## Workstream 6: release hardening and publication
 
 Before 0.2.0:
@@ -190,6 +207,13 @@ Before 0.2.0:
 4. Review the public API for schema compatibility and explicitly decide whether
    the V1 schema is frozen.
 5. Publish only after the commit and tag are pushed.
+
+Release-hardening status: conformance fixture coverage, public declaration
+generation, package/root/evaluation documentation, formatting, documentation
+checks, full tests, package dry runs, and benchmark reproducibility checks are
+complete. The V1 schemas remain experimental and are deliberately not frozen
+for 0.2.0; publication is still gated on the larger frozen benchmark dataset
+and verified model matrix.
 
 ## Suggested week sequence
 

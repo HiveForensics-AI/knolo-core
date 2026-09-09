@@ -387,13 +387,47 @@ export type {
   ReflexTeacherProvenanceV1,
   ReflexTeacherRecordV1,
 } from './distill.js';
-export { optimizeMinimumReflexSetV1 } from './optimizer.js';
+export {
+  enumerateReflexMRSSubsetsV1,
+  optimizeMinimumReflexSetV1,
+  validateReflexMRSProblemV1,
+} from './optimizer.js';
 export type {
   ReflexMRSAtomV1,
+  ReflexMRSEnumerationV1,
   ReflexMRSInteractionV1,
   ReflexMRSProblemV1,
   ReflexMRSResultV1,
+  ReflexMRSSubsetV1,
 } from './optimizer.js';
+export {
+  buildReflexMRSFrontierV1,
+  computeReflexMRSFrontierEntryDigestV1,
+  computeReflexMRSProblemDigestV1,
+  lookupReflexMRSFrontierV1,
+  validateReflexMRSFrontierV1,
+} from './frontier.js';
+export type {
+  ReflexMRSFrontierEntryV1,
+  ReflexMRSFrontierLookupOptionsV1,
+  ReflexMRSFrontierV1,
+} from './frontier.js';
+export { calibrateReflexCapabilityV1 } from './calibration.js';
+export type {
+  ReflexAblationObservationV1,
+  ReflexCalibrationConfigV1,
+  ReflexCalibrationFeatureV1,
+  ReflexCalibrationResultV1,
+} from './calibration.js';
+export {
+  assignReflexBenchmarkSplitsV1,
+  validateReflexBenchmarkSplitPlanV1,
+} from './benchmark.js';
+export type {
+  ReflexBenchmarkSplitPlanV1,
+  ReflexBenchmarkSplitV1,
+  ReflexBenchmarkTaskV1,
+} from './benchmark.js';
 export {
   openReflexSessionV1,
   computeReflexSelectionPolicyDigestV1,

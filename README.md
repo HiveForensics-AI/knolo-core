@@ -244,6 +244,12 @@ The package is independently versioned as `0.1.2`, compatible with
 server. See the [Reflex package guide](packages/reflex/README.md) for the CLI,
 verification, evaluation, optimization, distillation, and security details.
 
+The current Reflex 0.2 development line adds frozen teacher provenance,
+behavior-signature clusters, calibrated MRS selection, offline Pareto frontiers,
+and a split-aware benchmark harness. These additions remain experimental until
+the larger frozen evaluation set, conformance review, and release gates are
+complete.
+
 ## Trust and engineering proof
 
 Knolo’s trust model is expressed in executable contracts rather than marketing language. Run the repository checks locally:

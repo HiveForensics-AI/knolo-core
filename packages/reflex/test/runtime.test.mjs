@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  buildReflexMRSFrontierV1,
   openReflexSessionV1,
   selectReflexContextV1,
   validateReflexOutputV1,
@@ -313,4 +314,88 @@ test('integrates the finite MRS optimizer into runtime selection', async () => {
   assert.equal(selection.selectedAtomIds.length, 1);
   assert.match(selection.context, /support\.recovery/);
   assert.doesNotMatch(selection.context, /support\.extra/);
+});
+
+test('uses a verified offline MRS frontier in the fast runtime path', async () => {
+  const atoms = [
+    {
+      schema: 'knolo.reflex.atom/v1',
+      type: 'intent',
+      key: 'support.recovery',
+      scope: { namespace: 'support' },
+      requires: [],
+      conflicts: [],
+      sourceIds: [],
+      body: { phrase: 'recovery' },
+    },
+    {
+      schema: 'knolo.reflex.atom/v1',
+      type: 'fact',
+      key: 'support.extra',
+      scope: { namespace: 'support' },
+      requires: [],
+      conflicts: [],
+      sourceIds: [],
+      body: { detail: 'optional' },
+    },
+  ];
+  const atomIds = atoms.map((atom) =>
+    digestDomain(
+      'object',
+      canonicalCbor({
+        kind: 'metadata',
+        bytes: canonicalCbor(atom),
+        meta: {
+          reflex_namespace: 'support',
+          reflex_role: 'atom',
+          reflex_schema: 'knolo.reflex.atom/v1',
+          reflex_type: atom.type,
+        },
+      })
+    )
+  );
+  const built = buildReflexImageV1({
+    namespace: 'support',
+    atoms,
+    bundles: [
+      {
+        schema: 'knolo.reflex.bundle/v1',
+        key: 'support.recovery.default',
+        namespace: 'support',
+        requiredAtomKeys: ['support.recovery'],
+        triggerAtomKeys: ['support.recovery'],
+        optionalAtomKeys: ['support.extra'],
+        outputSchema: { type: 'object' },
+        renderer: 'reflex-renderer-v1',
+      },
+    ],
+  });
+  const mrs = {
+    successThreshold: 0.7,
+    contributionByAtomKey: { 'support.recovery': 1, 'support.extra': 0 },
+  };
+  const frontier = buildReflexMRSFrontierV1({
+    atoms: atomIds.map((id, index) => ({
+      id,
+      tokenCost: 1,
+      contribution: index === 0 ? 1 : 0,
+    })),
+    requiredAtomIds: [atomIds[0]],
+    intercept: 0,
+    successThreshold: mrs.successThreshold,
+    maxTokenCost: 512,
+    maxSearchAtoms: 20,
+  });
+  const session = await openReflexSessionV1(built.image.bytes, {
+    namespace: 'support',
+    countTokens: () => 1,
+    mrs,
+    mrsFrontier: frontier,
+  });
+  const selection = selectReflexContextV1(session, 'recovery');
+  assert.equal(selection.disposition, 'ready');
+  assert.deepEqual(selection.selectedAtomIds, [atomIds[0]]);
+  assert.equal(selection.receipt.mrsFrontierDigest, frontier.frontierDigest);
+  assert.ok(selection.receipt.mrsFrontierEntryDigest);
+  verifyReflexSelectionReceiptV1(session, selection.receipt, 'recovery');
 });

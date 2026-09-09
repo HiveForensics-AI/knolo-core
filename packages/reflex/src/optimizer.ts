@@ -32,6 +32,19 @@ export type ReflexMRSResultV1 = {
   reason?: string;
 };
 
+export type ReflexMRSSubsetV1 = {
+  selectedAtomIds: string[];
+  tokenCost: number;
+  predictedSuccess: number;
+};
+
+export type ReflexMRSEnumerationV1 = {
+  status: 'complete' | 'search_limit';
+  subsets: ReflexMRSSubsetV1[];
+  enumeratedSubsets: number;
+  reason?: string;
+};
+
 /**
  * Solve the finite surrogate MRS problem exactly by exhaustive enumeration.
  * `optimal` means every subset in the declared candidate pool was searched;
@@ -41,12 +54,8 @@ export type ReflexMRSResultV1 = {
 export function optimizeMinimumReflexSetV1(
   problem: ReflexMRSProblemV1
 ): ReflexMRSResultV1 {
-  validateProblem(problem);
-  const atoms = problem.atoms
-    .slice()
-    .sort((left, right) => compareBytes(left.id, right.id));
-  const maxSearchAtoms = problem.maxSearchAtoms ?? 20;
-  if (atoms.length > maxSearchAtoms) {
+  const enumeration = enumerateReflexMRSSubsetsV1(problem);
+  if (enumeration.status === 'search_limit') {
     return {
       schema: 'knolo.reflex.mrs-result/v1',
       status: 'search_limit',
@@ -55,81 +64,24 @@ export function optimizeMinimumReflexSetV1(
       predictedSuccess: null,
       threshold: problem.successThreshold,
       enumeratedSubsets: 0,
-      reason: `Candidate pool has ${atoms.length} atoms; exact search limit is ${maxSearchAtoms}.`,
+      reason: enumeration.reason,
     };
   }
-
-  const indexById = new Map(atoms.map((atom, index) => [atom.id, index]));
-  const required = new Set(problem.requiredAtomIds ?? []);
-  const interactions = (problem.interactions ?? []).map((interaction) => ({
-    ...interaction,
-    left: indexById.get(interaction.atomIds[0]) as number,
-    right: indexById.get(interaction.atomIds[1]) as number,
-  }));
-  const subsetCount = 2 ** atoms.length;
-  let enumeratedSubsets = 0;
-  let best: {
-    atomIds: string[];
-    tokenCost: number;
-    predictedSuccess: number;
-  } | null = null;
-
-  for (let mask = 0; mask < subsetCount; mask++) {
-    enumeratedSubsets++;
-    const selected = atoms.filter((_, index) => (mask & (1 << index)) !== 0);
-    const selectedIds = new Set(selected.map((atom) => atom.id));
-    if ([...required].some((id) => !selectedIds.has(id))) continue;
-    if (
-      selected.some((atom) =>
-        (atom.requires ?? []).some((dependency) => !selectedIds.has(dependency))
-      )
-    )
-      continue;
-    if (
-      selected.some((atom) =>
-        (atom.conflicts ?? []).some((conflict) => selectedIds.has(conflict))
-      )
-    )
-      continue;
-    const tokenCost = selected.reduce((sum, atom) => sum + atom.tokenCost, 0);
-    if (problem.maxTokenCost !== undefined && tokenCost > problem.maxTokenCost)
-      continue;
-    const logit =
-      problem.intercept +
-      selected.reduce((sum, atom) => sum + atom.contribution, 0) +
-      interactions.reduce(
-        (sum, interaction) =>
-          sum +
-          (selectedIds.has(atoms[interaction.left].id) &&
-          selectedIds.has(atoms[interaction.right].id)
-            ? interaction.contribution
-            : 0),
-        0
-      );
-    const predictedSuccess = sigmoid(logit);
-    if (predictedSuccess + Number.EPSILON < problem.successThreshold) continue;
-    const atomIds = selected.map((atom) => atom.id);
-    if (
-      best === null ||
-      tokenCost < best.tokenCost ||
-      (tokenCost === best.tokenCost && atomIds.length < best.atomIds.length) ||
-      (tokenCost === best.tokenCost &&
-        atomIds.length === best.atomIds.length &&
-        compareBytes(atomIds.join('\0'), best.atomIds.join('\0')) < 0)
-    ) {
-      best = { atomIds, tokenCost, predictedSuccess };
-    }
-  }
+  const best = enumeration.subsets.reduce<ReflexMRSSubsetV1 | null>(
+    (current, candidate) =>
+      current === null || isBetter(candidate, current) ? candidate : current,
+    null
+  );
 
   return best
     ? {
         schema: 'knolo.reflex.mrs-result/v1',
         status: 'optimal',
-        selectedAtomIds: best.atomIds,
+        selectedAtomIds: best.selectedAtomIds,
         tokenCost: best.tokenCost,
         predictedSuccess: best.predictedSuccess,
         threshold: problem.successThreshold,
-        enumeratedSubsets,
+        enumeratedSubsets: enumeration.enumeratedSubsets,
       }
     : {
         schema: 'knolo.reflex.mrs-result/v1',
@@ -138,12 +90,102 @@ export function optimizeMinimumReflexSetV1(
         tokenCost: null,
         predictedSuccess: null,
         threshold: problem.successThreshold,
-        enumeratedSubsets,
+        enumeratedSubsets: enumeration.enumeratedSubsets,
         reason: 'No feasible subset in the declared candidate pool.',
       };
 }
 
-function validateProblem(problem: ReflexMRSProblemV1): void {
+/** Enumerate every feasible subset in the declared finite candidate pool. */
+export function enumerateReflexMRSSubsetsV1(
+  problem: ReflexMRSProblemV1
+): ReflexMRSEnumerationV1 {
+  validateReflexMRSProblemV1(problem);
+  const atoms = problem.atoms
+    .slice()
+    .sort((left, right) => compareBytes(left.id, right.id));
+  const maxSearchAtoms = problem.maxSearchAtoms ?? 20;
+  if (atoms.length > maxSearchAtoms) {
+    return {
+      status: 'search_limit',
+      subsets: [],
+      enumeratedSubsets: 0,
+      reason: `Candidate pool has ${atoms.length} atoms; exact search limit is ${maxSearchAtoms}.`,
+    };
+  }
+
+  const subsetCount = 2 ** atoms.length;
+  const subsets: ReflexMRSSubsetV1[] = [];
+  let enumeratedSubsets = 0;
+  for (let mask = 0; mask < subsetCount; mask++) {
+    enumeratedSubsets++;
+    const selected = atoms.filter((_, index) => (mask & (1 << index)) !== 0);
+    const evaluated = evaluateSubset(problem, selected);
+    if (evaluated) subsets.push(evaluated);
+  }
+  return { status: 'complete', subsets, enumeratedSubsets };
+}
+
+function evaluateSubset(
+  problem: ReflexMRSProblemV1,
+  selected: ReflexMRSAtomV1[]
+): ReflexMRSSubsetV1 | null {
+  const selectedIds = new Set(selected.map((atom) => atom.id));
+  if ((problem.requiredAtomIds ?? []).some((id) => !selectedIds.has(id)))
+    return null;
+  if (
+    selected.some((atom) =>
+      (atom.requires ?? []).some((dependency) => !selectedIds.has(dependency))
+    )
+  )
+    return null;
+  if (
+    selected.some((atom) =>
+      (atom.conflicts ?? []).some((conflict) => selectedIds.has(conflict))
+    )
+  )
+    return null;
+  const tokenCost = selected.reduce((sum, atom) => sum + atom.tokenCost, 0);
+  if (problem.maxTokenCost !== undefined && tokenCost > problem.maxTokenCost)
+    return null;
+  const interactions = problem.interactions ?? [];
+  const logit =
+    problem.intercept +
+    selected.reduce((sum, atom) => sum + atom.contribution, 0) +
+    interactions.reduce(
+      (sum, interaction) =>
+        sum +
+        (selectedIds.has(interaction.atomIds[0]) &&
+        selectedIds.has(interaction.atomIds[1])
+          ? interaction.contribution
+          : 0),
+      0
+    );
+  const predictedSuccess = sigmoid(logit);
+  if (predictedSuccess + Number.EPSILON < problem.successThreshold) return null;
+  return {
+    selectedAtomIds: selected.map((atom) => atom.id),
+    tokenCost,
+    predictedSuccess,
+  };
+}
+
+function isBetter(
+  candidate: ReflexMRSSubsetV1,
+  current: ReflexMRSSubsetV1
+): boolean {
+  return (
+    candidate.tokenCost < current.tokenCost ||
+    (candidate.tokenCost === current.tokenCost &&
+      (candidate.selectedAtomIds.length < current.selectedAtomIds.length ||
+        (candidate.selectedAtomIds.length === current.selectedAtomIds.length &&
+          compareBytes(
+            candidate.selectedAtomIds.join('\0'),
+            current.selectedAtomIds.join('\0')
+          ) < 0)))
+  );
+}
+
+export function validateReflexMRSProblemV1(problem: ReflexMRSProblemV1): void {
   if (!problem || !Array.isArray(problem.atoms))
     throw new Error('MRS atoms are required.');
   if (!Number.isFinite(problem.intercept))

@@ -36,6 +36,8 @@ export type ReflexTeacherProvenanceV1 = {
 export type ReflexBehaviorExtractionV1 = {
   atoms: ReflexAtomV1[];
   triggerAtomKeys?: string[];
+  /** Explicit host-owned behavior signature used for deterministic clustering. */
+  behaviorSignature?: string;
 };
 
 export type ReflexBehaviorExtractorV1 = (
@@ -47,6 +49,7 @@ export type ReflexDistillationConfigV1 = {
   extractor: ReflexBehaviorExtractorV1;
   outputSchema?: Record<string, unknown>;
   renderer?: typeof REFLEX_RENDERER_V1;
+  maxClusterAtoms?: number;
 };
 
 export type ReflexFrozenDistillationConfigV1 = Omit<
@@ -77,6 +80,7 @@ export type ReflexExtractionRecordV1 = {
   teacherOutput: string;
   sourceIds: string[];
   accepted: boolean;
+  clusterId: string;
   provenance: ReflexTeacherProvenanceV1;
   teacherRecordRoot: string;
   extraction: ReflexBehaviorExtractionV1;
@@ -100,6 +104,11 @@ export function validateReflexExtractionRecordV1(
     !DIGEST_PATTERN.test(value.teacherRecordRoot)
   )
     throw new Error('Extraction record teacher root is invalid.');
+  if (
+    typeof value.clusterId !== 'string' ||
+    !DIGEST_PATTERN.test(value.clusterId)
+  )
+    throw new Error('Extraction record cluster ID is invalid.');
   if (
     !Array.isArray(value.sourceIds) ||
     value.sourceIds.some(
@@ -143,6 +152,12 @@ export function validateReflexExtractionRecordV1(
   )
     throw new Error('Extraction record trigger keys are invalid.');
   if (
+    extractionValue.behaviorSignature !== undefined &&
+    (typeof extractionValue.behaviorSignature !== 'string' ||
+      !extractionValue.behaviorSignature.trim())
+  )
+    throw new Error('Extraction record behavior signature is invalid.');
+  if (
     typeof value.extractionRoot !== 'string' ||
     !DIGEST_PATTERN.test(value.extractionRoot) ||
     value.extractionRoot !==
@@ -184,6 +199,7 @@ export function computeReflexExtractionRootV1(
       triggerAtomKeys: [...(extraction.triggerAtomKeys ?? [])].sort(
         compareBytes
       ),
+      behaviorSignature: extraction.behaviorSignature ?? null,
       atomSignatures: extraction.atoms.map(atomSignature).sort(compareBytes),
     } as never)
   );
@@ -307,8 +323,20 @@ export async function distillReflexBehaviorV1(
   }
 
   const atomsByKey = new Map<string, ReflexAtomV1>();
-  const familyAtoms = new Map<string, Set<string>>();
-  const familyTriggers = new Map<string, Set<string>>();
+  const maxClusterAtoms = config.maxClusterAtoms ?? 32;
+  if (!Number.isInteger(maxClusterAtoms) || maxClusterAtoms <= 0)
+    throw new Error('Reflex distillation maxClusterAtoms must be positive.');
+  const clusters = new Map<
+    string,
+    {
+      id: string;
+      family: string;
+      signature: string;
+      recordIds: Set<string>;
+      atomKeys: Set<string>;
+      triggerKeys: Set<string>;
+    }
+  >();
   const acceptedRecordIds: string[] = [];
   const extractionRecords: ReflexExtractionRecordV1[] = [];
   const rejectedRecords: ReflexDistillationRejectV1[] = [];
@@ -362,6 +390,29 @@ export async function distillReflexBehaviorV1(
       continue;
     }
     acceptedRecordIds.push(record.id);
+    const signature =
+      extracted.behaviorSignature?.trim() || `record:${record.id}`;
+    const clusterId = digestDomain(
+      'reflex-behavior-cluster',
+      canonicalCbor({ family: record.family, signature } as never)
+    );
+    const cluster = clusters.get(clusterId) ?? {
+      id: clusterId,
+      family: record.family,
+      signature,
+      recordIds: new Set<string>(),
+      atomKeys: new Set<string>(),
+      triggerKeys: new Set<string>(),
+    };
+    const nextAtomCount = new Set([...cluster.atomKeys, ...recordAtomKeys])
+      .size;
+    if (nextAtomCount > maxClusterAtoms)
+      throw new Error(
+        `Reflex behavior cluster exceeds atom limit: ${clusterId}`
+      );
+    cluster.recordIds.add(record.id);
+    for (const key of recordAtomKeys) cluster.atomKeys.add(key);
+    clusters.set(clusterId, cluster);
     const teacherRecordRoot =
       record.recordRoot ?? computeReflexTeacherRecordRootV1(record);
     const normalizedExtraction = {
@@ -370,6 +421,9 @@ export async function distillReflexBehaviorV1(
       ),
       ...(extracted.triggerAtomKeys
         ? { triggerAtomKeys: [...extracted.triggerAtomKeys].sort(compareBytes) }
+        : {}),
+      ...(extracted.behaviorSignature
+        ? { behaviorSignature: extracted.behaviorSignature.trim() }
         : {}),
     };
     extractionRecords.push({
@@ -380,6 +434,7 @@ export async function distillReflexBehaviorV1(
       teacherOutput: record.teacherOutput,
       sourceIds: [...(record.sourceIds ?? [])].sort(compareBytes),
       accepted: true,
+      clusterId,
       provenance: record.provenance,
       teacherRecordRoot,
       extraction: normalizedExtraction,
@@ -388,38 +443,31 @@ export async function distillReflexBehaviorV1(
         normalizedExtraction
       ),
     });
-    const atomsForFamily = familyAtoms.get(record.family) ?? new Set<string>();
-    for (const key of recordAtomKeys) atomsForFamily.add(key);
-    familyAtoms.set(record.family, atomsForFamily);
     const triggerKeys = extracted.triggerAtomKeys?.length
       ? extracted.triggerAtomKeys
       : [...recordAtomKeys].filter(
           (key) => atomsByKey.get(key)?.type === 'intent'
         );
-    const triggersForFamily =
-      familyTriggers.get(record.family) ?? new Set<string>();
+    const triggersForCluster = cluster.triggerKeys;
     for (const key of triggerKeys) {
-      if (recordAtomKeys.has(key)) triggersForFamily.add(key);
+      if (recordAtomKeys.has(key)) triggersForCluster.add(key);
     }
-    familyTriggers.set(record.family, triggersForFamily);
   }
 
   const atoms = [...atomsByKey.values()].sort((left, right) =>
     compareBytes(left.key, right.key)
   );
   const bundles: ReflexBundleBuildInput[] = [];
-  for (const [family, keys] of [...familyAtoms.entries()].sort((left, right) =>
-    compareBytes(left[0], right[0])
+  for (const cluster of [...clusters.values()].sort((left, right) =>
+    compareBytes(left.id, right.id)
   )) {
-    const requiredAtomKeys = [...keys].sort(compareBytes);
-    const triggerAtomKeys = [
-      ...(familyTriggers.get(family) ?? new Set<string>()),
-    ]
-      .filter((key) => keys.has(key))
+    const requiredAtomKeys = [...cluster.atomKeys].sort(compareBytes);
+    const triggerAtomKeys = [...cluster.triggerKeys]
+      .filter((key) => cluster.atomKeys.has(key))
       .sort(compareBytes);
     bundles.push({
       schema: REFLEX_SCHEMA_VERSIONS.bundle,
-      key: `${config.namespace}.${family}.default`,
+      key: `${config.namespace}.${cluster.family}.cluster-${cluster.id.slice(7, 23)}`,
       namespace: config.namespace,
       requiredAtomKeys,
       triggerAtomKeys: triggerAtomKeys.length
@@ -435,11 +483,22 @@ export async function distillReflexBehaviorV1(
     canonicalCbor({
       version: 1,
       namespace: config.namespace,
+      maxClusterAtoms,
       acceptedRecordIds,
       rejectedRecords,
       atomKeys: atoms.map((atom) => atom.key),
       atomSignatures: atoms.map(atomSignature),
       bundleKeys: bundles.map((bundle) => bundle.key),
+      clusters: [...clusters.values()]
+        .sort((left, right) => compareBytes(left.id, right.id))
+        .map((cluster) => ({
+          id: cluster.id,
+          family: cluster.family,
+          signature: cluster.signature,
+          recordIds: [...cluster.recordIds].sort(compareBytes),
+          atomKeys: [...cluster.atomKeys].sort(compareBytes),
+          triggerKeys: [...cluster.triggerKeys].sort(compareBytes),
+        })),
       extractionRoots: extractionRecords.map((record) => record.extractionRoot),
       duplicateAtomCount,
     } as never)

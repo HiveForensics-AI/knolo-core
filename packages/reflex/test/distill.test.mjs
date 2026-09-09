@@ -61,6 +61,7 @@ test('distills frozen teacher records into deduplicated atoms and bundles', asyn
           atom('support.account-recovery'),
           atom('support.verify-ownership', 'constraint'),
         ],
+        behaviorSignature: 'account-recovery',
         triggerAtomKeys:
           record.id === 'record-a' ? ['support.account-recovery'] : undefined,
       }),
@@ -76,6 +77,7 @@ test('distills frozen teacher records into deduplicated atoms and bundles', asyn
   assert.deepEqual(result.bundles[0].triggerAtomKeys, [
     'support.account-recovery',
   ]);
+  assert.equal(result.bundles.length, 1);
   assert.match(result.distillationDigest, /^sha256-[0-9a-f]{64}$/);
 });
 
@@ -155,4 +157,28 @@ test('replays serialized extraction records without an extractor', async () => {
     extracted.extractionRecords.map((item) => item.extractionRoot)
   );
   assert.deepEqual(replayed.bundles, extracted.bundles);
+});
+
+test('creates separate bounded bundles for distinct behavior signatures', async () => {
+  const records = ['password', 'mfa'].map((variant) => ({
+    schema: 'knolo.reflex.teacher-record/v1',
+    id: `record-${variant}`,
+    family: 'recovery',
+    query: `${variant} recovery`,
+    teacherOutput: `Use ${variant} recovery.`,
+    provenance,
+  }));
+  const result = await distillReflexBehaviorV1(records, {
+    namespace: 'support',
+    extractor: (record) => ({
+      atoms: [atom(`support.${record.query.split(' ')[0]}-recovery`)],
+      behaviorSignature: record.query.split(' ')[0],
+    }),
+  });
+  assert.equal(result.bundles.length, 2);
+  assert.notEqual(result.bundles[0].key, result.bundles[1].key);
+  assert.equal(
+    new Set(result.extractionRecords.map((item) => item.clusterId)).size,
+    2
+  );
 });

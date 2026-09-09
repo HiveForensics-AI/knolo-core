@@ -103,13 +103,22 @@ adapter is invoked.
 The package includes comparison and evaluation helpers:
 
 ```bash
-REFLEX_MODELS=gemma4:e2b npm run benchmark:reflex:local -- /tmp/knolo-reflex-gemma4-e2b.json
+REFLEX_MODELS=gemma4:e2b npm run benchmark:reflex:local -- \
+  /tmp/knolo-reflex-gemma4-e2b-benchmark.json
+npm run benchmark:reflex:check -- \
+  /tmp/knolo-reflex-gemma4-e2b-benchmark.json
 ```
 
-That command uses `gemma4:e2b` by default when Ollama is available.
-It is a development benchmark, not a certification claim; production teams
-should supply a larger task set, a stable model revision, and a task-specific
-judge.
+The harness records plain, full-Reflex, and MRS-Reflex variants, assigns a
+deterministic 60/20/20 calibration/development/test split, and commits task,
+split, behavior, selection-policy, frontier, and run-plan digests. Use
+`--dry-run` to generate and validate the plan without model inference. Set
+`REFLEX_MODEL_CLASS` only when the evaluation owner has verified a model class;
+the harness never infers parameter count from a model tag. Set
+`REFLEX_VALIDATE_OUTPUT=1` to enable the bundle output-schema check. The
+six-task fixture is intentionally exploratory and cannot support certification;
+production evidence requires a larger frozen task set, stable model revisions,
+and application-owned judges.
 
 Use `REFLEX_MODELS=model-a,model-b,...` to run the same held-out suite across
 multiple Ollama models (for example the 0.5B, 1B/1.5B, 3B, and 7B candidates).
@@ -132,11 +141,56 @@ Teacher records use the versioned `knolo.reflex.teacher-record/v1` contract and
 carry model, prompt, extractor, judge, dataset-split, and evidence provenance.
 `computeReflexTeacherRecordRootV1` commits the input record, while each accepted
 record receives an `extractionRoot` committing the normalized extracted atoms
-and triggers. Records with a supplied root are verified before extraction.
+and triggers. Records with a supplied root are verified before extraction. An
+extractor may return an explicit `behaviorSignature`; records with the same
+family and signature share a deterministic bounded cluster and bundle, while
+records without one remain isolated rather than being silently unioned.
 `optimizeMinimumReflexSetV1` exhaustively solves small surrogate candidate pools
 and reports `search_limit` instead of claiming optimality for larger pools.
 The exact solver caps exhaustive search at 30 atoms; production use should
 prefer an offline Pareto frontier or another bounded solver.
+
+For production request paths, build and validate that frontier offline from
+the exact candidate problem, then provide it alongside the same `mrs` config:
+
+```ts
+import { buildReflexMRSFrontierV1, openReflexSessionV1 } from '@knolo/reflex';
+
+const frontier = buildReflexMRSFrontierV1({
+  atoms: candidateAtoms,
+  requiredAtomIds,
+  intercept: 0,
+  successThreshold: 0.7,
+  maxTokenCost: 512,
+});
+const session = await openReflexSessionV1(packBytes, {
+  namespace: 'support',
+  mrs,
+  mrsFrontier: frontier,
+});
+```
+
+The frontier stores only nondominated selections and is content-addressed by
+the full MRS problem digest. Runtime lookup validates the frontier, checks that
+the current candidate problem matches that digest, and rechecks dependencies,
+conflicts, scope, atom count, and input budgets. A frontier is therefore an
+offline artifact for a fixed candidate pool; changing model coefficients,
+tokenizer, token costs, or budgets requires rebuilding it. Its digest and the
+selected entry digest are included in the selection receipt.
+
+Capability calibration is available for frozen model ablation observations:
+
+```bash
+reflex calibrate ./ablation-observations.json ./calibration-config.json \
+  ./capability-calibration.json
+```
+
+`calibrateReflexCapabilityV1` fits a bounded logistic surrogate for one model
+revision and behavior family using only `calibration` observations. It emits
+per-atom coefficients, declared pair interactions, standard errors, sample
+counts, and deterministic coefficient/calibration digests. Both successful and
+failed observations are required; development and test observations are
+rejected from fitting.
 
 ## Versioning and status
 
