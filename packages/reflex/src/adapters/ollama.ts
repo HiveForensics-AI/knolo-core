@@ -71,6 +71,7 @@ export function createOllamaReflexAdapterV1(
         });
         return {
           ...judgment,
+          output: payload.response,
           outputTokens:
             typeof payload.eval_count === 'number'
               ? payload.eval_count

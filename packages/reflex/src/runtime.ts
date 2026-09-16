@@ -139,6 +139,14 @@ export async function openReflexSessionV1(
     !config.namespace.trim()
   )
     throw new Error('Reflex runtime namespace is required.');
+  if (config.countTokens !== undefined) {
+    if (typeof config.countTokens !== 'function')
+      throw new Error('Reflex runtime countTokens must be a function.');
+    if (typeof config.tokenizerId !== 'string' || !config.tokenizerId.trim())
+      throw new Error(
+        'Reflex runtime tokenizerId is required with a custom countTokens function.'
+      );
+  }
   for (const [name, value] of [
     ['topK', config.topK],
     ['maxContextAtoms', config.maxContextAtoms],

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  computeReflexExtractionRootV1,
   computeReflexTeacherRecordRootV1,
   distillReflexBehaviorV1,
   distillReflexFrozenExtractionsV1,
@@ -132,6 +133,63 @@ test('commits teacher provenance and extracted behavior roots', async () => {
       recordRoot,
       teacherOutput: 'tampered',
     })
+  );
+});
+
+test('commits teacher acceptance and complete normalized atom references', () => {
+  const acceptedRecord = {
+    schema: 'knolo.reflex.teacher-record/v1',
+    id: 'acceptance-record',
+    family: 'recovery',
+    query: 'recover account',
+    teacherOutput: 'Use the approved path.',
+    provenance,
+  };
+  assert.equal(
+    computeReflexTeacherRecordRootV1(acceptedRecord),
+    computeReflexTeacherRecordRootV1({ ...acceptedRecord, accepted: true })
+  );
+  assert.notEqual(
+    computeReflexTeacherRecordRootV1({ ...acceptedRecord, accepted: false }),
+    computeReflexTeacherRecordRootV1(acceptedRecord)
+  );
+
+  const baseExtraction = {
+    atoms: [atom('support.recovery')],
+  };
+  const root = computeReflexExtractionRootV1(
+    'sha256-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    baseExtraction
+  );
+  assert.notEqual(
+    computeReflexExtractionRootV1(
+      'sha256-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      {
+        atoms: [
+          {
+            ...atom('support.recovery'),
+            requires: ['support.identity'],
+          },
+        ],
+      }
+    ),
+    root
+  );
+  assert.notEqual(
+    computeReflexExtractionRootV1(
+      'sha256-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      {
+        atoms: [
+          {
+            ...atom('support.recovery'),
+            sourceIds: [
+              'sha256-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+            ],
+          },
+        ],
+      }
+    ),
+    root
   );
 });
 

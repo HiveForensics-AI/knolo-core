@@ -181,7 +181,7 @@ export function computeReflexTeacherRecordRootV1(
       query: record.query,
       teacherOutput: record.teacherOutput,
       sourceIds: [...(record.sourceIds ?? [])].sort(compareBytes),
-      accepted: true,
+      accepted: record.accepted ?? true,
       provenance: record.provenance,
     } as never)
   );
@@ -200,7 +200,10 @@ export function computeReflexExtractionRootV1(
         compareBytes
       ),
       behaviorSignature: extraction.behaviorSignature ?? null,
-      atomSignatures: extraction.atoms.map(atomSignature).sort(compareBytes),
+      atomSignatures: extraction.atoms
+        .map(normalizeAtomForRoot)
+        .map(atomRootSignature)
+        .sort(compareBytes),
     } as never)
   );
 }
@@ -606,6 +609,22 @@ function atomSignature(atom: ReflexAtomV1): string {
       scope: atom.scope,
       body: atom.body,
     } as never)
+  );
+}
+
+function normalizeAtomForRoot(atom: ReflexAtomV1): ReflexAtomV1 {
+  return {
+    ...atom,
+    requires: [...atom.requires].sort(compareBytes),
+    conflicts: [...atom.conflicts].sort(compareBytes),
+    sourceIds: [...atom.sourceIds].sort(compareBytes),
+  };
+}
+
+function atomRootSignature(atom: ReflexAtomV1): string {
+  return digestDomain(
+    'reflex-atom-root-signature',
+    canonicalCbor(normalizeAtomForRoot(atom) as never)
   );
 }
 

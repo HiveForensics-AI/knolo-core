@@ -72,6 +72,7 @@ const datasetClass = classifyReflexBenchmarkDatasetV1(
   splitPlan.tasks.length,
   datasetKind
 );
+const datasetEligible = datasetClass === 'production-candidate' && !taskLimit;
 const taskById = new Map(splitPlan.tasks.map((task) => [task.id, task]));
 const maxInputTokens = parseInteger(process.env.REFLEX_MAX_INPUT_TOKENS, 512);
 const maxContextAtoms = parseInteger(process.env.REFLEX_MAX_CONTEXT_ATOMS, 8);
@@ -102,6 +103,8 @@ const baseConfig = {
   productVersion: process.env.REFLEX_PRODUCT_VERSION,
   maxInputTokens,
   maxContextAtoms,
+  tokenizerId:
+    process.env.REFLEX_TOKENIZER_ID ?? 'reflex-whitespace-tokenizer-v1',
   countTokens,
 };
 const baseSession = await openReflexSessionV1(built.image.bytes, baseConfig);
@@ -225,10 +228,10 @@ if (!dryRun) {
         const outputValidationFailure =
           process.env.REFLEX_VALIDATE_OUTPUT === '1' &&
           variant.session !== null &&
-          result.output !== undefined &&
-          !validateReflexOutputV1(result.output, {
-            schema: selection.outputSchema,
-          }).valid;
+          (result.output === undefined ||
+            !validateReflexOutputV1(result.output, {
+              schema: selection.outputSchema,
+            }).valid);
         observations.push({
           task,
           answered: true,

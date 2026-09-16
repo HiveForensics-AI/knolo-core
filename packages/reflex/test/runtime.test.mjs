@@ -137,6 +137,22 @@ test('activates a bundle from trigger atoms and closes over required atoms', asy
   assert.match(selection.context, /verify-ownership/);
 });
 
+test('requires an explicit tokenizer identity for custom token counters', async () => {
+  const built = buildReflexImageV1({
+    namespace: 'support',
+    atoms: [],
+    bundles: [],
+  });
+  await assert.rejects(
+    () =>
+      openReflexSessionV1(built.image.bytes, {
+        namespace: 'support',
+        countTokens: () => 1,
+      }),
+    /tokenizerId is required with a custom countTokens function/
+  );
+});
+
 test('commits delivered and attempted contexts separately when over budget', async () => {
   const built = buildReflexImageV1({
     namespace: 'support',
@@ -388,6 +404,7 @@ test('uses a verified offline MRS frontier in the fast runtime path', async () =
   });
   const session = await openReflexSessionV1(built.image.bytes, {
     namespace: 'support',
+    tokenizerId: 'test-fixed-counter-v1',
     countTokens: () => 1,
     mrs,
     mrsFrontier: frontier,

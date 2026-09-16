@@ -28,6 +28,7 @@ test('adapts an explicit Ollama response without making a real network call', as
     selectedAtomIds: [],
   });
   assert.equal(result.failure, false);
+  assert.equal(result.output, 'approved');
   assert.equal(result.outputTokens, 4);
   assert.equal(request.url, 'http://localhost:11434/api/generate');
   assert.match(request.init.body, /reset account/);
