@@ -5,6 +5,8 @@ export type OllamaReflexAdapterOptions = {
   revision?: string;
   endpoint?: string;
   timeoutMs?: number;
+  generationOptions?: Record<string, unknown>;
+  thinking?: boolean | 'low' | 'medium' | 'high' | 'max';
   fetchImpl?: typeof fetch;
   judge: (
     output: string,
@@ -40,8 +42,14 @@ export function createOllamaReflexAdapterV1(
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
             model: options.modelId,
-            prompt: `${input.context}\n\nUser request:\n${input.query}`,
+            prompt: `${input.context}\n\n${input.instruction ? `${input.instruction}\n\n` : ''}User request:\n${input.query}`,
             stream: false,
+            ...(options.generationOptions
+              ? { options: options.generationOptions }
+              : {}),
+            ...(options.thinking !== undefined
+              ? { think: options.thinking }
+              : {}),
           }),
           signal: controller.signal,
         });

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const releaseVersion = '5.5.0';
 const cliReleaseVersion = '5.5.0';
+const reflexReleaseVersion = '0.2.0';
 
 function readJson(relativePath) {
   return JSON.parse(readFileSync(path.join(root, relativePath), 'utf8'));
@@ -22,7 +23,7 @@ const npmPackages = [
 
 const reflexPackage = readJson('packages/reflex/package.json');
 assert.equal(reflexPackage.name, '@knolo/reflex');
-assert.equal(reflexPackage.version, '0.1.2');
+assert.equal(reflexPackage.version, reflexReleaseVersion);
 assert.equal(reflexPackage.license, 'Apache-2.0');
 assert.equal(reflexPackage.publishConfig?.access, 'public');
 assert.equal(reflexPackage.dependencies?.['@knolo/core'], '5.5.0');

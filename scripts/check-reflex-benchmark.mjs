@@ -20,6 +20,19 @@ if (
   report.benchmark.splitDigest !== report.benchmark.splitPlan.splitDigest
 )
   throw new Error('Benchmark report and split-plan digests disagree.');
+if (
+  report.benchmark.datasetClass === 'production-candidate' &&
+  report.benchmark.datasetKind !== 'production'
+)
+  throw new Error(
+    'Production-candidate benchmark must use a dataset wrapper with kind "production".'
+  );
+if (
+  report.benchmark.datasetClass === 'production-candidate' &&
+  report.benchmark.splitPlan.tasks.length <
+    (report.benchmark.minimumProductionTasks ?? 500)
+)
+  throw new Error('Production-candidate benchmark is below the minimum task count.');
 const expectedTasks = assignReflexBenchmarkSplitsV1(
   report.benchmark.splitPlan.tasks.map(({ split: _split, ...task }) => task)
 );
@@ -40,18 +53,22 @@ for (const run of report.runs) {
       throw new Error(`Benchmark task count is invalid for ${run.model.id}/${variant.id}.`);
   }
 }
+const plan = {
+  version: 2,
+  taskDigest: report.benchmark.taskDigest,
+  splitDigest: report.benchmark.splitDigest,
+  modelIds: report.models.map((model) => model.id),
+  variantIds: report.variants,
+  behaviorRoot: report.pack.behaviorRoot,
+  selectionPolicyDigests: report.selectionPolicyDigests,
+  frontierDigest: report.mrs.frontierDigest,
+};
+if ('generationOptions' in report.benchmark)
+  plan.generationOptions = report.benchmark.generationOptions;
+if ('thinking' in report.benchmark) plan.thinking = report.benchmark.thinking;
 const expectedPlanDigest = digestDomain(
   'reflex-benchmark-plan',
-  canonicalCbor({
-    version: 2,
-    taskDigest: report.benchmark.taskDigest,
-    splitDigest: report.benchmark.splitDigest,
-    modelIds: report.models.map((model) => model.id),
-    variantIds: report.variants,
-    behaviorRoot: report.pack.behaviorRoot,
-    selectionPolicyDigests: report.selectionPolicyDigests,
-    frontierDigest: report.mrs.frontierDigest,
-  })
+  canonicalCbor(plan)
 );
 if (expectedPlanDigest !== report.runPlanDigest)
   throw new Error('Benchmark run-plan digest mismatch.');

@@ -1,6 +1,6 @@
 # Reflex 0.2 Empirical Intelligence Plan
 
-Status: Workstream 5 harness complete; production dataset pending on 2026-09-09
+Status: Public-seed benchmark verified; Knolo-owned certification dataset and model matrix pending on 2026-09-13
 Branch: `feat/reflex-0.2-empirical`
 Target: `@knolo/reflex` 0.2.0
 
@@ -194,6 +194,28 @@ reproducibility checker is `scripts/check-reflex-benchmark.mjs`. The bundled
 six-task run is exploratory only; a 500-query frozen fixture and verified model
 matrix remain required for production certification.
 
+The production dataset gate is `npm run benchmark:reflex:dataset:check --
+./tasks-500.json`; it requires an explicit wrapper with `kind: production`, at
+least 500 tasks, and approximately 60/20/20 calibration/development/test
+ratios. Production wrappers must also provide dataset provenance with non-empty
+`source.id`, `source.revision`, and `source.owner` fields. The repository now
+includes a verified 500-task BANKING77 public seed, but it is not production
+evidence until Knolo-owned expectations and policy judges replace the
+public-seed placeholders. The supplied six-task fixture remains a development
+scaffold and is expected to fail that gate.
+For local pipeline testing, `npm run benchmark:reflex:dataset:test-fixture`
+creates a `kind: synthetic-test` dataset that passes structural validation but
+cannot produce a certified result.
+The benchmark now also supports an explicit `intent-classification` task mode
+with a fail-closed JSON intent judge; BANKING77 runs use this contract and are
+recorded as `public-seed-only` until Knolo-specific expectations are reviewed.
+
+Review tooling is available through `npm run
+benchmark:reflex:dataset:review-template` and
+`scripts/apply-reflex-dataset-review.mjs`. It binds every reviewer decision to
+the frozen task and split digests and refuses to emit `kind: production` until
+all tasks have explicit approval, policy decisions, and reviewer provenance.
+
 ## Workstream 6: release hardening and publication
 
 Before 0.2.0:
@@ -212,8 +234,9 @@ Release-hardening status: conformance fixture coverage, public declaration
 generation, package/root/evaluation documentation, formatting, documentation
 checks, full tests, package dry runs, and benchmark reproducibility checks are
 complete. The V1 schemas remain experimental and are deliberately not frozen
-for 0.2.0; publication is still gated on the larger frozen benchmark dataset
-and verified model matrix.
+for 0.2.0. The package may publish as an experimental release with the
+public-seed benchmark clearly labeled; production certification remains gated
+on the Knolo-owned dataset and verified model matrix.
 
 ## Suggested week sequence
 

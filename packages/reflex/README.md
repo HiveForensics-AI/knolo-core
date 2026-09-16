@@ -119,6 +119,63 @@ the harness never infers parameter count from a model tag. Set
 six-task fixture is intentionally exploratory and cannot support certification;
 production evidence requires a larger frozen task set, stable model revisions,
 and application-owned judges.
+For a bounded local smoke test, set `REFLEX_TASK_LIMIT=1`; limited runs are
+always exploratory.
+
+Before using a supplied production dataset, validate its minimum size and split
+ratios with:
+
+```bash
+npm run benchmark:reflex:dataset:check -- ./tasks-500.json
+```
+
+Certification requires a dataset wrapper with `kind: production` and a
+`source` object containing non-empty `id`, `revision`, and `owner` fields; an
+unwrapped task array is treated as unclassified and cannot become production
+evidence.
+
+The current six-task fixture intentionally fails this production-dataset gate.
+For pipeline smoke testing only, `npm run benchmark:reflex:dataset:test-fixture`
+generates a clearly labeled synthetic 500-task dataset; it is never production
+evidence and remains uncertified by the benchmark harness.
+The `public-seed` dataset class is likewise structural test data: public intent
+labels still require Knolo-owned expectations and judges before production use.
+For intent datasets, the harness uses `taskType: intent-classification`, asks
+the model for one JSON intent label, and records the
+`knolo.reflex.intent-exact-json/v1` judge contract in the report.
+
+To create an additional public seed with out-of-scope examples, download the
+official CLINC OOS repository and run:
+
+```bash
+git clone --depth 1 https://github.com/clinc/oos-eval.git /tmp/knolo-clinc-oos
+npm run benchmark:reflex:dataset:clinc
+npm run benchmark:reflex:dataset:check -- /tmp/knolo-clinc-oos-500.json
+```
+
+This produces a deterministic 500-task seed with 150 in-scope labels and an
+`oos` label. It remains public-seed-only until Knolo reviews the labels and
+creates its own expectations and policy judgments.
+
+To prepare that review, generate a fail-closed template:
+
+```bash
+npm run benchmark:reflex:dataset:review-template -- \
+  /tmp/knolo-clinc-oos-500.json /tmp/knolo-reflex-dataset-review.json
+```
+
+After a human reviewer fills every task and records their identity, apply it:
+
+```bash
+npm run build --workspace @knolo/reflex
+node scripts/apply-reflex-dataset-review.mjs \
+  /tmp/knolo-clinc-oos-500.json \
+  /tmp/knolo-reflex-dataset-review.json \
+  ./tasks-production.json
+```
+
+The apply step refuses incomplete approvals, mismatched task digests, missing
+policy decisions, or missing reviewer provenance.
 
 Use `REFLEX_MODELS=model-a,model-b,...` to run the same held-out suite across
 multiple Ollama models (for example the 0.5B, 1B/1.5B, 3B, and 7B candidates).
@@ -194,7 +251,7 @@ rejected from fitting.
 
 ## Versioning and status
 
-`@knolo/reflex` is independently versioned and currently released as `0.1.2`.
+`@knolo/reflex` is independently versioned and currently released as `0.2.0`.
 Its V1 schemas are experimental. The package does not require a
 `@knolo/core` version bump; it is compatible with `@knolo/core` `5.5.0`.
 

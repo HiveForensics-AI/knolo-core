@@ -421,9 +421,18 @@ export type {
 } from './calibration.js';
 export {
   assignReflexBenchmarkSplitsV1,
+  classifyReflexBenchmarkDatasetV1,
+  validateReflexBenchmarkDatasetEnvelopeV1,
+  validateReflexBenchmarkDatasetV1,
   validateReflexBenchmarkSplitPlanV1,
 } from './benchmark.js';
 export type {
+  ReflexBenchmarkDatasetClassV1,
+  ReflexBenchmarkDatasetEnvelopeV1,
+  ReflexBenchmarkDatasetKindV1,
+  ReflexBenchmarkDatasetSourceV1,
+  ReflexBenchmarkTaskTypeV1,
+  ReflexBenchmarkDatasetValidationOptionsV1,
   ReflexBenchmarkSplitPlanV1,
   ReflexBenchmarkSplitV1,
   ReflexBenchmarkTaskV1,

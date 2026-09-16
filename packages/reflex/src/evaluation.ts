@@ -12,6 +12,7 @@ export type ReflexEvaluationTaskV1 = {
   id: string;
   family: string;
   query: string;
+  expectedIntent?: string;
   expectation?: ReflexTaskExpectationV1;
 };
 
@@ -29,6 +30,7 @@ export type ReflexModelAdapterV1 = {
     query: string;
     context: string;
     selectedAtomIds: string[];
+    instruction?: string;
   }) => Promise<{
     failure: boolean;
     policyViolation?: boolean;

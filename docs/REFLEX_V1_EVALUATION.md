@@ -1,13 +1,13 @@
 # Reflex V1 Evaluation Record
 
-Date: 2026-09-09
+Date: 2026-09-13
 
 ## Automated tests
 
 | Area                                                          | Result                               |
 | ------------------------------------------------------------- | ------------------------------------ |
 | `@knolo/core` build, runtime check, test suite, legacy script | 43/43 tests passed; all tests passed |
-| `@knolo/reflex` build and test suite                          | 13/13 test files passed              |
+| `@knolo/reflex` build and test suite                          | 14/14 test files passed              |
 | TypeScript compilation                                        | Passed                               |
 | `git diff --check`                                            | Passed                               |
 | Full `npm run release:check`                                  | Passed                               |
@@ -65,9 +65,90 @@ selection-policy digest covering runtime scope, retrieval limits, tokenizer,
 renderer, and MRS settings. Output-schema failures are counted once per task,
 even when the model's semantic judge also reports a failure.
 
+## BANKING77 public-seed benchmark
+
+Date: 2026-09-13
+
+Model: `gemma4:e2b`
+
+Task set: 500 stratified BANKING77 test examples; calibration 300, development
+100, test 100
+
+Task type: `intent-classification`
+
+Dataset class: `public-seed-only`
+
+Generation: Ollama `think: false`, `temperature: 0`, `num_predict: 64`
+
+Task digest:
+`sha256-3a4af3a61f3e513669a73d65c784210938cfb7e838fae5fba4d558ce620a630d`
+
+Split digest:
+`sha256-6afe9358bfe7a22167f4213a3165b10c4ee1f7b8465bb4bc61b062457f3e526b`
+
+Behavior root:
+`sha256-ecf98fcac7f4e64965e0eda55fb2bdcea14a39d39f1f2059997e75587fccf5f8`
+
+Run-plan digest:
+`sha256-9a1bd29e45094c9c47cca4e61816c9ae6aa21f3afff961b96db1e00f6ac20715`
+
+| Variant     | Test answered | Test failures | Test failure rate | Test coverage |
+| ----------- | ------------: | ------------: | ----------------: | ------------: |
+| Plain       |           100 |            32 |             32.0% |          100% |
+| Full Reflex |           100 |            27 |             27.0% |          100% |
+| MRS Reflex  |           100 |            27 |             27.0% |          100% |
+
+Full Reflex and MRS Reflex improved test accuracy by five percentage points
+over plain Gemma on this public seed. The report was checked at
+`/tmp/knolo-reflex-gemma4-e2b-banking77-corrected.json`. This result is not
+certified production evidence: BANKING77 is public seed data, and the expected
+intent labels still require Knolo-owned task review and policy judging.
+
+## CLINC OOS public-seed benchmark
+
+Date: 2026-09-13
+
+Source: [official CLINC OOS repository](https://github.com/clinc/oos-eval),
+licensed under CC BY 3.0.
+
+Model: `gemma4:e2b`
+
+Task set: deterministic 500-example test subset with 450 in-scope examples
+across 150 labels and 50 out-of-scope examples; calibration 300, development
+100, test 100
+
+Task type: `intent-classification`
+
+Dataset class: `public-seed-only`
+
+Generation: Ollama `think: false`, `temperature: 0`, `num_predict: 64`
+
+Task digest:
+`sha256-7956efa0a684ea393a98b3836a9cb413844859ef0fac4ed2029de867abb2ed44`
+
+Split digest:
+`sha256-93b85c0b01555b4b0ac488d530b874634888509b84adcfa2cc8b37652e568c02`
+
+Behavior root:
+`sha256-92579f5a1510d31a684f62efde7eaf80aaef6adb23e16b9f59b966da67c8ccfe`
+
+Run-plan digest:
+`sha256-be929ff84f889a2ebbc829e89cb2bd6baed5de1888a31b215c9454bb5819eaf5`
+
+| Variant     | Test answered | Test failures | Test failure rate | Test coverage |
+| ----------- | ------------: | ------------: | ----------------: | ------------: |
+| Plain       |           100 |            40 |            40.00% |          100% |
+| Full Reflex |            93 |            33 |            35.48% |           93% |
+| MRS Reflex  |            93 |            33 |            35.48% |           93% |
+
+The Reflex variants reduced raw test failures from 40 to 33 while abstaining on
+seven tasks; among answered tasks, the failure rate was 35.48% versus 40.00%
+for Plain. The report was checked at
+`/tmp/knolo-reflex-gemma4-e2b-clinc500.json`. This remains public-seed-only
+evidence and is not a Knolo production certification.
+
 ## Release interpretation
 
-The automated package and core gates pass. Before production adoption, expand
-the task set, repeat the benchmark across the supported model revisions, and
-replace the fixture judge with application-owned correctness and policy
-judges.
+The automated package and core gates pass. Before production adoption, repeat
+the benchmark across supported model revisions and replace the public-seed
+expectations with application-owned correctness and policy judges.

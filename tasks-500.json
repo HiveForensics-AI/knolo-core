@@ -1,0 +1,7153 @@
+{
+  "schema": "knolo.reflex.benchmark-dataset/v1",
+  "kind": "public-seed",
+  "taskType": "intent-classification",
+  "description": "Stratified 500-example BANKING77 test subset; public seed for structural evaluation only.",
+  "source": {
+    "name": "BANKING77",
+    "publisher": "PolyAI",
+    "repository": "https://github.com/PolyAI-LDN/task-specific-datasets",
+    "license": "CC BY 4.0",
+    "split": "test"
+  },
+  "tasks": [
+    {
+      "id": "banking77-001",
+      "family": "Refund_not_showing_up",
+      "query": "The refund isn't showing up on my account.",
+      "expectedIntent": "Refund_not_showing_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "Refund",
+          "not",
+          "showing",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-002",
+      "family": "activate_my_card",
+      "query": "Could you please activate my card",
+      "expectedIntent": "activate_my_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "activate",
+          "my",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-003",
+      "family": "age_limit",
+      "query": "how old do i need to be to get an account for myself",
+      "expectedIntent": "age_limit",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "age",
+          "limit"
+        ]
+      }
+    },
+    {
+      "id": "banking77-004",
+      "family": "apple_pay_or_google_pay",
+      "query": "Is the top up feature available on the Apple Watch?",
+      "expectedIntent": "apple_pay_or_google_pay",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "apple",
+          "pay",
+          "or",
+          "google",
+          "pay"
+        ]
+      }
+    },
+    {
+      "id": "banking77-005",
+      "family": "atm_support",
+      "query": "Do all ATMs take this card?",
+      "expectedIntent": "atm_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "atm",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-006",
+      "family": "automatic_top_up",
+      "query": "When traveling, can I auto top-up my card at certain times?",
+      "expectedIntent": "automatic_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "automatic",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-007",
+      "family": "balance_not_updated_after_bank_transfer",
+      "query": "I made a transfer a few hours ago from a UK banking account.  I do not yet see the transfer.  Please check on this for me.",
+      "expectedIntent": "balance_not_updated_after_bank_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "balance",
+          "not",
+          "updated",
+          "after",
+          "bank",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-008",
+      "family": "balance_not_updated_after_cheque_or_cash_deposit",
+      "query": "I tried making an update to my balance using cheque just yesterday but it doesn't appear to have worked. Should this not be a faster process? I need you to please check over my account because something has went wrong.",
+      "expectedIntent": "balance_not_updated_after_cheque_or_cash_deposit",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "balance",
+          "not",
+          "updated",
+          "after",
+          "cheque",
+          "or",
+          "cash",
+          "deposit"
+        ]
+      }
+    },
+    {
+      "id": "banking77-009",
+      "family": "beneficiary_not_allowed",
+      "query": "I've tried numerous times to submit a transfer of funds. Why isn't it going through?",
+      "expectedIntent": "beneficiary_not_allowed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "beneficiary",
+          "not",
+          "allowed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-010",
+      "family": "cancel_transfer",
+      "query": "I made a transaction this morning and would like to revert it.",
+      "expectedIntent": "cancel_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cancel",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-011",
+      "family": "card_about_to_expire",
+      "query": "Am I able to order a new card and have it sent to me in China?",
+      "expectedIntent": "card_about_to_expire",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "about",
+          "to",
+          "expire"
+        ]
+      }
+    },
+    {
+      "id": "banking77-012",
+      "family": "card_acceptance",
+      "query": "Will my card be accepted all over the world?",
+      "expectedIntent": "card_acceptance",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "acceptance"
+        ]
+      }
+    },
+    {
+      "id": "banking77-013",
+      "family": "card_arrival",
+      "query": "How do I locate my card?",
+      "expectedIntent": "card_arrival",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "arrival"
+        ]
+      }
+    },
+    {
+      "id": "banking77-014",
+      "family": "card_delivery_estimate",
+      "query": "I need my card now!",
+      "expectedIntent": "card_delivery_estimate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "delivery",
+          "estimate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-015",
+      "family": "card_linking",
+      "query": "Why won't my card show up on the app?",
+      "expectedIntent": "card_linking",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "linking"
+        ]
+      }
+    },
+    {
+      "id": "banking77-016",
+      "family": "card_not_working",
+      "query": "I've tried my card a bunch of times and it never worked.",
+      "expectedIntent": "card_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-017",
+      "family": "card_payment_fee_charged",
+      "query": "I payed with a card and was charged an extra fee",
+      "expectedIntent": "card_payment_fee_charged",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "fee",
+          "charged"
+        ]
+      }
+    },
+    {
+      "id": "banking77-018",
+      "family": "card_payment_not_recognised",
+      "query": "I have a strange payment in my statement",
+      "expectedIntent": "card_payment_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-019",
+      "family": "card_payment_wrong_exchange_rate",
+      "query": "I purchased something in a foreign currency but the rate applied is wrong",
+      "expectedIntent": "card_payment_wrong_exchange_rate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "wrong",
+          "exchange",
+          "rate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-020",
+      "family": "card_swallowed",
+      "query": "What do I do if an ATM \"stole\" my card?",
+      "expectedIntent": "card_swallowed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "swallowed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-021",
+      "family": "cash_withdrawal_charge",
+      "query": "I see some fees for cash withdraw.",
+      "expectedIntent": "cash_withdrawal_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cash",
+          "withdrawal",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-022",
+      "family": "cash_withdrawal_not_recognised",
+      "query": "Think someone has took money out with my card. What shall I do?",
+      "expectedIntent": "cash_withdrawal_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cash",
+          "withdrawal",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-023",
+      "family": "change_pin",
+      "query": "What kind of cash machines would allow me to change my PIN?",
+      "expectedIntent": "change_pin",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "change",
+          "pin"
+        ]
+      }
+    },
+    {
+      "id": "banking77-024",
+      "family": "compromised_card",
+      "query": "I think someone is using my card to make transactions I don't remember.",
+      "expectedIntent": "compromised_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "compromised",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-025",
+      "family": "contactless_not_working",
+      "query": "Are contactless payments enabled on my new card?",
+      "expectedIntent": "contactless_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "contactless",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-026",
+      "family": "country_support",
+      "query": "I live in the US but want to get a card",
+      "expectedIntent": "country_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "country",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-027",
+      "family": "declined_card_payment",
+      "query": "My credit card was declined.",
+      "expectedIntent": "declined_card_payment",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "card",
+          "payment"
+        ]
+      }
+    },
+    {
+      "id": "banking77-028",
+      "family": "declined_cash_withdrawal",
+      "query": "Can you tell me why you won't let me get my own money out of the money machine? I know I used the right PIN.",
+      "expectedIntent": "declined_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-029",
+      "family": "declined_transfer",
+      "query": "I tried to make a transfer and it was declined. Why?",
+      "expectedIntent": "declined_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-030",
+      "family": "direct_debit_payment_not_recognised",
+      "query": "Help me.  There is a Direct Debit that I didn't make.",
+      "expectedIntent": "direct_debit_payment_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "direct",
+          "debit",
+          "payment",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-031",
+      "family": "disposable_card_limits",
+      "query": "How can i get multiple disposble cards.",
+      "expectedIntent": "disposable_card_limits",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "disposable",
+          "card",
+          "limits"
+        ]
+      }
+    },
+    {
+      "id": "banking77-032",
+      "family": "edit_personal_details",
+      "query": "I no longer live at my address on file, how do I change it?",
+      "expectedIntent": "edit_personal_details",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "edit",
+          "personal",
+          "details"
+        ]
+      }
+    },
+    {
+      "id": "banking77-033",
+      "family": "exchange_charge",
+      "query": "Is there an exchange fee?",
+      "expectedIntent": "exchange_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-034",
+      "family": "exchange_rate",
+      "query": "I need to know your exchange rates.",
+      "expectedIntent": "exchange_rate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "rate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-035",
+      "family": "exchange_via_app",
+      "query": "May I exchange currencies with this?",
+      "expectedIntent": "exchange_via_app",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "via",
+          "app"
+        ]
+      }
+    },
+    {
+      "id": "banking77-036",
+      "family": "extra_charge_on_statement",
+      "query": "My statement has a dollar I have been charged showing up on it.",
+      "expectedIntent": "extra_charge_on_statement",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "extra",
+          "charge",
+          "on",
+          "statement"
+        ]
+      }
+    },
+    {
+      "id": "banking77-037",
+      "family": "failed_transfer",
+      "query": "dont understand why transfer failed",
+      "expectedIntent": "failed_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "failed",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-038",
+      "family": "fiat_currency_support",
+      "query": "If I request that my funds be held, what currencies do you use?",
+      "expectedIntent": "fiat_currency_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "fiat",
+          "currency",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-039",
+      "family": "get_disposable_virtual_card",
+      "query": "can i get a description of how to use a disposable virtual card",
+      "expectedIntent": "get_disposable_virtual_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "get",
+          "disposable",
+          "virtual",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-040",
+      "family": "get_physical_card",
+      "query": "What do I do with my card PIN?",
+      "expectedIntent": "get_physical_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "get",
+          "physical",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-041",
+      "family": "getting_spare_card",
+      "query": "Would it be possible to get another card?",
+      "expectedIntent": "getting_spare_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "getting",
+          "spare",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-042",
+      "family": "getting_virtual_card",
+      "query": "Where can I obtain my virtual card?",
+      "expectedIntent": "getting_virtual_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "getting",
+          "virtual",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-043",
+      "family": "lost_or_stolen_card",
+      "query": "My entire gym bag, including my wallet, was stolen out of my locker today. Everything in my wallet is gone - how do I block the card to make it can't be used?",
+      "expectedIntent": "lost_or_stolen_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "lost",
+          "or",
+          "stolen",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-044",
+      "family": "lost_or_stolen_phone",
+      "query": "My phone was stolen",
+      "expectedIntent": "lost_or_stolen_phone",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "lost",
+          "or",
+          "stolen",
+          "phone"
+        ]
+      }
+    },
+    {
+      "id": "banking77-045",
+      "family": "order_physical_card",
+      "query": "How do I receive my physical card",
+      "expectedIntent": "order_physical_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "order",
+          "physical",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-046",
+      "family": "passcode_forgotten",
+      "query": "What do I do if I forget my passcode?  Because I did.",
+      "expectedIntent": "passcode_forgotten",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "passcode",
+          "forgotten"
+        ]
+      }
+    },
+    {
+      "id": "banking77-047",
+      "family": "pending_card_payment",
+      "query": "My card payment is still on hold, why is it so?",
+      "expectedIntent": "pending_card_payment",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "card",
+          "payment"
+        ]
+      }
+    },
+    {
+      "id": "banking77-048",
+      "family": "pending_cash_withdrawal",
+      "query": "My withdrawl is still pending.  Why?",
+      "expectedIntent": "pending_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-049",
+      "family": "pending_top_up",
+      "query": "new customer and filling gas today, it's not working, the thing shows pending half an hour!",
+      "expectedIntent": "pending_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-050",
+      "family": "pending_transfer",
+      "query": "I did transfer, why is it pending",
+      "expectedIntent": "pending_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-051",
+      "family": "pin_blocked",
+      "query": "How do I get my PIN unlocked?",
+      "expectedIntent": "pin_blocked",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pin",
+          "blocked"
+        ]
+      }
+    },
+    {
+      "id": "banking77-052",
+      "family": "receiving_money",
+      "query": "Will salary be received through this?",
+      "expectedIntent": "receiving_money",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "receiving",
+          "money"
+        ]
+      }
+    },
+    {
+      "id": "banking77-053",
+      "family": "request_refund",
+      "query": "Hello- It is urgent I get a refund on this product. The merchant has not been helpful, what can I do now to get this resolved ASAP?",
+      "expectedIntent": "request_refund",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "request",
+          "refund"
+        ]
+      }
+    },
+    {
+      "id": "banking77-054",
+      "family": "reverted_card_payment?",
+      "query": "I think my card payment has been stopped",
+      "expectedIntent": "reverted_card_payment?",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "reverted",
+          "card",
+          "payment?"
+        ]
+      }
+    },
+    {
+      "id": "banking77-055",
+      "family": "supported_cards_and_currencies",
+      "query": "To add money to my account, what currencies can I use?",
+      "expectedIntent": "supported_cards_and_currencies",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "supported",
+          "cards",
+          "and",
+          "currencies"
+        ]
+      }
+    },
+    {
+      "id": "banking77-056",
+      "family": "terminate_account",
+      "query": "Can you remove my account please?",
+      "expectedIntent": "terminate_account",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "terminate",
+          "account"
+        ]
+      }
+    },
+    {
+      "id": "banking77-057",
+      "family": "top_up_by_bank_transfer_charge",
+      "query": "how much do you charge to accept transfers",
+      "expectedIntent": "top_up_by_bank_transfer_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "by",
+          "bank",
+          "transfer",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-058",
+      "family": "top_up_by_card_charge",
+      "query": "Is there a fee for using a European bank card to top up?",
+      "expectedIntent": "top_up_by_card_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "by",
+          "card",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-059",
+      "family": "top_up_by_cash_or_cheque",
+      "query": "Can I top up by cheque?",
+      "expectedIntent": "top_up_by_cash_or_cheque",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "by",
+          "cash",
+          "or",
+          "cheque"
+        ]
+      }
+    },
+    {
+      "id": "banking77-060",
+      "family": "top_up_failed",
+      "query": "The app denied my topped up.",
+      "expectedIntent": "top_up_failed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "failed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-061",
+      "family": "top_up_limits",
+      "query": "can you limit my top up?",
+      "expectedIntent": "top_up_limits",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "limits"
+        ]
+      }
+    },
+    {
+      "id": "banking77-062",
+      "family": "top_up_reverted",
+      "query": "My top-up was cancelled; will I receive a refund?",
+      "expectedIntent": "top_up_reverted",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "reverted"
+        ]
+      }
+    },
+    {
+      "id": "banking77-063",
+      "family": "topping_up_by_card",
+      "query": "How can I top up my account with a card?",
+      "expectedIntent": "topping_up_by_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "topping",
+          "up",
+          "by",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-064",
+      "family": "transaction_charged_twice",
+      "query": "I got double charged for a payment so how do I fix that?",
+      "expectedIntent": "transaction_charged_twice",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transaction",
+          "charged",
+          "twice"
+        ]
+      }
+    },
+    {
+      "id": "banking77-065",
+      "family": "transfer_fee_charged",
+      "query": "When I made a transfer, there was a fee.  Why?",
+      "expectedIntent": "transfer_fee_charged",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "fee",
+          "charged"
+        ]
+      }
+    },
+    {
+      "id": "banking77-066",
+      "family": "transfer_into_account",
+      "query": "Can I do a bank transfer to put additional money in my account because I am out of money?",
+      "expectedIntent": "transfer_into_account",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "into",
+          "account"
+        ]
+      }
+    },
+    {
+      "id": "banking77-067",
+      "family": "transfer_not_received_by_recipient",
+      "query": "I completed an in country transfer a few days ago and was sure to check the account information several times since the transaction was completed, but the funds are still not available. What is the problem?",
+      "expectedIntent": "transfer_not_received_by_recipient",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "not",
+          "received",
+          "by",
+          "recipient"
+        ]
+      }
+    },
+    {
+      "id": "banking77-068",
+      "family": "transfer_timing",
+      "query": "What is the number of days I have to wait for my Europe transfer?",
+      "expectedIntent": "transfer_timing",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "timing"
+        ]
+      }
+    },
+    {
+      "id": "banking77-069",
+      "family": "unable_to_verify_identity",
+      "query": "I cannot verify my identity",
+      "expectedIntent": "unable_to_verify_identity",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "unable",
+          "to",
+          "verify",
+          "identity"
+        ]
+      }
+    },
+    {
+      "id": "banking77-070",
+      "family": "verify_my_identity",
+      "query": "What can I use to verify my identify?",
+      "expectedIntent": "verify_my_identity",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "verify",
+          "my",
+          "identity"
+        ]
+      }
+    },
+    {
+      "id": "banking77-071",
+      "family": "verify_source_of_funds",
+      "query": "Can I verify the source of my funds?",
+      "expectedIntent": "verify_source_of_funds",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "verify",
+          "source",
+          "of",
+          "funds"
+        ]
+      }
+    },
+    {
+      "id": "banking77-072",
+      "family": "verify_top_up",
+      "query": "What all is needed to verify the top-up card?",
+      "expectedIntent": "verify_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "verify",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-073",
+      "family": "virtual_card_not_working",
+      "query": "Why is my disposable virtual card being denied?",
+      "expectedIntent": "virtual_card_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "virtual",
+          "card",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-074",
+      "family": "visa_or_mastercard",
+      "query": "I like to Mastercard rather than Visa.",
+      "expectedIntent": "visa_or_mastercard",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "visa",
+          "or",
+          "mastercard"
+        ]
+      }
+    },
+    {
+      "id": "banking77-075",
+      "family": "why_verify_identity",
+      "query": "Why do you require so many details about my identity?",
+      "expectedIntent": "why_verify_identity",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "why",
+          "verify",
+          "identity"
+        ]
+      }
+    },
+    {
+      "id": "banking77-076",
+      "family": "wrong_amount_of_cash_received",
+      "query": "I don't know if this is an issue with the ATM or my account, but I just tried withdrawing 30 pounds from the ATM I'm at now and it only gave me 10. Is this a glitch or what exactly is going on?",
+      "expectedIntent": "wrong_amount_of_cash_received",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "wrong",
+          "amount",
+          "of",
+          "cash",
+          "received"
+        ]
+      }
+    },
+    {
+      "id": "banking77-077",
+      "family": "wrong_exchange_rate_for_cash_withdrawal",
+      "query": "I did not get the right amount of money when I used a different country's currency.",
+      "expectedIntent": "wrong_exchange_rate_for_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "wrong",
+          "exchange",
+          "rate",
+          "for",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-078",
+      "family": "Refund_not_showing_up",
+      "query": "My refund is missing from my statement.",
+      "expectedIntent": "Refund_not_showing_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "Refund",
+          "not",
+          "showing",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-079",
+      "family": "activate_my_card",
+      "query": "I need to activate my card can you do that now?",
+      "expectedIntent": "activate_my_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "activate",
+          "my",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-080",
+      "family": "age_limit",
+      "query": "How young can I be to open my own account?",
+      "expectedIntent": "age_limit",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "age",
+          "limit"
+        ]
+      }
+    },
+    {
+      "id": "banking77-081",
+      "family": "apple_pay_or_google_pay",
+      "query": "Can I use the system Google Pay for top-ups?",
+      "expectedIntent": "apple_pay_or_google_pay",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "apple",
+          "pay",
+          "or",
+          "google",
+          "pay"
+        ]
+      }
+    },
+    {
+      "id": "banking77-082",
+      "family": "atm_support",
+      "query": "Which ATMs accept this card?",
+      "expectedIntent": "atm_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "atm",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-083",
+      "family": "automatic_top_up",
+      "query": "Is there a limit when using auto top-up?",
+      "expectedIntent": "automatic_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "automatic",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-084",
+      "family": "balance_not_updated_after_bank_transfer",
+      "query": "the balance on my account didnt change when i transferred money",
+      "expectedIntent": "balance_not_updated_after_bank_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "balance",
+          "not",
+          "updated",
+          "after",
+          "bank",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-085",
+      "family": "balance_not_updated_after_cheque_or_cash_deposit",
+      "query": "How come I don't see my deposit in my account yet?",
+      "expectedIntent": "balance_not_updated_after_cheque_or_cash_deposit",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "balance",
+          "not",
+          "updated",
+          "after",
+          "cheque",
+          "or",
+          "cash",
+          "deposit"
+        ]
+      }
+    },
+    {
+      "id": "banking77-086",
+      "family": "beneficiary_not_allowed",
+      "query": "I've transferred money before without issue but now I am encountering an error stating that it isn't possible. Why is that?",
+      "expectedIntent": "beneficiary_not_allowed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "beneficiary",
+          "not",
+          "allowed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-087",
+      "family": "cancel_transfer",
+      "query": "Can i cancel a charge?",
+      "expectedIntent": "cancel_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cancel",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-088",
+      "family": "card_about_to_expire",
+      "query": "Will you be able to send the new card to China?",
+      "expectedIntent": "card_about_to_expire",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "about",
+          "to",
+          "expire"
+        ]
+      }
+    },
+    {
+      "id": "banking77-089",
+      "family": "card_acceptance",
+      "query": "Who accepts this card?",
+      "expectedIntent": "card_acceptance",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "acceptance"
+        ]
+      }
+    },
+    {
+      "id": "banking77-090",
+      "family": "card_arrival",
+      "query": "I still have not received my new card, I ordered over a week ago.",
+      "expectedIntent": "card_arrival",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "arrival"
+        ]
+      }
+    },
+    {
+      "id": "banking77-091",
+      "family": "card_delivery_estimate",
+      "query": "my card was not in the mail again can you advise?",
+      "expectedIntent": "card_delivery_estimate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "delivery",
+          "estimate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-092",
+      "family": "card_linking",
+      "query": "I would like to reactivate my card.",
+      "expectedIntent": "card_linking",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "linking"
+        ]
+      }
+    },
+    {
+      "id": "banking77-093",
+      "family": "card_not_working",
+      "query": "I can't get my card to work.",
+      "expectedIntent": "card_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-094",
+      "family": "card_payment_fee_charged",
+      "query": "I was charged a fee after using my card and I shouldn't have been.",
+      "expectedIntent": "card_payment_fee_charged",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "fee",
+          "charged"
+        ]
+      }
+    },
+    {
+      "id": "banking77-095",
+      "family": "card_payment_not_recognised",
+      "query": "There is a charge on my card that I did not make",
+      "expectedIntent": "card_payment_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-096",
+      "family": "card_payment_wrong_exchange_rate",
+      "query": "I made a currency exchange and think I was charged more than I should of been.",
+      "expectedIntent": "card_payment_wrong_exchange_rate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "wrong",
+          "exchange",
+          "rate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-097",
+      "family": "card_swallowed",
+      "query": "How do I retrieve my card from the machine?",
+      "expectedIntent": "card_swallowed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "swallowed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-098",
+      "family": "cash_withdrawal_charge",
+      "query": "How come I was charged extra when I withdrew cash?",
+      "expectedIntent": "cash_withdrawal_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cash",
+          "withdrawal",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-099",
+      "family": "cash_withdrawal_not_recognised",
+      "query": "There is a withdrawal that isn't mind in the app.",
+      "expectedIntent": "cash_withdrawal_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cash",
+          "withdrawal",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-100",
+      "family": "change_pin",
+      "query": "Where do I change my PIN?",
+      "expectedIntent": "change_pin",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "change",
+          "pin"
+        ]
+      }
+    },
+    {
+      "id": "banking77-101",
+      "family": "compromised_card",
+      "query": "someone is using my account",
+      "expectedIntent": "compromised_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "compromised",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-102",
+      "family": "contactless_not_working",
+      "query": "My contanctless has stopped working",
+      "expectedIntent": "contactless_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "contactless",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-103",
+      "family": "country_support",
+      "query": "Are your cards available in Europe?",
+      "expectedIntent": "country_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "country",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-104",
+      "family": "declined_card_payment",
+      "query": "The new card that was just sent to me was declined multiple times yesterday when I tried to use it at a restaurant to pay for my dinner.  I am really disappointed  and embarrassed that my card was denied when I tried to use it to pay for my friend's birthday dinner.",
+      "expectedIntent": "declined_card_payment",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "card",
+          "payment"
+        ]
+      }
+    },
+    {
+      "id": "banking77-105",
+      "family": "declined_cash_withdrawal",
+      "query": "My withdrawal was cancelled.",
+      "expectedIntent": "declined_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-106",
+      "family": "declined_transfer",
+      "query": "Good morning. I tried to make a purchase with my credit card last night and again this morning. Both times it was declined. Can you investigate?",
+      "expectedIntent": "declined_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-107",
+      "family": "direct_debit_payment_not_recognised",
+      "query": "There is a direct debit that's not mine.",
+      "expectedIntent": "direct_debit_payment_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "direct",
+          "debit",
+          "payment",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-108",
+      "family": "disposable_card_limits",
+      "query": "Can I make many disposable cards per day?",
+      "expectedIntent": "disposable_card_limits",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "disposable",
+          "card",
+          "limits"
+        ]
+      }
+    },
+    {
+      "id": "banking77-109",
+      "family": "edit_personal_details",
+      "query": "How to change my address.",
+      "expectedIntent": "edit_personal_details",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "edit",
+          "personal",
+          "details"
+        ]
+      }
+    },
+    {
+      "id": "banking77-110",
+      "family": "exchange_charge",
+      "query": "whats your exchange rate",
+      "expectedIntent": "exchange_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-111",
+      "family": "exchange_rate",
+      "query": "What exchange rates do you offer?",
+      "expectedIntent": "exchange_rate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "rate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-112",
+      "family": "exchange_via_app",
+      "query": "Tell me how I can exchange between different currency.",
+      "expectedIntent": "exchange_via_app",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "via",
+          "app"
+        ]
+      }
+    },
+    {
+      "id": "banking77-113",
+      "family": "extra_charge_on_statement",
+      "query": "Why is there a fee for an extra pound in my statement?",
+      "expectedIntent": "extra_charge_on_statement",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "extra",
+          "charge",
+          "on",
+          "statement"
+        ]
+      }
+    },
+    {
+      "id": "banking77-114",
+      "family": "failed_transfer",
+      "query": "Please help me make a transfer. I keep receiving an error and I'm trying to make the initial mortgage payment for a flat I'm buying. What is the deal here?",
+      "expectedIntent": "failed_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "failed",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-115",
+      "family": "fiat_currency_support",
+      "query": "I want to know how many different currencies my money can be in",
+      "expectedIntent": "fiat_currency_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "fiat",
+          "currency",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-116",
+      "family": "get_disposable_virtual_card",
+      "query": "Can I create a disposable virtual card?",
+      "expectedIntent": "get_disposable_virtual_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "get",
+          "disposable",
+          "virtual",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-117",
+      "family": "get_physical_card",
+      "query": "Is the PIN delivered separately?",
+      "expectedIntent": "get_physical_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "get",
+          "physical",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-118",
+      "family": "getting_spare_card",
+      "query": "How many cards can I have for one account?",
+      "expectedIntent": "getting_spare_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "getting",
+          "spare",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-119",
+      "family": "getting_virtual_card",
+      "query": "How do you get a virtual card?",
+      "expectedIntent": "getting_virtual_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "getting",
+          "virtual",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-120",
+      "family": "lost_or_stolen_card",
+      "query": "I can't find my card and think it may have been stolen.",
+      "expectedIntent": "lost_or_stolen_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "lost",
+          "or",
+          "stolen",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-121",
+      "family": "lost_or_stolen_phone",
+      "query": "My phone was stolen yesterday.  What should I do?",
+      "expectedIntent": "lost_or_stolen_phone",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "lost",
+          "or",
+          "stolen",
+          "phone"
+        ]
+      }
+    },
+    {
+      "id": "banking77-122",
+      "family": "order_physical_card",
+      "query": "I want a card. What is the procedure?",
+      "expectedIntent": "order_physical_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "order",
+          "physical",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-123",
+      "family": "passcode_forgotten",
+      "query": "I can't find my password",
+      "expectedIntent": "passcode_forgotten",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "passcode",
+          "forgotten"
+        ]
+      }
+    },
+    {
+      "id": "banking77-124",
+      "family": "pending_card_payment",
+      "query": "Why is my payment pending?",
+      "expectedIntent": "pending_card_payment",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "card",
+          "payment"
+        ]
+      }
+    },
+    {
+      "id": "banking77-125",
+      "family": "pending_cash_withdrawal",
+      "query": "My card was denied at an ATM earlier today but the transaction is pending. Please cancel it as I did not receive my money.",
+      "expectedIntent": "pending_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-126",
+      "family": "pending_top_up",
+      "query": "My card was topped this morning but I can't see the funds. Why didn't it complete?",
+      "expectedIntent": "pending_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-127",
+      "family": "pending_transfer",
+      "query": "How long for money transfer to show?",
+      "expectedIntent": "pending_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-128",
+      "family": "pin_blocked",
+      "query": "Where can I view my PIN?",
+      "expectedIntent": "pin_blocked",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pin",
+          "blocked"
+        ]
+      }
+    },
+    {
+      "id": "banking77-129",
+      "family": "receiving_money",
+      "query": "How can I get paid in a different currency?",
+      "expectedIntent": "receiving_money",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "receiving",
+          "money"
+        ]
+      }
+    },
+    {
+      "id": "banking77-130",
+      "family": "request_refund",
+      "query": "Can I receive a refund for my item?",
+      "expectedIntent": "request_refund",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "request",
+          "refund"
+        ]
+      }
+    },
+    {
+      "id": "banking77-131",
+      "family": "reverted_card_payment?",
+      "query": "My card payment was reverted.  Why?",
+      "expectedIntent": "reverted_card_payment?",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "reverted",
+          "card",
+          "payment?"
+        ]
+      }
+    },
+    {
+      "id": "banking77-132",
+      "family": "supported_cards_and_currencies",
+      "query": "I need support options, I want to top my card",
+      "expectedIntent": "supported_cards_and_currencies",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "supported",
+          "cards",
+          "and",
+          "currencies"
+        ]
+      }
+    },
+    {
+      "id": "banking77-133",
+      "family": "terminate_account",
+      "query": "i want to close an account but im not sure about setting up a new one in the future, what do you recommend",
+      "expectedIntent": "terminate_account",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "terminate",
+          "account"
+        ]
+      }
+    },
+    {
+      "id": "banking77-134",
+      "family": "top_up_by_bank_transfer_charge",
+      "query": "I would like to make a transfer. How much does it cost?",
+      "expectedIntent": "top_up_by_bank_transfer_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "by",
+          "bank",
+          "transfer",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-135",
+      "family": "top_up_by_card_charge",
+      "query": "Are there any fees for adding money with an international card?",
+      "expectedIntent": "top_up_by_card_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "by",
+          "card",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-136",
+      "family": "top_up_by_cash_or_cheque",
+      "query": "How do I top-up using cash?",
+      "expectedIntent": "top_up_by_cash_or_cheque",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "by",
+          "cash",
+          "or",
+          "cheque"
+        ]
+      }
+    },
+    {
+      "id": "banking77-137",
+      "family": "top_up_failed",
+      "query": "Heyy I tried to top up with my card today but it failed! I just got the couple days before but it has worked last time. What's going on, can you double check please?",
+      "expectedIntent": "top_up_failed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "failed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-138",
+      "family": "top_up_limits",
+      "query": "Am I free to top-up as much as I want?",
+      "expectedIntent": "top_up_limits",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "limits"
+        ]
+      }
+    },
+    {
+      "id": "banking77-139",
+      "family": "top_up_reverted",
+      "query": "How do I fix a reverted top up?",
+      "expectedIntent": "top_up_reverted",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "reverted"
+        ]
+      }
+    },
+    {
+      "id": "banking77-140",
+      "family": "topping_up_by_card",
+      "query": "WHERE IS MY MONEY I WAS USING MY CARD AND IT DISAPPEARED",
+      "expectedIntent": "topping_up_by_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "topping",
+          "up",
+          "by",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-141",
+      "family": "transaction_charged_twice",
+      "query": "I've just come back from an eating holiday in the USA and Canada and have SO many pending and duplicated transactions on my account.  I think there is something wrong, can you look in to it please?",
+      "expectedIntent": "transaction_charged_twice",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transaction",
+          "charged",
+          "twice"
+        ]
+      }
+    },
+    {
+      "id": "banking77-142",
+      "family": "transfer_fee_charged",
+      "query": "I was charged a fee for my transfer.",
+      "expectedIntent": "transfer_fee_charged",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "fee",
+          "charged"
+        ]
+      }
+    },
+    {
+      "id": "banking77-143",
+      "family": "transfer_into_account",
+      "query": "I'm out of money, can I add money with my bank?",
+      "expectedIntent": "transfer_into_account",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "into",
+          "account"
+        ]
+      }
+    },
+    {
+      "id": "banking77-144",
+      "family": "transfer_not_received_by_recipient",
+      "query": "My money transfer has not arrived.",
+      "expectedIntent": "transfer_not_received_by_recipient",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "not",
+          "received",
+          "by",
+          "recipient"
+        ]
+      }
+    },
+    {
+      "id": "banking77-145",
+      "family": "transfer_timing",
+      "query": "What is the wait time for a transfer from the US?",
+      "expectedIntent": "transfer_timing",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "timing"
+        ]
+      }
+    },
+    {
+      "id": "banking77-146",
+      "family": "unable_to_verify_identity",
+      "query": "I do not have what is required to prove my identity",
+      "expectedIntent": "unable_to_verify_identity",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "unable",
+          "to",
+          "verify",
+          "identity"
+        ]
+      }
+    },
+    {
+      "id": "banking77-147",
+      "family": "verify_my_identity",
+      "query": "What do you need to verify my identity?",
+      "expectedIntent": "verify_my_identity",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "verify",
+          "my",
+          "identity"
+        ]
+      }
+    },
+    {
+      "id": "banking77-148",
+      "family": "verify_source_of_funds",
+      "query": "I want information about the source of funds.",
+      "expectedIntent": "verify_source_of_funds",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "verify",
+          "source",
+          "of",
+          "funds"
+        ]
+      }
+    },
+    {
+      "id": "banking77-149",
+      "family": "verify_top_up",
+      "query": "It wants me to verify the top up. Why?",
+      "expectedIntent": "verify_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "verify",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-150",
+      "family": "virtual_card_not_working",
+      "query": "My disposable virtual card doesn't seem to work",
+      "expectedIntent": "virtual_card_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "virtual",
+          "card",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-151",
+      "family": "visa_or_mastercard",
+      "query": "Do I qualify for a visa card?",
+      "expectedIntent": "visa_or_mastercard",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "visa",
+          "or",
+          "mastercard"
+        ]
+      }
+    },
+    {
+      "id": "banking77-152",
+      "family": "why_verify_identity",
+      "query": "I'd rather not verify my identity.",
+      "expectedIntent": "why_verify_identity",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "why",
+          "verify",
+          "identity"
+        ]
+      }
+    },
+    {
+      "id": "banking77-153",
+      "family": "wrong_amount_of_cash_received",
+      "query": "I didn't get all the cash I requested for at the ATM",
+      "expectedIntent": "wrong_amount_of_cash_received",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "wrong",
+          "amount",
+          "of",
+          "cash",
+          "received"
+        ]
+      }
+    },
+    {
+      "id": "banking77-154",
+      "family": "wrong_exchange_rate_for_cash_withdrawal",
+      "query": "I took out money from a transaction machine and it exchanged the wrong dollar value amount from another currency!",
+      "expectedIntent": "wrong_exchange_rate_for_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "wrong",
+          "exchange",
+          "rate",
+          "for",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-155",
+      "family": "Refund_not_showing_up",
+      "query": "I requested a refund, and never received it. What can I do?",
+      "expectedIntent": "Refund_not_showing_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "Refund",
+          "not",
+          "showing",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-156",
+      "family": "activate_my_card",
+      "query": "What do I need to do to activate my new card?",
+      "expectedIntent": "activate_my_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "activate",
+          "my",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-157",
+      "family": "age_limit",
+      "query": "How old do I have to be?",
+      "expectedIntent": "age_limit",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "age",
+          "limit"
+        ]
+      }
+    },
+    {
+      "id": "banking77-158",
+      "family": "apple_pay_or_google_pay",
+      "query": "My top-up for Google Pay isn't working",
+      "expectedIntent": "apple_pay_or_google_pay",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "apple",
+          "pay",
+          "or",
+          "google",
+          "pay"
+        ]
+      }
+    },
+    {
+      "id": "banking77-159",
+      "family": "atm_support",
+      "query": "Where is the closest Mastercard ATM?",
+      "expectedIntent": "atm_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "atm",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-160",
+      "family": "automatic_top_up",
+      "query": "Will it automatically top-up or do I need to do that manually if there isn't much cash left?",
+      "expectedIntent": "automatic_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "automatic",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-161",
+      "family": "balance_not_updated_after_bank_transfer",
+      "query": "How long will it take for my transferred money to show up?",
+      "expectedIntent": "balance_not_updated_after_bank_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "balance",
+          "not",
+          "updated",
+          "after",
+          "bank",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-162",
+      "family": "balance_not_updated_after_cheque_or_cash_deposit",
+      "query": "Is there a reason why my account isn't updating because I used a check to  balance my account?",
+      "expectedIntent": "balance_not_updated_after_cheque_or_cash_deposit",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "balance",
+          "not",
+          "updated",
+          "after",
+          "cheque",
+          "or",
+          "cash",
+          "deposit"
+        ]
+      }
+    },
+    {
+      "id": "banking77-163",
+      "family": "beneficiary_not_allowed",
+      "query": "I am not able to do a transfer to an account",
+      "expectedIntent": "beneficiary_not_allowed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "beneficiary",
+          "not",
+          "allowed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-164",
+      "family": "cancel_transfer",
+      "query": "Can I cancel my transaction?",
+      "expectedIntent": "cancel_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cancel",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-165",
+      "family": "card_about_to_expire",
+      "query": "When my card expires what happens to my account?",
+      "expectedIntent": "card_about_to_expire",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "about",
+          "to",
+          "expire"
+        ]
+      }
+    },
+    {
+      "id": "banking77-166",
+      "family": "card_acceptance",
+      "query": "Can I use my card for payment all over the world?",
+      "expectedIntent": "card_acceptance",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "acceptance"
+        ]
+      }
+    },
+    {
+      "id": "banking77-167",
+      "family": "card_arrival",
+      "query": "I ordered a card but it has not arrived. Help please!",
+      "expectedIntent": "card_arrival",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "arrival"
+        ]
+      }
+    },
+    {
+      "id": "banking77-168",
+      "family": "card_delivery_estimate",
+      "query": "i need my card quick",
+      "expectedIntent": "card_delivery_estimate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "delivery",
+          "estimate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-169",
+      "family": "card_linking",
+      "query": "Where do I link the new card?",
+      "expectedIntent": "card_linking",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "linking"
+        ]
+      }
+    },
+    {
+      "id": "banking77-170",
+      "family": "card_not_working",
+      "query": "My card appears to be broken how can I fix it?",
+      "expectedIntent": "card_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-171",
+      "family": "card_payment_fee_charged",
+      "query": "Is there a reason I was charged a fee for using my card as payment? I've never had an extra fee before.",
+      "expectedIntent": "card_payment_fee_charged",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "fee",
+          "charged"
+        ]
+      }
+    },
+    {
+      "id": "banking77-172",
+      "family": "card_payment_not_recognised",
+      "query": "I saw a payment i did not do",
+      "expectedIntent": "card_payment_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-173",
+      "family": "card_payment_wrong_exchange_rate",
+      "query": "the card payment exchange rate is wrong",
+      "expectedIntent": "card_payment_wrong_exchange_rate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "wrong",
+          "exchange",
+          "rate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-174",
+      "family": "card_swallowed",
+      "query": "I was retrieving money and my card wouldn't remove.",
+      "expectedIntent": "card_swallowed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "swallowed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-175",
+      "family": "cash_withdrawal_charge",
+      "query": "Why am I being charged when I withdraw cash?",
+      "expectedIntent": "cash_withdrawal_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cash",
+          "withdrawal",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-176",
+      "family": "cash_withdrawal_not_recognised",
+      "query": "I just lost my wallet and I see that they are already withdrawing money from my account. How can I stop this?",
+      "expectedIntent": "cash_withdrawal_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cash",
+          "withdrawal",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-177",
+      "family": "change_pin",
+      "query": "Is the bank the only place I can change my PIN>",
+      "expectedIntent": "change_pin",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "change",
+          "pin"
+        ]
+      }
+    },
+    {
+      "id": "banking77-178",
+      "family": "compromised_card",
+      "query": "Someone I don't know has used my card without permission.",
+      "expectedIntent": "compromised_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "compromised",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-179",
+      "family": "contactless_not_working",
+      "query": "what is required documents for new card process ?",
+      "expectedIntent": "contactless_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "contactless",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-180",
+      "family": "country_support",
+      "query": "Can I use your app if I am from the EU?",
+      "expectedIntent": "country_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "country",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-181",
+      "family": "declined_card_payment",
+      "query": "Why was my card payment declined?",
+      "expectedIntent": "declined_card_payment",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "card",
+          "payment"
+        ]
+      }
+    },
+    {
+      "id": "banking77-182",
+      "family": "declined_cash_withdrawal",
+      "query": "This is very frustrating. I can't get my card to work on any ATM I try and I've tried 3 of them so far. What's going on? Can you please fix this issue immediately?",
+      "expectedIntent": "declined_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-183",
+      "family": "declined_transfer",
+      "query": "I am getting continuous failure for all my transfers. I have cross checked each recipient detail again and again and everything is correct.",
+      "expectedIntent": "declined_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-184",
+      "family": "direct_debit_payment_not_recognised",
+      "query": "I have a strange direct debit in my statement",
+      "expectedIntent": "direct_debit_payment_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "direct",
+          "debit",
+          "payment",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-185",
+      "family": "disposable_card_limits",
+      "query": "I need to use my disposable card multiple times a day, is there a cutoff limit?",
+      "expectedIntent": "disposable_card_limits",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "disposable",
+          "card",
+          "limits"
+        ]
+      }
+    },
+    {
+      "id": "banking77-186",
+      "family": "edit_personal_details",
+      "query": "How do I update my details?",
+      "expectedIntent": "edit_personal_details",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "edit",
+          "personal",
+          "details"
+        ]
+      }
+    },
+    {
+      "id": "banking77-187",
+      "family": "exchange_charge",
+      "query": "What are your currency exchange fees?",
+      "expectedIntent": "exchange_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-188",
+      "family": "exchange_rate",
+      "query": "How did you come up with your exchange rates?",
+      "expectedIntent": "exchange_rate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "rate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-189",
+      "family": "exchange_via_app",
+      "query": "Can I change from one currency to another?",
+      "expectedIntent": "exchange_via_app",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "via",
+          "app"
+        ]
+      }
+    },
+    {
+      "id": "banking77-190",
+      "family": "extra_charge_on_statement",
+      "query": "I'm not okay with this fee on my statement.",
+      "expectedIntent": "extra_charge_on_statement",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "extra",
+          "charge",
+          "on",
+          "statement"
+        ]
+      }
+    },
+    {
+      "id": "banking77-191",
+      "family": "failed_transfer",
+      "query": "My transfer didn't work",
+      "expectedIntent": "failed_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "failed",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-192",
+      "family": "fiat_currency_support",
+      "query": "Do you support all fiat currencies?",
+      "expectedIntent": "fiat_currency_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "fiat",
+          "currency",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-193",
+      "family": "get_disposable_virtual_card",
+      "query": "What can you tell me about getting a virtual disposable card?",
+      "expectedIntent": "get_disposable_virtual_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "get",
+          "disposable",
+          "virtual",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-194",
+      "family": "get_physical_card",
+      "query": "I do not have my pin",
+      "expectedIntent": "get_physical_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "get",
+          "physical",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-195",
+      "family": "getting_spare_card",
+      "query": "I want to order another crad",
+      "expectedIntent": "getting_spare_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "getting",
+          "spare",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-196",
+      "family": "getting_virtual_card",
+      "query": "Where can I find a virtual card?",
+      "expectedIntent": "getting_virtual_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "getting",
+          "virtual",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-197",
+      "family": "lost_or_stolen_card",
+      "query": "Someone stole my card. I need to report it stolen. I made a police report already, but how do I report it with you?",
+      "expectedIntent": "lost_or_stolen_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "lost",
+          "or",
+          "stolen",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-198",
+      "family": "lost_or_stolen_phone",
+      "query": "If my phone is missing, can I block someone from using the app?",
+      "expectedIntent": "lost_or_stolen_phone",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "lost",
+          "or",
+          "stolen",
+          "phone"
+        ]
+      }
+    },
+    {
+      "id": "banking77-199",
+      "family": "order_physical_card",
+      "query": "What do you charge for physical cards?",
+      "expectedIntent": "order_physical_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "order",
+          "physical",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-200",
+      "family": "passcode_forgotten",
+      "query": "How do I retrieve my passcode?",
+      "expectedIntent": "passcode_forgotten",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "passcode",
+          "forgotten"
+        ]
+      }
+    },
+    {
+      "id": "banking77-201",
+      "family": "pending_card_payment",
+      "query": "My card payment is still pending.",
+      "expectedIntent": "pending_card_payment",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "card",
+          "payment"
+        ]
+      }
+    },
+    {
+      "id": "banking77-202",
+      "family": "pending_cash_withdrawal",
+      "query": "My transaction is still showing that is pending from my cash withdrawal.",
+      "expectedIntent": "pending_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-203",
+      "family": "pending_top_up",
+      "query": "What would lead to my top up still pending?",
+      "expectedIntent": "pending_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-204",
+      "family": "pending_transfer",
+      "query": "Why is my transfer not done yet?",
+      "expectedIntent": "pending_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-205",
+      "family": "pin_blocked",
+      "query": "Will you reinstate my PIN?",
+      "expectedIntent": "pin_blocked",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pin",
+          "blocked"
+        ]
+      }
+    },
+    {
+      "id": "banking77-206",
+      "family": "receiving_money",
+      "query": "Can I receive my salary in a currency other than what it is deposited in?",
+      "expectedIntent": "receiving_money",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "receiving",
+          "money"
+        ]
+      }
+    },
+    {
+      "id": "banking77-207",
+      "family": "request_refund",
+      "query": "Get an item refund",
+      "expectedIntent": "request_refund",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "request",
+          "refund"
+        ]
+      }
+    },
+    {
+      "id": "banking77-208",
+      "family": "reverted_card_payment?",
+      "query": "the app reverted my payment",
+      "expectedIntent": "reverted_card_payment?",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "reverted",
+          "card",
+          "payment?"
+        ]
+      }
+    },
+    {
+      "id": "banking77-209",
+      "family": "supported_cards_and_currencies",
+      "query": "I have 1 other US card.  Can you take that?",
+      "expectedIntent": "supported_cards_and_currencies",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "supported",
+          "cards",
+          "and",
+          "currencies"
+        ]
+      }
+    },
+    {
+      "id": "banking77-210",
+      "family": "terminate_account",
+      "query": "My account needs to be deleted.",
+      "expectedIntent": "terminate_account",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "terminate",
+          "account"
+        ]
+      }
+    },
+    {
+      "id": "banking77-211",
+      "family": "top_up_by_bank_transfer_charge",
+      "query": "I need to make a transfer, what will the fee be?",
+      "expectedIntent": "top_up_by_bank_transfer_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "by",
+          "bank",
+          "transfer",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-212",
+      "family": "top_up_by_card_charge",
+      "query": "i was charged when i used a us issued card. why and what cards are free to use to add money",
+      "expectedIntent": "top_up_by_card_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "by",
+          "card",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-213",
+      "family": "top_up_by_cash_or_cheque",
+      "query": "Can I top up with a cheque?",
+      "expectedIntent": "top_up_by_cash_or_cheque",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "by",
+          "cash",
+          "or",
+          "cheque"
+        ]
+      }
+    },
+    {
+      "id": "banking77-214",
+      "family": "top_up_failed",
+      "query": "I have a top up that didn't go through.  Why?",
+      "expectedIntent": "top_up_failed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "failed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-215",
+      "family": "top_up_limits",
+      "query": "Is there a top up limit for my account?",
+      "expectedIntent": "top_up_limits",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "limits"
+        ]
+      }
+    },
+    {
+      "id": "banking77-216",
+      "family": "top_up_reverted",
+      "query": "Is it possible to tell if my top up has reverted?",
+      "expectedIntent": "top_up_reverted",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "reverted"
+        ]
+      }
+    },
+    {
+      "id": "banking77-217",
+      "family": "topping_up_by_card",
+      "query": "How can I top up by card?",
+      "expectedIntent": "topping_up_by_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "topping",
+          "up",
+          "by",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-218",
+      "family": "transaction_charged_twice",
+      "query": "Why am I being charged twice fro a restaurant?",
+      "expectedIntent": "transaction_charged_twice",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transaction",
+          "charged",
+          "twice"
+        ]
+      }
+    },
+    {
+      "id": "banking77-219",
+      "family": "transfer_fee_charged",
+      "query": "Is there a reason I was charged a fee to transfer?",
+      "expectedIntent": "transfer_fee_charged",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "fee",
+          "charged"
+        ]
+      }
+    },
+    {
+      "id": "banking77-220",
+      "family": "transfer_into_account",
+      "query": "How do I go forth on transferring money into my account?",
+      "expectedIntent": "transfer_into_account",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "into",
+          "account"
+        ]
+      }
+    },
+    {
+      "id": "banking77-221",
+      "family": "transfer_not_received_by_recipient",
+      "query": "I am still waiting for a transaction to be completed",
+      "expectedIntent": "transfer_not_received_by_recipient",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "not",
+          "received",
+          "by",
+          "recipient"
+        ]
+      }
+    },
+    {
+      "id": "banking77-222",
+      "family": "transfer_timing",
+      "query": "I need a fast transfer from China?  How fast will it be?",
+      "expectedIntent": "transfer_timing",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "timing"
+        ]
+      }
+    },
+    {
+      "id": "banking77-223",
+      "family": "unable_to_verify_identity",
+      "query": "Why doesn't the app believe I am who I say I am?",
+      "expectedIntent": "unable_to_verify_identity",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "unable",
+          "to",
+          "verify",
+          "identity"
+        ]
+      }
+    },
+    {
+      "id": "banking77-224",
+      "family": "verify_my_identity",
+      "query": "I need to verify my identity, but how do I do that?",
+      "expectedIntent": "verify_my_identity",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "verify",
+          "my",
+          "identity"
+        ]
+      }
+    },
+    {
+      "id": "banking77-225",
+      "family": "verify_source_of_funds",
+      "query": "Where are my funds being sourced from?",
+      "expectedIntent": "verify_source_of_funds",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "verify",
+          "source",
+          "of",
+          "funds"
+        ]
+      }
+    },
+    {
+      "id": "banking77-226",
+      "family": "verify_top_up",
+      "query": "Where can I find the top-up verification code?",
+      "expectedIntent": "verify_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "verify",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-227",
+      "family": "virtual_card_not_working",
+      "query": "My disposable virtual card is broken.",
+      "expectedIntent": "virtual_card_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "virtual",
+          "card",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-228",
+      "family": "visa_or_mastercard",
+      "query": "How do I get a visa card?",
+      "expectedIntent": "visa_or_mastercard",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "visa",
+          "or",
+          "mastercard"
+        ]
+      }
+    },
+    {
+      "id": "banking77-229",
+      "family": "why_verify_identity",
+      "query": "do I need to verify my identity every time I log into my account?",
+      "expectedIntent": "why_verify_identity",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "why",
+          "verify",
+          "identity"
+        ]
+      }
+    },
+    {
+      "id": "banking77-230",
+      "family": "wrong_amount_of_cash_received",
+      "query": "How come the ATM gave me less cash than what I asked for?",
+      "expectedIntent": "wrong_amount_of_cash_received",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "wrong",
+          "amount",
+          "of",
+          "cash",
+          "received"
+        ]
+      }
+    },
+    {
+      "id": "banking77-231",
+      "family": "wrong_exchange_rate_for_cash_withdrawal",
+      "query": "I made a withdraw from the ATM this past holiday and it seems like a was charged too much. If I would have   known about these charges I wouldn't have made a withdraw.",
+      "expectedIntent": "wrong_exchange_rate_for_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "wrong",
+          "exchange",
+          "rate",
+          "for",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-232",
+      "family": "Refund_not_showing_up",
+      "query": "I was supposed to get a purchase refunded but I don't see the money in my account",
+      "expectedIntent": "Refund_not_showing_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "Refund",
+          "not",
+          "showing",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-233",
+      "family": "activate_my_card",
+      "query": "Tell me how to go about activating my new card?",
+      "expectedIntent": "activate_my_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "activate",
+          "my",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-234",
+      "family": "age_limit",
+      "query": "Can I open an account for a child?",
+      "expectedIntent": "age_limit",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "age",
+          "limit"
+        ]
+      }
+    },
+    {
+      "id": "banking77-235",
+      "family": "apple_pay_or_google_pay",
+      "query": "Can I add money with Apple Pay?",
+      "expectedIntent": "apple_pay_or_google_pay",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "apple",
+          "pay",
+          "or",
+          "google",
+          "pay"
+        ]
+      }
+    },
+    {
+      "id": "banking77-236",
+      "family": "atm_support",
+      "query": "Is there a list of ATM machines?",
+      "expectedIntent": "atm_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "atm",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-237",
+      "family": "automatic_top_up",
+      "query": "I'm running out of money, can I  auto top up?",
+      "expectedIntent": "automatic_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "automatic",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-238",
+      "family": "balance_not_updated_after_bank_transfer",
+      "query": "Why didn't my balance change after I transferred some money?",
+      "expectedIntent": "balance_not_updated_after_bank_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "balance",
+          "not",
+          "updated",
+          "after",
+          "bank",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-239",
+      "family": "balance_not_updated_after_cheque_or_cash_deposit",
+      "query": "I don't know why the deposit I made a week ago still hasn't showed up, I really need the money now.",
+      "expectedIntent": "balance_not_updated_after_cheque_or_cash_deposit",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "balance",
+          "not",
+          "updated",
+          "after",
+          "cheque",
+          "or",
+          "cash",
+          "deposit"
+        ]
+      }
+    },
+    {
+      "id": "banking77-240",
+      "family": "beneficiary_not_allowed",
+      "query": "I was unable to make a transfer to another account.",
+      "expectedIntent": "beneficiary_not_allowed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "beneficiary",
+          "not",
+          "allowed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-241",
+      "family": "cancel_transfer",
+      "query": "I made a transaction but did it to the wrong account.",
+      "expectedIntent": "cancel_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cancel",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-242",
+      "family": "card_about_to_expire",
+      "query": "What do I do when my card expires?",
+      "expectedIntent": "card_about_to_expire",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "about",
+          "to",
+          "expire"
+        ]
+      }
+    },
+    {
+      "id": "banking77-243",
+      "family": "card_acceptance",
+      "query": "It will be fine to use at any establishment that accepts Mastercard.",
+      "expectedIntent": "card_acceptance",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "acceptance"
+        ]
+      }
+    },
+    {
+      "id": "banking77-244",
+      "family": "card_arrival",
+      "query": "Is there a way to know when my card will arrive?",
+      "expectedIntent": "card_arrival",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "arrival"
+        ]
+      }
+    },
+    {
+      "id": "banking77-245",
+      "family": "card_delivery_estimate",
+      "query": "How long will it take to get to me?",
+      "expectedIntent": "card_delivery_estimate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "delivery",
+          "estimate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-246",
+      "family": "card_linking",
+      "query": "I have received my card, can you help me put it in the app?",
+      "expectedIntent": "card_linking",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "linking"
+        ]
+      }
+    },
+    {
+      "id": "banking77-247",
+      "family": "card_not_working",
+      "query": "How do I know why my card isn't working?",
+      "expectedIntent": "card_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-248",
+      "family": "card_payment_fee_charged",
+      "query": "I show another charge on my card from when I used it, why?",
+      "expectedIntent": "card_payment_fee_charged",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "fee",
+          "charged"
+        ]
+      }
+    },
+    {
+      "id": "banking77-249",
+      "family": "card_payment_not_recognised",
+      "query": "There is a payment that is not mine in the app.  Please advise/",
+      "expectedIntent": "card_payment_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-250",
+      "family": "card_payment_wrong_exchange_rate",
+      "query": "The exchange rate was wrong when I bought something outside the country.",
+      "expectedIntent": "card_payment_wrong_exchange_rate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "wrong",
+          "exchange",
+          "rate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-251",
+      "family": "card_swallowed",
+      "query": "What do I do since the machine swallowed my card. I need one.",
+      "expectedIntent": "card_swallowed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "swallowed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-252",
+      "family": "cash_withdrawal_charge",
+      "query": "What is this charge on my account for a cash withdrawl?",
+      "expectedIntent": "cash_withdrawal_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cash",
+          "withdrawal",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-253",
+      "family": "cash_withdrawal_not_recognised",
+      "query": "I didn't get cash from an ATM, but the app says I did",
+      "expectedIntent": "cash_withdrawal_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cash",
+          "withdrawal",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-254",
+      "family": "change_pin",
+      "query": "If I am overseas, how do I change my pin?",
+      "expectedIntent": "change_pin",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "change",
+          "pin"
+        ]
+      }
+    },
+    {
+      "id": "banking77-255",
+      "family": "compromised_card",
+      "query": "My card was used without my permission.",
+      "expectedIntent": "compromised_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "compromised",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-256",
+      "family": "contactless_not_working",
+      "query": "I don't know what's wrong, my contactless stopped working. Tried it in a few different places today and it didn't work in any of them.",
+      "expectedIntent": "contactless_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "contactless",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-257",
+      "family": "country_support",
+      "query": "What countries are supported?",
+      "expectedIntent": "country_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "country",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-258",
+      "family": "declined_card_payment",
+      "query": "I was trying to purchase something at the store today and my card has been declined.  Why has this happened?",
+      "expectedIntent": "declined_card_payment",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "card",
+          "payment"
+        ]
+      }
+    },
+    {
+      "id": "banking77-259",
+      "family": "declined_cash_withdrawal",
+      "query": "The ATM did not allow me to withdraw",
+      "expectedIntent": "declined_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-260",
+      "family": "declined_transfer",
+      "query": "why was my transfer declined",
+      "expectedIntent": "declined_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-261",
+      "family": "direct_debit_payment_not_recognised",
+      "query": "I don't understand where this debit came from and want it removed.",
+      "expectedIntent": "direct_debit_payment_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "direct",
+          "debit",
+          "payment",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-262",
+      "family": "disposable_card_limits",
+      "query": "How do I make more than one disposable card in a day?",
+      "expectedIntent": "disposable_card_limits",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "disposable",
+          "card",
+          "limits"
+        ]
+      }
+    },
+    {
+      "id": "banking77-263",
+      "family": "edit_personal_details",
+      "query": "My address needs to be revised.",
+      "expectedIntent": "edit_personal_details",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "edit",
+          "personal",
+          "details"
+        ]
+      }
+    },
+    {
+      "id": "banking77-264",
+      "family": "exchange_charge",
+      "query": "Where do I find the exchange rate?",
+      "expectedIntent": "exchange_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-265",
+      "family": "exchange_rate",
+      "query": "Where do you guys acquire your exchange rate?",
+      "expectedIntent": "exchange_rate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "rate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-266",
+      "family": "exchange_via_app",
+      "query": "How do I change GBP to AUD?",
+      "expectedIntent": "exchange_via_app",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "via",
+          "app"
+        ]
+      }
+    },
+    {
+      "id": "banking77-267",
+      "family": "extra_charge_on_statement",
+      "query": "Why is there an extra dollar charged to my account?",
+      "expectedIntent": "extra_charge_on_statement",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "extra",
+          "charge",
+          "on",
+          "statement"
+        ]
+      }
+    },
+    {
+      "id": "banking77-268",
+      "family": "failed_transfer",
+      "query": "Fix your system. I can't make transfers, I've tried like 5 times already.",
+      "expectedIntent": "failed_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "failed",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-269",
+      "family": "fiat_currency_support",
+      "query": "Does your system support multiple currency.",
+      "expectedIntent": "fiat_currency_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "fiat",
+          "currency",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-270",
+      "family": "get_disposable_virtual_card",
+      "query": "I would like to order a disposable virtual card. How can I do this?",
+      "expectedIntent": "get_disposable_virtual_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "get",
+          "disposable",
+          "virtual",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-271",
+      "family": "get_physical_card",
+      "query": "Are PIN separately?",
+      "expectedIntent": "get_physical_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "get",
+          "physical",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-272",
+      "family": "getting_spare_card",
+      "query": "How can I get additional cards?",
+      "expectedIntent": "getting_spare_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "getting",
+          "spare",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-273",
+      "family": "getting_virtual_card",
+      "query": "Is there an option to have a virtual card?",
+      "expectedIntent": "getting_virtual_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "getting",
+          "virtual",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-274",
+      "family": "lost_or_stolen_card",
+      "query": "I cant find my card, it's gone.",
+      "expectedIntent": "lost_or_stolen_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "lost",
+          "or",
+          "stolen",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-275",
+      "family": "lost_or_stolen_phone",
+      "query": "I think my phone is either lost or stolen.",
+      "expectedIntent": "lost_or_stolen_phone",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "lost",
+          "or",
+          "stolen",
+          "phone"
+        ]
+      }
+    },
+    {
+      "id": "banking77-276",
+      "family": "order_physical_card",
+      "query": "Where can I get my card at?",
+      "expectedIntent": "order_physical_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "order",
+          "physical",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-277",
+      "family": "passcode_forgotten",
+      "query": "My passcode doesn't seem to be working",
+      "expectedIntent": "passcode_forgotten",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "passcode",
+          "forgotten"
+        ]
+      }
+    },
+    {
+      "id": "banking77-278",
+      "family": "pending_card_payment",
+      "query": "How do i finalize a card payment",
+      "expectedIntent": "pending_card_payment",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "card",
+          "payment"
+        ]
+      }
+    },
+    {
+      "id": "banking77-279",
+      "family": "pending_cash_withdrawal",
+      "query": "Hey I tried to get some money out earlier but the machine didn't work. Now just saw the transaction still seems in progress! Can you please check what's going there, seems something is broken, I don't want to be charged for money that I haven't actually received!",
+      "expectedIntent": "pending_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-280",
+      "family": "pending_top_up",
+      "query": "there's a delay in my top-up",
+      "expectedIntent": "pending_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-281",
+      "family": "pending_transfer",
+      "query": "I have a pending transfer",
+      "expectedIntent": "pending_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-282",
+      "family": "pin_blocked",
+      "query": "I accidentally blocked my PIN. How do I reset it?",
+      "expectedIntent": "pin_blocked",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pin",
+          "blocked"
+        ]
+      }
+    },
+    {
+      "id": "banking77-283",
+      "family": "receiving_money",
+      "query": "Can I get my salary through this?",
+      "expectedIntent": "receiving_money",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "receiving",
+          "money"
+        ]
+      }
+    },
+    {
+      "id": "banking77-284",
+      "family": "request_refund",
+      "query": "Would I be able to get a refund for something I bought?",
+      "expectedIntent": "request_refund",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "request",
+          "refund"
+        ]
+      }
+    },
+    {
+      "id": "banking77-285",
+      "family": "reverted_card_payment?",
+      "query": "My card payment was cancelled.",
+      "expectedIntent": "reverted_card_payment?",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "reverted",
+          "card",
+          "payment?"
+        ]
+      }
+    },
+    {
+      "id": "banking77-286",
+      "family": "supported_cards_and_currencies",
+      "query": "What are the cards and currencies that are supported?",
+      "expectedIntent": "supported_cards_and_currencies",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "supported",
+          "cards",
+          "and",
+          "currencies"
+        ]
+      }
+    },
+    {
+      "id": "banking77-287",
+      "family": "terminate_account",
+      "query": "I would like to delete my account please.",
+      "expectedIntent": "terminate_account",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "terminate",
+          "account"
+        ]
+      }
+    },
+    {
+      "id": "banking77-288",
+      "family": "top_up_by_bank_transfer_charge",
+      "query": "If I make a top-up are there charges applied?",
+      "expectedIntent": "top_up_by_bank_transfer_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "by",
+          "bank",
+          "transfer",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-289",
+      "family": "top_up_by_card_charge",
+      "query": "Any hidden fees associated with the international card if money is added?",
+      "expectedIntent": "top_up_by_card_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "by",
+          "card",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-290",
+      "family": "top_up_by_cash_or_cheque",
+      "query": "Is it possible to top up with cash? If so how do I do it?",
+      "expectedIntent": "top_up_by_cash_or_cheque",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "by",
+          "cash",
+          "or",
+          "cheque"
+        ]
+      }
+    },
+    {
+      "id": "banking77-291",
+      "family": "top_up_failed",
+      "query": "So, I tried topping up my card for the today. Unfortunately, it failed. A couple of days back I used it and it works fine. Can you double check and tell me what's going on?",
+      "expectedIntent": "top_up_failed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "failed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-292",
+      "family": "top_up_limits",
+      "query": "What is the limit to top up?",
+      "expectedIntent": "top_up_limits",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "limits"
+        ]
+      }
+    },
+    {
+      "id": "banking77-293",
+      "family": "top_up_reverted",
+      "query": "My top-up showed as complete, but it's no longer there! What's going on here?",
+      "expectedIntent": "top_up_reverted",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "reverted"
+        ]
+      }
+    },
+    {
+      "id": "banking77-294",
+      "family": "topping_up_by_card",
+      "query": "What is the process for using my credit card to transfer money?",
+      "expectedIntent": "topping_up_by_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "topping",
+          "up",
+          "by",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-295",
+      "family": "transaction_charged_twice",
+      "query": "I would like to know why I was charged twice for my purchase.",
+      "expectedIntent": "transaction_charged_twice",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transaction",
+          "charged",
+          "twice"
+        ]
+      }
+    },
+    {
+      "id": "banking77-296",
+      "family": "transfer_fee_charged",
+      "query": "Why was a charged just for transferring?",
+      "expectedIntent": "transfer_fee_charged",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "fee",
+          "charged"
+        ]
+      }
+    },
+    {
+      "id": "banking77-297",
+      "family": "transfer_into_account",
+      "query": "I don't understand how to top up my account, can you please explain the process?",
+      "expectedIntent": "transfer_into_account",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "into",
+          "account"
+        ]
+      }
+    },
+    {
+      "id": "banking77-298",
+      "family": "transfer_not_received_by_recipient",
+      "query": "I made a money transaction but the recipient can't see it",
+      "expectedIntent": "transfer_not_received_by_recipient",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "not",
+          "received",
+          "by",
+          "recipient"
+        ]
+      }
+    },
+    {
+      "id": "banking77-299",
+      "family": "transfer_timing",
+      "query": "how soon will I see the transfer in my account?",
+      "expectedIntent": "transfer_timing",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "timing"
+        ]
+      }
+    },
+    {
+      "id": "banking77-300",
+      "family": "unable_to_verify_identity",
+      "query": "I am having trouble verifying my identity.",
+      "expectedIntent": "unable_to_verify_identity",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "unable",
+          "to",
+          "verify",
+          "identity"
+        ]
+      }
+    },
+    {
+      "id": "banking77-301",
+      "family": "verify_my_identity",
+      "query": "How can I verify my indentity?",
+      "expectedIntent": "verify_my_identity",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "verify",
+          "my",
+          "identity"
+        ]
+      }
+    },
+    {
+      "id": "banking77-302",
+      "family": "verify_source_of_funds",
+      "query": "I would like to verify the source of my money",
+      "expectedIntent": "verify_source_of_funds",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "verify",
+          "source",
+          "of",
+          "funds"
+        ]
+      }
+    },
+    {
+      "id": "banking77-303",
+      "family": "verify_top_up",
+      "query": "Why do I have to verify the top-up that I started?",
+      "expectedIntent": "verify_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "verify",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-304",
+      "family": "virtual_card_not_working",
+      "query": "My non-physical card will not work",
+      "expectedIntent": "virtual_card_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "virtual",
+          "card",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-305",
+      "family": "visa_or_mastercard",
+      "query": "Do you guys accept Visa or Mastercard?",
+      "expectedIntent": "visa_or_mastercard",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "visa",
+          "or",
+          "mastercard"
+        ]
+      }
+    },
+    {
+      "id": "banking77-306",
+      "family": "why_verify_identity",
+      "query": "Why am I required to verify my identity?",
+      "expectedIntent": "why_verify_identity",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "why",
+          "verify",
+          "identity"
+        ]
+      }
+    },
+    {
+      "id": "banking77-307",
+      "family": "wrong_amount_of_cash_received",
+      "query": "Why did I not get my cash back after I withdrew?",
+      "expectedIntent": "wrong_amount_of_cash_received",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "wrong",
+          "amount",
+          "of",
+          "cash",
+          "received"
+        ]
+      }
+    },
+    {
+      "id": "banking77-308",
+      "family": "wrong_exchange_rate_for_cash_withdrawal",
+      "query": "Can you look to make sure the exchange rate is correct",
+      "expectedIntent": "wrong_exchange_rate_for_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "wrong",
+          "exchange",
+          "rate",
+          "for",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-309",
+      "family": "Refund_not_showing_up",
+      "query": "There's a refund missing from my statement",
+      "expectedIntent": "Refund_not_showing_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "Refund",
+          "not",
+          "showing",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-310",
+      "family": "activate_my_card",
+      "query": "How can I activate my card so I can start using it?",
+      "expectedIntent": "activate_my_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "activate",
+          "my",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-311",
+      "family": "age_limit",
+      "query": "How old do we have to be?",
+      "expectedIntent": "age_limit",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "age",
+          "limit"
+        ]
+      }
+    },
+    {
+      "id": "banking77-312",
+      "family": "apple_pay_or_google_pay",
+      "query": "Can I use my Apple Watch to to top up?",
+      "expectedIntent": "apple_pay_or_google_pay",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "apple",
+          "pay",
+          "or",
+          "google",
+          "pay"
+        ]
+      }
+    },
+    {
+      "id": "banking77-313",
+      "family": "atm_support",
+      "query": "Are there any specific ATMs that this card can be used at?",
+      "expectedIntent": "atm_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "atm",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-314",
+      "family": "automatic_top_up",
+      "query": "How do I use auto top up?",
+      "expectedIntent": "automatic_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "automatic",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-315",
+      "family": "balance_not_updated_after_bank_transfer",
+      "query": "When will my balance update after a transfer?",
+      "expectedIntent": "balance_not_updated_after_bank_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "balance",
+          "not",
+          "updated",
+          "after",
+          "bank",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-316",
+      "family": "balance_not_updated_after_cheque_or_cash_deposit",
+      "query": "I made a cash deposit almost a week ago but it's still not there!! please sort this out asap I need the money",
+      "expectedIntent": "balance_not_updated_after_cheque_or_cash_deposit",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "balance",
+          "not",
+          "updated",
+          "after",
+          "cheque",
+          "or",
+          "cash",
+          "deposit"
+        ]
+      }
+    },
+    {
+      "id": "banking77-317",
+      "family": "beneficiary_not_allowed",
+      "query": "I had a transfer blocked",
+      "expectedIntent": "beneficiary_not_allowed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "beneficiary",
+          "not",
+          "allowed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-318",
+      "family": "cancel_transfer",
+      "query": "Tell me how to cancel a transfer.",
+      "expectedIntent": "cancel_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cancel",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-319",
+      "family": "card_about_to_expire",
+      "query": "The expiration date on my card is coming up",
+      "expectedIntent": "card_about_to_expire",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "about",
+          "to",
+          "expire"
+        ]
+      }
+    },
+    {
+      "id": "banking77-320",
+      "family": "card_acceptance",
+      "query": "Where can the card be used?",
+      "expectedIntent": "card_acceptance",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "acceptance"
+        ]
+      }
+    },
+    {
+      "id": "banking77-321",
+      "family": "card_arrival",
+      "query": "My card has not arrived yet.",
+      "expectedIntent": "card_arrival",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "arrival"
+        ]
+      }
+    },
+    {
+      "id": "banking77-322",
+      "family": "card_delivery_estimate",
+      "query": "I'm just wondering when my card will get here.",
+      "expectedIntent": "card_delivery_estimate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "delivery",
+          "estimate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-323",
+      "family": "card_linking",
+      "query": "How do I link a card that I already have?",
+      "expectedIntent": "card_linking",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "linking"
+        ]
+      }
+    },
+    {
+      "id": "banking77-324",
+      "family": "card_not_working",
+      "query": "My card broke.",
+      "expectedIntent": "card_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-325",
+      "family": "card_payment_fee_charged",
+      "query": "Why do I get charged additional fees on some payments, but not others?",
+      "expectedIntent": "card_payment_fee_charged",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "fee",
+          "charged"
+        ]
+      }
+    },
+    {
+      "id": "banking77-326",
+      "family": "card_payment_not_recognised",
+      "query": "An unauthorized payment is in my app",
+      "expectedIntent": "card_payment_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-327",
+      "family": "card_payment_wrong_exchange_rate",
+      "query": "The exchange rate on my purchase is wrong.",
+      "expectedIntent": "card_payment_wrong_exchange_rate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "wrong",
+          "exchange",
+          "rate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-328",
+      "family": "card_swallowed",
+      "query": "HOw do I get my card back after the ATM has pulled it in?",
+      "expectedIntent": "card_swallowed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "swallowed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-329",
+      "family": "cash_withdrawal_charge",
+      "query": "Why are fees charged on cash withdrawals? I went to withdraw some money earlier today after shopping. There's a fee that wasn't there before.",
+      "expectedIntent": "cash_withdrawal_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cash",
+          "withdrawal",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-330",
+      "family": "cash_withdrawal_not_recognised",
+      "query": "My app shows some cash I didn't get.",
+      "expectedIntent": "cash_withdrawal_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cash",
+          "withdrawal",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-331",
+      "family": "change_pin",
+      "query": "Can i change my PIN at the ATM?",
+      "expectedIntent": "change_pin",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "change",
+          "pin"
+        ]
+      }
+    },
+    {
+      "id": "banking77-332",
+      "family": "compromised_card",
+      "query": "Can I freeze my card right now?",
+      "expectedIntent": "compromised_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "compromised",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-333",
+      "family": "contactless_not_working",
+      "query": "How do I get the contactless feature to work for my card?",
+      "expectedIntent": "contactless_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "contactless",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-334",
+      "family": "country_support",
+      "query": "i live in the US can i still get a card?",
+      "expectedIntent": "country_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "country",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-335",
+      "family": "declined_card_payment",
+      "query": "My payment has been declined, I thought this issue was fixed!",
+      "expectedIntent": "declined_card_payment",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "card",
+          "payment"
+        ]
+      }
+    },
+    {
+      "id": "banking77-336",
+      "family": "declined_cash_withdrawal",
+      "query": "Why was my ATM transaction cancelled?",
+      "expectedIntent": "declined_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-337",
+      "family": "declined_transfer",
+      "query": "What would make a decline message show up during a transfer?",
+      "expectedIntent": "declined_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-338",
+      "family": "direct_debit_payment_not_recognised",
+      "query": "what is this charge on my account",
+      "expectedIntent": "direct_debit_payment_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "direct",
+          "debit",
+          "payment",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-339",
+      "family": "disposable_card_limits",
+      "query": "Can I have more than one disposable card?",
+      "expectedIntent": "disposable_card_limits",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "disposable",
+          "card",
+          "limits"
+        ]
+      }
+    },
+    {
+      "id": "banking77-340",
+      "family": "edit_personal_details",
+      "query": "got married, need to change account name",
+      "expectedIntent": "edit_personal_details",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "edit",
+          "personal",
+          "details"
+        ]
+      }
+    },
+    {
+      "id": "banking77-341",
+      "family": "exchange_charge",
+      "query": "What is the base amount for cross-currency exchanges?",
+      "expectedIntent": "exchange_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-342",
+      "family": "exchange_rate",
+      "query": "How do I find the exchange rate?",
+      "expectedIntent": "exchange_rate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "rate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-343",
+      "family": "exchange_via_app",
+      "query": "Will this app exchange currencies?",
+      "expectedIntent": "exchange_via_app",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "via",
+          "app"
+        ]
+      }
+    },
+    {
+      "id": "banking77-344",
+      "family": "extra_charge_on_statement",
+      "query": "There is a fee I don't recognize on my statement.",
+      "expectedIntent": "extra_charge_on_statement",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "extra",
+          "charge",
+          "on",
+          "statement"
+        ]
+      }
+    },
+    {
+      "id": "banking77-345",
+      "family": "failed_transfer",
+      "query": "Tell me why my transfer failed!",
+      "expectedIntent": "failed_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "failed",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-346",
+      "family": "fiat_currency_support",
+      "query": "What currencies can I hold money in?",
+      "expectedIntent": "fiat_currency_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "fiat",
+          "currency",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-347",
+      "family": "get_disposable_virtual_card",
+      "query": "how do VR cards work",
+      "expectedIntent": "get_disposable_virtual_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "get",
+          "disposable",
+          "virtual",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-348",
+      "family": "get_physical_card",
+      "query": "I cannot seem to find my PIN. Where is it?",
+      "expectedIntent": "get_physical_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "get",
+          "physical",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-349",
+      "family": "getting_spare_card",
+      "query": "Is there a fee for extra cards?",
+      "expectedIntent": "getting_spare_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "getting",
+          "spare",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-350",
+      "family": "getting_virtual_card",
+      "query": "If I don't want a physical card can i get a virtual version?",
+      "expectedIntent": "getting_virtual_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "getting",
+          "virtual",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-351",
+      "family": "lost_or_stolen_card",
+      "query": "My card is lost! What can I do?",
+      "expectedIntent": "lost_or_stolen_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "lost",
+          "or",
+          "stolen",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-352",
+      "family": "lost_or_stolen_phone",
+      "query": "If I was mugged and lost everything, how do I access my account and app?",
+      "expectedIntent": "lost_or_stolen_phone",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "lost",
+          "or",
+          "stolen",
+          "phone"
+        ]
+      }
+    },
+    {
+      "id": "banking77-353",
+      "family": "order_physical_card",
+      "query": "price of physical card",
+      "expectedIntent": "order_physical_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "order",
+          "physical",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-354",
+      "family": "passcode_forgotten",
+      "query": "I lost my password",
+      "expectedIntent": "passcode_forgotten",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "passcode",
+          "forgotten"
+        ]
+      }
+    },
+    {
+      "id": "banking77-355",
+      "family": "pending_card_payment",
+      "query": "Why is my card payment showing as pending?",
+      "expectedIntent": "pending_card_payment",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "card",
+          "payment"
+        ]
+      }
+    },
+    {
+      "id": "banking77-356",
+      "family": "pending_cash_withdrawal",
+      "query": "How long does the cash withdrawal take to pend?",
+      "expectedIntent": "pending_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-357",
+      "family": "pending_top_up",
+      "query": "Is there a reason my top up hasn't gone through",
+      "expectedIntent": "pending_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-358",
+      "family": "pending_transfer",
+      "query": "I am waiting for a pending money transfer to process.",
+      "expectedIntent": "pending_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-359",
+      "family": "pin_blocked",
+      "query": "How do I unblock my pin after entering it wrong too many times?",
+      "expectedIntent": "pin_blocked",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pin",
+          "blocked"
+        ]
+      }
+    },
+    {
+      "id": "banking77-360",
+      "family": "receiving_money",
+      "query": "How can someone send me money?",
+      "expectedIntent": "receiving_money",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "receiving",
+          "money"
+        ]
+      }
+    },
+    {
+      "id": "banking77-361",
+      "family": "request_refund",
+      "query": "I need to do a refund",
+      "expectedIntent": "request_refund",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "request",
+          "refund"
+        ]
+      }
+    },
+    {
+      "id": "banking77-362",
+      "family": "reverted_card_payment?",
+      "query": "Why was my payment cancelled?",
+      "expectedIntent": "reverted_card_payment?",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "reverted",
+          "card",
+          "payment?"
+        ]
+      }
+    },
+    {
+      "id": "banking77-363",
+      "family": "supported_cards_and_currencies",
+      "query": "What currencies are accepted for adding money?",
+      "expectedIntent": "supported_cards_and_currencies",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "supported",
+          "cards",
+          "and",
+          "currencies"
+        ]
+      }
+    },
+    {
+      "id": "banking77-364",
+      "family": "terminate_account",
+      "query": "What steps do I need to take to close my account?",
+      "expectedIntent": "terminate_account",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "terminate",
+          "account"
+        ]
+      }
+    },
+    {
+      "id": "banking77-365",
+      "family": "top_up_by_bank_transfer_charge",
+      "query": "Can I also transfer with SWIFT?",
+      "expectedIntent": "top_up_by_bank_transfer_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "by",
+          "bank",
+          "transfer",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-366",
+      "family": "top_up_by_card_charge",
+      "query": "Will I get charged for topping off my card?",
+      "expectedIntent": "top_up_by_card_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "by",
+          "card",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-367",
+      "family": "top_up_by_cash_or_cheque",
+      "query": "Can you help me find top up by cash deposit?",
+      "expectedIntent": "top_up_by_cash_or_cheque",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "by",
+          "cash",
+          "or",
+          "cheque"
+        ]
+      }
+    },
+    {
+      "id": "banking77-368",
+      "family": "top_up_failed",
+      "query": "Why did the app deny my top up?",
+      "expectedIntent": "top_up_failed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "failed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-369",
+      "family": "top_up_limits",
+      "query": "How much money can i top up?",
+      "expectedIntent": "top_up_limits",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "limits"
+        ]
+      }
+    },
+    {
+      "id": "banking77-370",
+      "family": "top_up_reverted",
+      "query": "Hi, i don't know what's going on i've just paid for my top up twice by accident can you help me get a refund please.",
+      "expectedIntent": "top_up_reverted",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "reverted"
+        ]
+      }
+    },
+    {
+      "id": "banking77-371",
+      "family": "topping_up_by_card",
+      "query": "How do I top up my card using your app? I'm new to this.",
+      "expectedIntent": "topping_up_by_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "topping",
+          "up",
+          "by",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-372",
+      "family": "transaction_charged_twice",
+      "query": "I didn't buy this twice",
+      "expectedIntent": "transaction_charged_twice",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transaction",
+          "charged",
+          "twice"
+        ]
+      }
+    },
+    {
+      "id": "banking77-373",
+      "family": "transfer_fee_charged",
+      "query": "I had to pay in order to do a transfer",
+      "expectedIntent": "transfer_fee_charged",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "fee",
+          "charged"
+        ]
+      }
+    },
+    {
+      "id": "banking77-374",
+      "family": "transfer_into_account",
+      "query": "I don't understand the money transfer process.",
+      "expectedIntent": "transfer_into_account",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "into",
+          "account"
+        ]
+      }
+    },
+    {
+      "id": "banking77-375",
+      "family": "transfer_not_received_by_recipient",
+      "query": "I tried to send someone money but they haven't received it.",
+      "expectedIntent": "transfer_not_received_by_recipient",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "not",
+          "received",
+          "by",
+          "recipient"
+        ]
+      }
+    },
+    {
+      "id": "banking77-376",
+      "family": "transfer_timing",
+      "query": "How many days does it take until funds are in my account?",
+      "expectedIntent": "transfer_timing",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "timing"
+        ]
+      }
+    },
+    {
+      "id": "banking77-377",
+      "family": "unable_to_verify_identity",
+      "query": "what do i do if my verification failed",
+      "expectedIntent": "unable_to_verify_identity",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "unable",
+          "to",
+          "verify",
+          "identity"
+        ]
+      }
+    },
+    {
+      "id": "banking77-378",
+      "family": "verify_my_identity",
+      "query": "What is needed to prove my identity?",
+      "expectedIntent": "verify_my_identity",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "verify",
+          "my",
+          "identity"
+        ]
+      }
+    },
+    {
+      "id": "banking77-379",
+      "family": "verify_source_of_funds",
+      "query": "where to funds come from",
+      "expectedIntent": "verify_source_of_funds",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "verify",
+          "source",
+          "of",
+          "funds"
+        ]
+      }
+    },
+    {
+      "id": "banking77-380",
+      "family": "verify_top_up",
+      "query": "Can you give me information about verification code?",
+      "expectedIntent": "verify_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "verify",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-381",
+      "family": "virtual_card_not_working",
+      "query": "Why did the disposable virtual card which I used to pay a gym subscription get denied?",
+      "expectedIntent": "virtual_card_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "virtual",
+          "card",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-382",
+      "family": "visa_or_mastercard",
+      "query": "Are both Visa and Mastercard accepted?",
+      "expectedIntent": "visa_or_mastercard",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "visa",
+          "or",
+          "mastercard"
+        ]
+      }
+    },
+    {
+      "id": "banking77-383",
+      "family": "why_verify_identity",
+      "query": "Can I make transfers before identity verification?",
+      "expectedIntent": "why_verify_identity",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "why",
+          "verify",
+          "identity"
+        ]
+      }
+    },
+    {
+      "id": "banking77-384",
+      "family": "wrong_amount_of_cash_received",
+      "query": "I got less cash than the one I specified in the ATM",
+      "expectedIntent": "wrong_amount_of_cash_received",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "wrong",
+          "amount",
+          "of",
+          "cash",
+          "received"
+        ]
+      }
+    },
+    {
+      "id": "banking77-385",
+      "family": "wrong_exchange_rate_for_cash_withdrawal",
+      "query": "Exchange rate for my cash withdrawal is wrong",
+      "expectedIntent": "wrong_exchange_rate_for_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "wrong",
+          "exchange",
+          "rate",
+          "for",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-386",
+      "family": "Refund_not_showing_up",
+      "query": "I need help. I asked for a refund from a merchant a while ago, but I have not gotten my money back. I keep checking my account, but nothing is showing up. What should I do now?",
+      "expectedIntent": "Refund_not_showing_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "Refund",
+          "not",
+          "showing",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-387",
+      "family": "activate_my_card",
+      "query": "How long will it take to activate my new card?",
+      "expectedIntent": "activate_my_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "activate",
+          "my",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-388",
+      "family": "age_limit",
+      "query": "How do I go about setting up an account for my daughter?",
+      "expectedIntent": "age_limit",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "age",
+          "limit"
+        ]
+      }
+    },
+    {
+      "id": "banking77-389",
+      "family": "apple_pay_or_google_pay",
+      "query": "Does Apple Pay give the option to top up?",
+      "expectedIntent": "apple_pay_or_google_pay",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "apple",
+          "pay",
+          "or",
+          "google",
+          "pay"
+        ]
+      }
+    },
+    {
+      "id": "banking77-390",
+      "family": "atm_support",
+      "query": "How do I know which ATMs will accept this card?",
+      "expectedIntent": "atm_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "atm",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-391",
+      "family": "automatic_top_up",
+      "query": "Can it automatically top-up money if there isn't much left?",
+      "expectedIntent": "automatic_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "automatic",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-392",
+      "family": "balance_not_updated_after_bank_transfer",
+      "query": "How long does it take for an international transfer into my account?",
+      "expectedIntent": "balance_not_updated_after_bank_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "balance",
+          "not",
+          "updated",
+          "after",
+          "bank",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-393",
+      "family": "balance_not_updated_after_cheque_or_cash_deposit",
+      "query": "Where is my cash deposit?",
+      "expectedIntent": "balance_not_updated_after_cheque_or_cash_deposit",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "balance",
+          "not",
+          "updated",
+          "after",
+          "cheque",
+          "or",
+          "cash",
+          "deposit"
+        ]
+      }
+    },
+    {
+      "id": "banking77-394",
+      "family": "beneficiary_not_allowed",
+      "query": "Can you please help me with this exchange?  I am trying to get crypto and the app won't let me.",
+      "expectedIntent": "beneficiary_not_allowed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "beneficiary",
+          "not",
+          "allowed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-395",
+      "family": "cancel_transfer",
+      "query": "I need you to cancel a transfer that I made.  It is the wrong account number and the app won't let me stop the transaction.  Please stop it!",
+      "expectedIntent": "cancel_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cancel",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-396",
+      "family": "card_about_to_expire",
+      "query": "My card's expiring, what happens now?",
+      "expectedIntent": "card_about_to_expire",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "about",
+          "to",
+          "expire"
+        ]
+      }
+    },
+    {
+      "id": "banking77-397",
+      "family": "card_acceptance",
+      "query": "Can my card be used everywhere?",
+      "expectedIntent": "card_acceptance",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "acceptance"
+        ]
+      }
+    },
+    {
+      "id": "banking77-398",
+      "family": "card_arrival",
+      "query": "When will I get my card?",
+      "expectedIntent": "card_arrival",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "arrival"
+        ]
+      }
+    },
+    {
+      "id": "banking77-399",
+      "family": "card_delivery_estimate",
+      "query": "Can you get me my card fast?",
+      "expectedIntent": "card_delivery_estimate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "delivery",
+          "estimate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-400",
+      "family": "card_linking",
+      "query": "I received my new card, but I don't see it in the app anywhere.  What do I do?",
+      "expectedIntent": "card_linking",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "linking"
+        ]
+      }
+    },
+    {
+      "id": "banking77-401",
+      "family": "card_not_working",
+      "query": "My card won't work.",
+      "expectedIntent": "card_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-402",
+      "family": "card_payment_fee_charged",
+      "query": "I used my card for a purchase and was charged a fee",
+      "expectedIntent": "card_payment_fee_charged",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "fee",
+          "charged"
+        ]
+      }
+    },
+    {
+      "id": "banking77-403",
+      "family": "card_payment_not_recognised",
+      "query": "I did not make this card payment.",
+      "expectedIntent": "card_payment_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-404",
+      "family": "card_payment_wrong_exchange_rate",
+      "query": "This rate is too low. Are you sure your using the right exchange rate.",
+      "expectedIntent": "card_payment_wrong_exchange_rate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "wrong",
+          "exchange",
+          "rate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-405",
+      "family": "card_swallowed",
+      "query": "Atm took my card",
+      "expectedIntent": "card_swallowed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "swallowed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-406",
+      "family": "cash_withdrawal_charge",
+      "query": "How come you charge for cash withdrawals? I withdrew cash after buying groceries today, and there seems to be a new fee",
+      "expectedIntent": "cash_withdrawal_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cash",
+          "withdrawal",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-407",
+      "family": "cash_withdrawal_not_recognised",
+      "query": "Why is there a random withdrawal in my app?",
+      "expectedIntent": "cash_withdrawal_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cash",
+          "withdrawal",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-408",
+      "family": "change_pin",
+      "query": "How might  I change my PIN?",
+      "expectedIntent": "change_pin",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "change",
+          "pin"
+        ]
+      }
+    },
+    {
+      "id": "banking77-409",
+      "family": "compromised_card",
+      "query": "Freeze my account it's been hacked.",
+      "expectedIntent": "compromised_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "compromised",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-410",
+      "family": "contactless_not_working",
+      "query": "I tried to pay contactless at the bus today and it didn't work. Any ideas why?",
+      "expectedIntent": "contactless_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "contactless",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-411",
+      "family": "country_support",
+      "query": "Can I get a card outside the UK?",
+      "expectedIntent": "country_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "country",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-412",
+      "family": "declined_card_payment",
+      "query": "My card was declined in a shop",
+      "expectedIntent": "declined_card_payment",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "card",
+          "payment"
+        ]
+      }
+    },
+    {
+      "id": "banking77-413",
+      "family": "declined_cash_withdrawal",
+      "query": "The ATM keeps declining my card. I tried at a couple different ATMs. Can you tell me if there's a problem with my account?",
+      "expectedIntent": "declined_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-414",
+      "family": "declined_transfer",
+      "query": "Why do you keep declining my transfers?it was always been working really well so far but when I tried to buy something just now the card got declined . I tried couple of times already  but same thing is happening.",
+      "expectedIntent": "declined_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-415",
+      "family": "direct_debit_payment_not_recognised",
+      "query": "im so mad right now. theres several charges that I think my x boyfriend made on my card. the companys on the website wouldn't refund me my money, they told me to contact my bank. DO something please.",
+      "expectedIntent": "direct_debit_payment_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "direct",
+          "debit",
+          "payment",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-416",
+      "family": "disposable_card_limits",
+      "query": "what is the disposable cards limit?",
+      "expectedIntent": "disposable_card_limits",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "disposable",
+          "card",
+          "limits"
+        ]
+      }
+    },
+    {
+      "id": "banking77-417",
+      "family": "edit_personal_details",
+      "query": "My address has changed.",
+      "expectedIntent": "edit_personal_details",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "edit",
+          "personal",
+          "details"
+        ]
+      }
+    },
+    {
+      "id": "banking77-418",
+      "family": "exchange_charge",
+      "query": "My work sends me all over the world, can I get a discount for all the money I have to exchange?",
+      "expectedIntent": "exchange_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-419",
+      "family": "exchange_rate",
+      "query": "What are your international exchange rates?",
+      "expectedIntent": "exchange_rate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "rate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-420",
+      "family": "exchange_via_app",
+      "query": "How do I convert currencies with the app?",
+      "expectedIntent": "exchange_via_app",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "via",
+          "app"
+        ]
+      }
+    },
+    {
+      "id": "banking77-421",
+      "family": "extra_charge_on_statement",
+      "query": "I would like a refund on the extra pound I was charged.",
+      "expectedIntent": "extra_charge_on_statement",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "extra",
+          "charge",
+          "on",
+          "statement"
+        ]
+      }
+    },
+    {
+      "id": "banking77-422",
+      "family": "failed_transfer",
+      "query": "My transfer did not go through.",
+      "expectedIntent": "failed_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "failed",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-423",
+      "family": "fiat_currency_support",
+      "query": "Do you support any currency?",
+      "expectedIntent": "fiat_currency_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "fiat",
+          "currency",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-424",
+      "family": "get_disposable_virtual_card",
+      "query": "What is a disposable virtual card?",
+      "expectedIntent": "get_disposable_virtual_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "get",
+          "disposable",
+          "virtual",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-425",
+      "family": "get_physical_card",
+      "query": "How do I set-up my PIN for the new card?",
+      "expectedIntent": "get_physical_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "get",
+          "physical",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-426",
+      "family": "getting_spare_card",
+      "query": "I need some spare physical cards.",
+      "expectedIntent": "getting_spare_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "getting",
+          "spare",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-427",
+      "family": "getting_virtual_card",
+      "query": "I requested a virtual card but it is not showing up. Why?",
+      "expectedIntent": "getting_virtual_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "getting",
+          "virtual",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-428",
+      "family": "lost_or_stolen_card",
+      "query": "I lost my card",
+      "expectedIntent": "lost_or_stolen_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "lost",
+          "or",
+          "stolen",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-429",
+      "family": "lost_or_stolen_phone",
+      "query": "I can't find my phone.",
+      "expectedIntent": "lost_or_stolen_phone",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "lost",
+          "or",
+          "stolen",
+          "phone"
+        ]
+      }
+    },
+    {
+      "id": "banking77-430",
+      "family": "order_physical_card",
+      "query": "Please, how do I order a card?",
+      "expectedIntent": "order_physical_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "order",
+          "physical",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-431",
+      "family": "passcode_forgotten",
+      "query": "My password isn't being accepted and I need to reset it.",
+      "expectedIntent": "passcode_forgotten",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "passcode",
+          "forgotten"
+        ]
+      }
+    },
+    {
+      "id": "banking77-432",
+      "family": "pending_card_payment",
+      "query": "Why has my payment not gone through?",
+      "expectedIntent": "pending_card_payment",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "card",
+          "payment"
+        ]
+      }
+    },
+    {
+      "id": "banking77-433",
+      "family": "pending_cash_withdrawal",
+      "query": "Why is it taking so long for my cash withdrawal to no longer show as pending?",
+      "expectedIntent": "pending_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-434",
+      "family": "pending_top_up",
+      "query": "The top-up is pending.",
+      "expectedIntent": "pending_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-435",
+      "family": "pending_transfer",
+      "query": "i transfered however its still pending",
+      "expectedIntent": "pending_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pending",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-436",
+      "family": "pin_blocked",
+      "query": "I used the wrong ping too many times and now the account is blocked.  How do I unblock?",
+      "expectedIntent": "pin_blocked",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "pin",
+          "blocked"
+        ]
+      }
+    },
+    {
+      "id": "banking77-437",
+      "family": "receiving_money",
+      "query": "Is there a problem with receiving my salary in GBP?",
+      "expectedIntent": "receiving_money",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "receiving",
+          "money"
+        ]
+      }
+    },
+    {
+      "id": "banking77-438",
+      "family": "request_refund",
+      "query": "I need a refund on an item I have not received.  Am I able to simply cancel the payment?  I don't know how to do this.",
+      "expectedIntent": "request_refund",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "request",
+          "refund"
+        ]
+      }
+    },
+    {
+      "id": "banking77-439",
+      "family": "reverted_card_payment?",
+      "query": "I made a payment but the app reverted the payment.",
+      "expectedIntent": "reverted_card_payment?",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "reverted",
+          "card",
+          "payment?"
+        ]
+      }
+    },
+    {
+      "id": "banking77-440",
+      "family": "supported_cards_and_currencies",
+      "query": "What kind of currencies can I use to add money?",
+      "expectedIntent": "supported_cards_and_currencies",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "supported",
+          "cards",
+          "and",
+          "currencies"
+        ]
+      }
+    },
+    {
+      "id": "banking77-441",
+      "family": "terminate_account",
+      "query": "I'm tired of all the problems I've had. I want to quit this account!",
+      "expectedIntent": "terminate_account",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "terminate",
+          "account"
+        ]
+      }
+    },
+    {
+      "id": "banking77-442",
+      "family": "top_up_by_bank_transfer_charge",
+      "query": "Are SWIFT transfers accepted?",
+      "expectedIntent": "top_up_by_bank_transfer_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "by",
+          "bank",
+          "transfer",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-443",
+      "family": "top_up_by_card_charge",
+      "query": "Are there charges for topping up US cards?",
+      "expectedIntent": "top_up_by_card_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "by",
+          "card",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-444",
+      "family": "top_up_by_cash_or_cheque",
+      "query": "Is there an option to top up a with cheque?",
+      "expectedIntent": "top_up_by_cash_or_cheque",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "by",
+          "cash",
+          "or",
+          "cheque"
+        ]
+      }
+    },
+    {
+      "id": "banking77-445",
+      "family": "top_up_failed",
+      "query": "please tell me why my top-up failed.",
+      "expectedIntent": "top_up_failed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "failed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-446",
+      "family": "top_up_limits",
+      "query": "What are the restrictions to top-offs?",
+      "expectedIntent": "top_up_limits",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "limits"
+        ]
+      }
+    },
+    {
+      "id": "banking77-447",
+      "family": "top_up_reverted",
+      "query": "It seems my top up is reverted?",
+      "expectedIntent": "top_up_reverted",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "top",
+          "up",
+          "reverted"
+        ]
+      }
+    },
+    {
+      "id": "banking77-448",
+      "family": "topping_up_by_card",
+      "query": "Can friends add to my account",
+      "expectedIntent": "topping_up_by_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "topping",
+          "up",
+          "by",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-449",
+      "family": "transaction_charged_twice",
+      "query": "Why was I chaged twice for the same thing?",
+      "expectedIntent": "transaction_charged_twice",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transaction",
+          "charged",
+          "twice"
+        ]
+      }
+    },
+    {
+      "id": "banking77-450",
+      "family": "transfer_fee_charged",
+      "query": "What is the transfer fee charge?",
+      "expectedIntent": "transfer_fee_charged",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "fee",
+          "charged"
+        ]
+      }
+    },
+    {
+      "id": "banking77-451",
+      "family": "transfer_into_account",
+      "query": "I need to transfer money into my account, how do I go about doing this?",
+      "expectedIntent": "transfer_into_account",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "into",
+          "account"
+        ]
+      }
+    },
+    {
+      "id": "banking77-452",
+      "family": "transfer_not_received_by_recipient",
+      "query": "How long does it take for a transfer to get to a recipient?",
+      "expectedIntent": "transfer_not_received_by_recipient",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "not",
+          "received",
+          "by",
+          "recipient"
+        ]
+      }
+    },
+    {
+      "id": "banking77-453",
+      "family": "transfer_timing",
+      "query": "How long until my transfer goes through?",
+      "expectedIntent": "transfer_timing",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "transfer",
+          "timing"
+        ]
+      }
+    },
+    {
+      "id": "banking77-454",
+      "family": "unable_to_verify_identity",
+      "query": "It is impossible to verify my identity",
+      "expectedIntent": "unable_to_verify_identity",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "unable",
+          "to",
+          "verify",
+          "identity"
+        ]
+      }
+    },
+    {
+      "id": "banking77-455",
+      "family": "verify_my_identity",
+      "query": "What do you need for my identity check?",
+      "expectedIntent": "verify_my_identity",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "verify",
+          "my",
+          "identity"
+        ]
+      }
+    },
+    {
+      "id": "banking77-456",
+      "family": "verify_source_of_funds",
+      "query": "What is the source of my funds.",
+      "expectedIntent": "verify_source_of_funds",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "verify",
+          "source",
+          "of",
+          "funds"
+        ]
+      }
+    },
+    {
+      "id": "banking77-457",
+      "family": "verify_top_up",
+      "query": "What are the benefits to verifying the top-up?",
+      "expectedIntent": "verify_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "verify",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-458",
+      "family": "virtual_card_not_working",
+      "query": "Why is my virtual card is being declined?",
+      "expectedIntent": "virtual_card_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "virtual",
+          "card",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-459",
+      "family": "visa_or_mastercard",
+      "query": "Do you guys accept mastercard or visa?",
+      "expectedIntent": "visa_or_mastercard",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "visa",
+          "or",
+          "mastercard"
+        ]
+      }
+    },
+    {
+      "id": "banking77-460",
+      "family": "why_verify_identity",
+      "query": "What is the need to verify my identity?",
+      "expectedIntent": "why_verify_identity",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "why",
+          "verify",
+          "identity"
+        ]
+      }
+    },
+    {
+      "id": "banking77-461",
+      "family": "wrong_amount_of_cash_received",
+      "query": "The amount of cash I received was incorrect",
+      "expectedIntent": "wrong_amount_of_cash_received",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "wrong",
+          "amount",
+          "of",
+          "cash",
+          "received"
+        ]
+      }
+    },
+    {
+      "id": "banking77-462",
+      "family": "wrong_exchange_rate_for_cash_withdrawal",
+      "query": "Hello. I'm on holiday and didn't bring any cash with me. I need to withdrawal my home currency from one of your machines. Do you have any that will do this and is there a charge?",
+      "expectedIntent": "wrong_exchange_rate_for_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "wrong",
+          "exchange",
+          "rate",
+          "for",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-463",
+      "family": "Refund_not_showing_up",
+      "query": "I am awaiting my refund",
+      "expectedIntent": "Refund_not_showing_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "Refund",
+          "not",
+          "showing",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-464",
+      "family": "activate_my_card",
+      "query": "What's the right way to activate my card?",
+      "expectedIntent": "activate_my_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "activate",
+          "my",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-465",
+      "family": "age_limit",
+      "query": "Is there an age minimum?",
+      "expectedIntent": "age_limit",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "age",
+          "limit"
+        ]
+      }
+    },
+    {
+      "id": "banking77-466",
+      "family": "apple_pay_or_google_pay",
+      "query": "Top up on my Google Pay isn't working.",
+      "expectedIntent": "apple_pay_or_google_pay",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "apple",
+          "pay",
+          "or",
+          "google",
+          "pay"
+        ]
+      }
+    },
+    {
+      "id": "banking77-467",
+      "family": "atm_support",
+      "query": "Which ATM's accept my card?",
+      "expectedIntent": "atm_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "atm",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-468",
+      "family": "automatic_top_up",
+      "query": "If there isn't much money left can it automatically top-up?",
+      "expectedIntent": "automatic_top_up",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "automatic",
+          "top",
+          "up"
+        ]
+      }
+    },
+    {
+      "id": "banking77-469",
+      "family": "balance_not_updated_after_bank_transfer",
+      "query": "The amount of time that transfers usually take from a UK account is what?I just completed a transfer and it is not showing up at all. I'm wondering at this point if everything is actually okay.",
+      "expectedIntent": "balance_not_updated_after_bank_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "balance",
+          "not",
+          "updated",
+          "after",
+          "bank",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-470",
+      "family": "balance_not_updated_after_cheque_or_cash_deposit",
+      "query": "How can I get the cash deposit to show up on my account?",
+      "expectedIntent": "balance_not_updated_after_cheque_or_cash_deposit",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "balance",
+          "not",
+          "updated",
+          "after",
+          "cheque",
+          "or",
+          "cash",
+          "deposit"
+        ]
+      }
+    },
+    {
+      "id": "banking77-471",
+      "family": "beneficiary_not_allowed",
+      "query": "How do I do a successful transfer to an account?",
+      "expectedIntent": "beneficiary_not_allowed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "beneficiary",
+          "not",
+          "allowed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-472",
+      "family": "cancel_transfer",
+      "query": "I need to cancel my recent transfer immediately, I made a mistake there, please help quickly before it goes through",
+      "expectedIntent": "cancel_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cancel",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-473",
+      "family": "card_about_to_expire",
+      "query": "My card is about to expire. What do I need to do?",
+      "expectedIntent": "card_about_to_expire",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "about",
+          "to",
+          "expire"
+        ]
+      }
+    },
+    {
+      "id": "banking77-474",
+      "family": "card_acceptance",
+      "query": "Are there any limits on where I can use my card?",
+      "expectedIntent": "card_acceptance",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "acceptance"
+        ]
+      }
+    },
+    {
+      "id": "banking77-475",
+      "family": "card_arrival",
+      "query": "Do you know if there is a tracking number for the new card you sent me?",
+      "expectedIntent": "card_arrival",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "arrival"
+        ]
+      }
+    },
+    {
+      "id": "banking77-476",
+      "family": "card_delivery_estimate",
+      "query": "How long will it take to deliver something to US?",
+      "expectedIntent": "card_delivery_estimate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "delivery",
+          "estimate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-477",
+      "family": "card_linking",
+      "query": "How do I re-add a card to the app?",
+      "expectedIntent": "card_linking",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "linking"
+        ]
+      }
+    },
+    {
+      "id": "banking77-478",
+      "family": "card_not_working",
+      "query": "Why is my card not working?",
+      "expectedIntent": "card_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-479",
+      "family": "card_payment_fee_charged",
+      "query": "Why was I charged for card payment?",
+      "expectedIntent": "card_payment_fee_charged",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "fee",
+          "charged"
+        ]
+      }
+    },
+    {
+      "id": "banking77-480",
+      "family": "card_payment_not_recognised",
+      "query": "What should I do if I see a payment I didn't make?",
+      "expectedIntent": "card_payment_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-481",
+      "family": "card_payment_wrong_exchange_rate",
+      "query": "I bought something, but the exchange rate looks wrong.",
+      "expectedIntent": "card_payment_wrong_exchange_rate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "payment",
+          "wrong",
+          "exchange",
+          "rate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-482",
+      "family": "card_swallowed",
+      "query": "Is there a way I can get my ATM card back from the machine?",
+      "expectedIntent": "card_swallowed",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "card",
+          "swallowed"
+        ]
+      }
+    },
+    {
+      "id": "banking77-483",
+      "family": "cash_withdrawal_charge",
+      "query": "It looks like I was charged a withdrawal fee for going to my ATM. Why is that because I haven't been charged previously for doing so?",
+      "expectedIntent": "cash_withdrawal_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cash",
+          "withdrawal",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-484",
+      "family": "cash_withdrawal_not_recognised",
+      "query": "There is a suspicious cash withdraw on the account.",
+      "expectedIntent": "cash_withdrawal_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "cash",
+          "withdrawal",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-485",
+      "family": "change_pin",
+      "query": "I would like to change my PIN but I am not currently in the country.",
+      "expectedIntent": "change_pin",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "change",
+          "pin"
+        ]
+      }
+    },
+    {
+      "id": "banking77-486",
+      "family": "compromised_card",
+      "query": "There are transactions I didn't make, someone else must have used my card.",
+      "expectedIntent": "compromised_card",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "compromised",
+          "card"
+        ]
+      }
+    },
+    {
+      "id": "banking77-487",
+      "family": "contactless_not_working",
+      "query": "I've been unable to pay contactless with my card for over a week now. Is there a way to fix this issue?",
+      "expectedIntent": "contactless_not_working",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "contactless",
+          "not",
+          "working"
+        ]
+      }
+    },
+    {
+      "id": "banking77-488",
+      "family": "country_support",
+      "query": "I'm not in the UK, can I still get a card?",
+      "expectedIntent": "country_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "country",
+          "support"
+        ]
+      }
+    },
+    {
+      "id": "banking77-489",
+      "family": "declined_card_payment",
+      "query": "Why did it decline my payment?",
+      "expectedIntent": "declined_card_payment",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "card",
+          "payment"
+        ]
+      }
+    },
+    {
+      "id": "banking77-490",
+      "family": "declined_cash_withdrawal",
+      "query": "I was at the ATM trying to made a withdraw and I was declined.",
+      "expectedIntent": "declined_cash_withdrawal",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "cash",
+          "withdrawal"
+        ]
+      }
+    },
+    {
+      "id": "banking77-491",
+      "family": "declined_transfer",
+      "query": "How can I fix my card, it got declined twice.",
+      "expectedIntent": "declined_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "declined",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-492",
+      "family": "direct_debit_payment_not_recognised",
+      "query": "someone stole my money",
+      "expectedIntent": "direct_debit_payment_not_recognised",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "direct",
+          "debit",
+          "payment",
+          "not",
+          "recognised"
+        ]
+      }
+    },
+    {
+      "id": "banking77-493",
+      "family": "disposable_card_limits",
+      "query": "What's the most disposable cards I can have?",
+      "expectedIntent": "disposable_card_limits",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "disposable",
+          "card",
+          "limits"
+        ]
+      }
+    },
+    {
+      "id": "banking77-494",
+      "family": "edit_personal_details",
+      "query": "got married and need to change name",
+      "expectedIntent": "edit_personal_details",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "edit",
+          "personal",
+          "details"
+        ]
+      }
+    },
+    {
+      "id": "banking77-495",
+      "family": "exchange_charge",
+      "query": "How much more do I have to pay to exchange currencies?",
+      "expectedIntent": "exchange_charge",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "charge"
+        ]
+      }
+    },
+    {
+      "id": "banking77-496",
+      "family": "exchange_rate",
+      "query": "How often do your exchange rates change",
+      "expectedIntent": "exchange_rate",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "rate"
+        ]
+      }
+    },
+    {
+      "id": "banking77-497",
+      "family": "exchange_via_app",
+      "query": "How are currencies exchanged?",
+      "expectedIntent": "exchange_via_app",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "exchange",
+          "via",
+          "app"
+        ]
+      }
+    },
+    {
+      "id": "banking77-498",
+      "family": "extra_charge_on_statement",
+      "query": "Can you explain what this random $1 charge is?",
+      "expectedIntent": "extra_charge_on_statement",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "extra",
+          "charge",
+          "on",
+          "statement"
+        ]
+      }
+    },
+    {
+      "id": "banking77-499",
+      "family": "failed_transfer",
+      "query": "Why was I not able to complete a transfer?",
+      "expectedIntent": "failed_transfer",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "failed",
+          "transfer"
+        ]
+      }
+    },
+    {
+      "id": "banking77-500",
+      "family": "fiat_currency_support",
+      "query": "There is an incoming payment into my account, but it is deactivated. Will they still be processed?",
+      "expectedIntent": "fiat_currency_support",
+      "expectation": {
+        "mode": "answer",
+        "requiredTerms": [
+          "fiat",
+          "currency",
+          "support"
+        ]
+      }
+    }
+  ]
+}

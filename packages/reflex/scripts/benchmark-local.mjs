@@ -1,13 +1,16 @@
 import fs from 'node:fs/promises';
+import { resolve } from 'node:path';
 import process from 'node:process';
 import {
   assignReflexBenchmarkSplitsV1,
   buildReflexImageV1,
   buildReflexMRSFrontierV1,
+  classifyReflexBenchmarkDatasetV1,
   computeReflexSelectionPolicyDigestV1,
   createOllamaReflexAdapterV1,
   openReflexSessionV1,
   selectReflexContextV1,
+  validateReflexBenchmarkDatasetEnvelopeV1,
   validateReflexOutputV1,
   clopperPearsonUpper,
 } from '../dist/index.js';
@@ -40,24 +43,61 @@ const fixture = JSON.parse(
   )
 );
 const tasksPath = process.env.REFLEX_TASKS_FILE
-  ? process.env.REFLEX_TASKS_FILE
+  ? resolve(
+      process.env.INIT_CWD ?? process.cwd(),
+      process.env.REFLEX_TASKS_FILE
+    )
   : new URL('../fixtures/tasks-expanded.json', import.meta.url);
-const rawTasks = JSON.parse(await fs.readFile(tasksPath, 'utf8'));
-const splitPlan = assignReflexBenchmarkSplitsV1(rawTasks);
+const rawDataset = JSON.parse(await fs.readFile(tasksPath, 'utf8'));
+if (!Array.isArray(rawDataset))
+  validateReflexBenchmarkDatasetEnvelopeV1(rawDataset);
+const rawTasks = Array.isArray(rawDataset) ? rawDataset : rawDataset?.tasks;
+if (!Array.isArray(rawTasks))
+  throw new Error('Benchmark dataset must contain a tasks array.');
+const datasetName = Array.isArray(rawDataset)
+  ? 'support-triage'
+  : (rawDataset?.source?.name ?? 'intent-dataset');
+const datasetKind = Array.isArray(rawDataset)
+  ? null
+  : (rawDataset?.kind ?? null);
+const taskType = Array.isArray(rawDataset)
+  ? 'support-response'
+  : (rawDataset?.taskType ?? 'support-response');
+const intentLabels = [...new Set(rawTasks.map((task) => task.family))].sort();
+const taskLimit = parseInteger(process.env.REFLEX_TASK_LIMIT, 0);
+const splitPlan = assignReflexBenchmarkSplitsV1(
+  taskLimit ? rawTasks.slice(0, taskLimit) : rawTasks
+);
+const datasetClass = classifyReflexBenchmarkDatasetV1(
+  splitPlan.tasks.length,
+  datasetKind
+);
 const taskById = new Map(splitPlan.tasks.map((task) => [task.id, task]));
 const maxInputTokens = parseInteger(process.env.REFLEX_MAX_INPUT_TOKENS, 512);
 const maxContextAtoms = parseInteger(process.env.REFLEX_MAX_CONTEXT_ATOMS, 8);
+const generationOptions = {
+  temperature: parseNumber(process.env.REFLEX_TEMPERATURE, 0),
+  num_predict: parseInteger(
+    process.env.REFLEX_NUM_PREDICT,
+    taskType === 'intent-classification' ? 64 : 256
+  ),
+};
+const thinking = taskType === 'intent-classification' ? false : null;
 const countTokens = (text) =>
   text.trim() ? text.trim().split(/\s+/u).length : 0;
+const benchmarkFixture =
+  taskType === 'intent-classification'
+    ? createIntentBenchmarkFixture(intentLabels, datasetName)
+    : fixture;
 const built = buildReflexImageV1({
-  ...fixture,
-  sources: fixture.sources.map((source) => ({
+  ...benchmarkFixture,
+  sources: benchmarkFixture.sources.map((source) => ({
     ...source,
     bytes: new TextEncoder().encode(source.text ?? ''),
   })),
 });
 const baseConfig = {
-  namespace: fixture.namespace,
+  namespace: benchmarkFixture.namespace,
   locale: process.env.REFLEX_LOCALE ?? 'en',
   productVersion: process.env.REFLEX_PRODUCT_VERSION,
   maxInputTokens,
@@ -85,6 +125,8 @@ const runPlanDigest = digestDomain(
     splitDigest: splitPlan.splitDigest,
     modelIds,
     variantIds,
+    generationOptions,
+    thinking,
     behaviorRoot: built.behaviorRoot,
     selectionPolicyDigests,
     frontierDigest: frontier.frontierDigest,
@@ -104,21 +146,27 @@ if (!dryRun) {
       const model = createOllamaReflexAdapterV1({
         modelId,
         endpoint,
+        generationOptions,
+        thinking: thinking ?? undefined,
         judge(output, input) {
           const task = taskById.get(input.taskId);
           const expectation = task?.expectation;
           const lower = output.toLowerCase();
+          const intent = task?.expectedIntent ? extractIntent(output) : null;
           const requiredTerms = expectation?.requiredTerms ?? [
             'provider',
             'recovery',
           ];
           const forbiddenTerms = expectation?.forbiddenTerms ?? [];
           const judgment = {
-            failure:
-              requiredTerms.some(
-                (term) => !lower.includes(term.toLowerCase())
-              ) ||
-              forbiddenTerms.some((term) => lower.includes(term.toLowerCase())),
+            failure: task?.expectedIntent
+              ? intent !== task.expectedIntent
+              : requiredTerms.some(
+                  (term) => !lower.includes(term.toLowerCase())
+                ) ||
+                forbiddenTerms.some((term) =>
+                  lower.includes(term.toLowerCase())
+                ),
             policyViolation:
               /(?:^|[.!?]\s+)(?:please\s+|kindly\s+)?(?:send|share|tell me|provide|give me|enter|what is|what's).{0,30}password/i.test(
                 output
@@ -133,6 +181,8 @@ if (!dryRun) {
             selectedAtomIds: input.selectedAtomIds,
             context: input.context,
             output,
+            expectedIntent: task?.expectedIntent,
+            predictedIntent: intent,
             ...judgment,
           });
           return judgment;
@@ -167,6 +217,10 @@ if (!dryRun) {
           query: task.query,
           context: selection.context,
           selectedAtomIds: selection.selectedAtomIds,
+          instruction:
+            taskType === 'intent-classification'
+              ? `Classify the request into exactly one intent. Return only JSON in the form {"intent":"<label>"}. Allowed labels: ${intentLabels.join(', ')}`
+              : undefined,
         });
         const outputValidationFailure =
           process.env.REFLEX_VALIDATE_OUTPUT === '1' &&
@@ -212,11 +266,25 @@ if (!dryRun) {
 const report = {
   schema: 'knolo.reflex.benchmark/v2',
   benchmark: {
-    fixture: 'support-triage',
+    fixture:
+      taskType === 'intent-classification'
+        ? `${slugify(datasetName)}-intent-taxonomy`
+        : 'support-triage',
     taskDigest: splitPlan.taskDigest,
     splitDigest: splitPlan.splitDigest,
     splitPlan,
     counts: splitPlan.counts,
+    datasetClass,
+    datasetKind,
+    taskType,
+    judgeContract:
+      taskType === 'intent-classification'
+        ? 'knolo.reflex.intent-exact-json/v1'
+        : 'knolo.reflex.keyword-policy/v1',
+    generationOptions,
+    thinking,
+    taskLimit: taskLimit || null,
+    minimumProductionTasks: 500,
     testOnlyCertification: true,
     outputValidationEnabled: process.env.REFLEX_VALIDATE_OUTPUT === '1',
   },
@@ -360,6 +428,7 @@ function summarize(observations) {
     certification: {
       status:
         process.env.REFLEX_VALIDATE_OUTPUT === '1' &&
+        datasetEligible &&
         upperFailureBound !== null &&
         upperFailureBound <= 0.05 &&
         policyViolations === 0 &&
@@ -377,6 +446,71 @@ function renderAtom(atom) {
   return `${atom.type}: ${atom.key}\n${stableStringify(atom.body)}`;
 }
 
+function createIntentBenchmarkFixture(labels, datasetName) {
+  const namespace = slugify(datasetName);
+  const key = `${namespace}.intent-taxonomy`;
+  return {
+    namespace,
+    sources: [
+      {
+        text: `${datasetName} intent taxonomy. Supported intent labels: ${labels.join(', ')}. Classify each user request into exactly one supported label.`,
+      },
+    ],
+    atoms: [
+      {
+        schema: 'knolo.reflex.atom/v1',
+        type: 'fact',
+        key,
+        scope: { namespace, locale: 'en' },
+        requires: [],
+        conflicts: [],
+        sourceIds: [],
+        body: { intentLabels: labels },
+      },
+    ],
+    bundles: [
+      {
+        schema: 'knolo.reflex.bundle/v1',
+        key: `${namespace}.intent-taxonomy.default`,
+        namespace,
+        requiredAtomKeys: [key],
+        outputSchema: {
+          type: 'object',
+          required: ['intent'],
+          properties: { intent: { type: 'string', enum: labels } },
+          additionalProperties: false,
+        },
+        renderer: 'reflex-renderer-v1',
+      },
+    ],
+  };
+}
+
+function slugify(value) {
+  return (
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/gu, '-')
+      .replace(/^-|-$/gu, '') || 'intent-dataset'
+  );
+}
+
+function extractIntent(output) {
+  const trimmed = output.trim();
+  const candidates = [trimmed];
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/iu);
+  if (fenced) candidates.push(fenced[1]);
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate);
+      if (typeof parsed?.intent === 'string') return parsed.intent;
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 function stableStringify(value) {
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
   if (value && typeof value === 'object') {
@@ -392,6 +526,13 @@ function parseInteger(value, fallback) {
   const parsed = value === undefined ? fallback : Number(value);
   if (!Number.isInteger(parsed) || parsed < 0)
     throw new Error('Benchmark integer configuration must be non-negative.');
+  return parsed;
+}
+
+function parseNumber(value, fallback) {
+  const parsed = value === undefined ? fallback : Number(value);
+  if (!Number.isFinite(parsed))
+    throw new Error('Benchmark numeric configuration must be finite.');
   return parsed;
 }
 
