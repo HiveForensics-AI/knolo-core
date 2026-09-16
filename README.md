@@ -239,10 +239,16 @@ if (selection.disposition === 'ready') {
 }
 ```
 
-The package is independently versioned as `0.1.1`, compatible with
+The package is independently versioned as `0.1.2`, compatible with
 `@knolo/core` `5.5.0`, and includes an optional adapter for a local Ollama
 server. See the [Reflex package guide](packages/reflex/README.md) for the CLI,
 verification, evaluation, optimization, distillation, and security details.
+
+The current Reflex 0.2 development line adds frozen teacher provenance,
+behavior-signature clusters, calibrated MRS selection, offline Pareto frontiers,
+and a split-aware benchmark harness. These additions remain experimental until
+the larger frozen evaluation set, conformance review, and release gates are
+complete.
 
 ## Trust and engineering proof
 

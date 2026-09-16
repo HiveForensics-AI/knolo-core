@@ -7,6 +7,8 @@ test('adapts an explicit Ollama response without making a real network call', as
   let judgedInput;
   const adapter = createOllamaReflexAdapterV1({
     modelId: 'local-test',
+    generationOptions: { temperature: 0, num_predict: 8 },
+    thinking: false,
     fetchImpl: async (url, init) => {
       request = { url, init };
       return new Response(
@@ -26,9 +28,15 @@ test('adapts an explicit Ollama response without making a real network call', as
     selectedAtomIds: [],
   });
   assert.equal(result.failure, false);
+  assert.equal(result.output, 'approved');
   assert.equal(result.outputTokens, 4);
   assert.equal(request.url, 'http://localhost:11434/api/generate');
   assert.match(request.init.body, /reset account/);
+  assert.deepEqual(JSON.parse(request.init.body).options, {
+    temperature: 0,
+    num_predict: 8,
+  });
+  assert.equal(JSON.parse(request.init.body).think, false);
   assert.equal(judgedInput.taskId, 'support-001');
 });
 

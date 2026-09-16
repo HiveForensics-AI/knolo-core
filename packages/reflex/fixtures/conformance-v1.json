@@ -1,0 +1,67 @@
+{
+  "teacherRecord": {
+    "schema": "knolo.reflex.teacher-record/v1",
+    "id": "conformance-record",
+    "family": "recovery",
+    "query": "recover account",
+    "teacherOutput": "Identify the provider and use the approved recovery path.",
+    "accepted": true,
+    "provenance": {
+      "teacherModelId": "teacher-model",
+      "teacherRevision": "teacher-revision",
+      "promptContractDigest": "sha256-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "extractorId": "conformance-extractor",
+      "extractorRevision": "conformance-extractor-v1",
+      "extractionContractDigest": "sha256-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "judgeId": "conformance-judge",
+      "judgeRevision": "conformance-judge-v1",
+      "datasetSplit": "calibration"
+    }
+  },
+  "calibration": {
+    "config": {
+      "modelId": "student-model",
+      "modelRevision": "student-revision",
+      "family": "recovery",
+      "candidateAtomIds": ["atom.recovery"],
+      "datasetSplitDigest": "sha256-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "minObservations": 2,
+      "maxIterations": 20
+    },
+    "observations": [
+      {
+        "schema": "knolo.reflex.ablation-observation/v1",
+        "id": "observation-success",
+        "modelId": "student-model",
+        "modelRevision": "student-revision",
+        "family": "recovery",
+        "queryId": "query-success",
+        "datasetSplit": "calibration",
+        "atomIds": ["atom.recovery"],
+        "success": true
+      },
+      {
+        "schema": "knolo.reflex.ablation-observation/v1",
+        "id": "observation-failure",
+        "modelId": "student-model",
+        "modelRevision": "student-revision",
+        "family": "recovery",
+        "queryId": "query-failure",
+        "datasetSplit": "calibration",
+        "atomIds": [],
+        "success": false
+      }
+    ]
+  },
+  "frontierProblem": {
+    "atoms": [
+      { "id": "atom.recovery", "tokenCost": 3, "contribution": 2 },
+      { "id": "atom.extra", "tokenCost": 2, "contribution": 0 }
+    ],
+    "requiredAtomIds": ["atom.recovery"],
+    "intercept": -1,
+    "successThreshold": 0.7,
+    "maxTokenCost": 10,
+    "maxSearchAtoms": 20
+  }
+}

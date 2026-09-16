@@ -18,6 +18,7 @@ try {
   else if (command === 'query') await query(args);
   else if (command === 'compare') await compare(args);
   else if (command === 'evaluate') await evaluate(args);
+  else if (command === 'calibrate') await calibrate(args);
   else usage(1);
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
@@ -125,6 +126,21 @@ async function evaluate(args) {
   print(report);
 }
 
+async function calibrate(args) {
+  const paths = args.filter((arg) => !arg.startsWith('--'));
+  if (paths.length < 2)
+    usage(
+      1,
+      'Usage: reflex calibrate <observations.json> <config.json> [output.json]'
+    );
+  const observations = JSON.parse(await fs.readFile(paths[0], 'utf8'));
+  const config = JSON.parse(await fs.readFile(paths[1], 'utf8'));
+  const result = api.calibrateReflexCapabilityV1(observations, config);
+  if (paths[2])
+    await fs.writeFile(paths[2], JSON.stringify(result, null, 2) + '\n');
+  print(result);
+}
+
 function normalizeInput(input) {
   return {
     ...input,
@@ -149,7 +165,7 @@ function print(value) {
 }
 function usage(
   code,
-  message = 'Usage: reflex <build|inspect|query|evaluate> ...'
+  message = 'Usage: reflex <build|inspect|query|compare|evaluate|calibrate> ...'
 ) {
   console.error(message);
   process.exit(code);

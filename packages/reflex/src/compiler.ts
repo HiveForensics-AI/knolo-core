@@ -233,6 +233,7 @@ function normalizeBundle(
     ),
     outputSchema: input.outputSchema,
     renderer: input.renderer,
+    ...(input.triggerMode ? { triggerMode: input.triggerMode } : {}),
     triggerAtomIds: [],
   };
   const triggerWasSpecified =
