@@ -146,6 +146,67 @@ test('missing, unauthorized, and stale evidence fail closed', () => {
   assert.equal(evaluateEvidenceGateV1(empty).overall, 'unknown');
 });
 
+test('authority thresholds fail closed for missing and nonnumeric metadata', () => {
+  const knowledgePolicy = {
+    version: 1,
+    default: 'deny',
+    rules: [{ effect: 'allow', action: 'read', principal: 'support-agent' }],
+  };
+  const image = createKnowledgeImageV5({
+    policy: knowledgePolicy,
+    objects: [
+      {
+        kind: 'chunk',
+        bytes: encoder.encode('Refunds are available within 30 days.'),
+        meta: { authority: 'untrusted' },
+      },
+    ],
+  });
+  const policy = {
+    knowledge: knowledgePolicy,
+    minAuthority: 1,
+    onConflict: 'contested',
+    requireEvidenceFor: ['fact'],
+  };
+  const result = evaluateEvidenceGateV1({
+    image,
+    policy,
+    principal: 'support-agent',
+    claims: [
+      {
+        id: 'refund-window',
+        text: 'Refunds are available within 30 days.',
+        modality: 'fact',
+        evidence: [ref(image, 0, 'supports')],
+      },
+    ],
+  });
+  assert.equal(result.claims[0].decision, 'unknown');
+  assert.deepEqual(result.claims[0].reasons, [
+    `evidence-not-applicable:${image.objects[0].id}`,
+    'no-applicable-evidence',
+  ]);
+});
+
+test('zero-length evidence spans are rejected', () => {
+  const { image } = fixture();
+  assert.throws(
+    () =>
+      evaluateEvidenceGateV1(
+        request(image, [
+          {
+            id: 'empty-span',
+            text: 'Refunds',
+            modality: 'fact',
+            evidence: [ref(image, 0, 'supports', 0, 0)],
+          },
+        ])
+      ),
+    /non-empty/
+  );
+  assert.throws(() => evidenceSpanTextV1(image.objects[0], 0, 0), /non-empty/);
+});
+
 test('tampering with evidence or the result is rejected', () => {
   const { image } = fixture();
   const claims = [
@@ -173,6 +234,32 @@ test('tampering with evidence or the result is rejected', () => {
   const bad = structuredClone(req);
   bad.claims[0].evidence[0].end -= 1;
   assert.throws(() => verifyEvidenceGateV1(result, bad), /certificate|replay/i);
+});
+
+test('certificate verification ignores JSON object key order', () => {
+  const { image } = fixture();
+  const req = request(image, [
+    {
+      id: 'refund-window',
+      text: 'Refunds are available within 30 days.',
+      modality: 'fact',
+      evidence: [ref(image, 0, 'supports')],
+    },
+  ]);
+  const result = evaluateEvidenceGateV1(req);
+  const reordered = {
+    replayHash: result.replayHash,
+    certificateRoot: result.certificateRoot,
+    overall: result.overall,
+    claims: result.claims,
+    limits: result.limits,
+    principal: result.principal,
+    evaluationRoot: result.evaluationRoot,
+    policyRoot: result.policyRoot,
+    stateRoot: result.stateRoot,
+    version: result.version,
+  };
+  verifyEvidenceGateV1(reordered, req);
 });
 
 test('explanation returns verified source text and byte spans', () => {

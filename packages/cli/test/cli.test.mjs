@@ -1829,6 +1829,15 @@ test('v5 query uses the verified EQL contract through both CLI entry points', as
     )
   );
   assert.equal(v5Command.resultRoot, topLevel.resultRoot);
+
+  const imageFlagCommand = JSON.parse(
+    runCli(
+      ['v5', 'query', '--image', './knowledge.knolo', expression, '--json'],
+      cwd
+    )
+  );
+  assert.equal(imageFlagCommand.resultRoot, topLevel.resultRoot);
+
   assert.ok(existsSync(receiptPath));
   const explained = JSON.parse(
     runCli(

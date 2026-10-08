@@ -1296,7 +1296,9 @@ async function cmdV5(core, args) {
       throw createError(
         `V5 image file not found at ${path.relative(process.cwd(), imagePath)}.`
       );
-    const expression = positional.slice(1).join(' ').trim();
+    const expression = (flags.image ? positional : positional.slice(1))
+      .join(' ')
+      .trim();
     if (!expression)
       throw createError(
         'Usage: knolo v5 query <image.v5> <EQL> [--json] [--receipt <file>]'

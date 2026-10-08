@@ -165,7 +165,12 @@ export function verifyEvidenceGateV1(
   if (!result || result.version !== 'evidence-gate-v1')
     throw new Error('Unsupported Evidence Gate result version.');
   const expected = evaluateEvidenceGateV1(request);
-  if (JSON.stringify(result) !== JSON.stringify(expected))
+  if (
+    !bytesEqual(
+      canonicalCbor(result as unknown as CborValue),
+      canonicalCbor(expected as unknown as CborValue)
+    )
+  )
     throw new Error('Evidence Gate certificate or replay hash mismatch.');
 }
 
@@ -363,10 +368,12 @@ function validateSpan(bytes: Uint8Array, start: number, end: number): void {
     !Number.isSafeInteger(start) ||
     !Number.isSafeInteger(end) ||
     start < 0 ||
-    end < start ||
+    end <= start ||
     end > bytes.length
   )
-    throw new Error(`Evidence Gate span must be within 0..${bytes.length}.`);
+    throw new Error(
+      `Evidence Gate span must be non-empty and within 0..${bytes.length}.`
+    );
 }
 
 function evaluateClaim(
@@ -475,14 +482,14 @@ function applicable(
       if (!Number.isFinite(validUntil) || validUntil < asOf) return false;
     }
   }
-  if (
-    policy.minAuthority !== undefined &&
-    typeof meta.authority === 'number' &&
-    meta.authority < policy.minAuthority
-  )
-    return false;
-  if (policy.minAuthority !== undefined && meta.authority === undefined)
-    return false;
+  if (policy.minAuthority !== undefined) {
+    if (
+      typeof meta.authority !== 'number' ||
+      !Number.isFinite(meta.authority) ||
+      meta.authority < policy.minAuthority
+    )
+      return false;
+  }
   return true;
 }
 
@@ -521,4 +528,11 @@ function evidenceKey(reference: EvidenceGateEvidenceReferenceV1): string {
 
 function compareText(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
+}
+
+function bytesEqual(left: Uint8Array, right: Uint8Array): boolean {
+  return (
+    left.length === right.length &&
+    left.every((value, index) => value === right[index])
+  );
 }
