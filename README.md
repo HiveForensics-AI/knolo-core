@@ -119,6 +119,7 @@ The boundary is intentional. Knolo owns the artifact, identity, evidence, roots,
 | Verification            | Container validation, roots, digests, receipts, and recovery                  | TypeScript and Rust            |
 | Retrieval               | Lexical V4 retrieval plus bounded V5 query planning and indexes               | `@knolo/core`                  |
 | Agent boundary          | Durable runs, evidence-aware context, policy, and authority primitives        | `@knolo/core`                  |
+| Evidence Gate           | Claim-level support, conflict, abstention, and offline certificate checks    | `@knolo/evidence-gate`        |
 | Operations              | Health, diagnostics, Studio snapshot, sync, merge, and replay                 | `@knolo/core` and `@knolo/cli` |
 | Application integration | LangChain, LlamaIndex, Python, ICP, and starter workspace paths               | `examples/`, `packages/`       |
 | Behavior packs          | Deterministic scoped procedures, constraints, context selection, and receipts | `@knolo/reflex`                |

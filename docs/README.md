@@ -33,6 +33,11 @@ operational guides for Knolo.
   release handoff.
 - [Reflex 0.2 empirical intelligence plan](REFLEX_0.2_PLAN.md) — provenance,
   clustering, capability calibration, MRS frontiers, and benchmark gates.
+- [Evidence Gate implementation plan](EVIDENCE_GATE_IMPLEMENTATION_PLAN.md) —
+  claim-level evidence decisions, certificates, verification, and the first
+  product pilot.
+- [`@knolo/evidence-gate`](../packages/evidence-gate/README.md) — the current
+  TypeScript vertical slice for deterministic claim-level verification.
 
 Architecture sources, future-version specifications, and internal planning
 records are kept local and are not part of the public repository. The

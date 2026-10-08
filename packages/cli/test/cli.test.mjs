@@ -1782,6 +1782,84 @@ test('v5 info and health expose verified runtime diagnostics', async () => {
   assert.equal(studio.capabilities.mutateImage, false);
 });
 
+test('v5 query uses the verified EQL contract through both CLI entry points', async () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-v5-query-'));
+  const core = await import(
+    pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href
+  );
+  const image = core.createKnowledgeImageV5({
+    objects: [
+      {
+        kind: 'chunk',
+        bytes: new TextEncoder().encode('alpha billing policy'),
+        meta: { source: 'policy.md' },
+      },
+      {
+        kind: 'chunk',
+        bytes: new TextEncoder().encode('unrelated text'),
+        meta: { source: 'other.md' },
+      },
+    ],
+  });
+  const imagePath = path.join(cwd, 'knowledge.knolo');
+  writeFileSync(imagePath, image.bytes);
+  const expression = 'FROM chunk SEARCH "billing" LIMIT 5';
+
+  const topLevel = JSON.parse(
+    runCli(['query', expression, '--pack', './knowledge.knolo', '--json'], cwd)
+  );
+  assert.equal(topLevel.contract, 'v5-knowledge-image');
+  assert.equal(topLevel.stateRoot, image.stateRoot);
+  assert.equal(topLevel.hits.length, 1);
+  assert.equal(topLevel.hits[0].source, 'policy.md');
+
+  const receiptPath = path.join(cwd, 'query-result.json');
+  const v5Command = JSON.parse(
+    runCli(
+      [
+        'v5',
+        'query',
+        './knowledge.knolo',
+        expression,
+        '--receipt',
+        './query-result.json',
+        '--json',
+      ],
+      cwd
+    )
+  );
+  assert.equal(v5Command.resultRoot, topLevel.resultRoot);
+  assert.ok(existsSync(receiptPath));
+  const explained = JSON.parse(
+    runCli(
+      ['explain', './query-result.json', '--pack', './knowledge.knolo'],
+      cwd
+    )
+  );
+  assert.equal(explained.verified, true);
+  assert.equal(explained.contract, 'v5-knowledge-image');
+});
+
+test('inspect and verify recognize V5 images without mounting them as V4 packs', async () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-v5-verify-'));
+  const core = await import(
+    pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href
+  );
+  const image = core.createKnowledgeImageV5({
+    objects: [
+      { kind: 'metadata', bytes: new TextEncoder().encode('v5'), meta: {} },
+    ],
+  });
+  writeFileSync(path.join(cwd, 'knowledge.knolo'), image.bytes);
+
+  const inspected = JSON.parse(runCli(['inspect', './knowledge.knolo'], cwd));
+  assert.equal(inspected.format, 'v5-knowledge-image');
+  assert.equal(inspected.stateRoot, image.stateRoot);
+  const verified = JSON.parse(runCli(['verify', './knowledge.knolo'], cwd));
+  assert.equal(verified.verified, true);
+  assert.equal(verified.format, 'v5-knowledge-image');
+});
+
 test('v5 compress and decompress are explicit and report byte statistics', async () => {
   const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-v5-compress-'));
   const core = await import(

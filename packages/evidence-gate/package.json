@@ -1,0 +1,57 @@
+{
+  "name": "@knolo/evidence-gate",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Deterministic claim-level evidence decisions and offline certificates for Knolo Knowledge Images.",
+  "keywords": [
+    "ai",
+    "evidence",
+    "provenance",
+    "grounding",
+    "verification"
+  ],
+  "author": "Sam Paniagua",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HiveForensics-AI/knolo-core.git",
+    "directory": "packages/evidence-gate"
+  },
+  "homepage": "https://github.com/HiveForensics-AI/knolo-core#readme",
+  "bugs": {
+    "url": "https://github.com/HiveForensics-AI/knolo-core/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "evidence-gate": "./bin/evidence-gate.mjs"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "@knolo/core": "5.5.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

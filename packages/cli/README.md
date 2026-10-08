@@ -1,7 +1,7 @@
 # @knolo/cli
 
-The CLI preserves the Knolo V4 pack workflow and adds read-only V5 Knowledge
-Image inspection. Normal builds emit V4; the ICP legacy build path explicitly
+The CLI preserves the Knolo V4 pack workflow and adds explicit V5 Knowledge
+Image inspection and querying. Normal builds emit V4; the ICP legacy build path explicitly
 emits V3 until the canister gains a V4 profile. V5 Studio output is a verified
 management snapshot, not a mutation interface.
 
@@ -133,6 +133,22 @@ knolo query "billing policy" --receipt receipt.json --json
 knolo explain receipt.json --pack dist/knowledge.knolo
 knolo diff old.knolo new.knolo
 ```
+
+`knolo build` produces a V4 pack, so its natural-language query and receipt
+contract applies to that artifact. V5 images are verified Knowledge Images and
+use bounded EQL with roots-bound query results:
+
+```bash
+knolo query 'FROM chunk SEARCH "billing" LIMIT 5' \
+  --pack ./dist/knowledge.v5 --json --receipt ./query-result.json
+knolo v5 query ./dist/knowledge.v5 \
+  'FROM chunk SEARCH "billing" LIMIT 5' --json
+knolo explain ./query-result.json --pack ./dist/knowledge.v5
+```
+
+V5 images are never mounted through the V4 pack query API. Semantic sidecars
+currently target V4 packs and are rejected for V5 images with a contract-specific
+message.
 
 V5 runtime diagnostics:
 

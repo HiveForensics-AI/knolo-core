@@ -58,6 +58,11 @@ V5 completion gate are finished.
 2. Verify publication artifacts and record the V5 release/operator sign-off.
 3. After the gate closes, create the separate V6 implementation workstream.
 
+The first product workstream for that V6 line is the [Evidence Gate
+implementation plan](EVIDENCE_GATE_IMPLEMENTATION_PLAN.md). It turns the V5
+artifact and receipt foundations into claim-level support, conflict, and
+abstention decisions that an agent host can place before answer publication.
+
 ## Later V5 capabilities
 
 - Durable writer leases, authorized operations, and production sync
