@@ -146,7 +146,7 @@ Commands:
   publish                 Publish a pack with a Hub Bearer token
   yank <pack>@<version>   Yank a released pack with a Hub Bearer token
   build                   Build a .knolo pack from configured sources
-  query <question>        Query a built pack and print top hits
+  query <question|EQL>    Query a V4 pack or a V5 image using its declared contract
   inspect <pack>          Inspect pack format, sections, and manifest
   migrate <pack>          Migrate a legacy pack to v4
   verify <pack>           Verify pack structure and cryptographic digests
@@ -179,7 +179,7 @@ function printCommandHelp(command) {
     yank: 'Usage: knolo yank <publisher>/<slug>@<version> [--json] [--registry <url>]\n\nUses the stored token as Authorization: Bearer kno_…. Yank is owner-only and leaves the public Blob in place.',
     build: 'Usage: knolo build',
     query:
-      'Usage: knolo query <question> [--pack <path>] [--k <number>] [--receipt <file>] [--json]',
+      'Usage: knolo query <question|EQL> [--pack <path>] [--k <number>] [--receipt <file>] [--json]\n\nV4 packs accept natural-language queries. V5 images require bounded EQL such as: FROM chunk SEARCH "billing" LIMIT 5.',
     inspect: 'Usage: knolo inspect <pack.knolo>',
     migrate:
       'Usage: knolo migrate <pack.knolo> --out <new-pack.knolo> [--to 4]',
@@ -187,7 +187,7 @@ function printCommandHelp(command) {
     explain: 'Usage: knolo explain <receipt.json> --pack <pack.knolo>',
     diff: 'Usage: knolo diff <pack-a.knolo> <pack-b.knolo>',
     dev: 'Usage: knolo dev',
-    v5: 'Usage: knolo v5 <info|health|studio|compress|decompress> <image.v5> [--out <file>] [--mode fast|balanced|max] [--attach-index]',
+    v5: 'Usage: knolo v5 <info|health|studio|query|compress|decompress> <image.v5> [--out <file>] [--mode fast|balanced|max] [--attach-index]\n\nFor query: knolo v5 query <image.v5> <EQL> [--json] [--receipt <file>].',
     icp: 'Usage: knolo icp <command> [options]',
     'semantic:index':
       'Usage: knolo semantic:index --pack <path> [--out <path>] [--model <id>] [--endpoint <url>]',
@@ -877,6 +877,13 @@ async function cmdQuery(core, args) {
 
   const packBuffer = readFileSync(packPath);
   const bytes = Uint8Array.from(packBuffer);
+  if (core.isKnowledgeImageV5?.(bytes)) {
+    if (opts.k !== undefined)
+      throw createError(
+        'V5 queries use EQL LIMIT. Put LIMIT in the query instead of --k.'
+      );
+    return await cmdQueryV5(core, bytes, packPath, question, opts);
+  }
   const kb = await mountPackFromBytes(core, bytes);
   const receiptResult =
     opts.receipt && core.queryWithReceipt
@@ -936,6 +943,66 @@ async function cmdQuery(core, args) {
   });
 }
 
+async function cmdQueryV5(core, bytes, imagePath, expression, opts) {
+  const image = core.mountKnowledgeImageV5(bytes);
+  const result = core.queryKnowledgeImageV5(image, expression);
+  if (opts.receipt) {
+    writeFileSync(
+      path.resolve(process.cwd(), opts.receipt),
+      `${JSON.stringify(result, null, 2)}\n`
+    );
+  }
+  const objects = new Map(image.objects.map((object) => [object.id, object]));
+  const hits = result.hits.map((hit) => {
+    const object = objects.get(hit.objectId);
+    const text = object
+      ? new TextDecoder()
+          .decode(object.bytes)
+          .replace(/\s+/gu, ' ')
+          .slice(0, 200)
+      : '';
+    const metadata = object?.meta ?? {};
+    const source =
+      typeof metadata.source === 'string'
+        ? metadata.source
+        : typeof metadata.docId === 'string'
+          ? metadata.docId
+          : hit.objectId;
+    return {
+      objectId: hit.objectId,
+      kind: hit.kind,
+      source,
+      snippet: text,
+      joinedObjectIds: hit.joinedObjectIds,
+    };
+  });
+  const payload = {
+    contract: 'v5-knowledge-image',
+    query: expression,
+    imagePath,
+    stateRoot: result.stateRoot,
+    planRoot: result.planRoot,
+    resultRoot: result.resultRoot,
+    plan: result.plan,
+    hits,
+    queryResult: result,
+  };
+  if (opts.json) {
+    console.log(JSON.stringify(payload, null, 2));
+    return;
+  }
+  if (!hits.length) {
+    console.log('No V5 hits found.');
+    return;
+  }
+  console.log(`V5 query returned ${hits.length} hit(s):`);
+  hits.forEach((hit, index) => {
+    console.log(`\n${index + 1}. ${hit.kind} ${hit.objectId}`);
+    console.log(`   source: ${hit.source}`);
+    console.log(`   snippet: ${hit.snippet}`);
+  });
+}
+
 function parsePackCommandArgs(args, command) {
   const positional = [];
   const flags = {};
@@ -961,6 +1028,24 @@ async function cmdInspect(core, args) {
       `Pack file not found at ${path.relative(process.cwd(), packPath)}.`
     );
   const bytes = Uint8Array.from(readFileSync(packPath));
+  if (core.isKnowledgeImageV5?.(bytes)) {
+    const image = core.mountKnowledgeImageV5(bytes);
+    console.log(
+      JSON.stringify(
+        {
+          format: 'v5-knowledge-image',
+          version: 5,
+          stateRoot: image.stateRoot,
+          commitDigest: image.commitDigest,
+          objects: image.objects.length,
+          events: image.events.length,
+        },
+        null,
+        2
+      )
+    );
+    return;
+  }
   const pack = await mountPackFromBytes(core, bytes);
   const result = {
     format:
@@ -988,6 +1073,23 @@ async function cmdVerify(core, args) {
       `Pack file not found at ${path.relative(process.cwd(), packPath)}.`
     );
   const bytes = Uint8Array.from(readFileSync(packPath));
+  if (core.isKnowledgeImageV5?.(bytes)) {
+    const verification = core.verifyKnowledgeImageV5(bytes);
+    console.log(
+      JSON.stringify(
+        {
+          verified: verification.valid,
+          format: 'v5-knowledge-image',
+          version: 5,
+          stateRoot: verification.stateRoot,
+          commitDigest: verification.commitDigest,
+        },
+        null,
+        2
+      )
+    );
+    return;
+  }
   const pack = await mountPackFromBytes(core, bytes);
   console.log(
     JSON.stringify(
@@ -1043,16 +1145,47 @@ async function cmdExplain(core, args) {
   const receiptPath = positional[0];
   if (!receiptPath || (!flags.out && !flags.pack))
     throw createError(
-      'Usage: knolo explain <receipt.json> --pack <pack.knolo>'
+      'Usage: knolo explain <receipt.json> --pack <pack.knolo|image.v5>'
     );
   const packPath = path.resolve(process.cwd(), flags.pack);
   const receipt = JSON.parse(
     readFileSync(path.resolve(process.cwd(), receiptPath), 'utf8')
   );
-  const pack = await mountPackFromBytes(
-    core,
-    Uint8Array.from(readFileSync(packPath))
-  );
+  const bytes = Uint8Array.from(readFileSync(packPath));
+  if (core.isKnowledgeImageV5?.(bytes)) {
+    core.verifyKnowledgeQueryResultV5(bytes, receipt);
+    const image = core.mountKnowledgeImageV5(bytes);
+    const objects = new Map(image.objects.map((object) => [object.id, object]));
+    console.log(
+      JSON.stringify(
+        {
+          verified: true,
+          contract: 'v5-knowledge-image',
+          query: receipt.plan,
+          stateRoot: receipt.stateRoot,
+          planRoot: receipt.planRoot,
+          resultRoot: receipt.resultRoot,
+          hits: receipt.hits.map((hit) => {
+            const object = objects.get(hit.objectId);
+            return {
+              objectId: hit.objectId,
+              kind: hit.kind,
+              source:
+                typeof object?.meta?.source === 'string'
+                  ? object.meta.source
+                  : typeof object?.meta?.docId === 'string'
+                    ? object.meta.docId
+                    : undefined,
+            };
+          }),
+        },
+        null,
+        2
+      )
+    );
+    return;
+  }
+  const pack = await mountPackFromBytes(core, bytes);
   core.verifyReceipt(receipt, pack);
   console.log(
     JSON.stringify(
@@ -1120,6 +1253,8 @@ function parseV5Args(args) {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === '--attach-index') flags.attachIndex = true;
+    else if (arg === '--json') flags.json = true;
+    else if (arg === '--receipt') flags.receipt = args[++i];
     else if (
       arg === '--image' ||
       arg === '--index' ||
@@ -1139,17 +1274,40 @@ function parseV5Args(args) {
 
 async function cmdV5(core, args) {
   const subcommand = args[0] || 'info';
-  if (
-    !['info', 'health', 'studio', 'compress', 'decompress'].includes(subcommand)
-  )
+  const subcommands = [
+    'info',
+    'health',
+    'studio',
+    'query',
+    'compress',
+    'decompress',
+  ];
+  if (!subcommands.includes(subcommand))
     throw createError(`Unknown V5 command: ${subcommand}`);
   const { positional, flags } = parseV5Args(
-    args.slice(
-      ['info', 'health', 'studio', 'compress', 'decompress'].includes(args[0])
-        ? 1
-        : 0
-    )
+    args.slice(subcommands.includes(args[0]) ? 1 : 0)
   );
+  if (subcommand === 'query') {
+    const imagePath = path.resolve(
+      process.cwd(),
+      flags.image || positional[0] || 'dist/knowledge.v5'
+    );
+    if (!existsSync(imagePath))
+      throw createError(
+        `V5 image file not found at ${path.relative(process.cwd(), imagePath)}.`
+      );
+    const expression = (flags.image ? positional : positional.slice(1))
+      .join(' ')
+      .trim();
+    if (!expression)
+      throw createError(
+        'Usage: knolo v5 query <image.v5> <EQL> [--json] [--receipt <file>]'
+      );
+    const bytes = Uint8Array.from(readFileSync(imagePath));
+    if (!core.isKnowledgeImageV5?.(bytes))
+      throw createError('V5 query requires a V5 Knowledge Image input.');
+    return await cmdQueryV5(core, bytes, imagePath, expression, flags);
+  }
   const imagePath = path.resolve(
     process.cwd(),
     flags.image || positional[0] || 'dist/knowledge.v5'
@@ -1282,6 +1440,10 @@ async function cmdSemanticIndex(core, args) {
     );
 
   const bytes = Uint8Array.from(readFileSync(packPath));
+  if (core.isKnowledgeImageV5?.(bytes))
+    throw createError(
+      'semantic:index targets V4 packs. Query V5 images with bounded EQL through knolo query.'
+    );
   const pack = await mountPackFromBytes(core, bytes);
   const OllamaEmbeddingProvider = await loadOllamaProvider();
   const provider = new OllamaEmbeddingProvider({ modelId, endpoint });
@@ -1332,10 +1494,12 @@ async function cmdSemanticValidate(core, args) {
   const sidecarPath = path.resolve(process.cwd(), flags.sidecar);
   const modelId = flags.model;
   if (!modelId) throw createError('semantic:validate requires --model <id>.');
-  const pack = await mountPackFromBytes(
-    core,
-    Uint8Array.from(readFileSync(packPath))
-  );
+  const packBytes = Uint8Array.from(readFileSync(packPath));
+  if (core.isKnowledgeImageV5?.(packBytes))
+    throw createError(
+      'semantic:validate targets V4 packs. Query V5 images with bounded EQL through knolo query.'
+    );
+  const pack = await mountPackFromBytes(core, packBytes);
   const sidecar = core.parseSidecar(readFileSync(sidecarPath, 'utf8'));
   core.validateSidecarForPack({ sidecar, pack, modelId });
   if (sidecar.blocks.length !== pack.blocks.length)
