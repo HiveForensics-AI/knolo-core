@@ -1,0 +1,59 @@
+{
+  "name": "@knolo/openclaw",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Verified, local-first Knolo Knowledge Image tools for OpenClaw.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HiveForensics-AI/knolo-core.git",
+    "directory": "packages/openclaw"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./plugin": "./dist/plugin.js"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "openclaw.plugin.json",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=24.16.0"
+  },
+  "openclaw": {
+    "extensions": [
+      "./dist/plugin.js"
+    ],
+    "compat": {
+      "pluginApi": ">=2026.5.17 <2027.0.0",
+      "minGatewayVersion": "2026.5.17"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "@knolo/core": "^5.5.0",
+    "typebox": "1.3.34"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.5.17 <2027.0.0"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}
