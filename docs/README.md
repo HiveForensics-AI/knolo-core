@@ -36,6 +36,11 @@ operational guides for Knolo.
 - [Evidence Gate implementation plan](EVIDENCE_GATE_IMPLEMENTATION_PLAN.md) —
   claim-level evidence decisions, certificates, verification, and the first
   product pilot.
+- [Knolo for OpenClaw implementation plan](OPENCLAW_IMPLEMENTATION_PLAN.md) —
+  read-only V5 plugin scope, tool and audit contracts, delivery phases, and
+  later grounding and memory modes.
+- [`@knolo/openclaw`](../packages/openclaw/README.md) — local V5 mounts,
+  policy-aware retrieval, query records, and the native OpenClaw tool plugin.
 - [`@knolo/evidence-gate`](../packages/evidence-gate/README.md) — the current
   TypeScript vertical slice for deterministic claim-level verification.
 
