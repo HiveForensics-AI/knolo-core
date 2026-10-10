@@ -11,7 +11,9 @@ npm. Do not republish them.
 
 Rust and Python were not version-bumped for 5.5.1. V4 retrieval behavior
 remains the compatibility path. The procedure below is the publication record
-for this release line; the npm 5.5.1 upload is already complete.
+for this release line. The npm `5.5.1`, PyPI `knolo==5.5.0`, and crates.io
+`5.5.0` uploads are already complete. Do not rerun them. Sections 4 and 5 are
+historical. Section 6 is verification only.
 
 ## Release set
 
@@ -108,34 +110,29 @@ npx knolo --help
 node --input-type=module -e "import('@knolo/core').then(m => console.log(typeof m.verifyKnowledgeImageV5))"
 ```
 
-Use `npm view <package>@5.5.1 version dist.tarball` to confirm each npm package
-is available before moving to the next ecosystem.
+Use `npm view <package>@5.5.1 version dist.tarball` to confirm each npm package.
+Python and Rust are already published; do not continue into a new upload.
 
-## 4. Python package publication through GitHub
+## 4. Python package — historical, do not rerun
 
-Python is now part of the V5 read-only verifier/query profile. The repository's
-`python-ci` workflow must be green before publication. The build and upload are
-performed by `python-publish` from the GitHub web UI; do not run a local
-`python -m build` or `twine upload` as the publication step.
+`knolo==5.5.0` is already on PyPI from tag `v5.5.0`. Do not publish another
+GitHub release to upload it again, and do not run `python -m build` or
+`twine upload` for this version. `.github/workflows/python-publish.yml` uploads
+on every published release. A second upload of `knolo==5.5.0` is rejected
+because those files already exist, so the publish job cannot pass.
 
-Push the release commit and confirm the branch checks:
+The notes below are the record of the publication that already happened. Do
+not rerun them.
 
-```bash
-git push origin feat/vqf1-compression
-```
+- `python-ci` was green before publication.
+- The release commit was pushed, and GitHub release `v5.5.0` was published from
+  the web UI.
+- That published release started `python-publish`, which built `knolo==5.5.0`,
+  ran `twine check`, and uploaded it through the `pypi` environment and Trusted
+  Publishing. Local `python -m build` and `twine upload` were not the
+  publication step.
 
-Python `5.5.0` was published from tag `v5.5.0`. Tag `v5.5.1` is the npm release
-and does not change the Python version. Publishing that GitHub release still
-starts `python-publish` for the Python version on the tagged commit
-(`knolo==5.5.0`), which is already on PyPI.
-
-In GitHub, open **Releases → Draft a new release**, choose or create tag
-`v5.5.0` at the Python release commit, then select **Publish release**. This
-published release starts `python-publish`, which builds `knolo==5.5.0`, runs
-`twine check`, and uploads it to PyPI through the configured `pypi` environment
-and Trusted Publishing. Wait for both workflow jobs to pass before continuing.
-
-Verify the package from a clean environment:
+Verify the package that is already on PyPI:
 
 ```bash
 python -m pip index versions knolo
@@ -146,31 +143,26 @@ python -m venv "$python_tmp"
 "$python_tmp/bin/python" -c "import knolo; assert knolo.__version__ == '5.5.0'; print(knolo.__version__)"
 ```
 
-## 5. Publish Rust crates
+## 5. Rust crates — historical, do not rerun
 
-After the GitHub Python workflow and PyPI verification pass, publish the Rust
-crates in dependency order:
+`knolo-core-rust` `5.5.0` and `knolo-icp-canister` `5.5.0` are already on
+crates.io. Do not run `cargo publish` for these versions again. crates.io
+rejects a second upload of the same version.
 
-```bash
-cargo login
-cargo publish --manifest-path packages/core-rust/Cargo.toml --dry-run
-cargo publish --manifest-path packages/core-rust/Cargo.toml
-```
+The publication already ran, in dependency order. Do not rerun it.
 
-Wait for `knolo-core-rust 5.5.0` to be indexed, then publish the adapter:
-
-```bash
-cargo publish --manifest-path packages/icp-canister/Cargo.toml --dry-run
-cargo publish --manifest-path packages/icp-canister/Cargo.toml
-```
+- `cargo login`, then a dry run and `cargo publish` for
+  `packages/core-rust/Cargo.toml`.
+- After `knolo-core-rust` `5.5.0` was indexed, a dry run and `cargo publish`
+  for `packages/icp-canister/Cargo.toml`.
 
 The ICP crate is the V5 release-line adapter but currently exposes the legacy
 pack Candid API. Its V5 Knowledge Image integration is a later adapter wave.
 
-## 6. Verify the release
+## 6. Verify the published artifacts
 
-After npm, PyPI, and crates.io publication, verify the package registries and
-record the GitHub release URL in the release notes:
+These commands only read the registries. They do not publish npm packages,
+PyPI distributions, or crates.
 
 ```bash
 npm view @knolo/core@5.5.1 version
