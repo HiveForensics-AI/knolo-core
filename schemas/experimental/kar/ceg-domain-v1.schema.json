@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schema/experimental/kar/ceg-domain-v1.schema.json",
+  "title": "CEG Domain Pack v1",
+  "description": "Reusable semantic production data for ceg-domain-1. A domain pack is not a Knowledge Image and it is not a Committed Evidence Graph. Fixtures are tests and are excluded from DomainPackRoot.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "id", "version", "conceptKinds", "concepts", "relations", "rules", "planTemplates"],
+  "properties": {
+    "format": { "const": "ceg-domain-1" },
+    "id": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "version": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "description": { "type": "string", "maxLength": 2000 },
+    "conceptKinds": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/conceptKind" }
+    },
+    "concepts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/concept" }
+    },
+    "relations": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 200 }
+    },
+    "rules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/rule" }
+    },
+    "planTemplates": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/planTemplate" }
+    },
+    "limits": { "$ref": "#/$defs/limits" },
+    "fixtures": {
+      "type": "array",
+      "items": { "type": "object" }
+    }
+  },
+  "$defs": {
+    "conceptKind": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "label": { "type": "string" }
+      }
+    },
+    "concept": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "kind": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "label": { "type": "string" },
+        "phrases": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "bindingRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["concept", "requirements"],
+      "properties": {
+        "concept": { "type": "string", "minLength": 1 },
+        "requirements": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "relationRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "type", "to"],
+      "properties": {
+        "from": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "minLength": 1 },
+        "to": { "type": "string", "minLength": 1 }
+      }
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "autoAccept", "kind"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "autoAccept": { "type": "boolean" },
+        "kind": {
+          "enum": ["metadata", "heading", "phrase", "cue", "date", "authority", "section", "incomplete"]
+        },
+        "pattern": { "type": "string", "maxLength": 256 },
+        "patternMode": { "enum": ["exact", "regex"] },
+        "ignoreCase": { "type": "boolean" },
+        "excludePattern": { "type": "string", "maxLength": 256 },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "metadataExists": { "type": "string", "minLength": 1 },
+        "concept": { "type": "string", "minLength": 1 },
+        "relation": { "$ref": "#/$defs/relationRef" },
+        "binding": { "$ref": "#/$defs/bindingRule" },
+        "dateField": { "enum": ["validFrom", "validUntil"] },
+        "authorityMetadata": { "type": "string", "minLength": 1 },
+        "targetPattern": { "type": "string", "maxLength": 256 },
+        "maxMatches": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxEvidenceObjects": { "type": "integer", "minimum": 0, "maximum": 100000 },
+        "maxRules": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "maxMatchesPerRule": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "maxGeneratedConcepts": { "type": "integer", "minimum": 0, "maximum": 100000 },
+        "maxGeneratedRelations": { "type": "integer", "minimum": 0, "maximum": 200000 },
+        "maxGeneratedBindings": { "type": "integer", "minimum": 0, "maximum": 200000 },
+        "maxSpanLength": { "type": "integer", "minimum": 0, "maximum": 2000 },
+        "maxPackBytes": { "type": "integer", "minimum": 0, "maximum": 2097152 },
+        "maxConceptKinds": { "type": "integer", "minimum": 0, "maximum": 1000 },
+        "maxRelationVocabulary": { "type": "integer", "minimum": 0, "maximum": 1000 },
+        "maxPlanTemplates": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "maxPatternLength": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "maxRulesPerEvidence": { "type": "integer", "minimum": 0, "maximum": 1000 },
+        "maxRegexSteps": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "maxConcepts": { "type": "integer", "minimum": 0, "maximum": 20000 }
+      }
+    },
+    "planTemplate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "anchor", "frontierMap", "depth", "cardinalityBound", "coverageMode", "requirements", "floors", "profile", "asOf", "minAuthority", "bounds", "lexical"],
+      "properties": {
+        "version": { "const": 1 },
+        "anchor": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode"],
+          "properties": {
+            "mode": { "enum": ["supplied", "recompute"] },
+            "concept": { "type": "string", "minLength": 1 },
+            "queryTerm": { "type": "string" },
+            "procedure": { "type": "string" }
+          }
+        },
+        "frontierMap": {
+          "type": "object",
+          "additionalProperties": { "enum": ["F_S", "F_O", "F_Q", "F_T", "F_A"] }
+        },
+        "depth": { "type": "integer", "minimum": 1 },
+        "cardinalityBound": { "type": "integer", "minimum": 1 },
+        "coverageMode": { "const": "requirements" },
+        "requirements": { "type": "object" },
+        "floors": { "type": "object" },
+        "profile": { "const": "minimum-cover" },
+        "asOf": { "type": "string" },
+        "minAuthority": { "type": ["integer", "null"] },
+        "bounds": { "type": "object" },
+        "lexical": { "type": "null" }
+      }
+    }
+  }
+}

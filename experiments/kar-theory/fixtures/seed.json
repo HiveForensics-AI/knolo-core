@@ -1,0 +1,18 @@
+{
+  "seed": 20261009,
+  "generator": "kar-theory-fixtures-1",
+  "perScenario": 20,
+  "scenarios": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "N"
+  ]
+}

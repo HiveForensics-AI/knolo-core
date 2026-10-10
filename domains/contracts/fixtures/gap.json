@@ -1,0 +1,27 @@
+{
+  "id": "gap",
+  "documents": [
+    {
+      "source": "terms.md",
+      "text": "The agreement is subject to the former limit.\n",
+      "meta": {
+        "type": "contract"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "agreement"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE"
+    ],
+    "kar": {
+      "template": "support-only",
+      "proposition": "May the agreement terminate?",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS"
+    }
+  }
+}

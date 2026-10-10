@@ -1,0 +1,144 @@
+{
+  "id": "vocabulary",
+  "documents": [
+    {
+      "source": "vocabulary.md",
+      "text": "Policy\nControl\nThe control is required before launch.\nThe control is prohibited after review.\nThe action is prohibited in this office.\nAn exception applies when the director approves.\nLaunch is allowed unless approved in writing.\nThe control is subject to approval.\nThe control is subject to the former limit.\nThis policy is replaced by the current policy.\nThe control applies to the role.\nThe clause is valid before the review.\nThe clause is valid after the review.\nThe policy is effective 2026-01-01 until 2027-01-01.\n",
+      "meta": {
+        "type": "policy"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "control",
+      "effective-date",
+      "exception",
+      "policy",
+      "prohibition",
+      "replacement",
+      "role"
+    ],
+    "relations": [
+      {
+        "from": "policy",
+        "type": "applies_to",
+        "to": "control"
+      },
+      {
+        "from": "policy",
+        "type": "requires",
+        "to": "control"
+      },
+      {
+        "from": "policy",
+        "type": "prohibits",
+        "to": "control"
+      },
+      {
+        "from": "policy",
+        "type": "prohibits",
+        "to": "prohibition"
+      },
+      {
+        "from": "policy",
+        "type": "qualifies",
+        "to": "exception"
+      },
+      {
+        "from": "policy",
+        "type": "supersedes",
+        "to": "replacement"
+      },
+      {
+        "from": "policy",
+        "type": "applies_to",
+        "to": "role"
+      },
+      {
+        "from": "policy",
+        "type": "valid_before",
+        "to": "effective-date"
+      },
+      {
+        "from": "policy",
+        "type": "valid_after",
+        "to": "effective-date"
+      }
+    ],
+    "bindings": [
+      {
+        "concept": "control",
+        "source": "vocabulary.md",
+        "requirements": [
+          "control-required"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "control",
+        "source": "vocabulary.md",
+        "requirements": [
+          "control-prohibited"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "prohibition",
+        "source": "vocabulary.md",
+        "requirements": [
+          "control-prohibited"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "exception",
+        "source": "vocabulary.md",
+        "requirements": [
+          "stated-exception"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "replacement",
+        "source": "vocabulary.md",
+        "requirements": [
+          "stated-replacement"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "role",
+        "source": "vocabulary.md",
+        "requirements": [
+          "role-scope"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "effective-date",
+        "source": "vocabulary.md",
+        "requirements": [
+          "temporal-bound"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      }
+    ],
+    "diagnosticCodes": [
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE",
+      "CEG_PRODUCER_RELATION_CONFLICT"
+    ],
+    "kar": {
+      "template": "compliance-review",
+      "proposition": "Is the control required?",
+      "status": "SATISFIED"
+    }
+  }
+}

@@ -1,0 +1,96 @@
+format: ceg-domain-1
+id: contracts
+version: 1
+description: Reusable contract semantics for rights, obligations, restrictions, exceptions, amendments, and effective dates.
+conceptKinds:
+  - id: agreement
+    label: Agreement
+  - id: right
+    label: Right
+  - id: obligation
+    label: Obligation
+  - id: restriction
+    label: Restriction
+  - id: exception
+    label: Exception
+  - id: party
+    label: Party
+  - id: effective-date
+    label: Effective date
+concepts:
+  - name: agreement
+    kind: agreement
+    label: Agreement
+    phrases:
+      - agreement
+      - contract
+  - name: termination
+    kind: right
+    label: Termination
+    phrases:
+      - may terminate
+      - may not terminate
+  - name: cancellation
+    kind: right
+    label: Cancellation
+    phrases:
+      - may cancel
+      - may not cancel
+  - name: renewal
+    kind: obligation
+    label: Renewal
+    phrases:
+      - must renew
+  - name: obligation
+    kind: obligation
+    label: Obligation
+    phrases:
+      - must provide
+  - name: restriction
+    kind: restriction
+    label: Restriction
+    phrases:
+      - shall not assign
+  - name: exception
+    kind: exception
+    label: Exception
+    phrases:
+      - except when
+      - unless stated
+      - provided that
+      - subject to
+  - name: party
+    kind: party
+    label: Party
+    phrases:
+      - applies to the party
+  - name: amendment
+    kind: agreement
+    label: Amendment
+    phrases:
+      - supersedes the agreement
+      - overrides the restriction
+  - name: scope
+    kind: agreement
+    label: Scope
+    phrases:
+      - applies to the party
+  - name: effective-date
+    kind: effective-date
+    label: Effective date
+    phrases:
+      - valid before
+      - valid after
+      - effective
+      - until
+relations:
+  - permits
+  - prohibits
+  - requires
+  - qualifies
+  - excepts
+  - overrides
+  - supersedes
+  - applies_to
+  - valid_before
+  - valid_after

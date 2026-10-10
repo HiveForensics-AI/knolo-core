@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schema/experimental/kar/ceg-build-v1.schema.json",
+  "title": "CEG build record v1",
+  "description": "External compiler identity for a CEG build. It is not a KAR certificate and it is not stored inside KarSidecarV1. The identity object has no timestamp.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "identity"],
+  "properties": {
+    "format": { "const": "ceg-build-1" },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["compiler", "configRoot", "sourceRoot", "image", "semanticRoot", "sidecarDigest"],
+      "properties": {
+        "compiler": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "version"],
+          "properties": {
+            "id": { "const": "knolo-ceg-compiler" },
+            "version": { "const": "ceg-source-1" }
+          }
+        },
+        "configRoot": { "$ref": "#/$defs/digest" },
+        "sourceRoot": { "$ref": "#/$defs/digest" },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["stateRoot", "objectRoot", "commitDigest", "knowledgeRoot"],
+          "properties": {
+            "stateRoot": { "$ref": "#/$defs/digest" },
+            "objectRoot": { "$ref": "#/$defs/digest" },
+            "commitDigest": { "$ref": "#/$defs/digest" },
+            "knowledgeRoot": { "$ref": "#/$defs/digest" }
+          }
+        },
+        "semanticRoot": { "$ref": "#/$defs/digest" },
+        "sidecarDigest": { "$ref": "#/$defs/digest" }
+      }
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256-[0-9a-f]{64}$"
+    }
+  }
+}

@@ -42,6 +42,18 @@
     "./node": {
       "import": "./dist/node.js",
       "types": "./dist/node.d.ts"
+    },
+    "./experimental/kar": {
+      "browser": "./dist/experimental/kar/index.js",
+      "react-native": "./dist/experimental/kar/index.js",
+      "import": "./dist/experimental/kar/index.js",
+      "types": "./dist/experimental/kar/index.d.ts"
+    },
+    "./experimental/kar/authoring": {
+      "browser": "./dist/experimental/kar/authoring/index.js",
+      "react-native": "./dist/experimental/kar/authoring/index.js",
+      "import": "./dist/experimental/kar/authoring/index.js",
+      "types": "./dist/experimental/kar/authoring/index.d.ts"
     }
   },
   "sideEffects": false,

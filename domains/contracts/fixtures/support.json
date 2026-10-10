@@ -1,0 +1,40 @@
+{
+  "id": "support",
+  "documents": [
+    {
+      "source": "terms.md",
+      "text": "The agreement may terminate after notice.\nThe room probably means lodging.\n",
+      "meta": {
+        "type": "contract"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "agreement",
+      "termination"
+    ],
+    "relations": [
+      {
+        "from": "agreement",
+        "type": "permits",
+        "to": "termination"
+      }
+    ],
+    "bindings": [
+      {
+        "concept": "termination",
+        "source": "terms.md",
+        "requirements": [
+          "termination-right"
+        ]
+      }
+    ],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "support-only",
+      "proposition": "May the agreement terminate?",
+      "status": "SATISFIED"
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "id": "qualification",
+  "documents": [
+    {
+      "source": "policy.md",
+      "text": "The control is required before launch.\nAn exception applies when the director approves.\n",
+      "meta": {
+        "type": "policy"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "control",
+      "exception",
+      "policy"
+    ],
+    "relations": [
+      {
+        "from": "policy",
+        "type": "requires",
+        "to": "control"
+      },
+      {
+        "from": "policy",
+        "type": "qualifies",
+        "to": "exception"
+      }
+    ],
+    "bindings": [
+      {
+        "concept": "control",
+        "source": "policy.md",
+        "requirements": [
+          "control-required"
+        ]
+      },
+      {
+        "concept": "exception",
+        "source": "policy.md",
+        "requirements": [
+          "stated-exception"
+        ]
+      }
+    ],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "exception-review",
+      "proposition": "Is the control required?",
+      "status": "SATISFIED"
+    }
+  }
+}

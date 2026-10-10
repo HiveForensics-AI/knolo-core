@@ -1,0 +1,41 @@
+{
+  "id": "future",
+  "documents": [
+    {
+      "source": "terms.md",
+      "text": "The agreement may terminate after notice.\nThe agreement is effective 2027-01-01.\n",
+      "meta": {
+        "type": "contract"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "agreement",
+      "termination"
+    ],
+    "relations": [
+      {
+        "from": "agreement",
+        "type": "permits",
+        "to": "termination"
+      }
+    ],
+    "bindings": [
+      {
+        "concept": "termination",
+        "source": "terms.md",
+        "requirements": [
+          "termination-right"
+        ],
+        "validFrom": "2027-01-01"
+      }
+    ],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "support-only",
+      "proposition": "May the agreement terminate?",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS"
+    }
+  }
+}

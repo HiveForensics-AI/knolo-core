@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "kind": "kar-committed-evidence-graph",
+  "semantics": "kar-1-research-1",
+  "stateRoot": "sha256-60cf8e392bfd478f0fb6d53d592855485d325b978f179342e4ac0b9f20b37d12",
+  "objectRoot": "sha256-8935c548474fae5e1b11803d667664c4ca2fa15fe1220ddbc69cbe55fc3ad96d",
+  "commitDigest": "sha256-26f2c1ee521e478ee8622d239c9a2dca698c02229a5c24407ffd4d87ff1d32e4",
+  "knowledgeRoot": "sha256-515a5388a29fdccaf6e983bda7a34a7888ea741b2864a17aa223744be03c7c71",
+  "graph": {
+    "version": 1,
+    "knowledgeRoot": "sha256-515a5388a29fdccaf6e983bda7a34a7888ea741b2864a17aa223744be03c7c71",
+    "provenance": {
+      "producer": "hand",
+      "note": "kar-sidecar:authority"
+    },
+    "nodes": [
+      {
+        "id": "lodging"
+      },
+      {
+        "id": "statute"
+      },
+      {
+        "id": "memo"
+      },
+      {
+        "id": "general-policy"
+      }
+    ],
+    "relations": [
+      {
+        "id": "r-statute",
+        "from": "lodging",
+        "relation": "prohibits",
+        "to": "statute"
+      },
+      {
+        "id": "r-memo",
+        "from": "lodging",
+        "relation": "prohibits",
+        "to": "memo"
+      },
+      {
+        "id": "r-policy",
+        "from": "lodging",
+        "relation": "permits",
+        "to": "general-policy"
+      }
+    ],
+    "bindings": [
+      {
+        "id": "b-statute",
+        "nodeId": "statute",
+        "evidenceId": "sha256-f7d2dba2eda15a2dd10df59d50b76785963074fc4d8a44451f1e7b3ca2926074",
+        "requirements": [
+          "bars-cancel"
+        ],
+        "authority": 80,
+        "provenance": "hand:statute"
+      },
+      {
+        "id": "b-memo",
+        "nodeId": "memo",
+        "evidenceId": "sha256-e206b3b3e4c5d46cb4269be715f85e0bf7afc401f70fc48f827d91cd91d7967f",
+        "requirements": [
+          "bars-cancel"
+        ],
+        "authority": 20,
+        "provenance": "hand:memo"
+      },
+      {
+        "id": "b-policy",
+        "nodeId": "general-policy",
+        "evidenceId": "sha256-3425d73cfe75537bdc92d0ea1d00e42a4525746da8c6f1673a15ec7c0c554011",
+        "requirements": [
+          "how-to-ask"
+        ],
+        "provenance": "hand:manual"
+      }
+    ]
+  }
+}

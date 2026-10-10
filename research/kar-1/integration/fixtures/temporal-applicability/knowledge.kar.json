@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "kind": "kar-committed-evidence-graph",
+  "semantics": "kar-1-research-1",
+  "stateRoot": "sha256-06124513f8f096dc09d9047b2c74eed92594853f575350dcc3ea35af16b272a5",
+  "objectRoot": "sha256-1727a98cadae873438a4310a0e6775a00da88b09573157174298a68fd3210036",
+  "commitDigest": "sha256-343c1085ee48f0aaf912dc50dd183bc6fb24a7d31c83fe30320aad5c7ea4d72d",
+  "knowledgeRoot": "sha256-1fe8399c7ed6bd3976d49f5a55e17a274d381a808d95570d0faac090d9c66b80",
+  "graph": {
+    "version": 1,
+    "knowledgeRoot": "sha256-1fe8399c7ed6bd3976d49f5a55e17a274d381a808d95570d0faac090d9c66b80",
+    "provenance": {
+      "producer": "hand",
+      "note": "kar-sidecar:temporal-applicability"
+    },
+    "nodes": [
+      {
+        "id": "lodging"
+      },
+      {
+        "id": "old-rule"
+      },
+      {
+        "id": "current-rule"
+      },
+      {
+        "id": "future-rule"
+      }
+    ],
+    "relations": [
+      {
+        "id": "r-old",
+        "from": "lodging",
+        "relation": "permits",
+        "to": "old-rule"
+      },
+      {
+        "id": "r-current",
+        "from": "lodging",
+        "relation": "permits",
+        "to": "current-rule"
+      },
+      {
+        "id": "r-future",
+        "from": "lodging",
+        "relation": "permits",
+        "to": "future-rule"
+      }
+    ],
+    "bindings": [
+      {
+        "id": "b-old",
+        "nodeId": "old-rule",
+        "evidenceId": "sha256-70208fca2b542d4c25659a3b0fcd5ea63af986018c5cda6cf4912421a175d35a",
+        "requirements": [
+          "rule"
+        ],
+        "validFrom": "2020-01-01",
+        "validUntil": "2024-01-01",
+        "provenance": "hand:old-rule"
+      },
+      {
+        "id": "b-current",
+        "nodeId": "current-rule",
+        "evidenceId": "sha256-b3c8dad9b53fba4e81fdd195bb4fa76c7e2fc54088a1105757c003367035ffe3",
+        "requirements": [
+          "rule"
+        ],
+        "validFrom": "2024-01-01",
+        "validUntil": "2027-01-01",
+        "provenance": "hand:current-rule"
+      },
+      {
+        "id": "b-future",
+        "nodeId": "future-rule",
+        "evidenceId": "sha256-7886b3695ed37520451e27e4c132902496225ef2245b7596d3d58f9b76ee7006",
+        "requirements": [
+          "rule"
+        ],
+        "validFrom": "2027-01-01",
+        "provenance": "hand:future-rule"
+      }
+    ]
+  }
+}

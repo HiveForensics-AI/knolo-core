@@ -1,0 +1,54 @@
+{
+  "id": "opposition",
+  "documents": [
+    {
+      "source": "terms.md",
+      "text": "The agreement may terminate after notice.\nThe agreement may not terminate during the annual term.\n",
+      "meta": {
+        "type": "contract"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "agreement",
+      "termination"
+    ],
+    "relations": [
+      {
+        "from": "agreement",
+        "type": "permits",
+        "to": "termination"
+      },
+      {
+        "from": "agreement",
+        "type": "prohibits",
+        "to": "termination"
+      }
+    ],
+    "bindings": [
+      {
+        "concept": "termination",
+        "source": "terms.md",
+        "requirements": [
+          "termination-right"
+        ]
+      },
+      {
+        "concept": "termination",
+        "source": "terms.md",
+        "requirements": [
+          "termination-barred"
+        ]
+      }
+    ],
+    "diagnosticCodes": [
+      "CEG_PRODUCER_RELATION_CONFLICT"
+    ],
+    "kar": {
+      "template": "balanced-review",
+      "proposition": "May the agreement terminate?",
+      "status": "SATISFIED"
+    }
+  }
+}

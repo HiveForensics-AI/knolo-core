@@ -1,0 +1,18 @@
+- id: generic.metadata.record.v1
+  autoAccept: true
+  kind: metadata
+  metadata:
+    type: record
+  concept: record
+- id: generic.phrase.related.v1
+  autoAccept: true
+  kind: phrase
+  pattern: related to
+  relation:
+    from: record
+    type: related
+    to: topic
+  binding:
+    concept: topic
+    requirements:
+      - related-link

@@ -1,0 +1,10 @@
+[package]
+name = "kar1-research"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Research verifier for KAR-1. Not the V5 Rust runtime."
+
+[dependencies]
+serde_json = "1"
+sha2 = "0.10"

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schema/experimental/kar/producer-decisions-v1.schema.json",
+  "title": "CEG producer decisions v1",
+  "description": "Batch review file, format ceg-decisions-1. Only ACCEPTED proposals enter finalized CEG Source. An empty decisions array keeps proposals that are already ACCEPTED and leaves PROPOSED, NEEDS_REVIEW, and REJECTED out.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "decisions"],
+  "properties": {
+    "format": { "const": "ceg-decisions-1" },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "state"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "state": { "enum": ["PROPOSED", "ACCEPTED", "REJECTED", "NEEDS_REVIEW"] }
+        }
+      }
+    }
+  }
+}

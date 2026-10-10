@@ -1,0 +1,54 @@
+{
+  "id": "opposition",
+  "documents": [
+    {
+      "source": "procedure.md",
+      "text": "The operator must complete the step.\nThe operator must not complete the step.\n",
+      "meta": {
+        "type": "procedure"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "procedure",
+      "step"
+    ],
+    "relations": [
+      {
+        "from": "procedure",
+        "type": "requires",
+        "to": "step"
+      },
+      {
+        "from": "procedure",
+        "type": "prohibits",
+        "to": "step"
+      }
+    ],
+    "bindings": [
+      {
+        "concept": "step",
+        "source": "procedure.md",
+        "requirements": [
+          "required-step"
+        ]
+      },
+      {
+        "concept": "step",
+        "source": "procedure.md",
+        "requirements": [
+          "prohibited-state"
+        ]
+      }
+    ],
+    "diagnosticCodes": [
+      "CEG_PRODUCER_RELATION_CONFLICT"
+    ],
+    "kar": {
+      "template": "procedure-review",
+      "proposition": "Must the operator complete the step?",
+      "status": "SATISFIED"
+    }
+  }
+}

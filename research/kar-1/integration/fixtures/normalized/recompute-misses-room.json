@@ -1,0 +1,167 @@
+{
+  "name": "recompute-misses-room",
+  "scenario": "support-opposition",
+  "image": {
+    "version": 1,
+    "evidence": [
+      {
+        "id": "sha256-13841b4d369c4aa0abc103ce2ecbadf56b0a1bb43d599d1f1b964d1772a86db5",
+        "text": "A guest may cancel a lodging reservation before the day of arrival and receive the deposit back."
+      },
+      {
+        "id": "sha256-5a62dde978bc98565bf7c6aa810c210b98b744f490d6ef03c2c544921be6e5db",
+        "text": "An enterprise lodging commitment cannot be cancelled after the agreement is signed."
+      }
+    ]
+  },
+  "graph": {
+    "version": 1,
+    "knowledgeRoot": "sha256-f4d0c63d0ca3fdbd8a1d660c2232e07819731b814194f66e9441f04ccef93a8d",
+    "provenance": {
+      "producer": "hand",
+      "note": "kar-sidecar:support-opposition"
+    },
+    "nodes": [
+      {
+        "id": "lodging"
+      },
+      {
+        "id": "general-policy"
+      },
+      {
+        "id": "enterprise-clause"
+      }
+    ],
+    "relations": [
+      {
+        "id": "r-permit",
+        "from": "lodging",
+        "relation": "permits",
+        "to": "general-policy"
+      },
+      {
+        "id": "r-prohibit",
+        "from": "lodging",
+        "relation": "prohibits",
+        "to": "enterprise-clause"
+      }
+    ],
+    "bindings": [
+      {
+        "id": "b-policy",
+        "nodeId": "general-policy",
+        "evidenceId": "sha256-13841b4d369c4aa0abc103ce2ecbadf56b0a1bb43d599d1f1b964d1772a86db5",
+        "requirements": [
+          "cancel-allowed"
+        ],
+        "provenance": "hand:general-policy"
+      },
+      {
+        "id": "b-enterprise",
+        "nodeId": "enterprise-clause",
+        "evidenceId": "sha256-5a62dde978bc98565bf7c6aa810c210b98b744f490d6ef03c2c544921be6e5db",
+        "requirements": [
+          "commitment-bars-cancel"
+        ],
+        "provenance": "hand:enterprise-clause"
+      }
+    ]
+  },
+  "query": "Can the customer cancel the room?",
+  "plan": {
+    "version": 1,
+    "anchor": {
+      "mode": "recompute",
+      "procedure": "member-id-v1"
+    },
+    "frontierMap": {
+      "permits": "F_S",
+      "prohibits": "F_O"
+    },
+    "depth": 1,
+    "cardinalityBound": 5,
+    "coverageMode": "requirements",
+    "requirements": {
+      "F_S": [
+        "cancel-allowed"
+      ],
+      "F_O": [
+        "commitment-bars-cancel"
+      ],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "floors": {
+      "F_S": "1",
+      "F_O": "1",
+      "F_Q": "0",
+      "F_T": "0",
+      "F_A": "0"
+    },
+    "profile": "minimum-cover",
+    "asOf": "2026-10-10",
+    "minAuthority": null,
+    "bounds": {
+      "maxAnchorNodes": 8,
+      "maxClosureNodes": 32,
+      "maxClosureEdges": 64,
+      "maxFrontierEvidence": 16,
+      "maxRequirementsPerFrontier": 8,
+      "maxEvidenceBindings": 32,
+      "maxCoverVisits": 10000
+    },
+    "lexical": null
+  },
+  "stateRoot": "sha256-fe6ac66f9e0f14a11d72d0125b95750bc0fa46dd53e49639e5eeb362cb26f7a6",
+  "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS",
+  "evidenceIds": [],
+  "choices": [],
+  "frontiers": {
+    "F_S": [],
+    "F_O": [],
+    "F_Q": [],
+    "F_T": [],
+    "F_A": []
+  },
+  "witnesses": [],
+  "decision": {
+    "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS",
+    "profile": "minimum-cover",
+    "cardinality": 0,
+    "coverage": {
+      "F_S": {
+        "covered": 0,
+        "required": 1
+      },
+      "F_O": {
+        "covered": 0,
+        "required": 1
+      },
+      "F_Q": {
+        "covered": 0,
+        "required": 0
+      },
+      "F_T": {
+        "covered": 0,
+        "required": 0
+      },
+      "F_A": {
+        "covered": 0,
+        "required": 0
+      }
+    }
+  },
+  "roots": {
+    "knowledgeRoot": "sha256-f4d0c63d0ca3fdbd8a1d660c2232e07819731b814194f66e9441f04ccef93a8d",
+    "semanticRoot": "sha256-22fb00919d1a84b54abbec1194850242ff81c80f30057d9dd2515896b7a7da14",
+    "queryRoot": "sha256-d551e83e07a43df818a7a11b9d9cff659e3ff5e7140cabda1cda013f62049585",
+    "planRoot": "sha256-3e24b9ea49f961c23f255492e41b07a817efb3cafce16a3439e80fda6cc8b336",
+    "anchorRoot": "sha256-021f3d45423daffb70ea242f780a760efdbb0dde780604db71025e2431588f6f",
+    "frontierRoot": "sha256-410e362c5f21065747884a2bbe7d7ed67c31153f973bdba42b98f214fe01929f",
+    "frontierWitnessRoot": "sha256-4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "evidenceSetRoot": "sha256-4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "decisionRoot": "sha256-624d13a2619077903e12c86b6bc02ff938e62eab61350b264cb129040494f0ad",
+    "karRoot": "sha256-1f0456c50b503495aec018c4a428f4aaa86105bd654c8cb7e6a613c4c85e2fa7"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "id": "future",
+  "documents": [
+    {
+      "source": "procedure.md",
+      "text": "The operator must complete the step.\nThe procedure is effective 2027-01-01.\n",
+      "meta": {
+        "type": "procedure"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "procedure",
+      "step"
+    ],
+    "relations": [
+      {
+        "from": "procedure",
+        "type": "requires",
+        "to": "step"
+      }
+    ],
+    "bindings": [
+      {
+        "concept": "step",
+        "source": "procedure.md",
+        "requirements": [
+          "required-step"
+        ],
+        "validFrom": "2027-01-01"
+      }
+    ],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "current-procedure",
+      "proposition": "Must the operator complete the step?",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS"
+    }
+  }
+}

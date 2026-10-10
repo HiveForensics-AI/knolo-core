@@ -1,0 +1,2957 @@
+[
+  {
+    "name": "abstain-empty-opposition",
+    "image": {
+      "version": 1,
+      "evidence": [
+        {
+          "id": "doc-o",
+          "text": "the booking stays committed"
+        },
+        {
+          "id": "doc-s",
+          "text": "the guest may end the stay"
+        }
+      ]
+    },
+    "graph": {
+      "version": 1,
+      "knowledgeRoot": "sha256-d04a81eaa4e6f8edb115b70896dde22eb3bd3853d6c05614857ea7aedde65883",
+      "provenance": {
+        "producer": "hand"
+      },
+      "nodes": [
+        {
+          "id": "anchor"
+        },
+        {
+          "id": "support-node"
+        }
+      ],
+      "relations": [
+        {
+          "id": "r-s",
+          "from": "anchor",
+          "relation": "supports",
+          "to": "support-node"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "b-s",
+          "nodeId": "support-node",
+          "evidenceId": "doc-s",
+          "requirements": [
+            "s"
+          ]
+        }
+      ]
+    },
+    "query": "q",
+    "plan": {
+      "version": 1,
+      "anchor": {
+        "mode": "supplied",
+        "witness": [
+          {
+            "nodeId": "anchor",
+            "queryTerm": "room"
+          }
+        ]
+      },
+      "frontierMap": {
+        "supports": "F_S",
+        "prohibits": "F_O"
+      },
+      "depth": 1,
+      "cardinalityBound": 5,
+      "coverageMode": "requirements",
+      "requirements": {
+        "F_S": [
+          "s"
+        ],
+        "F_O": [
+          "o"
+        ],
+        "F_Q": [],
+        "F_T": [],
+        "F_A": []
+      },
+      "floors": {
+        "F_S": "1",
+        "F_O": "1",
+        "F_Q": "0",
+        "F_T": "0",
+        "F_A": "0"
+      },
+      "profile": "minimum-cover",
+      "asOf": "2026-10-10",
+      "minAuthority": null,
+      "bounds": {
+        "maxAnchorNodes": 20,
+        "maxClosureNodes": 50,
+        "maxClosureEdges": 100,
+        "maxFrontierEvidence": 20,
+        "maxRequirementsPerFrontier": 10,
+        "maxEvidenceBindings": 50,
+        "maxCoverVisits": 10000
+      },
+      "lexical": null
+    },
+    "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS",
+    "evidenceIds": [],
+    "choices": [],
+    "frontiers": {
+      "F_S": [
+        "doc-s"
+      ],
+      "F_O": [],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [
+      {
+        "evidenceId": "doc-s",
+        "frontier": "F_S",
+        "anchorId": "anchor",
+        "path": [
+          {
+            "node": "anchor"
+          },
+          {
+            "relation": "r-s",
+            "node": "support-node"
+          }
+        ]
+      }
+    ],
+    "decision": {
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS",
+      "profile": "minimum-cover",
+      "cardinality": 0,
+      "coverage": {
+        "F_S": {
+          "covered": 0,
+          "required": 1
+        },
+        "F_O": {
+          "covered": 0,
+          "required": 1
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-d04a81eaa4e6f8edb115b70896dde22eb3bd3853d6c05614857ea7aedde65883",
+      "semanticRoot": "sha256-eb179a30dd39a90d7c228d597b1dddf571cc9e9ea0326123dd649617b1195802",
+      "queryRoot": "sha256-90edba1c9d0bb14ec514a96ca800a95448adb82f1adced02b66c15b4091777d2",
+      "planRoot": "sha256-0a711db941fe4e1a75590b7b772617c56abce3120299ed2340f1c0a719699af1",
+      "anchorRoot": "sha256-3c66b035dd9c8167235c0e156a28a035233f48367369b2418366e79b8201b5a5",
+      "frontierRoot": "sha256-9759ea9817930b8397b490117715bfdcdfe9890a0d9379dbd8adb3b047233ed8",
+      "frontierWitnessRoot": "sha256-716aba3563b8ac59315404294a01d1459ff7212ab202fe98cfac35c0abae3b5c",
+      "evidenceSetRoot": "sha256-4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "decisionRoot": "sha256-624d13a2619077903e12c86b6bc02ff938e62eab61350b264cb129040494f0ad",
+      "karRoot": "sha256-2305518962052ef7cae79686fd39e2ad8f79fe1feff43b1eccd7a25dc6003918"
+    }
+  },
+  {
+    "name": "anchor-binding",
+    "image": {
+      "version": 1,
+      "evidence": [
+        {
+          "id": "kiln-doc",
+          "text": "the kiln stays fired"
+        },
+        {
+          "id": "pump-doc",
+          "text": "the pump stays mounted"
+        }
+      ]
+    },
+    "graph": {
+      "version": 1,
+      "knowledgeRoot": "sha256-395fc7e752a36a2b7ec1a15c8c0f6c066800e8317794c796b5b0aac5779cde04",
+      "provenance": {
+        "producer": "hand"
+      },
+      "nodes": [
+        {
+          "id": "kiln"
+        },
+        {
+          "id": "kiln-end"
+        },
+        {
+          "id": "pump"
+        },
+        {
+          "id": "pump-end"
+        }
+      ],
+      "relations": [
+        {
+          "id": "r-kiln",
+          "from": "kiln",
+          "relation": "prohibits",
+          "to": "kiln-end"
+        },
+        {
+          "id": "r-pump",
+          "from": "pump",
+          "relation": "prohibits",
+          "to": "pump-end"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "b-kiln",
+          "nodeId": "kiln-end",
+          "evidenceId": "kiln-doc",
+          "requirements": [
+            "o"
+          ]
+        },
+        {
+          "id": "b-pump",
+          "nodeId": "pump-end",
+          "evidenceId": "pump-doc",
+          "requirements": [
+            "o"
+          ]
+        }
+      ]
+    },
+    "query": "crew cancel pump whenever asked",
+    "plan": {
+      "version": 1,
+      "anchor": {
+        "mode": "supplied",
+        "witness": [
+          {
+            "nodeId": "pump",
+            "queryTerm": "pump"
+          }
+        ]
+      },
+      "frontierMap": {
+        "prohibits": "F_O"
+      },
+      "depth": 1,
+      "cardinalityBound": 5,
+      "coverageMode": "requirements",
+      "requirements": {
+        "F_S": [],
+        "F_O": [
+          "o"
+        ],
+        "F_Q": [],
+        "F_T": [],
+        "F_A": []
+      },
+      "floors": {
+        "F_S": "0",
+        "F_O": "1",
+        "F_Q": "0",
+        "F_T": "0",
+        "F_A": "0"
+      },
+      "profile": "minimum-cover",
+      "asOf": "2026-10-10",
+      "minAuthority": null,
+      "bounds": {
+        "maxAnchorNodes": 20,
+        "maxClosureNodes": 50,
+        "maxClosureEdges": 100,
+        "maxFrontierEvidence": 20,
+        "maxRequirementsPerFrontier": 10,
+        "maxEvidenceBindings": 50,
+        "maxCoverVisits": 10000
+      },
+      "lexical": null
+    },
+    "status": "SATISFIED",
+    "evidenceIds": [
+      "pump-doc"
+    ],
+    "choices": [
+      {
+        "evidenceId": "pump-doc",
+        "frontiers": [
+          "F_O"
+        ]
+      }
+    ],
+    "frontiers": {
+      "F_S": [],
+      "F_O": [
+        "pump-doc"
+      ],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [
+      {
+        "evidenceId": "pump-doc",
+        "frontier": "F_O",
+        "anchorId": "pump",
+        "path": [
+          {
+            "node": "pump"
+          },
+          {
+            "relation": "r-pump",
+            "node": "pump-end"
+          }
+        ]
+      }
+    ],
+    "decision": {
+      "status": "SATISFIED",
+      "profile": "minimum-cover",
+      "cardinality": 1,
+      "coverage": {
+        "F_S": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_O": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-395fc7e752a36a2b7ec1a15c8c0f6c066800e8317794c796b5b0aac5779cde04",
+      "semanticRoot": "sha256-1d7290fd3c8b03c1ccf88ae71e16207e55d4344d7e3c70cbe014d11d9f01c79f",
+      "queryRoot": "sha256-3c6a833f61cf04d29e989b3e173df8760cea947f0176e7ba6249073737b6ec78",
+      "planRoot": "sha256-d4570ae9edf4d8c385f31031c1ccc543a37cff68afa92fd042f0a68e085616b7",
+      "anchorRoot": "sha256-32d1f31ea0073d6b2de04bd1f291752fee646f4786b03f3f26f3c6a6a0b9ba6e",
+      "frontierRoot": "sha256-5d9986bae78304fd64aca2b8d5e8a25cf031ef92104703357b2d129791d5efe7",
+      "frontierWitnessRoot": "sha256-34ffb2920e0222385d7eaf743241253e887fda6ab24c11305f27fa5dba9cb147",
+      "evidenceSetRoot": "sha256-e290a870f09f44d2ca2a020e768866750b65c1a7e28ddbe95088f1c0835aebea",
+      "decisionRoot": "sha256-763f5fe52350eec811838215fb20acc5f04c4a5947d6cd15eae7a98c3f888a9f",
+      "karRoot": "sha256-9f0364eca3e037d83b5797806904fc28da174a72317bf3d4be56802fa5d05cf4"
+    }
+  },
+  {
+    "name": "anchor-rejected",
+    "image": {
+      "version": 1,
+      "evidence": [
+        {
+          "id": "doc-o",
+          "text": "the booking stays committed"
+        },
+        {
+          "id": "doc-s",
+          "text": "the guest may end the stay"
+        }
+      ]
+    },
+    "graph": {
+      "version": 1,
+      "knowledgeRoot": "sha256-d04a81eaa4e6f8edb115b70896dde22eb3bd3853d6c05614857ea7aedde65883",
+      "provenance": {
+        "producer": "hand"
+      },
+      "nodes": [
+        {
+          "id": "anchor"
+        },
+        {
+          "id": "oppose-node"
+        },
+        {
+          "id": "support-node"
+        }
+      ],
+      "relations": [
+        {
+          "id": "r-o",
+          "from": "anchor",
+          "relation": "prohibits",
+          "to": "oppose-node"
+        },
+        {
+          "id": "r-s",
+          "from": "anchor",
+          "relation": "supports",
+          "to": "support-node"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "b-o",
+          "nodeId": "oppose-node",
+          "evidenceId": "doc-o",
+          "requirements": [
+            "o"
+          ]
+        },
+        {
+          "id": "b-s",
+          "nodeId": "support-node",
+          "evidenceId": "doc-s",
+          "requirements": [
+            "s"
+          ]
+        }
+      ]
+    },
+    "query": "q",
+    "plan": {
+      "version": 1,
+      "anchor": {
+        "mode": "supplied",
+        "witness": [
+          {
+            "nodeId": "missing",
+            "queryTerm": "room"
+          }
+        ]
+      },
+      "frontierMap": {},
+      "depth": 1,
+      "cardinalityBound": 5,
+      "coverageMode": "requirements",
+      "requirements": {
+        "F_S": [],
+        "F_O": [],
+        "F_Q": [],
+        "F_T": [],
+        "F_A": []
+      },
+      "floors": {
+        "F_S": "0",
+        "F_O": "0",
+        "F_Q": "0",
+        "F_T": "0",
+        "F_A": "0"
+      },
+      "profile": "minimum-cover",
+      "asOf": "2026-10-10",
+      "minAuthority": null,
+      "bounds": {
+        "maxAnchorNodes": 20,
+        "maxClosureNodes": 50,
+        "maxClosureEdges": 100,
+        "maxFrontierEvidence": 20,
+        "maxRequirementsPerFrontier": 10,
+        "maxEvidenceBindings": 50,
+        "maxCoverVisits": 10000
+      },
+      "lexical": null
+    },
+    "status": "ANCHOR_REJECTED",
+    "evidenceIds": [],
+    "choices": [],
+    "frontiers": {
+      "F_S": [],
+      "F_O": [],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [],
+    "decision": {
+      "status": "ANCHOR_REJECTED",
+      "profile": "minimum-cover",
+      "cardinality": 0,
+      "coverage": {
+        "F_S": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_O": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-d04a81eaa4e6f8edb115b70896dde22eb3bd3853d6c05614857ea7aedde65883",
+      "semanticRoot": "sha256-756e90b57ba9bca2e32596a854067cfb0c3641d93961df4d07b12df47719f138",
+      "queryRoot": "sha256-90edba1c9d0bb14ec514a96ca800a95448adb82f1adced02b66c15b4091777d2",
+      "planRoot": "sha256-93ce3515a8b5fd2211729c5cd1f96a82a6cf8c90b9fa484d4001cb7f714b26fc",
+      "anchorRoot": "sha256-f3a3d36a24d666562bcdb579abd5bf930dce15a64a43de48347e3bb5c28e9bc4",
+      "frontierRoot": "sha256-410e362c5f21065747884a2bbe7d7ed67c31153f973bdba42b98f214fe01929f",
+      "frontierWitnessRoot": "sha256-4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "evidenceSetRoot": "sha256-4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "decisionRoot": "sha256-e4a9f808768056c3c60e3410a880e2f6a4199cd2a06e668054441f6ff87d3be9",
+      "karRoot": "sha256-738ce19582125b391d49eee28b26d4d6f21e279b251e9a969531e3fbf30848d2"
+    }
+  },
+  {
+    "name": "anchor-witness",
+    "image": {
+      "version": 1,
+      "evidence": [
+        {
+          "id": "doc-o",
+          "text": "the booking stays committed"
+        },
+        {
+          "id": "doc-s",
+          "text": "the guest may end the stay"
+        }
+      ]
+    },
+    "graph": {
+      "version": 1,
+      "knowledgeRoot": "sha256-d04a81eaa4e6f8edb115b70896dde22eb3bd3853d6c05614857ea7aedde65883",
+      "provenance": {
+        "producer": "hand"
+      },
+      "nodes": [
+        {
+          "id": "anchor"
+        },
+        {
+          "id": "oppose-node"
+        },
+        {
+          "id": "support-node"
+        }
+      ],
+      "relations": [
+        {
+          "id": "r-o",
+          "from": "anchor",
+          "relation": "prohibits",
+          "to": "oppose-node"
+        },
+        {
+          "id": "r-s",
+          "from": "anchor",
+          "relation": "supports",
+          "to": "support-node"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "b-o",
+          "nodeId": "oppose-node",
+          "evidenceId": "doc-o",
+          "requirements": [
+            "o"
+          ]
+        },
+        {
+          "id": "b-s",
+          "nodeId": "support-node",
+          "evidenceId": "doc-s",
+          "requirements": [
+            "s"
+          ]
+        }
+      ]
+    },
+    "query": "q",
+    "plan": {
+      "version": 1,
+      "anchor": {
+        "mode": "supplied",
+        "witness": [
+          {
+            "nodeId": "anchor",
+            "queryTerm": "room"
+          }
+        ]
+      },
+      "frontierMap": {
+        "supports": "F_S",
+        "prohibits": "F_O"
+      },
+      "depth": 1,
+      "cardinalityBound": 5,
+      "coverageMode": "requirements",
+      "requirements": {
+        "F_S": [
+          "s"
+        ],
+        "F_O": [
+          "o"
+        ],
+        "F_Q": [],
+        "F_T": [],
+        "F_A": []
+      },
+      "floors": {
+        "F_S": "1",
+        "F_O": "1",
+        "F_Q": "0",
+        "F_T": "0",
+        "F_A": "0"
+      },
+      "profile": "minimum-cover",
+      "asOf": "2026-10-10",
+      "minAuthority": null,
+      "bounds": {
+        "maxAnchorNodes": 20,
+        "maxClosureNodes": 50,
+        "maxClosureEdges": 100,
+        "maxFrontierEvidence": 20,
+        "maxRequirementsPerFrontier": 10,
+        "maxEvidenceBindings": 50,
+        "maxCoverVisits": 10000
+      },
+      "lexical": null
+    },
+    "status": "SATISFIED",
+    "evidenceIds": [
+      "doc-o",
+      "doc-s"
+    ],
+    "choices": [
+      {
+        "evidenceId": "doc-o",
+        "frontiers": [
+          "F_O"
+        ]
+      },
+      {
+        "evidenceId": "doc-s",
+        "frontiers": [
+          "F_S"
+        ]
+      }
+    ],
+    "frontiers": {
+      "F_S": [
+        "doc-s"
+      ],
+      "F_O": [
+        "doc-o"
+      ],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [
+      {
+        "evidenceId": "doc-o",
+        "frontier": "F_O",
+        "anchorId": "anchor",
+        "path": [
+          {
+            "node": "anchor"
+          },
+          {
+            "relation": "r-o",
+            "node": "oppose-node"
+          }
+        ]
+      },
+      {
+        "evidenceId": "doc-s",
+        "frontier": "F_S",
+        "anchorId": "anchor",
+        "path": [
+          {
+            "node": "anchor"
+          },
+          {
+            "relation": "r-s",
+            "node": "support-node"
+          }
+        ]
+      }
+    ],
+    "decision": {
+      "status": "SATISFIED",
+      "profile": "minimum-cover",
+      "cardinality": 2,
+      "coverage": {
+        "F_S": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_O": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-d04a81eaa4e6f8edb115b70896dde22eb3bd3853d6c05614857ea7aedde65883",
+      "semanticRoot": "sha256-756e90b57ba9bca2e32596a854067cfb0c3641d93961df4d07b12df47719f138",
+      "queryRoot": "sha256-90edba1c9d0bb14ec514a96ca800a95448adb82f1adced02b66c15b4091777d2",
+      "planRoot": "sha256-0a711db941fe4e1a75590b7b772617c56abce3120299ed2340f1c0a719699af1",
+      "anchorRoot": "sha256-3c66b035dd9c8167235c0e156a28a035233f48367369b2418366e79b8201b5a5",
+      "frontierRoot": "sha256-d4b73d0c75a726d23f97de89283c41ffc1f6dbf70c6fcb231d4e0268e144d4b1",
+      "frontierWitnessRoot": "sha256-a8fde8bd71b396bd4217e7d0120c7beabb33381cec407a6a331db8fda15925f2",
+      "evidenceSetRoot": "sha256-faee8933cf16479df77ad3f60dc96491ec7e1b8f803d6aedd1dd141de2eb6111",
+      "decisionRoot": "sha256-ba643ef0dcb933a375cfd8f7bc3bb47ddad181564c32ed1918cffe0224a14550",
+      "karRoot": "sha256-d492b39ad8accfbec92f9b1b1d3e5bc11f7c350530bd5e528afaa697edd30130"
+    }
+  },
+  {
+    "name": "closure-bound",
+    "image": {
+      "version": 1,
+      "evidence": [
+        {
+          "id": "e1",
+          "text": "one"
+        },
+        {
+          "id": "e2",
+          "text": "two"
+        },
+        {
+          "id": "e3",
+          "text": "three"
+        }
+      ]
+    },
+    "graph": {
+      "version": 1,
+      "knowledgeRoot": "sha256-e13f3145133c678a7013b05007fd15c72cd3a076b6246a06b31c0111ad6e81f2",
+      "provenance": {
+        "producer": "hand"
+      },
+      "nodes": [
+        {
+          "id": "anchor"
+        },
+        {
+          "id": "n1"
+        },
+        {
+          "id": "n2"
+        },
+        {
+          "id": "n3"
+        }
+      ],
+      "relations": [
+        {
+          "id": "r1",
+          "from": "anchor",
+          "relation": "supports",
+          "to": "n1"
+        },
+        {
+          "id": "r2",
+          "from": "anchor",
+          "relation": "supports",
+          "to": "n2"
+        },
+        {
+          "id": "r3",
+          "from": "anchor",
+          "relation": "supports",
+          "to": "n3"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "b1",
+          "nodeId": "n1",
+          "evidenceId": "e1",
+          "requirements": [
+            "s"
+          ]
+        },
+        {
+          "id": "b2",
+          "nodeId": "n2",
+          "evidenceId": "e2",
+          "requirements": [
+            "s"
+          ]
+        },
+        {
+          "id": "b3",
+          "nodeId": "n3",
+          "evidenceId": "e3",
+          "requirements": [
+            "s"
+          ]
+        }
+      ]
+    },
+    "query": "q",
+    "plan": {
+      "version": 1,
+      "anchor": {
+        "mode": "supplied",
+        "witness": [
+          {
+            "nodeId": "anchor",
+            "queryTerm": "room"
+          }
+        ]
+      },
+      "frontierMap": {
+        "supports": "F_S"
+      },
+      "depth": 1,
+      "cardinalityBound": 5,
+      "coverageMode": "requirements",
+      "requirements": {
+        "F_S": [
+          "s"
+        ],
+        "F_O": [],
+        "F_Q": [],
+        "F_T": [],
+        "F_A": []
+      },
+      "floors": {
+        "F_S": "1",
+        "F_O": "0",
+        "F_Q": "0",
+        "F_T": "0",
+        "F_A": "0"
+      },
+      "profile": "minimum-cover",
+      "asOf": "2026-10-10",
+      "minAuthority": null,
+      "bounds": {
+        "maxAnchorNodes": 20,
+        "maxClosureNodes": 50,
+        "maxClosureEdges": 2,
+        "maxFrontierEvidence": 20,
+        "maxRequirementsPerFrontier": 10,
+        "maxEvidenceBindings": 50,
+        "maxCoverVisits": 10000
+      },
+      "lexical": null
+    },
+    "status": "CLOSURE_BOUND_EXCEEDED",
+    "evidenceIds": [],
+    "choices": [],
+    "frontiers": {
+      "F_S": [],
+      "F_O": [],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [],
+    "decision": {
+      "status": "CLOSURE_BOUND_EXCEEDED",
+      "profile": "minimum-cover",
+      "cardinality": 0,
+      "coverage": {
+        "F_S": {
+          "covered": 0,
+          "required": 1
+        },
+        "F_O": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-e13f3145133c678a7013b05007fd15c72cd3a076b6246a06b31c0111ad6e81f2",
+      "semanticRoot": "sha256-07f7d5c95512f614c1bcff77151d56b53b9b33b848a3e0a61893a0e7a75c163c",
+      "queryRoot": "sha256-90edba1c9d0bb14ec514a96ca800a95448adb82f1adced02b66c15b4091777d2",
+      "planRoot": "sha256-c0e8a6588dc9746ed5209ee791ce0348fcd24c0a8c43c6284bf8c54c3c83b134",
+      "anchorRoot": "sha256-3c66b035dd9c8167235c0e156a28a035233f48367369b2418366e79b8201b5a5",
+      "frontierRoot": "sha256-410e362c5f21065747884a2bbe7d7ed67c31153f973bdba42b98f214fe01929f",
+      "frontierWitnessRoot": "sha256-4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "evidenceSetRoot": "sha256-4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "decisionRoot": "sha256-bfb070a7abdc1844298429c405a272db9dcf08197e38f82bd40269430c5b9173",
+      "karRoot": "sha256-55bcb31b110e74c7285074e756cd5ec198f508d99e69dcdc6f6c54659f2a795e"
+    }
+  },
+  {
+    "name": "graph-not-bound",
+    "image": {
+      "version": 1,
+      "evidence": [
+        {
+          "id": "doc-s",
+          "text": "alpha"
+        }
+      ]
+    },
+    "graph": {
+      "version": 1,
+      "knowledgeRoot": "sha256-abababababababababababababababababababababababababababababababab",
+      "provenance": {
+        "producer": "hand"
+      },
+      "nodes": [
+        {
+          "id": "anchor"
+        },
+        {
+          "id": "support-node"
+        }
+      ],
+      "relations": [
+        {
+          "id": "r-s",
+          "from": "anchor",
+          "relation": "supports",
+          "to": "support-node"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "b-s",
+          "nodeId": "support-node",
+          "evidenceId": "doc-s",
+          "requirements": [
+            "s"
+          ]
+        }
+      ]
+    },
+    "query": "q",
+    "plan": {
+      "version": 1,
+      "anchor": {
+        "mode": "supplied",
+        "witness": [
+          {
+            "nodeId": "anchor",
+            "queryTerm": "room"
+          }
+        ]
+      },
+      "frontierMap": {
+        "supports": "F_S"
+      },
+      "depth": 1,
+      "cardinalityBound": 5,
+      "coverageMode": "requirements",
+      "requirements": {
+        "F_S": [],
+        "F_O": [],
+        "F_Q": [],
+        "F_T": [],
+        "F_A": []
+      },
+      "floors": {
+        "F_S": "0",
+        "F_O": "0",
+        "F_Q": "0",
+        "F_T": "0",
+        "F_A": "0"
+      },
+      "profile": "minimum-cover",
+      "asOf": "2026-10-10",
+      "minAuthority": null,
+      "bounds": {
+        "maxAnchorNodes": 20,
+        "maxClosureNodes": 50,
+        "maxClosureEdges": 100,
+        "maxFrontierEvidence": 20,
+        "maxRequirementsPerFrontier": 10,
+        "maxEvidenceBindings": 50,
+        "maxCoverVisits": 10000
+      },
+      "lexical": null
+    },
+    "status": "GRAPH_NOT_BOUND",
+    "evidenceIds": [],
+    "choices": [],
+    "frontiers": {
+      "F_S": [],
+      "F_O": [],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [],
+    "decision": {
+      "status": "GRAPH_NOT_BOUND",
+      "profile": "minimum-cover",
+      "cardinality": 0,
+      "coverage": {
+        "F_S": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_O": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-b704b62ecb4327acf0a59733855b041460bdb7a15eb9e24e6fe6e483d8ea20f2",
+      "semanticRoot": "sha256-ac50b9355a3ead13b714ab9383247b84aeec5f3a6eab74a4408001fa991d465f",
+      "queryRoot": "sha256-90edba1c9d0bb14ec514a96ca800a95448adb82f1adced02b66c15b4091777d2",
+      "planRoot": "sha256-88ff351ce7c652fe855cbd81861f72e5e6d4902172bcc378ad705119d3521fda",
+      "anchorRoot": "sha256-dca07c55b941b8bd06e624e690a19ec34d1c9a7d689108f296c94fada854c8e3",
+      "frontierRoot": "sha256-410e362c5f21065747884a2bbe7d7ed67c31153f973bdba42b98f214fe01929f",
+      "frontierWitnessRoot": "sha256-4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "evidenceSetRoot": "sha256-4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "decisionRoot": "sha256-ce99a65c31f454ddc47aa91f820c00e717eab2e5b6387d8babd748402d531556",
+      "karRoot": "sha256-c1ee32d50911b5d478d5b2aa3bb029ea8b5634808451c07dd8b210f2df71c627"
+    }
+  },
+  {
+    "name": "last-edge-depth",
+    "image": {
+      "version": 1,
+      "evidence": [
+        {
+          "id": "doc-clause",
+          "text": "the clause forbids cancellation"
+        },
+        {
+          "id": "doc-mid",
+          "text": "the customer record"
+        }
+      ]
+    },
+    "graph": {
+      "version": 1,
+      "knowledgeRoot": "sha256-c6825131c396d9648921f9460c14dc9278ae9abf358d136fc33c1831f720f1d4",
+      "provenance": {
+        "producer": "hand"
+      },
+      "nodes": [
+        {
+          "id": "anchor"
+        },
+        {
+          "id": "clause"
+        },
+        {
+          "id": "mid"
+        }
+      ],
+      "relations": [
+        {
+          "id": "r-time",
+          "from": "anchor",
+          "relation": "applies_to",
+          "to": "mid"
+        },
+        {
+          "id": "r-opp",
+          "from": "mid",
+          "relation": "contradicts",
+          "to": "clause"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "b-clause",
+          "nodeId": "clause",
+          "evidenceId": "doc-clause",
+          "requirements": [
+            "o"
+          ]
+        },
+        {
+          "id": "b-mid",
+          "nodeId": "mid",
+          "evidenceId": "doc-mid",
+          "requirements": [
+            "t"
+          ]
+        }
+      ]
+    },
+    "query": "q",
+    "plan": {
+      "version": 1,
+      "anchor": {
+        "mode": "supplied",
+        "witness": [
+          {
+            "nodeId": "anchor"
+          }
+        ]
+      },
+      "frontierMap": {
+        "applies_to": "F_T",
+        "contradicts": "F_O"
+      },
+      "depth": 2,
+      "cardinalityBound": 5,
+      "coverageMode": "requirements",
+      "requirements": {
+        "F_S": [],
+        "F_O": [],
+        "F_Q": [],
+        "F_T": [],
+        "F_A": []
+      },
+      "floors": {
+        "F_S": "0",
+        "F_O": "0",
+        "F_Q": "0",
+        "F_T": "0",
+        "F_A": "0"
+      },
+      "profile": "minimum-cover",
+      "asOf": "2026-10-10",
+      "minAuthority": null,
+      "bounds": {
+        "maxAnchorNodes": 20,
+        "maxClosureNodes": 50,
+        "maxClosureEdges": 100,
+        "maxFrontierEvidence": 20,
+        "maxRequirementsPerFrontier": 10,
+        "maxEvidenceBindings": 50,
+        "maxCoverVisits": 10000
+      },
+      "lexical": null
+    },
+    "status": "SATISFIED",
+    "evidenceIds": [],
+    "choices": [],
+    "frontiers": {
+      "F_S": [],
+      "F_O": [
+        "doc-clause"
+      ],
+      "F_Q": [],
+      "F_T": [
+        "doc-mid"
+      ],
+      "F_A": []
+    },
+    "witnesses": [
+      {
+        "evidenceId": "doc-clause",
+        "frontier": "F_O",
+        "anchorId": "anchor",
+        "path": [
+          {
+            "node": "anchor"
+          },
+          {
+            "relation": "r-time",
+            "node": "mid"
+          },
+          {
+            "relation": "r-opp",
+            "node": "clause"
+          }
+        ]
+      },
+      {
+        "evidenceId": "doc-mid",
+        "frontier": "F_T",
+        "anchorId": "anchor",
+        "path": [
+          {
+            "node": "anchor"
+          },
+          {
+            "relation": "r-time",
+            "node": "mid"
+          }
+        ]
+      }
+    ],
+    "decision": {
+      "status": "SATISFIED",
+      "profile": "minimum-cover",
+      "cardinality": 0,
+      "coverage": {
+        "F_S": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_O": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-c6825131c396d9648921f9460c14dc9278ae9abf358d136fc33c1831f720f1d4",
+      "semanticRoot": "sha256-3d88c8b2ca46707069c1da3d293c437247b7dae890d9c430b5f7d125f1a0bc3c",
+      "queryRoot": "sha256-90edba1c9d0bb14ec514a96ca800a95448adb82f1adced02b66c15b4091777d2",
+      "planRoot": "sha256-0f296cb3768a809129dd0295868a820b595a43804af830f099ce597948db6250",
+      "anchorRoot": "sha256-b454ea9440ae32f90d9c104ca7739cee40c6e965c595d98f3aacef7a32cfe309",
+      "frontierRoot": "sha256-e9fac528239cd6e904a8f19827ea1abc6e6030368b424061e960a2047ef41bf4",
+      "frontierWitnessRoot": "sha256-8182504ed746d6953261c4b16af00acbb7d8ee2e8e9f036e0f7ac3b4721c1cab",
+      "evidenceSetRoot": "sha256-4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "decisionRoot": "sha256-41cab4249d277c8fec7571f1c767850975738b00a49f1c6e161dab6355719438",
+      "karRoot": "sha256-c2ec888390282cb2ed05f9a0e93acc7bb9620c2dd6d26a131893e9c63598d600"
+    }
+  },
+  {
+    "name": "lexical-union",
+    "image": {
+      "version": 1,
+      "evidence": [
+        {
+          "id": "doc-s",
+          "text": "guest may cancel the room"
+        }
+      ]
+    },
+    "graph": {
+      "version": 1,
+      "knowledgeRoot": "sha256-66acad4674ab2ffc666da26d5ac8e62ba2b9fe7c20f6b2c692430053e73d3d21",
+      "provenance": {
+        "producer": "hand"
+      },
+      "nodes": [
+        {
+          "id": "anchor"
+        }
+      ],
+      "relations": [],
+      "bindings": []
+    },
+    "query": "q",
+    "plan": {
+      "version": 1,
+      "anchor": {
+        "mode": "supplied",
+        "witness": [
+          {
+            "nodeId": "anchor",
+            "queryTerm": "room"
+          }
+        ]
+      },
+      "frontierMap": {},
+      "depth": 1,
+      "cardinalityBound": 5,
+      "coverageMode": "nonempty",
+      "requirements": {
+        "F_S": [],
+        "F_O": [],
+        "F_Q": [],
+        "F_T": [],
+        "F_A": []
+      },
+      "floors": {
+        "F_S": "1",
+        "F_O": "0",
+        "F_Q": "0",
+        "F_T": "0",
+        "F_A": "0"
+      },
+      "profile": "minimum-cover",
+      "asOf": "2026-10-10",
+      "minAuthority": null,
+      "bounds": {
+        "maxAnchorNodes": 20,
+        "maxClosureNodes": 50,
+        "maxClosureEdges": 100,
+        "maxFrontierEvidence": 20,
+        "maxRequirementsPerFrontier": 10,
+        "maxEvidenceBindings": 50,
+        "maxCoverVisits": 10000
+      },
+      "lexical": {
+        "frontier": "F_S",
+        "evidenceIds": [
+          "doc-s"
+        ]
+      }
+    },
+    "status": "SATISFIED",
+    "evidenceIds": [
+      "doc-s"
+    ],
+    "choices": [
+      {
+        "evidenceId": "doc-s",
+        "frontiers": [
+          "F_S"
+        ]
+      }
+    ],
+    "frontiers": {
+      "F_S": [
+        "doc-s"
+      ],
+      "F_O": [],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [
+      {
+        "evidenceId": "doc-s",
+        "frontier": "F_S",
+        "anchorId": null,
+        "path": []
+      }
+    ],
+    "decision": {
+      "status": "SATISFIED",
+      "profile": "minimum-cover",
+      "cardinality": 1,
+      "coverage": {
+        "F_S": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_O": {
+          "covered": 0,
+          "required": 1
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 1
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 1
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 1
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-66acad4674ab2ffc666da26d5ac8e62ba2b9fe7c20f6b2c692430053e73d3d21",
+      "semanticRoot": "sha256-875224ac319e20639d0e1f0adf12cd5acdef50b3ba8944366179d1a6d1276371",
+      "queryRoot": "sha256-90edba1c9d0bb14ec514a96ca800a95448adb82f1adced02b66c15b4091777d2",
+      "planRoot": "sha256-ba548f718b460a68c49132ba3ba9c8ccc5c29ed99a9992d6ff0af16b728e137c",
+      "anchorRoot": "sha256-3c66b035dd9c8167235c0e156a28a035233f48367369b2418366e79b8201b5a5",
+      "frontierRoot": "sha256-9759ea9817930b8397b490117715bfdcdfe9890a0d9379dbd8adb3b047233ed8",
+      "frontierWitnessRoot": "sha256-b002261a0819d6dbf1850c5e467ad6a046561035b27ef484b9040b8c2ff4378e",
+      "evidenceSetRoot": "sha256-d624d94727de14f36fde0ebb2ba79d23f19bb68bd8b217580784d670d66a3cba",
+      "decisionRoot": "sha256-f4680ec86fcfac009d6f0f3264fedf8426baad5c4dcb4b279c87fbb7ac4cded7",
+      "karRoot": "sha256-cb05bfeedd158a2b987dce197b878444c5a254b19aee8c6b97c5128b0362370a"
+    }
+  },
+  {
+    "name": "mask-economy",
+    "image": {
+      "version": 1,
+      "evidence": [
+        {
+          "id": "a-doc",
+          "text": "alpha"
+        },
+        {
+          "id": "b-doc",
+          "text": "beta"
+        }
+      ]
+    },
+    "graph": {
+      "version": 1,
+      "knowledgeRoot": "sha256-d050c7b61bc85fba5668d64b09661dda4f6676d954774dc9d50c648e74358c5e",
+      "provenance": {
+        "producer": "hand"
+      },
+      "nodes": [
+        {
+          "id": "anchor"
+        },
+        {
+          "id": "node-a"
+        },
+        {
+          "id": "node-b"
+        }
+      ],
+      "relations": [
+        {
+          "id": "r-a",
+          "from": "anchor",
+          "relation": "supports",
+          "to": "node-a"
+        },
+        {
+          "id": "r-b",
+          "from": "anchor",
+          "relation": "supports",
+          "to": "node-b"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "b-a",
+          "nodeId": "node-a",
+          "evidenceId": "a-doc",
+          "requirements": [
+            "s"
+          ]
+        },
+        {
+          "id": "b-b",
+          "nodeId": "node-b",
+          "evidenceId": "b-doc",
+          "requirements": [
+            "s"
+          ]
+        }
+      ]
+    },
+    "query": "q",
+    "plan": {
+      "version": 1,
+      "anchor": {
+        "mode": "supplied",
+        "witness": [
+          {
+            "nodeId": "anchor",
+            "queryTerm": "room"
+          }
+        ]
+      },
+      "frontierMap": {
+        "supports": "F_S"
+      },
+      "depth": 1,
+      "cardinalityBound": 5,
+      "coverageMode": "requirements",
+      "requirements": {
+        "F_S": [
+          "s"
+        ],
+        "F_O": [],
+        "F_Q": [],
+        "F_T": [],
+        "F_A": []
+      },
+      "floors": {
+        "F_S": "1",
+        "F_O": "0",
+        "F_Q": "0",
+        "F_T": "0",
+        "F_A": "0"
+      },
+      "profile": "minimum-cover",
+      "asOf": "2026-10-10",
+      "minAuthority": null,
+      "bounds": {
+        "maxAnchorNodes": 20,
+        "maxClosureNodes": 50,
+        "maxClosureEdges": 100,
+        "maxFrontierEvidence": 20,
+        "maxRequirementsPerFrontier": 10,
+        "maxEvidenceBindings": 50,
+        "maxCoverVisits": 10000
+      },
+      "lexical": null
+    },
+    "status": "SATISFIED",
+    "evidenceIds": [
+      "a-doc"
+    ],
+    "choices": [
+      {
+        "evidenceId": "a-doc",
+        "frontiers": [
+          "F_S"
+        ]
+      }
+    ],
+    "frontiers": {
+      "F_S": [
+        "a-doc",
+        "b-doc"
+      ],
+      "F_O": [],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [
+      {
+        "evidenceId": "a-doc",
+        "frontier": "F_S",
+        "anchorId": "anchor",
+        "path": [
+          {
+            "node": "anchor"
+          },
+          {
+            "relation": "r-a",
+            "node": "node-a"
+          }
+        ]
+      },
+      {
+        "evidenceId": "b-doc",
+        "frontier": "F_S",
+        "anchorId": "anchor",
+        "path": [
+          {
+            "node": "anchor"
+          },
+          {
+            "relation": "r-b",
+            "node": "node-b"
+          }
+        ]
+      }
+    ],
+    "decision": {
+      "status": "SATISFIED",
+      "profile": "minimum-cover",
+      "cardinality": 1,
+      "coverage": {
+        "F_S": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_O": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-d050c7b61bc85fba5668d64b09661dda4f6676d954774dc9d50c648e74358c5e",
+      "semanticRoot": "sha256-d864d0b55cf2f7bfa4899186abffcc8fec2b7beacb96f3f60f4a54b534cc9c8c",
+      "queryRoot": "sha256-90edba1c9d0bb14ec514a96ca800a95448adb82f1adced02b66c15b4091777d2",
+      "planRoot": "sha256-626f3adca969ac88fc5c9677937e52c60876748ce12853e3e643c0ef93055f4d",
+      "anchorRoot": "sha256-3c66b035dd9c8167235c0e156a28a035233f48367369b2418366e79b8201b5a5",
+      "frontierRoot": "sha256-2e2f12195e7fc6b49c2431f9371242febfc9f08793c16ee64ab1e8d663154b6f",
+      "frontierWitnessRoot": "sha256-710c06fb4dbf2b8249de9b60020c86ac0645f0244427904bdba039cb75e5da7a",
+      "evidenceSetRoot": "sha256-13550420ca1e462c60b167acc9b6d0f8b89d9ad1db5be0faf8a7633d9cfd32ec",
+      "decisionRoot": "sha256-fae61f2297742ed62dd71cf2d4ac2750e866711202318182b797d98dfb0e9810",
+      "karRoot": "sha256-1dfb8eadb24b5a6f61cd26d97954bbf90c235fc12c16f52dc99e26fbdc841edc"
+    }
+  },
+  {
+    "name": "member-id",
+    "image": {
+      "version": 1,
+      "evidence": [
+        {
+          "id": "doc",
+          "text": "lodging stays"
+        }
+      ]
+    },
+    "graph": {
+      "version": 1,
+      "knowledgeRoot": "sha256-4956c7e985376b865b9235b5b0cbe6df1f2f757f6288dea3a47dca0d41556cb3",
+      "provenance": {
+        "producer": "hand"
+      },
+      "nodes": [
+        {
+          "id": "kiln"
+        },
+        {
+          "id": "lodging"
+        },
+        {
+          "id": "lodging-end"
+        }
+      ],
+      "relations": [
+        {
+          "id": "r",
+          "from": "lodging",
+          "relation": "prohibits",
+          "to": "lodging-end"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "b",
+          "nodeId": "lodging-end",
+          "evidenceId": "doc",
+          "requirements": [
+            "o"
+          ]
+        }
+      ]
+    },
+    "query": "please lodging tonight",
+    "plan": {
+      "version": 1,
+      "anchor": {
+        "mode": "recompute",
+        "procedure": "member-id-v1"
+      },
+      "frontierMap": {
+        "prohibits": "F_O"
+      },
+      "depth": 1,
+      "cardinalityBound": 5,
+      "coverageMode": "requirements",
+      "requirements": {
+        "F_S": [],
+        "F_O": [
+          "o"
+        ],
+        "F_Q": [],
+        "F_T": [],
+        "F_A": []
+      },
+      "floors": {
+        "F_S": "0",
+        "F_O": "1",
+        "F_Q": "0",
+        "F_T": "0",
+        "F_A": "0"
+      },
+      "profile": "minimum-cover",
+      "asOf": "2026-10-10",
+      "minAuthority": null,
+      "bounds": {
+        "maxAnchorNodes": 20,
+        "maxClosureNodes": 50,
+        "maxClosureEdges": 100,
+        "maxFrontierEvidence": 20,
+        "maxRequirementsPerFrontier": 10,
+        "maxEvidenceBindings": 50,
+        "maxCoverVisits": 10000
+      },
+      "lexical": null
+    },
+    "status": "SATISFIED",
+    "evidenceIds": [
+      "doc"
+    ],
+    "choices": [
+      {
+        "evidenceId": "doc",
+        "frontiers": [
+          "F_O"
+        ]
+      }
+    ],
+    "frontiers": {
+      "F_S": [],
+      "F_O": [
+        "doc"
+      ],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [
+      {
+        "evidenceId": "doc",
+        "frontier": "F_O",
+        "anchorId": "lodging",
+        "path": [
+          {
+            "node": "lodging"
+          },
+          {
+            "relation": "r",
+            "node": "lodging-end"
+          }
+        ]
+      }
+    ],
+    "decision": {
+      "status": "SATISFIED",
+      "profile": "minimum-cover",
+      "cardinality": 1,
+      "coverage": {
+        "F_S": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_O": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-4956c7e985376b865b9235b5b0cbe6df1f2f757f6288dea3a47dca0d41556cb3",
+      "semanticRoot": "sha256-54b10ddd3cd85f09323e9eade4659cf475bf9a82b891444c099fa709c0add707",
+      "queryRoot": "sha256-eb094aedcf930d002c2ccaad5b31ae4890c1d0afb76873ab8fc99a83178bfab5",
+      "planRoot": "sha256-174c2e432fbe04cb41c6b3ec3c66b15f4bca4f658b13cf9944f6dbbdae02a7cf",
+      "anchorRoot": "sha256-71e1757d7adbab8c1cc2be8877a1c3b637837ee35e157f7c688bcf05704d1284",
+      "frontierRoot": "sha256-838e85621e16188d0bb94021a97c9b638ccfea589245849a6e4e82b57ae61c8c",
+      "frontierWitnessRoot": "sha256-859f4ee25953f916ee655760586366e64f158b83f093110cddd33bd62886864d",
+      "evidenceSetRoot": "sha256-41f58f231134522a9a00edba4be056803717a3e1b6f1762e4cac844ecb30b548",
+      "decisionRoot": "sha256-763f5fe52350eec811838215fb20acc5f04c4a5947d6cd15eae7a98c3f888a9f",
+      "karRoot": "sha256-2e0ea6fcf20edc53e90b12717c5d3a2f876e377cce3c1a45c42c9b6b5eac3c64"
+    }
+  },
+  {
+    "name": "no-topk-fallback",
+    "image": {
+      "version": 1,
+      "evidence": [
+        {
+          "id": "doc-s",
+          "text": "support text"
+        }
+      ]
+    },
+    "graph": {
+      "version": 1,
+      "knowledgeRoot": "sha256-e04b2cdab90d5370490bfff1f652e2f30653e77ae352dfd7d6be70642f2d002b",
+      "provenance": {
+        "producer": "hand"
+      },
+      "nodes": [
+        {
+          "id": "anchor"
+        }
+      ],
+      "relations": [],
+      "bindings": []
+    },
+    "query": "q",
+    "plan": {
+      "version": 1,
+      "anchor": {
+        "mode": "supplied",
+        "witness": [
+          {
+            "nodeId": "anchor",
+            "queryTerm": "room"
+          }
+        ]
+      },
+      "frontierMap": {},
+      "depth": 1,
+      "cardinalityBound": 5,
+      "coverageMode": "requirements",
+      "requirements": {
+        "F_S": [
+          "s"
+        ],
+        "F_O": [
+          "o"
+        ],
+        "F_Q": [],
+        "F_T": [],
+        "F_A": []
+      },
+      "floors": {
+        "F_S": "0",
+        "F_O": "1",
+        "F_Q": "0",
+        "F_T": "0",
+        "F_A": "0"
+      },
+      "profile": "minimum-cover",
+      "asOf": "2026-10-10",
+      "minAuthority": null,
+      "bounds": {
+        "maxAnchorNodes": 20,
+        "maxClosureNodes": 50,
+        "maxClosureEdges": 100,
+        "maxFrontierEvidence": 20,
+        "maxRequirementsPerFrontier": 10,
+        "maxEvidenceBindings": 50,
+        "maxCoverVisits": 10000
+      },
+      "lexical": {
+        "frontier": "F_S",
+        "evidenceIds": [
+          "doc-s"
+        ]
+      }
+    },
+    "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS",
+    "evidenceIds": [],
+    "choices": [],
+    "frontiers": {
+      "F_S": [
+        "doc-s"
+      ],
+      "F_O": [],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [
+      {
+        "evidenceId": "doc-s",
+        "frontier": "F_S",
+        "anchorId": null,
+        "path": []
+      }
+    ],
+    "decision": {
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS",
+      "profile": "minimum-cover",
+      "cardinality": 0,
+      "coverage": {
+        "F_S": {
+          "covered": 0,
+          "required": 1
+        },
+        "F_O": {
+          "covered": 0,
+          "required": 1
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-e04b2cdab90d5370490bfff1f652e2f30653e77ae352dfd7d6be70642f2d002b",
+      "semanticRoot": "sha256-650763ef02f0bc0c613f5c918a8822e4e46bff7087853511e87f63966e0b6a28",
+      "queryRoot": "sha256-90edba1c9d0bb14ec514a96ca800a95448adb82f1adced02b66c15b4091777d2",
+      "planRoot": "sha256-f613f68d374dfae71301b7107a44ef120a871457786902bab8b11d5a6c5e7873",
+      "anchorRoot": "sha256-3c66b035dd9c8167235c0e156a28a035233f48367369b2418366e79b8201b5a5",
+      "frontierRoot": "sha256-9759ea9817930b8397b490117715bfdcdfe9890a0d9379dbd8adb3b047233ed8",
+      "frontierWitnessRoot": "sha256-b002261a0819d6dbf1850c5e467ad6a046561035b27ef484b9040b8c2ff4378e",
+      "evidenceSetRoot": "sha256-4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "decisionRoot": "sha256-624d13a2619077903e12c86b6bc02ff938e62eab61350b264cb129040494f0ad",
+      "karRoot": "sha256-a1938acaa2351bd1e1adf36d7065eca75f1b684542373d4d1841d09dac280261"
+    }
+  },
+  {
+    "name": "redundancy-profile",
+    "image": {
+      "version": 1,
+      "evidence": [
+        {
+          "id": "a-dup-1",
+          "text": "red red"
+        },
+        {
+          "id": "a-dup-2",
+          "text": "red red"
+        },
+        {
+          "id": "m-1",
+          "text": "blue"
+        },
+        {
+          "id": "m-2",
+          "text": "green"
+        },
+        {
+          "id": "solo",
+          "text": "alpha alpha alpha"
+        }
+      ]
+    },
+    "graph": {
+      "version": 1,
+      "knowledgeRoot": "sha256-a7637746e77e46f54871101ccd7985c7c156559b3d43d5b9921f39974986af84",
+      "provenance": {
+        "producer": "hand"
+      },
+      "nodes": [
+        {
+          "id": "anchor"
+        },
+        {
+          "id": "n1"
+        },
+        {
+          "id": "n2"
+        },
+        {
+          "id": "n3"
+        },
+        {
+          "id": "n4"
+        }
+      ],
+      "relations": [
+        {
+          "id": "r1",
+          "from": "anchor",
+          "relation": "supports",
+          "to": "n1"
+        },
+        {
+          "id": "r2",
+          "from": "anchor",
+          "relation": "prohibits",
+          "to": "n2"
+        },
+        {
+          "id": "r3",
+          "from": "anchor",
+          "relation": "supports",
+          "to": "n3"
+        },
+        {
+          "id": "r4",
+          "from": "anchor",
+          "relation": "prohibits",
+          "to": "n4"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "b1",
+          "nodeId": "n1",
+          "evidenceId": "a-dup-1",
+          "requirements": [
+            "s"
+          ]
+        },
+        {
+          "id": "b2",
+          "nodeId": "n2",
+          "evidenceId": "a-dup-2",
+          "requirements": [
+            "o"
+          ]
+        },
+        {
+          "id": "b3",
+          "nodeId": "n3",
+          "evidenceId": "m-1",
+          "requirements": [
+            "s"
+          ]
+        },
+        {
+          "id": "b4",
+          "nodeId": "n4",
+          "evidenceId": "m-2",
+          "requirements": [
+            "o"
+          ]
+        }
+      ]
+    },
+    "query": "q",
+    "plan": {
+      "version": 1,
+      "anchor": {
+        "mode": "supplied",
+        "witness": [
+          {
+            "nodeId": "anchor",
+            "queryTerm": "room"
+          }
+        ]
+      },
+      "frontierMap": {
+        "supports": "F_S",
+        "prohibits": "F_O"
+      },
+      "depth": 1,
+      "cardinalityBound": 5,
+      "coverageMode": "requirements",
+      "requirements": {
+        "F_S": [
+          "s"
+        ],
+        "F_O": [
+          "o"
+        ],
+        "F_Q": [],
+        "F_T": [],
+        "F_A": []
+      },
+      "floors": {
+        "F_S": "1",
+        "F_O": "1",
+        "F_Q": "0",
+        "F_T": "0",
+        "F_A": "0"
+      },
+      "profile": "minimum-cover-redundancy-v1",
+      "asOf": "2026-10-10",
+      "minAuthority": null,
+      "bounds": {
+        "maxAnchorNodes": 20,
+        "maxClosureNodes": 50,
+        "maxClosureEdges": 100,
+        "maxFrontierEvidence": 20,
+        "maxRequirementsPerFrontier": 10,
+        "maxEvidenceBindings": 50,
+        "maxCoverVisits": 10000
+      },
+      "lexical": null
+    },
+    "status": "SATISFIED",
+    "evidenceIds": [
+      "a-dup-1",
+      "m-2"
+    ],
+    "choices": [
+      {
+        "evidenceId": "a-dup-1",
+        "frontiers": [
+          "F_S"
+        ]
+      },
+      {
+        "evidenceId": "m-2",
+        "frontiers": [
+          "F_O"
+        ]
+      }
+    ],
+    "frontiers": {
+      "F_S": [
+        "a-dup-1",
+        "m-1"
+      ],
+      "F_O": [
+        "a-dup-2",
+        "m-2"
+      ],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [
+      {
+        "evidenceId": "a-dup-2",
+        "frontier": "F_O",
+        "anchorId": "anchor",
+        "path": [
+          {
+            "node": "anchor"
+          },
+          {
+            "relation": "r2",
+            "node": "n2"
+          }
+        ]
+      },
+      {
+        "evidenceId": "m-2",
+        "frontier": "F_O",
+        "anchorId": "anchor",
+        "path": [
+          {
+            "node": "anchor"
+          },
+          {
+            "relation": "r4",
+            "node": "n4"
+          }
+        ]
+      },
+      {
+        "evidenceId": "a-dup-1",
+        "frontier": "F_S",
+        "anchorId": "anchor",
+        "path": [
+          {
+            "node": "anchor"
+          },
+          {
+            "relation": "r1",
+            "node": "n1"
+          }
+        ]
+      },
+      {
+        "evidenceId": "m-1",
+        "frontier": "F_S",
+        "anchorId": "anchor",
+        "path": [
+          {
+            "node": "anchor"
+          },
+          {
+            "relation": "r3",
+            "node": "n3"
+          }
+        ]
+      }
+    ],
+    "decision": {
+      "status": "SATISFIED",
+      "profile": "minimum-cover-redundancy-v1",
+      "cardinality": 2,
+      "coverage": {
+        "F_S": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_O": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      },
+      "redundancy": {
+        "numerator": 0,
+        "denominator": 1
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-a7637746e77e46f54871101ccd7985c7c156559b3d43d5b9921f39974986af84",
+      "semanticRoot": "sha256-ee0d475ff979e06eeae95cde9838511cb82cf4937fc993f055c3be7410b7b51f",
+      "queryRoot": "sha256-90edba1c9d0bb14ec514a96ca800a95448adb82f1adced02b66c15b4091777d2",
+      "planRoot": "sha256-bb3abfc9aa948fa8cbcace330d2b922aa54e5caf46250ed70fdf071698580064",
+      "anchorRoot": "sha256-3c66b035dd9c8167235c0e156a28a035233f48367369b2418366e79b8201b5a5",
+      "frontierRoot": "sha256-a88e58936d98ee5d2683ccb6419de56ec21b1fc5256ce2ca6a6fa2e092622714",
+      "frontierWitnessRoot": "sha256-3e14eb253b3da98740e3696dfa944eb67c35498bc4870cfbd02e0c3dcd51db54",
+      "evidenceSetRoot": "sha256-e266855618c76e7872096a494c57fcd677ae937dc26aa3d6bb12dea0c363190b",
+      "decisionRoot": "sha256-99f083d15d7ac6a39a3ea86bcc245a0c039ce8fe4512ae1167aac8894eb5fddf",
+      "karRoot": "sha256-fcb0c0aa3265991f28cd2e7b5f95ed16c9ddc3eb69f3203d61a3abb2a3c95e4d"
+    }
+  },
+  {
+    "name": "replay-dual",
+    "image": {
+      "version": 1,
+      "evidence": [
+        {
+          "id": "doc-o",
+          "text": "the booking stays committed"
+        },
+        {
+          "id": "doc-s",
+          "text": "the guest may end the stay"
+        }
+      ]
+    },
+    "graph": {
+      "version": 1,
+      "knowledgeRoot": "sha256-d04a81eaa4e6f8edb115b70896dde22eb3bd3853d6c05614857ea7aedde65883",
+      "provenance": {
+        "producer": "hand"
+      },
+      "nodes": [
+        {
+          "id": "anchor"
+        },
+        {
+          "id": "oppose-node"
+        },
+        {
+          "id": "support-node"
+        }
+      ],
+      "relations": [
+        {
+          "id": "r-o",
+          "from": "anchor",
+          "relation": "prohibits",
+          "to": "oppose-node"
+        },
+        {
+          "id": "r-s",
+          "from": "anchor",
+          "relation": "supports",
+          "to": "support-node"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "b-o",
+          "nodeId": "oppose-node",
+          "evidenceId": "doc-o",
+          "requirements": [
+            "o"
+          ]
+        },
+        {
+          "id": "b-s",
+          "nodeId": "support-node",
+          "evidenceId": "doc-s",
+          "requirements": [
+            "s"
+          ]
+        }
+      ]
+    },
+    "query": "guest cancel room whenever asked",
+    "plan": {
+      "version": 1,
+      "anchor": {
+        "mode": "supplied",
+        "witness": [
+          {
+            "nodeId": "anchor",
+            "queryTerm": "room"
+          }
+        ]
+      },
+      "frontierMap": {
+        "supports": "F_S",
+        "prohibits": "F_O"
+      },
+      "depth": 1,
+      "cardinalityBound": 5,
+      "coverageMode": "requirements",
+      "requirements": {
+        "F_S": [
+          "s"
+        ],
+        "F_O": [
+          "o"
+        ],
+        "F_Q": [],
+        "F_T": [],
+        "F_A": []
+      },
+      "floors": {
+        "F_S": "1",
+        "F_O": "1",
+        "F_Q": "0",
+        "F_T": "0",
+        "F_A": "0"
+      },
+      "profile": "minimum-cover",
+      "asOf": "2026-10-10",
+      "minAuthority": null,
+      "bounds": {
+        "maxAnchorNodes": 20,
+        "maxClosureNodes": 50,
+        "maxClosureEdges": 100,
+        "maxFrontierEvidence": 20,
+        "maxRequirementsPerFrontier": 10,
+        "maxEvidenceBindings": 50,
+        "maxCoverVisits": 10000
+      },
+      "lexical": null
+    },
+    "status": "SATISFIED",
+    "evidenceIds": [
+      "doc-o",
+      "doc-s"
+    ],
+    "choices": [
+      {
+        "evidenceId": "doc-o",
+        "frontiers": [
+          "F_O"
+        ]
+      },
+      {
+        "evidenceId": "doc-s",
+        "frontiers": [
+          "F_S"
+        ]
+      }
+    ],
+    "frontiers": {
+      "F_S": [
+        "doc-s"
+      ],
+      "F_O": [
+        "doc-o"
+      ],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [
+      {
+        "evidenceId": "doc-o",
+        "frontier": "F_O",
+        "anchorId": "anchor",
+        "path": [
+          {
+            "node": "anchor"
+          },
+          {
+            "relation": "r-o",
+            "node": "oppose-node"
+          }
+        ]
+      },
+      {
+        "evidenceId": "doc-s",
+        "frontier": "F_S",
+        "anchorId": "anchor",
+        "path": [
+          {
+            "node": "anchor"
+          },
+          {
+            "relation": "r-s",
+            "node": "support-node"
+          }
+        ]
+      }
+    ],
+    "decision": {
+      "status": "SATISFIED",
+      "profile": "minimum-cover",
+      "cardinality": 2,
+      "coverage": {
+        "F_S": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_O": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-d04a81eaa4e6f8edb115b70896dde22eb3bd3853d6c05614857ea7aedde65883",
+      "semanticRoot": "sha256-756e90b57ba9bca2e32596a854067cfb0c3641d93961df4d07b12df47719f138",
+      "queryRoot": "sha256-d2afd5c181ac2beeaa147b39154c223ca083d50de66b6a2a4ff050d5f78ed039",
+      "planRoot": "sha256-0a711db941fe4e1a75590b7b772617c56abce3120299ed2340f1c0a719699af1",
+      "anchorRoot": "sha256-3c66b035dd9c8167235c0e156a28a035233f48367369b2418366e79b8201b5a5",
+      "frontierRoot": "sha256-d4b73d0c75a726d23f97de89283c41ffc1f6dbf70c6fcb231d4e0268e144d4b1",
+      "frontierWitnessRoot": "sha256-a8fde8bd71b396bd4217e7d0120c7beabb33381cec407a6a331db8fda15925f2",
+      "evidenceSetRoot": "sha256-faee8933cf16479df77ad3f60dc96491ec7e1b8f803d6aedd1dd141de2eb6111",
+      "decisionRoot": "sha256-ba643ef0dcb933a375cfd8f7bc3bb47ddad181564c32ed1918cffe0224a14550",
+      "karRoot": "sha256-07d6c75783042bae1e5ce2a0065408ca3a757e975369cb077d81ab216eb1bab5"
+    }
+  },
+  {
+    "name": "root-stability",
+    "image": {
+      "version": 1,
+      "evidence": [
+        {
+          "id": "doc-s",
+          "text": "alpha"
+        }
+      ]
+    },
+    "graph": {
+      "version": 1,
+      "knowledgeRoot": "sha256-b704b62ecb4327acf0a59733855b041460bdb7a15eb9e24e6fe6e483d8ea20f2",
+      "provenance": {
+        "producer": "hand"
+      },
+      "nodes": [
+        {
+          "id": "anchor"
+        },
+        {
+          "id": "support-node"
+        }
+      ],
+      "relations": [
+        {
+          "id": "r-s",
+          "from": "anchor",
+          "relation": "supports",
+          "to": "support-node"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "b-s",
+          "nodeId": "support-node",
+          "evidenceId": "doc-s",
+          "requirements": [
+            "s"
+          ]
+        }
+      ]
+    },
+    "query": "q",
+    "plan": {
+      "version": 1,
+      "anchor": {
+        "mode": "supplied",
+        "witness": [
+          {
+            "nodeId": "anchor",
+            "queryTerm": "room"
+          }
+        ]
+      },
+      "frontierMap": {
+        "supports": "F_S"
+      },
+      "depth": 1,
+      "cardinalityBound": 5,
+      "coverageMode": "requirements",
+      "requirements": {
+        "F_S": [],
+        "F_O": [],
+        "F_Q": [],
+        "F_T": [],
+        "F_A": []
+      },
+      "floors": {
+        "F_S": "0",
+        "F_O": "0",
+        "F_Q": "0",
+        "F_T": "0",
+        "F_A": "0"
+      },
+      "profile": "minimum-cover",
+      "asOf": "2026-10-10",
+      "minAuthority": null,
+      "bounds": {
+        "maxAnchorNodes": 20,
+        "maxClosureNodes": 50,
+        "maxClosureEdges": 100,
+        "maxFrontierEvidence": 20,
+        "maxRequirementsPerFrontier": 10,
+        "maxEvidenceBindings": 50,
+        "maxCoverVisits": 10000
+      },
+      "lexical": null
+    },
+    "status": "SATISFIED",
+    "evidenceIds": [],
+    "choices": [],
+    "frontiers": {
+      "F_S": [
+        "doc-s"
+      ],
+      "F_O": [],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [
+      {
+        "evidenceId": "doc-s",
+        "frontier": "F_S",
+        "anchorId": "anchor",
+        "path": [
+          {
+            "node": "anchor"
+          },
+          {
+            "relation": "r-s",
+            "node": "support-node"
+          }
+        ]
+      }
+    ],
+    "decision": {
+      "status": "SATISFIED",
+      "profile": "minimum-cover",
+      "cardinality": 0,
+      "coverage": {
+        "F_S": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_O": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-b704b62ecb4327acf0a59733855b041460bdb7a15eb9e24e6fe6e483d8ea20f2",
+      "semanticRoot": "sha256-797c13c9f09b3956d34a6a0a40a052f0eccc12d59e55ea6f1522df6e8b2b70c2",
+      "queryRoot": "sha256-90edba1c9d0bb14ec514a96ca800a95448adb82f1adced02b66c15b4091777d2",
+      "planRoot": "sha256-88ff351ce7c652fe855cbd81861f72e5e6d4902172bcc378ad705119d3521fda",
+      "anchorRoot": "sha256-3c66b035dd9c8167235c0e156a28a035233f48367369b2418366e79b8201b5a5",
+      "frontierRoot": "sha256-9759ea9817930b8397b490117715bfdcdfe9890a0d9379dbd8adb3b047233ed8",
+      "frontierWitnessRoot": "sha256-716aba3563b8ac59315404294a01d1459ff7212ab202fe98cfac35c0abae3b5c",
+      "evidenceSetRoot": "sha256-4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "decisionRoot": "sha256-41cab4249d277c8fec7571f1c767850975738b00a49f1c6e161dab6355719438",
+      "karRoot": "sha256-97725b6a18be006468dcd348faa3b6e147b73c89b721817d3bdac267323c9262"
+    }
+  },
+  {
+    "name": "unmapped-relation",
+    "image": {
+      "version": 1,
+      "evidence": [
+        {
+          "id": "doc",
+          "text": "hidden opposition"
+        }
+      ]
+    },
+    "graph": {
+      "version": 1,
+      "knowledgeRoot": "sha256-da47e82ff6285599b837913c9e6a9936e754ffaabf99e6dd1027d872498b1102",
+      "provenance": {
+        "producer": "hand"
+      },
+      "nodes": [
+        {
+          "id": "anchor"
+        },
+        {
+          "id": "hidden"
+        }
+      ],
+      "relations": [
+        {
+          "id": "r",
+          "from": "anchor",
+          "relation": "requires",
+          "to": "hidden"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "b",
+          "nodeId": "hidden",
+          "evidenceId": "doc",
+          "requirements": [
+            "s"
+          ]
+        }
+      ]
+    },
+    "query": "q",
+    "plan": {
+      "version": 1,
+      "anchor": {
+        "mode": "supplied",
+        "witness": [
+          {
+            "nodeId": "anchor",
+            "queryTerm": "room"
+          }
+        ]
+      },
+      "frontierMap": {},
+      "depth": 1,
+      "cardinalityBound": 5,
+      "coverageMode": "requirements",
+      "requirements": {
+        "F_S": [],
+        "F_O": [],
+        "F_Q": [],
+        "F_T": [],
+        "F_A": []
+      },
+      "floors": {
+        "F_S": "0",
+        "F_O": "0",
+        "F_Q": "0",
+        "F_T": "0",
+        "F_A": "0"
+      },
+      "profile": "minimum-cover",
+      "asOf": "2026-10-10",
+      "minAuthority": null,
+      "bounds": {
+        "maxAnchorNodes": 20,
+        "maxClosureNodes": 50,
+        "maxClosureEdges": 100,
+        "maxFrontierEvidence": 20,
+        "maxRequirementsPerFrontier": 10,
+        "maxEvidenceBindings": 50,
+        "maxCoverVisits": 10000
+      },
+      "lexical": null
+    },
+    "status": "SATISFIED",
+    "evidenceIds": [],
+    "choices": [],
+    "frontiers": {
+      "F_S": [],
+      "F_O": [],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [],
+    "decision": {
+      "status": "SATISFIED",
+      "profile": "minimum-cover",
+      "cardinality": 0,
+      "coverage": {
+        "F_S": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_O": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-da47e82ff6285599b837913c9e6a9936e754ffaabf99e6dd1027d872498b1102",
+      "semanticRoot": "sha256-3dc00b2295e4830fbd07e92a17168d0669aa786e5b88502e0adfb291138ebccf",
+      "queryRoot": "sha256-90edba1c9d0bb14ec514a96ca800a95448adb82f1adced02b66c15b4091777d2",
+      "planRoot": "sha256-f63b340f2c9a950376ce7f01fcd6ea7c9eb0404a254b79a1cc49adf2fb683685",
+      "anchorRoot": "sha256-3c66b035dd9c8167235c0e156a28a035233f48367369b2418366e79b8201b5a5",
+      "frontierRoot": "sha256-410e362c5f21065747884a2bbe7d7ed67c31153f973bdba42b98f214fe01929f",
+      "frontierWitnessRoot": "sha256-4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "evidenceSetRoot": "sha256-4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "decisionRoot": "sha256-41cab4249d277c8fec7571f1c767850975738b00a49f1c6e161dab6355719438",
+      "karRoot": "sha256-5a1f2012323971bb2f376d60d2eee7a094724330ea52e8f1dde306b0fbe463e0"
+    }
+  },
+  {
+    "name": "visit-bound",
+    "image": {
+      "version": 1,
+      "evidence": [
+        {
+          "id": "e1",
+          "text": "one"
+        },
+        {
+          "id": "e2",
+          "text": "two"
+        },
+        {
+          "id": "e3",
+          "text": "three"
+        }
+      ]
+    },
+    "graph": {
+      "version": 1,
+      "knowledgeRoot": "sha256-e13f3145133c678a7013b05007fd15c72cd3a076b6246a06b31c0111ad6e81f2",
+      "provenance": {
+        "producer": "hand"
+      },
+      "nodes": [
+        {
+          "id": "anchor"
+        },
+        {
+          "id": "n1"
+        },
+        {
+          "id": "n2"
+        },
+        {
+          "id": "n3"
+        }
+      ],
+      "relations": [
+        {
+          "id": "r1",
+          "from": "anchor",
+          "relation": "supports",
+          "to": "n1"
+        },
+        {
+          "id": "r2",
+          "from": "anchor",
+          "relation": "supports",
+          "to": "n2"
+        },
+        {
+          "id": "r3",
+          "from": "anchor",
+          "relation": "supports",
+          "to": "n3"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "b1",
+          "nodeId": "n1",
+          "evidenceId": "e1",
+          "requirements": [
+            "s"
+          ]
+        },
+        {
+          "id": "b2",
+          "nodeId": "n2",
+          "evidenceId": "e2",
+          "requirements": [
+            "s"
+          ]
+        },
+        {
+          "id": "b3",
+          "nodeId": "n3",
+          "evidenceId": "e3",
+          "requirements": [
+            "s"
+          ]
+        }
+      ]
+    },
+    "query": "q",
+    "plan": {
+      "version": 1,
+      "anchor": {
+        "mode": "supplied",
+        "witness": [
+          {
+            "nodeId": "anchor",
+            "queryTerm": "room"
+          }
+        ]
+      },
+      "frontierMap": {
+        "supports": "F_S"
+      },
+      "depth": 1,
+      "cardinalityBound": 5,
+      "coverageMode": "requirements",
+      "requirements": {
+        "F_S": [
+          "s"
+        ],
+        "F_O": [],
+        "F_Q": [],
+        "F_T": [],
+        "F_A": []
+      },
+      "floors": {
+        "F_S": "1",
+        "F_O": "0",
+        "F_Q": "0",
+        "F_T": "0",
+        "F_A": "0"
+      },
+      "profile": "minimum-cover",
+      "asOf": "2026-10-10",
+      "minAuthority": null,
+      "bounds": {
+        "maxAnchorNodes": 20,
+        "maxClosureNodes": 50,
+        "maxClosureEdges": 100,
+        "maxFrontierEvidence": 20,
+        "maxRequirementsPerFrontier": 10,
+        "maxEvidenceBindings": 50,
+        "maxCoverVisits": 1
+      },
+      "lexical": null
+    },
+    "status": "SEARCH_BOUND_EXCEEDED",
+    "evidenceIds": [],
+    "choices": [],
+    "frontiers": {
+      "F_S": [
+        "e1",
+        "e2",
+        "e3"
+      ],
+      "F_O": [],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [
+      {
+        "evidenceId": "e1",
+        "frontier": "F_S",
+        "anchorId": "anchor",
+        "path": [
+          {
+            "node": "anchor"
+          },
+          {
+            "relation": "r1",
+            "node": "n1"
+          }
+        ]
+      },
+      {
+        "evidenceId": "e2",
+        "frontier": "F_S",
+        "anchorId": "anchor",
+        "path": [
+          {
+            "node": "anchor"
+          },
+          {
+            "relation": "r2",
+            "node": "n2"
+          }
+        ]
+      },
+      {
+        "evidenceId": "e3",
+        "frontier": "F_S",
+        "anchorId": "anchor",
+        "path": [
+          {
+            "node": "anchor"
+          },
+          {
+            "relation": "r3",
+            "node": "n3"
+          }
+        ]
+      }
+    ],
+    "decision": {
+      "status": "SEARCH_BOUND_EXCEEDED",
+      "profile": "minimum-cover",
+      "cardinality": 0,
+      "coverage": {
+        "F_S": {
+          "covered": 0,
+          "required": 1
+        },
+        "F_O": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-e13f3145133c678a7013b05007fd15c72cd3a076b6246a06b31c0111ad6e81f2",
+      "semanticRoot": "sha256-07f7d5c95512f614c1bcff77151d56b53b9b33b848a3e0a61893a0e7a75c163c",
+      "queryRoot": "sha256-90edba1c9d0bb14ec514a96ca800a95448adb82f1adced02b66c15b4091777d2",
+      "planRoot": "sha256-6639a3d8810ab1dc74dec9aff3e919875390be6a1eb5245794de2a108218c9aa",
+      "anchorRoot": "sha256-3c66b035dd9c8167235c0e156a28a035233f48367369b2418366e79b8201b5a5",
+      "frontierRoot": "sha256-84712b2a74fe48f30a6e2347e5315d1b50b56f63d4182f51bc7d2716f2da2d55",
+      "frontierWitnessRoot": "sha256-d756f2d2c4e0da9ad757d84f8eb2dd7c8459884702663e4f38108b0e1e669a57",
+      "evidenceSetRoot": "sha256-4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "decisionRoot": "sha256-7c7688f7c7c7383299534628e82cc679138f35ba8e76aa3524b8f4505942d40b",
+      "karRoot": "sha256-9146580b04ef2f58210d921dd806c30575e6ad2ec58912c338acf3fb23542fdd"
+    }
+  }
+]

@@ -38,6 +38,8 @@ operational guides for Knolo.
   product pilot.
 - [`@knolo/evidence-gate`](../packages/evidence-gate/README.md) — the current
   TypeScript vertical slice for deterministic claim-level verification.
+- [Experimental KAR](kar/README.md) — exact evidence-set retrieval over a
+  Committed Evidence Graph. It is not part of the `@knolo/core` root import.
 
 Architecture sources, future-version specifications, and internal planning
 records are kept local and are not part of the public repository. The

@@ -1,0 +1,42 @@
+{
+  "id": "authority",
+  "documents": [
+    {
+      "source": "terms.md",
+      "text": "The agreement may terminate after notice.\n",
+      "meta": {
+        "type": "contract",
+        "authority": "80"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "agreement",
+      "termination"
+    ],
+    "relations": [
+      {
+        "from": "agreement",
+        "type": "permits",
+        "to": "termination"
+      }
+    ],
+    "bindings": [
+      {
+        "concept": "termination",
+        "source": "terms.md",
+        "requirements": [
+          "termination-right"
+        ],
+        "authority": 80
+      }
+    ],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "authority-review",
+      "proposition": "May the agreement terminate?",
+      "status": "SATISFIED"
+    }
+  }
+}

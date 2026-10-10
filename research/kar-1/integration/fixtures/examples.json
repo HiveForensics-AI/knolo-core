@@ -1,0 +1,138 @@
+{
+  "satisfied": {
+    "scenario": "support-opposition",
+    "stateRoot": "sha256-fe6ac66f9e0f14a11d72d0125b95750bc0fa46dd53e49639e5eeb362cb26f7a6",
+    "knowledgeRoot": "sha256-f4d0c63d0ca3fdbd8a1d660c2232e07819731b814194f66e9441f04ccef93a8d",
+    "anchor": {
+      "mode": "supplied",
+      "witness": [
+        {
+          "nodeId": "lodging",
+          "queryTerm": "room"
+        }
+      ],
+      "procedure": null,
+      "anchorRoot": "sha256-ed9b2b77a366c24cdaeeb76c976638d526ebe4b8eeec381e48fbd67c5366182c"
+    },
+    "evidence": [
+      {
+        "id": "sha256-13841b4d369c4aa0abc103ce2ecbadf56b0a1bb43d599d1f1b964d1772a86db5",
+        "source": "front-desk/cancellation-policy"
+      },
+      {
+        "id": "sha256-5a62dde978bc98565bf7c6aa810c210b98b744f490d6ef03c2c544921be6e5db",
+        "source": "contracts/enterprise-lodging"
+      }
+    ],
+    "frontiers": {
+      "F_S": [
+        "sha256-13841b4d369c4aa0abc103ce2ecbadf56b0a1bb43d599d1f1b964d1772a86db5"
+      ],
+      "F_O": [
+        "sha256-5a62dde978bc98565bf7c6aa810c210b98b744f490d6ef03c2c544921be6e5db"
+      ],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "status": "SATISFIED",
+    "evidenceIds": [
+      "sha256-13841b4d369c4aa0abc103ce2ecbadf56b0a1bb43d599d1f1b964d1772a86db5",
+      "sha256-5a62dde978bc98565bf7c6aa810c210b98b744f490d6ef03c2c544921be6e5db"
+    ],
+    "roots": {
+      "knowledgeRoot": "sha256-f4d0c63d0ca3fdbd8a1d660c2232e07819731b814194f66e9441f04ccef93a8d",
+      "semanticRoot": "sha256-22fb00919d1a84b54abbec1194850242ff81c80f30057d9dd2515896b7a7da14",
+      "queryRoot": "sha256-d551e83e07a43df818a7a11b9d9cff659e3ff5e7140cabda1cda013f62049585",
+      "planRoot": "sha256-b43f51fc4d88b0adee9f123de01abe3bf80aeca56593ff4d75879b70f7ffb9f3",
+      "anchorRoot": "sha256-ed9b2b77a366c24cdaeeb76c976638d526ebe4b8eeec381e48fbd67c5366182c",
+      "frontierRoot": "sha256-08d716fbb644df4bf5ca718c7c4ecad2abea66effa5e90a642a559c9f5052c4e",
+      "frontierWitnessRoot": "sha256-e6cd5955d4549da03809810ca95ffe78a73cf93e76028148353ae1a52c721970",
+      "evidenceSetRoot": "sha256-eaa3f067f4e986461b72dd567909e70bd85a462ed0bc7bae536dca6460086797",
+      "decisionRoot": "sha256-ba643ef0dcb933a375cfd8f7bc3bb47ddad181564c32ed1918cffe0224a14550",
+      "karRoot": "sha256-ff8aa7a6978951c2c3e5d25a2d0039b00b718a6615216661b45c64bd9558d04f"
+    },
+    "decision": {
+      "status": "SATISFIED",
+      "profile": "minimum-cover",
+      "cardinality": 2,
+      "coverage": {
+        "F_S": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_O": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    }
+  },
+  "abstention": {
+    "scenario": "genuine-gap",
+    "stateRoot": "sha256-23aae6e7c2f5063dff3c38d346cc12dc092bcb5fa08d25e284255a8ce3875aac",
+    "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS",
+    "evidenceIds": [],
+    "frontiers": {
+      "F_S": [
+        "sha256-13841b4d369c4aa0abc103ce2ecbadf56b0a1bb43d599d1f1b964d1772a86db5"
+      ],
+      "F_O": [],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "decision": {
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS",
+      "profile": "minimum-cover",
+      "cardinality": 0,
+      "coverage": {
+        "F_S": {
+          "covered": 0,
+          "required": 1
+        },
+        "F_O": {
+          "covered": 0,
+          "required": 1
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-88a349c6f5ccb047c164c5374a2c95d380a41828dcb7821081439370345a4907",
+      "semanticRoot": "sha256-602ed49051d50c9ef31e1a35a63c4f7aefd947bc05ed65d09e9dc281aa16c91c",
+      "queryRoot": "sha256-d551e83e07a43df818a7a11b9d9cff659e3ff5e7140cabda1cda013f62049585",
+      "planRoot": "sha256-b43f51fc4d88b0adee9f123de01abe3bf80aeca56593ff4d75879b70f7ffb9f3",
+      "anchorRoot": "sha256-ed9b2b77a366c24cdaeeb76c976638d526ebe4b8eeec381e48fbd67c5366182c",
+      "frontierRoot": "sha256-ef50be990048339da69d096e68191521e2e3ddc195e231789524fc2a3aa62a27",
+      "frontierWitnessRoot": "sha256-709cdccaea3f2a4fd17a4fc42dedee5788d59557f4a7f0c6e03bc07a512e89c0",
+      "evidenceSetRoot": "sha256-4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "decisionRoot": "sha256-624d13a2619077903e12c86b6bc02ff938e62eab61350b264cb129040494f0ad",
+      "karRoot": "sha256-18c7bea68ac65ed1bde36cfbde3d97c0c87fee4817c710238511f2eff42561a7"
+    },
+    "explanation": "unsatisfied F_S,F_O; returned evidence count 0; populated frontiers F_S; no top-k fallback"
+  }
+}

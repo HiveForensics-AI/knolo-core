@@ -1,0 +1,40 @@
+{
+  "id": "support",
+  "documents": [
+    {
+      "source": "policy.md",
+      "text": "The control is required before launch.\nThe room probably means lodging.\n",
+      "meta": {
+        "type": "policy"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "control",
+      "policy"
+    ],
+    "relations": [
+      {
+        "from": "policy",
+        "type": "requires",
+        "to": "control"
+      }
+    ],
+    "bindings": [
+      {
+        "concept": "control",
+        "source": "policy.md",
+        "requirements": [
+          "control-required"
+        ]
+      }
+    ],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "current-policy",
+      "proposition": "Is the control required?",
+      "status": "SATISFIED"
+    }
+  }
+}

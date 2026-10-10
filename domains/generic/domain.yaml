@@ -1,0 +1,20 @@
+format: ceg-domain-1
+id: generic
+version: 1
+description: Small generic pack used to measure rules that are not tied to one domain.
+conceptKinds:
+  - id: record
+    label: Record
+concepts:
+  - name: record
+    kind: record
+    label: Record
+    phrases:
+      - record
+  - name: topic
+    kind: record
+    label: Topic
+    phrases:
+      - related to
+relations:
+  - related

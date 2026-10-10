@@ -1,0 +1,107 @@
+[
+  {
+    "name": "KnowledgeRoot tamper",
+    "pass": true,
+    "reason": "GRAPH_NOT_BOUND"
+  },
+  {
+    "name": "SemanticRoot/CEG tamper",
+    "pass": true,
+    "reason": "RESULT_MISMATCH status SATISFIED did not match SATISFIED"
+  },
+  {
+    "name": "query tamper",
+    "pass": true,
+    "reason": "RESULT_MISMATCH status SATISFIED did not match SATISFIED"
+  },
+  {
+    "name": "plan tamper",
+    "pass": true,
+    "reason": "RESULT_MISMATCH status UNSATISFIED_EVIDENCE_REQUIREMENTS did not match SATISFIED"
+  },
+  {
+    "name": "anchor witness tamper",
+    "pass": true,
+    "reason": "RESULT_MISMATCH status SATISFIED did not match SATISFIED"
+  },
+  {
+    "name": "relation tamper",
+    "pass": true,
+    "reason": "RESULT_MISMATCH status UNSATISFIED_EVIDENCE_REQUIREMENTS did not match SATISFIED"
+  },
+  {
+    "name": "evidence binding tamper",
+    "pass": true,
+    "reason": "RESULT_MISMATCH status SATISFIED did not match SATISFIED"
+  },
+  {
+    "name": "authority tamper",
+    "pass": true,
+    "reason": "RESULT_MISMATCH status SATISFIED did not match SATISFIED"
+  },
+  {
+    "name": "validity tamper",
+    "pass": true,
+    "reason": "RESULT_MISMATCH status UNSATISFIED_EVIDENCE_REQUIREMENTS did not match SATISFIED"
+  },
+  {
+    "name": "frontier mapping tamper",
+    "pass": true,
+    "reason": "RESULT_MISMATCH status UNSATISFIED_EVIDENCE_REQUIREMENTS did not match SATISFIED"
+  },
+  {
+    "name": "threshold tamper",
+    "pass": true,
+    "reason": "RESULT_MISMATCH status UNSATISFIED_EVIDENCE_REQUIREMENTS did not match SATISFIED"
+  },
+  {
+    "name": "as-of tamper",
+    "pass": true,
+    "reason": "RESULT_MISMATCH status SATISFIED did not match SATISFIED"
+  },
+  {
+    "name": "frontier tamper",
+    "pass": true,
+    "reason": "RESULT_MISMATCH status SATISFIED did not match SATISFIED"
+  },
+  {
+    "name": "evidence set tamper",
+    "pass": true,
+    "reason": "RESULT_MISMATCH status SATISFIED did not match SATISFIED"
+  },
+  {
+    "name": "decision tamper",
+    "pass": true,
+    "reason": "RESULT_MISMATCH status SATISFIED did not match SATISFIED"
+  },
+  {
+    "name": "KARRoot tamper",
+    "pass": true,
+    "reason": "RESULT_MISMATCH status SATISFIED did not match SATISFIED"
+  },
+  {
+    "name": "modified evidence bytes",
+    "pass": true,
+    "reason": "GRAPH_NOT_BOUND"
+  },
+  {
+    "name": "wrong Knowledge Image root",
+    "pass": true,
+    "reason": "GRAPH_NOT_BOUND"
+  },
+  {
+    "name": "changed selected evidence",
+    "pass": true,
+    "reason": "RESULT_MISMATCH status SATISFIED did not match SATISFIED"
+  },
+  {
+    "name": "corrupt container byte",
+    "pass": true,
+    "reason": "IMAGE_REJECTED V5 segment digest mismatch: 3."
+  },
+  {
+    "name": "state root tamper",
+    "pass": true,
+    "reason": "GRAPH_NOT_BOUND"
+  }
+]

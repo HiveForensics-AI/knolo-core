@@ -1,0 +1,40 @@
+{
+  "id": "support",
+  "documents": [
+    {
+      "source": "note.md",
+      "text": "The record is related to the topic.\n",
+      "meta": {
+        "type": "record"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "record",
+      "topic"
+    ],
+    "relations": [
+      {
+        "from": "record",
+        "type": "related",
+        "to": "topic"
+      }
+    ],
+    "bindings": [
+      {
+        "concept": "topic",
+        "source": "note.md",
+        "requirements": [
+          "related-link"
+        ]
+      }
+    ],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "related-review",
+      "proposition": "Is the record related to the topic?",
+      "status": "SATISFIED"
+    }
+  }
+}

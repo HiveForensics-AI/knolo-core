@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "kind": "kar-committed-evidence-graph",
+  "semantics": "kar-1-research-1",
+  "stateRoot": "sha256-38afef51e31132633504520116f9244e9120501b55996810b2c6196489d9614d",
+  "objectRoot": "sha256-c2f484536e92db5522b7e8936530562d7f49a5598405bc39a74b2bfca578f286",
+  "commitDigest": "sha256-85f63a4844b83ebd793cbf79be9b61764fcc6fc436506d838f9cd4c66549997b",
+  "knowledgeRoot": "sha256-007e0e593755ccb9fa23d15ddfda13bc39202e9ea066d0e9c56c75de45eab5c3",
+  "graph": {
+    "version": 1,
+    "knowledgeRoot": "sha256-007e0e593755ccb9fa23d15ddfda13bc39202e9ea066d0e9c56c75de45eab5c3",
+    "provenance": {
+      "producer": "hand",
+      "note": "kar-sidecar:support-opposition-qualifier"
+    },
+    "nodes": [
+      {
+        "id": "lodging"
+      },
+      {
+        "id": "general-policy"
+      },
+      {
+        "id": "contradicting-agreement"
+      },
+      {
+        "id": "grandfathered-amendment"
+      }
+    ],
+    "relations": [
+      {
+        "id": "r-permit",
+        "from": "lodging",
+        "relation": "permits",
+        "to": "general-policy"
+      },
+      {
+        "id": "r-prohibit",
+        "from": "lodging",
+        "relation": "prohibits",
+        "to": "contradicting-agreement"
+      },
+      {
+        "id": "r-qualify",
+        "from": "lodging",
+        "relation": "qualifies",
+        "to": "grandfathered-amendment"
+      }
+    ],
+    "bindings": [
+      {
+        "id": "b-general",
+        "nodeId": "general-policy",
+        "evidenceId": "sha256-a95218fabe32c0e1a9daae96c9f71b7134a555e441747615282d12e6e97a7a3b",
+        "requirements": [
+          "standard-cancel"
+        ],
+        "provenance": "hand:general-policy"
+      },
+      {
+        "id": "b-agreement",
+        "nodeId": "contradicting-agreement",
+        "evidenceId": "sha256-8393f70c4025e58fe10103f9f90fa340cee4300c790e6176c7916d90e4766950",
+        "requirements": [
+          "agreement-bars"
+        ],
+        "provenance": "hand:agreement"
+      },
+      {
+        "id": "b-amendment",
+        "nodeId": "grandfathered-amendment",
+        "evidenceId": "sha256-7ce6d6e44daa0c8c24fe0d0ebe47d7c3869059f5aab63f9e891b5d2882d90409",
+        "requirements": [
+          "grandfather-window"
+        ],
+        "provenance": "hand:amendment"
+      }
+    ]
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "anchor": {
+    "mode": "supplied",
+    "concept": "procedure",
+    "queryTerm": "step"
+  },
+  "frontierMap": {
+    "requires": "F_S",
+    "supersedes": "F_S",
+    "prohibits": "F_O",
+    "qualifies": "F_Q",
+    "excepts": "F_Q",
+    "valid_before": "F_T",
+    "valid_after": "F_T",
+    "applies_to": "F_T"
+  },
+  "depth": 2,
+  "cardinalityBound": 4,
+  "coverageMode": "requirements",
+  "requirements": {
+    "F_S": [
+      "required-step"
+    ],
+    "F_O": [],
+    "F_Q": [
+      "stated-exception"
+    ],
+    "F_T": [],
+    "F_A": []
+  },
+  "floors": {
+    "F_S": "1",
+    "F_O": "0",
+    "F_Q": "1",
+    "F_T": "0",
+    "F_A": "0"
+  },
+  "profile": "minimum-cover",
+  "asOf": "2026-06-01",
+  "minAuthority": null,
+  "bounds": {
+    "maxAnchorNodes": 8,
+    "maxClosureNodes": 32,
+    "maxClosureEdges": 64,
+    "maxFrontierEvidence": 16,
+    "maxRequirementsPerFrontier": 8,
+    "maxEvidenceBindings": 32,
+    "maxCoverVisits": 256
+  },
+  "lexical": null
+}

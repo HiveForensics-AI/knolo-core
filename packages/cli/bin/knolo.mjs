@@ -72,6 +72,7 @@ const SUBCOMMANDS = new Set([
   'semantic:index',
   'semantic:inspect',
   'semantic:validate',
+  'kar',
 ]);
 const ICP_SUBCOMMANDS = new Set([
   'init',
@@ -154,6 +155,7 @@ Commands:
   diff <pack-a> <pack-b>  Compare pack identities and source/chunk counts
   dev                     Watch config/sources and rebuild on change
   v5                      Inspect, compress, decompress, and health-check a V5 Knowledge Image
+  kar                     Experimental exact evidence-set retrieval over a Committed Evidence Graph
   icp                     Scaffold and operate an ICP-native knowledge canister
 
 Global options:
@@ -188,6 +190,7 @@ function printCommandHelp(command) {
     diff: 'Usage: knolo diff <pack-a.knolo> <pack-b.knolo>',
     dev: 'Usage: knolo dev',
     v5: 'Usage: knolo v5 <info|health|studio|query|compress|decompress> <image.v5> [--out <file>] [--mode fast|balanced|max] [--attach-index]\n\nFor query: knolo v5 query <image.v5> <EQL> [--json] [--receipt <file>].',
+    kar: 'Usage: knolo kar <evaluate|verify|explain|inspect|graph|package|produce|domain> [options]\n\nExperimental KAR retrieval. Semantics are frozen at kar-1-research-1.\n\n  knolo kar evaluate --image knowledge.knolo --graph knowledge.kar.json --plan plan.json --query "..."\n  knolo kar verify   --image knowledge.knolo --graph knowledge.kar.json --plan plan.json --query "..." --result result.json\n  knolo kar explain  --result result.json\n  knolo kar inspect  --image knowledge.knolo --graph knowledge.kar.json [--plan plan.json]\n  knolo kar graph build --image knowledge.knolo --source knowledge.ceg.yaml --out knowledge.kar.json\n  knolo kar package --image knowledge.knolo --graph knowledge.kar.json --out dist/my-knowledge-kar/\n  knolo kar produce rules --image knowledge.knolo --domain domains/contracts --out proposals.json\n  knolo kar domain validate domains/contracts\n\n--json prints the machine-readable result. verify exits non-zero when the certificate does not match. graph and package author a Committed Evidence Graph without changing retrieval. produce proposes CEG Source and does not write committed bytes.',
     icp: 'Usage: knolo icp <command> [options]',
     'semantic:index':
       'Usage: knolo semantic:index --pack <path> [--out <path>] [--model <id>] [--endpoint <url>]',
@@ -1830,6 +1833,10 @@ async function main() {
     if (SUBCOMMANDS.has(command)) {
       if (commandArgs.includes('--help') || commandArgs.includes('-h'))
         return printCommandHelp(command);
+      if (command === 'kar') {
+        const { runKarCli } = await import('./kar.mjs');
+        return runKarCli(commandArgs);
+      }
       if (command === 'init') return await cmdInit();
       if (command === 'add') return await cmdAdd(commandArgs);
       if (command === 'search') return await runHubSearch(commandArgs);

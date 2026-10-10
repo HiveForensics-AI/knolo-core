@@ -200,6 +200,9 @@ function validateVector(
   return expected ?? vector.length;
 }
 
+export { proposeCegWithOllama } from './ceg-producer.js';
+export type { OllamaCegProposalRequest } from './ceg-producer.js';
+
 function validatePositiveInteger(value: number, name: string): number {
   if (!Number.isSafeInteger(value) || value <= 0) {
     throw new Error(`Ollama ${name} must be a positive safe integer.`);

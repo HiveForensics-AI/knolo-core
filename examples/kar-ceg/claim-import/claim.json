@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "nodes": [
+    { "id": "customer", "label": "Enterprise customer" },
+    { "id": "cancellation", "label": "Cancellation" }
+  ],
+  "edges": [
+    { "id": "e1", "from": "customer", "p": "related", "to": "cancellation", "evidence": [0] }
+  ]
+}

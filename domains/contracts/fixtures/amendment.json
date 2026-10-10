@@ -1,0 +1,40 @@
+{
+  "id": "amendment",
+  "documents": [
+    {
+      "source": "amendment.md",
+      "text": "Agreement\nThe amendment supersedes the agreement.\n",
+      "meta": {
+        "type": "contract"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "agreement",
+      "amendment"
+    ],
+    "relations": [
+      {
+        "from": "amendment",
+        "type": "supersedes",
+        "to": "agreement"
+      }
+    ],
+    "bindings": [
+      {
+        "concept": "agreement",
+        "source": "amendment.md",
+        "requirements": [
+          "amendment-effect"
+        ]
+      }
+    ],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "amendment-review",
+      "proposition": "Does the amendment supersede the agreement?",
+      "status": "SATISFIED"
+    }
+  }
+}

@@ -1,0 +1,301 @@
+{
+  "experimental": true,
+  "api": "experimental",
+  "version": "kar-1-research-1",
+  "status": "SATISFIED",
+  "code": null,
+  "proposition": "Can this enterprise customer cancel?",
+  "plan": {
+    "version": 1,
+    "anchor": {
+      "mode": "supplied",
+      "witness": [
+        {
+          "nodeId": "sha256-ca9862ca023562276ebeeaf7b94f0c57215b461943ad3ed5e068943b417e17f8",
+          "queryTerm": "cancel"
+        }
+      ]
+    },
+    "frontierMap": {
+      "permits": "F_S",
+      "prohibits": "F_O"
+    },
+    "depth": 1,
+    "cardinalityBound": 4,
+    "coverageMode": "requirements",
+    "requirements": {
+      "F_S": [
+        "cancel-allowed"
+      ],
+      "F_O": [
+        "cancel-barred"
+      ],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "floors": {
+      "F_S": "1",
+      "F_O": "1",
+      "F_Q": "0",
+      "F_T": "0",
+      "F_A": "0"
+    },
+    "profile": "minimum-cover",
+    "asOf": "2026-06-01",
+    "minAuthority": null,
+    "bounds": {
+      "maxAnchorNodes": 4,
+      "maxClosureNodes": 16,
+      "maxClosureEdges": 16,
+      "maxFrontierEvidence": 8,
+      "maxRequirementsPerFrontier": 4,
+      "maxEvidenceBindings": 8,
+      "maxCoverVisits": 100
+    },
+    "lexical": null
+  },
+  "image": {
+    "stateRoot": "sha256-640285c36f90614c7bfa3739735a5aced0bacbf6c1b5b62b0958ca7a7ad5c876",
+    "knowledgeRoot": "sha256-efe0a65f56a70b21fcd29fdd35335fdb96c60e9a4aea187270726c5888e3cfff",
+    "objectRoot": "sha256-23f17200b5af88f6a537f031640d6abe82db2ae52636f2c72bc7959bb9fc5075",
+    "commitDigest": "sha256-d6d7e1ec1f5b0690afbc7dbbd6c8d03498f1ab8b583cd0e331e46111a1e3a596"
+  },
+  "frontiers": {
+    "F_S": [
+      "sha256-0410b9c02eb7fe64b97194cadc3b81f79e7df2ea1d067116e436f69197bc189f",
+      "sha256-7de35ff8030c05ebcdd4892b024b68253cf1d6e563ca242fdf7c360d6d119869"
+    ],
+    "F_O": [
+      "sha256-0410b9c02eb7fe64b97194cadc3b81f79e7df2ea1d067116e436f69197bc189f",
+      "sha256-7de35ff8030c05ebcdd4892b024b68253cf1d6e563ca242fdf7c360d6d119869"
+    ],
+    "F_Q": [],
+    "F_T": [],
+    "F_A": []
+  },
+  "selectedEvidence": [
+    {
+      "id": "sha256-0410b9c02eb7fe64b97194cadc3b81f79e7df2ea1d067116e436f69197bc189f",
+      "frontiers": [
+        "F_O",
+        "F_S"
+      ],
+      "text": "A guest may cancel a lodging reservation before the day of arrival.\n",
+      "source": "policy.md",
+      "metadata": {
+        "kind": "chunk",
+        "meta": {
+          "source": "policy.md"
+        }
+      }
+    },
+    {
+      "id": "sha256-7de35ff8030c05ebcdd4892b024b68253cf1d6e563ca242fdf7c360d6d119869",
+      "frontiers": [
+        "F_O",
+        "F_S"
+      ],
+      "text": "An enterprise customer may not cancel after the contract is signed.\n",
+      "source": "contract.md",
+      "metadata": {
+        "kind": "chunk",
+        "meta": {
+          "source": "contract.md"
+        }
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "evidenceId": "sha256-0410b9c02eb7fe64b97194cadc3b81f79e7df2ea1d067116e436f69197bc189f",
+      "frontier": "F_O",
+      "anchorId": "sha256-ca9862ca023562276ebeeaf7b94f0c57215b461943ad3ed5e068943b417e17f8",
+      "path": [
+        {
+          "node": "sha256-ca9862ca023562276ebeeaf7b94f0c57215b461943ad3ed5e068943b417e17f8"
+        },
+        {
+          "relation": "sha256-21469b82e313cfb961843e16de68a9c983c9fbb1d84dfffcd146a46152402628",
+          "node": "sha256-b9f0b8007745e0df7f8e722e06d64364ae01800367a71c8604deeae48e5e7b0a"
+        }
+      ]
+    },
+    {
+      "evidenceId": "sha256-7de35ff8030c05ebcdd4892b024b68253cf1d6e563ca242fdf7c360d6d119869",
+      "frontier": "F_O",
+      "anchorId": "sha256-ca9862ca023562276ebeeaf7b94f0c57215b461943ad3ed5e068943b417e17f8",
+      "path": [
+        {
+          "node": "sha256-ca9862ca023562276ebeeaf7b94f0c57215b461943ad3ed5e068943b417e17f8"
+        },
+        {
+          "relation": "sha256-21469b82e313cfb961843e16de68a9c983c9fbb1d84dfffcd146a46152402628",
+          "node": "sha256-b9f0b8007745e0df7f8e722e06d64364ae01800367a71c8604deeae48e5e7b0a"
+        }
+      ]
+    },
+    {
+      "evidenceId": "sha256-0410b9c02eb7fe64b97194cadc3b81f79e7df2ea1d067116e436f69197bc189f",
+      "frontier": "F_S",
+      "anchorId": "sha256-ca9862ca023562276ebeeaf7b94f0c57215b461943ad3ed5e068943b417e17f8",
+      "path": [
+        {
+          "node": "sha256-ca9862ca023562276ebeeaf7b94f0c57215b461943ad3ed5e068943b417e17f8"
+        },
+        {
+          "relation": "sha256-fab75bdfcfbd063d1b7e6fd7d801b771fa04228977b7f3378cf67773d66a3a27",
+          "node": "sha256-b9f0b8007745e0df7f8e722e06d64364ae01800367a71c8604deeae48e5e7b0a"
+        }
+      ]
+    },
+    {
+      "evidenceId": "sha256-7de35ff8030c05ebcdd4892b024b68253cf1d6e563ca242fdf7c360d6d119869",
+      "frontier": "F_S",
+      "anchorId": "sha256-ca9862ca023562276ebeeaf7b94f0c57215b461943ad3ed5e068943b417e17f8",
+      "path": [
+        {
+          "node": "sha256-ca9862ca023562276ebeeaf7b94f0c57215b461943ad3ed5e068943b417e17f8"
+        },
+        {
+          "relation": "sha256-fab75bdfcfbd063d1b7e6fd7d801b771fa04228977b7f3378cf67773d66a3a27",
+          "node": "sha256-b9f0b8007745e0df7f8e722e06d64364ae01800367a71c8604deeae48e5e7b0a"
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "version": "kar-1-research-1",
+    "status": "SATISFIED",
+    "evidenceIds": [
+      "sha256-0410b9c02eb7fe64b97194cadc3b81f79e7df2ea1d067116e436f69197bc189f",
+      "sha256-7de35ff8030c05ebcdd4892b024b68253cf1d6e563ca242fdf7c360d6d119869"
+    ],
+    "choices": [
+      {
+        "evidenceId": "sha256-0410b9c02eb7fe64b97194cadc3b81f79e7df2ea1d067116e436f69197bc189f",
+        "frontiers": [
+          "F_O",
+          "F_S"
+        ]
+      },
+      {
+        "evidenceId": "sha256-7de35ff8030c05ebcdd4892b024b68253cf1d6e563ca242fdf7c360d6d119869",
+        "frontiers": [
+          "F_O",
+          "F_S"
+        ]
+      }
+    ],
+    "frontiers": {
+      "F_S": [
+        "sha256-0410b9c02eb7fe64b97194cadc3b81f79e7df2ea1d067116e436f69197bc189f",
+        "sha256-7de35ff8030c05ebcdd4892b024b68253cf1d6e563ca242fdf7c360d6d119869"
+      ],
+      "F_O": [
+        "sha256-0410b9c02eb7fe64b97194cadc3b81f79e7df2ea1d067116e436f69197bc189f",
+        "sha256-7de35ff8030c05ebcdd4892b024b68253cf1d6e563ca242fdf7c360d6d119869"
+      ],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [
+      {
+        "evidenceId": "sha256-0410b9c02eb7fe64b97194cadc3b81f79e7df2ea1d067116e436f69197bc189f",
+        "frontier": "F_O",
+        "anchorId": "sha256-ca9862ca023562276ebeeaf7b94f0c57215b461943ad3ed5e068943b417e17f8",
+        "path": [
+          {
+            "node": "sha256-ca9862ca023562276ebeeaf7b94f0c57215b461943ad3ed5e068943b417e17f8"
+          },
+          {
+            "relation": "sha256-21469b82e313cfb961843e16de68a9c983c9fbb1d84dfffcd146a46152402628",
+            "node": "sha256-b9f0b8007745e0df7f8e722e06d64364ae01800367a71c8604deeae48e5e7b0a"
+          }
+        ]
+      },
+      {
+        "evidenceId": "sha256-7de35ff8030c05ebcdd4892b024b68253cf1d6e563ca242fdf7c360d6d119869",
+        "frontier": "F_O",
+        "anchorId": "sha256-ca9862ca023562276ebeeaf7b94f0c57215b461943ad3ed5e068943b417e17f8",
+        "path": [
+          {
+            "node": "sha256-ca9862ca023562276ebeeaf7b94f0c57215b461943ad3ed5e068943b417e17f8"
+          },
+          {
+            "relation": "sha256-21469b82e313cfb961843e16de68a9c983c9fbb1d84dfffcd146a46152402628",
+            "node": "sha256-b9f0b8007745e0df7f8e722e06d64364ae01800367a71c8604deeae48e5e7b0a"
+          }
+        ]
+      },
+      {
+        "evidenceId": "sha256-0410b9c02eb7fe64b97194cadc3b81f79e7df2ea1d067116e436f69197bc189f",
+        "frontier": "F_S",
+        "anchorId": "sha256-ca9862ca023562276ebeeaf7b94f0c57215b461943ad3ed5e068943b417e17f8",
+        "path": [
+          {
+            "node": "sha256-ca9862ca023562276ebeeaf7b94f0c57215b461943ad3ed5e068943b417e17f8"
+          },
+          {
+            "relation": "sha256-fab75bdfcfbd063d1b7e6fd7d801b771fa04228977b7f3378cf67773d66a3a27",
+            "node": "sha256-b9f0b8007745e0df7f8e722e06d64364ae01800367a71c8604deeae48e5e7b0a"
+          }
+        ]
+      },
+      {
+        "evidenceId": "sha256-7de35ff8030c05ebcdd4892b024b68253cf1d6e563ca242fdf7c360d6d119869",
+        "frontier": "F_S",
+        "anchorId": "sha256-ca9862ca023562276ebeeaf7b94f0c57215b461943ad3ed5e068943b417e17f8",
+        "path": [
+          {
+            "node": "sha256-ca9862ca023562276ebeeaf7b94f0c57215b461943ad3ed5e068943b417e17f8"
+          },
+          {
+            "relation": "sha256-fab75bdfcfbd063d1b7e6fd7d801b771fa04228977b7f3378cf67773d66a3a27",
+            "node": "sha256-b9f0b8007745e0df7f8e722e06d64364ae01800367a71c8604deeae48e5e7b0a"
+          }
+        ]
+      }
+    ],
+    "decision": {
+      "status": "SATISFIED",
+      "profile": "minimum-cover",
+      "cardinality": 2,
+      "coverage": {
+        "F_S": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_O": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-efe0a65f56a70b21fcd29fdd35335fdb96c60e9a4aea187270726c5888e3cfff",
+      "semanticRoot": "sha256-3bc0763fe7cc8b941168fe5ee0998d1bad399d7be82779fd444b3fc206ee750c",
+      "queryRoot": "sha256-11d9d17aee8e14e724e03fd81335b4e6c6282283c60245166f9bd612d6b3569e",
+      "planRoot": "sha256-b7f956f808731d53606c44aeec84fa73afaa645b6ed93219434147c8f900d09f",
+      "anchorRoot": "sha256-28ed28432239412fd69882c21c5b12675e2265acab1846897201b267e8401704",
+      "frontierRoot": "sha256-c6a6169e5bbdbcffddec85503b45bf476b40ed16d15b7a4381e471b8b6520305",
+      "frontierWitnessRoot": "sha256-8caf0a47ba12128528be7b5c5248c31aee09e4da3deba803d5da6deb7b992e83",
+      "evidenceSetRoot": "sha256-ecc2034a87cd40d42c6a8dd305eeaff8c7ac6b173083eaed471a01fddcc742db",
+      "decisionRoot": "sha256-ba643ef0dcb933a375cfd8f7bc3bb47ddad181564c32ed1918cffe0224a14550",
+      "karRoot": "sha256-464ebf13e95032a0643ac890a949cc08dc518f8274777e8ca4fb56b95b51ea88"
+    }
+  }
+}

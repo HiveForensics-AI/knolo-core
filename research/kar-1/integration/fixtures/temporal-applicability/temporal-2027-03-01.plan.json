@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "anchor": {
+    "mode": "supplied",
+    "witness": [
+      {
+        "nodeId": "lodging",
+        "queryTerm": "room"
+      }
+    ]
+  },
+  "frontierMap": {
+    "permits": "F_S"
+  },
+  "depth": 1,
+  "cardinalityBound": 5,
+  "coverageMode": "requirements",
+  "requirements": {
+    "F_S": [
+      "rule"
+    ],
+    "F_O": [],
+    "F_Q": [],
+    "F_T": [],
+    "F_A": []
+  },
+  "floors": {
+    "F_S": "1",
+    "F_O": "0",
+    "F_Q": "0",
+    "F_T": "0",
+    "F_A": "0"
+  },
+  "profile": "minimum-cover",
+  "asOf": "2027-03-01",
+  "minAuthority": null,
+  "bounds": {
+    "maxAnchorNodes": 8,
+    "maxClosureNodes": 32,
+    "maxClosureEdges": 64,
+    "maxFrontierEvidence": 16,
+    "maxRequirementsPerFrontier": 8,
+    "maxEvidenceBindings": 32,
+    "maxCoverVisits": 10000
+  },
+  "lexical": null
+}

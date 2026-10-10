@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schema/experimental/kar/producer-run-v1.schema.json",
+  "title": "CEG producer run v1",
+  "description": "Non-committed producer artifact, format ceg-producer-run-1. The fragment is accepted CEG Source only. It is not a KarSidecarV1 and it does not enter SemanticRoot by itself.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "producer", "fragment", "diagnostics", "observations", "proposals", "provenance"],
+  "properties": {
+    "format": { "const": "ceg-producer-run-1" },
+    "producer": { "$ref": "#/$defs/producer" },
+    "fragment": { "$ref": "ceg-source-v1.schema.json" },
+    "diagnostics": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/diagnostic" }
+    },
+    "observations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/observation" }
+    },
+    "proposals": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/proposal" }
+    },
+    "aliases": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/alias" }
+    },
+    "provenance": { "$ref": "#/$defs/provenance" }
+  },
+  "$defs": {
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["severity", "code", "path", "message"],
+      "properties": {
+        "severity": { "enum": ["error", "warning", "info"] },
+        "code": { "type": "string" },
+        "path": { "type": "string" },
+        "message": { "type": "string" }
+      }
+    },
+    "span": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "integer", "minimum": 0 },
+        "end": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "evidenceId", "producerId", "producerVersion"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "evidenceId": { "type": "string", "minLength": 1 },
+        "producerId": { "type": "string", "minLength": 1 },
+        "producerVersion": { "type": "string", "minLength": 1 },
+        "ruleId": { "type": "string" },
+        "span": { "$ref": "#/$defs/span" },
+        "textDigest": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "proposedConcepts": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "proposedRelations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["from", "type", "to"],
+            "properties": {
+              "from": { "type": "string" },
+              "type": { "type": "string" },
+              "to": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "proposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "state", "producerId", "producerVersion", "fragment"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "state": { "enum": ["PROPOSED", "ACCEPTED", "REJECTED", "NEEDS_REVIEW"] },
+        "producerId": { "type": "string", "minLength": 1 },
+        "producerVersion": { "type": "string", "minLength": 1 },
+        "ruleId": { "type": "string" },
+        "evidenceId": { "type": "string" },
+        "observationId": { "type": "string" },
+        "confidence": { "type": "number" },
+        "fragment": { "type": "object" }
+      }
+    },
+    "alias": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phrase", "concept"],
+      "properties": {
+        "phrase": { "type": "string", "minLength": 1 },
+        "concept": { "type": "string", "minLength": 1 },
+        "evidenceId": { "type": "string" }
+      }
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stateRoot", "objectRoot", "commitDigest", "knowledgeRoot"],
+      "properties": {
+        "stateRoot": { "type": "string" },
+        "objectRoot": { "type": "string" },
+        "commitDigest": { "type": "string" },
+        "knowledgeRoot": { "type": "string" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["producerId", "producerVersion", "configRoot", "inputRoot"],
+      "properties": {
+        "producerId": { "type": "string" },
+        "producerVersion": { "type": "string" },
+        "domainPackId": { "type": "string" },
+        "domainPackVersion": { "type": "string" },
+        "domainPackRoot": { "type": "string" },
+        "image": { "$ref": "#/$defs/image" },
+        "configRoot": { "type": "string" },
+        "inputRoot": { "type": "string" }
+      }
+    }
+  }
+}
