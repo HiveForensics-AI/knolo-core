@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.5.1] - 2026-10-08
+
+### V4 and V5 query contracts
+
+- Separated V4 natural-language pack queries from V5 bounded EQL in `@knolo/cli`.
+- V5 images stay off the V4 pack query API. `knolo v5 query` runs EQL against a Knowledge Image, and `knolo explain` accepts either artifact.
+- `semantic:index` and `semantic:validate` remain V4-only and reject V5 images.
+
+### Ollama embeddings
+
+- `@knolo/semantic-ollama` prefers `/api/embed`, checks that each batch returns one vector per input in a consistent dimension, and falls back to `/api/embeddings` only when `api` is `auto` and the current endpoint is unavailable.
+
+### Evidence and reader hardening
+
+- Added `@knolo/evidence-gate` `0.1.0` for deterministic claim checks against a verified V5 image.
+- Certificate comparison uses canonical CBOR bytes, evidence spans must be non-empty, and `minAuthority` requires a finite numeric authority score.
+- V5 readers clone commit records, object bytes, and nested metadata before those values leave the verified reader.
+
+### Packages
+
+- Published `@knolo/core`, `@knolo/cli`, `@knolo/langchain`, `@knolo/llamaindex`, `@knolo/semantic-ollama`, and `create-knolo-app` as `5.5.1`.
+- Rust, Python, and the ICP adapter remain `5.5.0`.
+
 ## [5.5.0] - 2026-09-06
 
 ### VQF-1 cross-runtime parity

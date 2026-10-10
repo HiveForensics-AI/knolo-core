@@ -4,8 +4,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const releaseVersion = '5.5.0';
-const cliReleaseVersion = '5.5.0';
+const npmReleaseVersion = '5.5.1';
+const cliReleaseVersion = '5.5.1';
+const nativeReleaseVersion = '5.5.0';
+const npmDependencyRange = '^5.5.0';
 const reflexReleaseVersion = '0.2.0';
 
 function readJson(relativePath) {
@@ -34,7 +36,7 @@ for (const relativePath of npmPackages) {
   const expectedVersion =
     relativePath === 'packages/cli/package.json'
       ? cliReleaseVersion
-      : releaseVersion;
+      : npmReleaseVersion;
   assert.equal(
     pkg.version,
     expectedVersion,
@@ -72,7 +74,7 @@ for (const relativePath of npmPackages) {
       if (name.startsWith('@knolo/')) {
         assert.equal(
           range,
-          `^${releaseVersion}`,
+          npmDependencyRange,
           `${relativePath} has stale ${name} range.`
         );
       }
@@ -81,8 +83,8 @@ for (const relativePath of npmPackages) {
 }
 
 const template = readJson('packages/create-knolo-app/template/package.json');
-assert.equal(template.dependencies['@knolo/core'], `^${releaseVersion}`);
-assert.equal(template.devDependencies['@knolo/cli'], `^${releaseVersion}`);
+assert.equal(template.dependencies['@knolo/core'], npmDependencyRange);
+assert.equal(template.devDependencies['@knolo/cli'], npmDependencyRange);
 
 const rustCore = readFileSync(
   path.join(root, 'packages/core-rust/Cargo.toml'),
@@ -92,12 +94,12 @@ const rustIcp = readFileSync(
   path.join(root, 'packages/icp-canister/Cargo.toml'),
   'utf8'
 );
-assert.match(rustCore, new RegExp(`version = "${releaseVersion}"`));
-assert.match(rustIcp, new RegExp(`version = "${releaseVersion}"`));
+assert.match(rustCore, new RegExp(`version = "${nativeReleaseVersion}"`));
+assert.match(rustIcp, new RegExp(`version = "${nativeReleaseVersion}"`));
 assert.match(
   rustIcp,
   new RegExp(
-    `knolo-core-rust = \\{ path = "\\.\\./core-rust", version = "${releaseVersion}" \\}`
+    `knolo-core-rust = \\{ path = "\\.\\./core-rust", version = "${nativeReleaseVersion}" \\}`
   )
 );
 
@@ -109,13 +111,13 @@ const pythonInit = readFileSync(
   path.join(root, 'packages/core-python/src/knolo/__init__.py'),
   'utf8'
 );
-assert.match(pythonProject, new RegExp(`version = "${releaseVersion}"`));
-assert.match(pythonInit, new RegExp(`__version__ = "${releaseVersion}"`));
+assert.match(pythonProject, new RegExp(`version = "${nativeReleaseVersion}"`));
+assert.match(pythonInit, new RegExp(`__version__ = "${nativeReleaseVersion}"`));
 assert.match(
   readFileSync(path.join(root, 'packages/core-python/README.md'), 'utf8'),
   /V5 Knowledge Image verification/i
 );
 
 console.log(
-  `Release metadata passed for npm/Rust/Python ${releaseVersion} with CLI-only @knolo/cli ${cliReleaseVersion}.`
+  `Release metadata passed for npm ${npmReleaseVersion} with CLI @knolo/cli ${cliReleaseVersion}; Rust/Python remain ${nativeReleaseVersion}.`
 );
