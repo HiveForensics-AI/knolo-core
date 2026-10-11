@@ -42,7 +42,7 @@
     "prepublishOnly": "npm run build && npm test"
   },
   "dependencies": {
-    "@knolo/core": "^5.5.0",
+    "@knolo/core": "^5.5.1",
     "typebox": "1.3.34"
   },
   "peerDependencies": {

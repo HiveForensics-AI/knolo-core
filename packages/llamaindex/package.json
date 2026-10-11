@@ -28,7 +28,7 @@
     "test": "node --test test/llamaindex.test.mjs"
   },
   "dependencies": {
-    "@knolo/core": "^5.5.0"
+    "@knolo/core": "^5.5.1"
   },
   "description": "LlamaIndex-style retriever interface for KnoLo."
 }

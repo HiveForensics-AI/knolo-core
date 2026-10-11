@@ -29,7 +29,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@knolo/core": "^5.5.0"
+    "@knolo/core": "^5.5.1"
   },
   "devDependencies": {
     "typescript": "^5.5.0"
