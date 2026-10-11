@@ -6,14 +6,15 @@ npm. Do not republish them.
 
 - npm `5.5.1`: `@knolo/core`, `@knolo/cli`, `@knolo/langchain`,
   `@knolo/llamaindex`, `@knolo/semantic-ollama`, `create-knolo-app`
-- PyPI `5.5.1`: `knolo`
+- PyPI `5.5.0`: `knolo` (the `5.5.1` tree is not on PyPI yet)
 - crates.io `5.5.1`: `knolo-core-rust`, `knolo-icp-canister`
 
 Rust and Python were not version-bumped for 5.5.1. V4 retrieval behavior
 remains the compatibility path. The procedure below is the publication record
-for this release line. The npm `5.5.1`, PyPI `knolo==5.5.1`, and crates.io
-`5.5.1` uploads are already complete. Do not rerun them. Sections 4 and 5 are
-historical. Section 6 is verification only.
+for this release line. The npm `5.5.1` and crates.io `5.5.1` uploads are
+already complete. Do not rerun them. PyPI still has `knolo==5.5.0`. Section 4
+records that failed upload. Section 5 is historical. Section 6 is verification
+only.
 
 ## Release set
 
@@ -111,26 +112,25 @@ node --input-type=module -e "import('@knolo/core').then(m => console.log(typeof 
 ```
 
 Use `npm view <package>@5.5.1 version dist.tarball` to confirm each npm package.
-Python and Rust are already published; do not continue into a new upload.
+Rust `5.5.1` is already published. Python on PyPI is still `knolo==5.5.0`. Do not upload either by hand.
 
-## 4. Python package — historical, do not rerun
+## 4. Python package
 
-`knolo==5.5.1` is already on PyPI from tag `v5.5.1`. Do not publish another
-GitHub release to upload it again, and do not run `python -m build` or
-`twine upload` for this version. `.github/workflows/python-publish.yml` uploads
-on every published release. A second upload of `knolo==5.5.1` is rejected
-because those files already exist, so the publish job cannot pass.
+PyPI has `knolo==5.5.0`. It does not have `knolo==5.5.1`. Do not run
+`python -m build` or `twine upload` locally. Publication goes through
+`.github/workflows/python-publish.yml` and Trusted Publishing.
 
-The notes below are the record of the publication that already happened. Do
-not rerun them.
+The GitHub release `v5.5.1` checked out tag `v5.5.1`
+(`5111fc65f61073ee39cbe4923dc36dec760db5ed`). That tag still says
+`version = "5.5.0"`. The publish job uploaded `knolo-5.5.0` again, and PyPI
+returned `400 File already exists`. The run is
+https://github.com/HiveForensics-AI/knolo-core/actions/runs/38035566591.
+The version string `5.5.1` was committed later and was not part of that tag.
 
-- `python-ci` was green before publication.
-- The release commit was pushed, and GitHub release `v5.5.1` was published from
-  the web UI.
-- That published release started `python-publish`, which built `knolo==5.5.1`,
-  ran `twine check`, and uploaded it through the `pypi` environment and Trusted
-  Publishing. Local `python -m build` and `twine upload` were not the
-  publication step.
+`skip-existing: true` makes a later release succeed when the built version is
+already on PyPI. A release or a manual run from a commit that contains
+`version = "5.5.1"` uploads that version once. Knolo 6 does not change the
+Python package version. It stays `5.5.1`.
 
 Verify the package that is already on PyPI:
 
@@ -139,8 +139,8 @@ python -m pip index versions knolo
 python_tmp="$(mktemp -d)"
 python -m venv "$python_tmp"
 "$python_tmp/bin/python" -m pip install --upgrade pip
-"$python_tmp/bin/python" -m pip install --no-cache-dir knolo==5.5.1
-"$python_tmp/bin/python" -c "import knolo; assert knolo.__version__ == '5.5.1'; print(knolo.__version__)"
+"$python_tmp/bin/python" -m pip install --no-cache-dir knolo==5.5.0
+"$python_tmp/bin/python" -c "import knolo; assert knolo.__version__ == '5.5.0'; print(knolo.__version__)"
 ```
 
 ## 5. Rust crates — historical, do not rerun
