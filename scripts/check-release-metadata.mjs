@@ -4,8 +4,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const releaseVersion = '5.5.0';
-const cliReleaseVersion = '5.5.0';
+const releaseVersion = '5.5.1';
+const cliReleaseVersion = '5.5.1';
 const reflexReleaseVersion = '0.2.0';
 
 function readJson(relativePath) {
@@ -26,7 +26,7 @@ assert.equal(reflexPackage.name, '@knolo/reflex');
 assert.equal(reflexPackage.version, reflexReleaseVersion);
 assert.equal(reflexPackage.license, 'Apache-2.0');
 assert.equal(reflexPackage.publishConfig?.access, 'public');
-assert.equal(reflexPackage.dependencies?.['@knolo/core'], '5.5.0');
+assert.equal(reflexPackage.dependencies?.['@knolo/core'], '5.5.1');
 assert.ok(existsSync(path.join(root, 'packages/reflex/README.md')));
 
 for (const relativePath of npmPackages) {
