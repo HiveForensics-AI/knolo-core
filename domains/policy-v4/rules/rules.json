@@ -1,0 +1,704 @@
+[
+  {
+    "id": "policy.metadata.policy.v1",
+    "autoAccept": true,
+    "kind": "metadata",
+    "metadata": {
+      "type": "policy"
+    },
+    "concept": "policy",
+    "policyClass": "AUTO_ACCEPT"
+  },
+  {
+    "id": "policy.heading.control.v1",
+    "autoAccept": true,
+    "kind": "heading",
+    "pattern": "Control",
+    "concept": "control",
+    "policyClass": "AUTO_ACCEPT"
+  },
+  {
+    "id": "policy.section.control.v1",
+    "autoAccept": false,
+    "kind": "section",
+    "pattern": "Control",
+    "relation": {
+      "from": "policy",
+      "type": "applies_to",
+      "to": "control"
+    },
+    "binding": {
+      "concept": "control",
+      "requirements": [
+        "control-required"
+      ]
+    },
+    "targetPattern": "Policy",
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "policy.control.required.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "is required",
+    "relation": {
+      "from": "policy",
+      "type": "requires",
+      "to": "control"
+    },
+    "binding": {
+      "concept": "control",
+      "requirements": [
+        "control-required"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "BROAD_DUTY"
+  },
+  {
+    "id": "policy.control.prohibited.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "is prohibited",
+    "relation": {
+      "from": "policy",
+      "type": "prohibits",
+      "to": "control"
+    },
+    "binding": {
+      "concept": "control",
+      "requirements": [
+        "control-prohibited"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "policy.action.prohibited.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "action is prohibited",
+    "relation": {
+      "from": "policy",
+      "type": "prohibits",
+      "to": "prohibition"
+    },
+    "binding": {
+      "concept": "prohibition",
+      "requirements": [
+        "control-prohibited"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "policy.exception.applies.v1",
+    "autoAccept": false,
+    "kind": "cue",
+    "pattern": "exception applies",
+    "relation": {
+      "from": "policy",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "policy.exception.unless.v1",
+    "autoAccept": false,
+    "kind": "cue",
+    "pattern": "unless approved",
+    "relation": {
+      "from": "policy",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "policy.exception.subject.v1",
+    "autoAccept": false,
+    "kind": "cue",
+    "pattern": "is subject to",
+    "excludePattern": "former",
+    "relation": {
+      "from": "policy",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "policy.exception.former.v1",
+    "autoAccept": false,
+    "kind": "incomplete",
+    "pattern": "subject to the former",
+    "policyClass": "OBSERVATION_ONLY",
+    "reason": "INCOMPLETE_REFERENCE"
+  },
+  {
+    "id": "policy.replacement.supersedes.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "replaced by",
+    "relation": {
+      "from": "policy",
+      "type": "supersedes",
+      "to": "replacement"
+    },
+    "binding": {
+      "concept": "replacement",
+      "requirements": [
+        "stated-replacement"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "policy.scope.role.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "applies to the role",
+    "relation": {
+      "from": "policy",
+      "type": "applies_to",
+      "to": "role"
+    },
+    "binding": {
+      "concept": "role",
+      "requirements": [
+        "role-scope"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "policy.temporal.before.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "valid before",
+    "relation": {
+      "from": "policy",
+      "type": "valid_before",
+      "to": "effective-date"
+    },
+    "binding": {
+      "concept": "effective-date",
+      "requirements": [
+        "temporal-bound"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "policy.temporal.after.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "valid after",
+    "relation": {
+      "from": "policy",
+      "type": "valid_after",
+      "to": "effective-date"
+    },
+    "binding": {
+      "concept": "effective-date",
+      "requirements": [
+        "temporal-bound"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "policy.date.effective.v1",
+    "autoAccept": false,
+    "kind": "date",
+    "pattern": "effective",
+    "binding": {
+      "concept": "effective-date",
+      "requirements": [
+        "temporal-bound"
+      ]
+    },
+    "dateField": "validFrom",
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "EXPLICIT_DATE"
+  },
+  {
+    "id": "policy.date.until.v1",
+    "autoAccept": false,
+    "kind": "date",
+    "pattern": "until",
+    "binding": {
+      "concept": "effective-date",
+      "requirements": [
+        "temporal-bound"
+      ]
+    },
+    "dateField": "validUntil",
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "EXPLICIT_DATE"
+  },
+  {
+    "id": "policy.authority.v1",
+    "autoAccept": true,
+    "kind": "authority",
+    "authorityMetadata": "authority"
+  },
+  {
+    "id": "policy.prohibits.shall-not.v2",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "shall not",
+    "relation": {
+      "from": "policy",
+      "type": "prohibits",
+      "to": "prohibition"
+    },
+    "binding": {
+      "concept": "prohibition",
+      "requirements": [
+        "control-prohibited"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "BROAD_DUTY"
+  },
+  {
+    "id": "policy.supersedes.verb.v2",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "supersedes",
+    "relation": {
+      "from": "policy",
+      "type": "supersedes",
+      "to": "replacement"
+    },
+    "binding": {
+      "concept": "replacement",
+      "requirements": [
+        "stated-replacement"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "BROAD_DUTY"
+  },
+  {
+    "id": "policy.qualifies.unless.v2",
+    "autoAccept": false,
+    "kind": "cue",
+    "pattern": "unless",
+    "relation": {
+      "from": "policy",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "policy.qualifies.except-when.v2",
+    "autoAccept": false,
+    "kind": "cue",
+    "pattern": "except when",
+    "relation": {
+      "from": "policy",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "policy.qualifies.provided.v2",
+    "autoAccept": false,
+    "kind": "cue",
+    "pattern": "provided that",
+    "relation": {
+      "from": "policy",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "policy.qualifies.only-if.v2",
+    "autoAccept": false,
+    "kind": "cue",
+    "pattern": "only if",
+    "relation": {
+      "from": "policy",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "policy.permits.authorized.v2",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "is authorized",
+    "relation": {
+      "from": "policy",
+      "type": "permits",
+      "to": "authorization"
+    },
+    "binding": {
+      "concept": "authorization",
+      "requirements": [
+        "stated-permission"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "policy.scope.applies.v2",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "applies to",
+    "excludePattern": "the role",
+    "relation": {
+      "from": "policy",
+      "type": "applies_to",
+      "to": "scope"
+    },
+    "binding": {
+      "concept": "scope",
+      "requirements": [
+        "stated-scope"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "BROAD_DUTY"
+  },
+  {
+    "id": "policy.qualifies.are-subject.v2",
+    "autoAccept": false,
+    "kind": "cue",
+    "pattern": "are subject to",
+    "relation": {
+      "from": "policy",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "policy.qualifies.be-subject.v2",
+    "autoAccept": false,
+    "kind": "cue",
+    "pattern": "be subject to",
+    "excludePattern": "not be",
+    "relation": {
+      "from": "policy",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "policy.incomplete.except-as-provided.v2",
+    "autoAccept": false,
+    "kind": "incomplete",
+    "pattern": "except as provided",
+    "policyClass": "OBSERVATION_ONLY",
+    "reason": "INCOMPLETE_REFERENCE"
+  },
+  {
+    "id": "policy.incomplete.except-as-provided-capital.v2",
+    "autoAccept": false,
+    "kind": "incomplete",
+    "pattern": "Except as provided",
+    "policyClass": "OBSERVATION_ONLY",
+    "reason": "INCOMPLETE_REFERENCE"
+  },
+  {
+    "id": "policy.duty.must.v3",
+    "autoAccept": false,
+    "kind": "clause",
+    "pattern": "party-modal-verb",
+    "relation": {
+      "from": "policy",
+      "type": "requires",
+      "to": "requirement"
+    },
+    "binding": {
+      "concept": "requirement",
+      "requirements": [
+        "requirement-duty"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "BROAD_DUTY",
+    "modal": "must"
+  },
+  {
+    "id": "policy.duty.shall.v3",
+    "autoAccept": false,
+    "kind": "clause",
+    "pattern": "party-modal-verb",
+    "relation": {
+      "from": "policy",
+      "type": "requires",
+      "to": "requirement"
+    },
+    "binding": {
+      "concept": "requirement",
+      "requirements": [
+        "requirement-duty"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "BROAD_DUTY",
+    "modal": "shall"
+  },
+  {
+    "id": "policy.duty.required.v3",
+    "autoAccept": false,
+    "kind": "clause",
+    "pattern": "object-is-required",
+    "relation": {
+      "from": "policy",
+      "type": "requires",
+      "to": "requirement"
+    },
+    "binding": {
+      "concept": "requirement",
+      "requirements": [
+        "requirement-duty"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "BROAD_DUTY"
+  },
+  {
+    "id": "policy.prohibition.not.v3",
+    "autoAccept": false,
+    "kind": "clause",
+    "pattern": "party-modal-not",
+    "relation": {
+      "from": "policy",
+      "type": "prohibits",
+      "to": "prohibition"
+    },
+    "binding": {
+      "concept": "prohibition",
+      "requirements": [
+        "prohibition-bar"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "BROAD_DUTY"
+  },
+  {
+    "id": "policy.exception.condition.v3",
+    "autoAccept": false,
+    "kind": "clause",
+    "pattern": "condition-main",
+    "relation": {
+      "from": "policy",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "policy.reference.section.v3",
+    "autoAccept": false,
+    "kind": "incomplete",
+    "pattern": "as set forth in",
+    "policyClass": "OBSERVATION_ONLY",
+    "reason": "INCOMPLETE_REFERENCE"
+  },
+  {
+    "id": "policy.reference.accordance.v3",
+    "autoAccept": false,
+    "kind": "incomplete",
+    "pattern": "in accordance with",
+    "policyClass": "OBSERVATION_ONLY",
+    "reason": "INCOMPLETE_REFERENCE"
+  },
+  {
+    "id": "policy.heading.requirements.v4",
+    "autoAccept": true,
+    "policyClass": "AUTO_ACCEPT",
+    "kind": "heading",
+    "pattern": "Requirements",
+    "concept": "requirement"
+  },
+  {
+    "id": "policy.heading.prohibited.v4",
+    "autoAccept": true,
+    "policyClass": "AUTO_ACCEPT",
+    "kind": "heading",
+    "pattern": "Prohibited Conduct",
+    "concept": "prohibition"
+  },
+  {
+    "id": "policy.heading.exceptions.v4",
+    "autoAccept": true,
+    "policyClass": "AUTO_ACCEPT",
+    "kind": "heading",
+    "pattern": "Exceptions",
+    "concept": "exception"
+  },
+  {
+    "id": "policy.duty.will.v4",
+    "autoAccept": false,
+    "policyClass": "NEEDS_REVIEW",
+    "kind": "clause",
+    "pattern": "party-modal-verb",
+    "reason": "BROAD_DUTY",
+    "relation": {
+      "from": "policy",
+      "type": "requires",
+      "to": "requirement"
+    },
+    "binding": {
+      "concept": "requirement",
+      "requirements": [
+        "requirement-duty"
+      ]
+    },
+    "modal": "will"
+  },
+  {
+    "id": "policy.duty.agrees.v4",
+    "autoAccept": false,
+    "policyClass": "NEEDS_REVIEW",
+    "kind": "clause",
+    "pattern": "party-agrees-to",
+    "reason": "BROAD_DUTY",
+    "relation": {
+      "from": "policy",
+      "type": "requires",
+      "to": "requirement"
+    },
+    "binding": {
+      "concept": "requirement",
+      "requirements": [
+        "requirement-duty"
+      ]
+    }
+  },
+  {
+    "id": "policy.duty.requirements-heading.v4",
+    "autoAccept": false,
+    "policyClass": "NEEDS_REVIEW",
+    "kind": "clause",
+    "pattern": "party-modal-verb",
+    "reason": "CONSTRAINED_PHRASE",
+    "relation": {
+      "from": "policy",
+      "type": "requires",
+      "to": "requirement"
+    },
+    "binding": {
+      "concept": "requirement",
+      "requirements": [
+        "requirement-duty"
+      ]
+    },
+    "modal": "must",
+    "headingContext": "Requirements"
+  },
+  {
+    "id": "policy.reference.pursuant.v4",
+    "autoAccept": false,
+    "policyClass": "OBSERVATION_ONLY",
+    "kind": "incomplete",
+    "pattern": "pursuant to",
+    "reason": "INCOMPLETE_REFERENCE"
+  },
+  {
+    "id": "policy.reference.pursuant-capital.v4",
+    "autoAccept": false,
+    "policyClass": "OBSERVATION_ONLY",
+    "kind": "incomplete",
+    "pattern": "Pursuant to",
+    "reason": "INCOMPLETE_REFERENCE"
+  },
+  {
+    "id": "policy.reference.as-provided.v4",
+    "autoAccept": false,
+    "policyClass": "OBSERVATION_ONLY",
+    "kind": "incomplete",
+    "pattern": "as provided in",
+    "reason": "INCOMPLETE_REFERENCE"
+  }
+]

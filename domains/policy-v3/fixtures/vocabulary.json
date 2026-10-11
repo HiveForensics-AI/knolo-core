@@ -1,0 +1,28 @@
+{
+  "id": "vocabulary",
+  "documents": [
+    {
+      "source": "vocabulary.md",
+      "text": "Policy\nControl\nThe control is required before launch.\nThe control is prohibited after review.\nThe action is prohibited in this office.\nAn exception applies when the director approves.\nLaunch is allowed unless approved in writing.\nThe control is subject to approval.\nThe control is subject to the former limit.\nThis policy is replaced by the current policy.\nThe control applies to the role.\nThe clause is valid before the review.\nThe clause is valid after the review.\nThe policy is effective 2026-01-01 until 2027-01-01.\n",
+      "meta": {
+        "type": "policy"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "control",
+      "policy"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE"
+    ],
+    "kar": {
+      "template": "compliance-review",
+      "proposition": "Is the control required?",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS"
+    }
+  }
+}

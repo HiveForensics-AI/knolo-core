@@ -1,6 +1,18 @@
-# Experimental KAR API
+# KAR API
 
-Import the experimental subpath. The root `@knolo/core` entry does not re-export these functions, and loading the root does not load this module.
+New code should import `@knolo/core/kar` and `@knolo/core/kar/authoring`. The experimental paths below remain operational for the V6 cycle. The root `@knolo/core` entry does not re-export these functions, and loading the root does not load this module.
+
+```ts
+import {
+  createKarSession,
+  evaluateKar,
+  verifyKar,
+  explainKarResult,
+  createKarDossier,
+} from '@knolo/core/kar';
+```
+
+See [Migration to V6](migration-v6.md). The rest of this page documents the same functions.
 
 ```ts
 import {

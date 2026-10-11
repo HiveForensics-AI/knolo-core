@@ -1,5 +1,5 @@
 import { CEG_SOURCE_VERSION, type CegLimits } from './constants.js';
-import { diagnostic, hasErrors, sortDiagnostics, type CegDiagnostic } from './diagnostics.js';
+import { diagnostic, hasErrors, isReservedObjectKey, sortDiagnostics, type CegDiagnostic } from './diagnostics.js';
 
 export type CegEvidenceSelector =
   | { objectId: string }
@@ -141,8 +141,8 @@ function interpretConcepts(
   }
   const concepts: Record<string, CegConcept> = {};
   for (const name of names) {
-    if (!validIdentifier(name, limits.maxIdentifierLength)) {
-      diagnostics.push(diagnostic('error', 'CEG_INVALID_IDENTIFIER', `concepts.${name}`, 'Concept name is empty, too long, or contains controls.'));
+    if (isReservedObjectKey(name) || !validIdentifier(name, limits.maxIdentifierLength)) {
+      diagnostics.push(diagnostic('error', 'CEG_INVALID_IDENTIFIER', `concepts.${name}`, 'Concept name is empty, reserved, too long, or contains controls.'));
       continue;
     }
     const raw = value[name];
@@ -188,8 +188,8 @@ function interpretEvidence(
   }
   const evidence: Record<string, CegEvidenceSelector> = {};
   for (const alias of aliases) {
-    if (!validIdentifier(alias, limits.maxIdentifierLength)) {
-      diagnostics.push(diagnostic('error', 'CEG_INVALID_IDENTIFIER', `evidence.${alias}`, 'Evidence alias is empty, too long, or contains controls.'));
+    if (isReservedObjectKey(alias) || !validIdentifier(alias, limits.maxIdentifierLength)) {
+      diagnostics.push(diagnostic('error', 'CEG_INVALID_IDENTIFIER', `evidence.${alias}`, 'Evidence alias is empty, reserved, too long, or contains controls.'));
       continue;
     }
     const selector = interpretSelector(value[alias], `evidence.${alias}`, limits, diagnostics);
@@ -262,7 +262,7 @@ function interpretSelector(
     return null;
   }
   for (const key of keys) {
-    if (!validIdentifier(key, limits.maxIdentifierLength)) {
+    if (isReservedObjectKey(key) || !validIdentifier(key, limits.maxIdentifierLength)) {
       diagnostics.push(diagnostic('error', 'CEG_INVALID_IDENTIFIER', `${path}.meta.${key}`, 'Metadata key is not a supported identifier.'));
       continue;
     }

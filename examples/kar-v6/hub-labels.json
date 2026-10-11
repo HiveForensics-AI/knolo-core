@@ -1,0 +1,30 @@
+{
+  "format": "knolo-hub-label-1",
+  "note": "Labels for Hub publishers. They are not kar-distribution-1 fields and they do not change KAR.",
+  "artifacts": [
+    {
+      "id": "contracts-demo",
+      "kind": "kar-bundle",
+      "path": "examples/kar-v6/contracts",
+      "containsCustomerEvidence": false,
+      "redistributable": true,
+      "shows": ["support", "opposition"]
+    },
+    {
+      "id": "policy-demo",
+      "kind": "kar-bundle",
+      "path": "examples/kar-v6/policy",
+      "containsCustomerEvidence": false,
+      "redistributable": true,
+      "shows": ["support", "qualification"]
+    },
+    {
+      "id": "operations-demo",
+      "kind": "kar-bundle",
+      "path": "examples/kar-v6/operations",
+      "containsCustomerEvidence": false,
+      "redistributable": true,
+      "shows": ["support", "abstention"]
+    }
+  ]
+}

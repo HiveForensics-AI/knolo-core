@@ -1,0 +1,88 @@
+format: ceg-domain-1
+id: operations
+version: 4
+description: Version 4 review-coverage operations semantics. AUTO_ACCEPT remains metadata and heading context. Relation rules stay NEEDS_REVIEW until development calibration promotes one. Version 3 is unchanged. Dates are not committed. Incomplete references invent no target.
+conceptKinds:
+  - id: condition
+    label: Condition
+  - id: effective-date
+    label: Effective date
+  - id: equipment
+    label: Equipment
+  - id: exception
+    label: Exception
+  - id: precondition
+    label: Precondition
+  - id: procedure
+    label: Procedure
+  - id: prohibition
+    label: Prohibition
+  - id: role
+    label: Role
+  - id: step
+    label: Step
+concepts:
+  - name: procedure
+    kind: procedure
+    label: Procedure
+    phrases:
+      - procedure
+  - name: step
+    kind: step
+    label: Step
+    phrases:
+      - must complete
+      - must not complete
+  - name: prohibited-state
+    kind: prohibition
+    label: Prohibited state
+    phrases:
+      - must not start
+  - name: precondition
+    kind: precondition
+    label: Precondition
+    phrases:
+      - before starting
+  - name: exception
+    kind: exception
+    label: Exception
+    phrases:
+      - unless authorized
+      - subject to
+  - name: equipment
+    kind: equipment
+    label: Equipment
+    phrases:
+      - using the equipment
+  - name: role
+    kind: role
+    label: Role
+    phrases:
+      - operator
+  - name: replacement
+    kind: procedure
+    label: Replacement
+    phrases:
+      - replaced by procedure
+  - name: effective-date
+    kind: effective-date
+    label: Effective date
+    phrases:
+      - valid before
+      - valid after
+      - effective
+      - until
+  - name: condition
+    kind: condition
+    label: Condition
+relations:
+  - applies_to
+  - contradicts
+  - excepts
+  - prohibits
+  - qualifies
+  - requires
+  - supersedes
+  - supports
+  - valid_after
+  - valid_before

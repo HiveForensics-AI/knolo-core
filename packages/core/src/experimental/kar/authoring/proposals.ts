@@ -30,6 +30,10 @@ export type CegObservation = {
   excerpt?: string;
   proposedConcepts?: string[];
   proposedRelations?: CegRelationSource[];
+  /** Set only when the Domain Pack rule declares a policy class. */
+  policyClass?: 'AUTO_ACCEPT' | 'NEEDS_REVIEW' | 'OBSERVATION_ONLY';
+  /** Stable reason code from the rule. Not a probability and not KAR authority. */
+  reason?: string;
 };
 
 export type CegAliasProposal = {
@@ -48,6 +52,9 @@ export type CegProposal = {
   observationId?: string;
   /** Model confidence stays here. It is not EvidenceBinding.authority. */
   confidence?: number;
+  policyClass?: 'AUTO_ACCEPT' | 'NEEDS_REVIEW' | 'OBSERVATION_ONLY';
+  /** Stable reason code from the rule. Not a probability and not KAR authority. */
+  reason?: string;
   fragment: CegSourceFragment;
 };
 
@@ -340,7 +347,8 @@ export function renderProducerReview(runInput: unknown): string {
     if (proposal.evidenceId) lines.push(`evidence   ${proposal.evidenceId}`);
     if (observation?.excerpt) lines.push(`text       ${observation.excerpt}`);
     lines.push(`producer   ${proposal.producerId}`);
-    lines.push(`reason     ${proposal.ruleId ?? '(none)'}`);
+    if (proposal.policyClass) lines.push(`policy     ${proposal.policyClass}`);
+    lines.push(`reason     ${proposal.reason ?? observation?.reason ?? proposal.ruleId ?? '(none)'}`);
     if (proposal.confidence !== undefined) lines.push(`confidence ${proposal.confidence}`);
     lines.push('decision   ACCEPTED or REJECTED in a ceg-decisions-1 file');
   }
@@ -351,7 +359,8 @@ export function renderProducerReview(runInput: unknown): string {
     lines.push('OBSERVATION');
     lines.push(observation.id);
     lines.push(`evidence   ${observation.evidenceId}`);
-    lines.push(`reason     ${observation.ruleId ?? '(none)'}`);
+    if (observation.policyClass) lines.push(`policy     ${observation.policyClass}`);
+    lines.push(`reason     ${observation.reason ?? observation.ruleId ?? '(none)'}`);
     if (observation.excerpt) lines.push(`text       ${observation.excerpt}`);
   }
   if (run.aliases && run.aliases.length > 0) {

@@ -87,7 +87,9 @@
               "to": { "type": "string" }
             }
           }
-        }
+        },
+        "policyClass": { "enum": ["AUTO_ACCEPT", "NEEDS_REVIEW", "OBSERVATION_ONLY"] },
+        "reason": { "type": "string" }
       }
     },
     "proposal": {
@@ -103,6 +105,8 @@
         "evidenceId": { "type": "string" },
         "observationId": { "type": "string" },
         "confidence": { "type": "number" },
+        "policyClass": { "enum": ["AUTO_ACCEPT", "NEEDS_REVIEW", "OBSERVATION_ONLY"] },
+        "reason": { "type": "string" },
         "fragment": { "type": "object" }
       }
     },

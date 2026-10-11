@@ -1,5 +1,8 @@
 /**
- * Experimental CEG authoring for `@knolo/core/experimental/kar/authoring`.
+ * CEG authoring for `@knolo/core/experimental/kar/authoring`.
+ *
+ * @deprecated Import from `@knolo/core/kar/authoring`, which re-exports
+ * this module. This path stays operational for the V6 cycle.
  *
  * This module compiles human source into the frozen KarSidecarV1 consumed by
  * `kar-1-research-1`. It does not change KAR retrieval. It does not call a model.
@@ -54,7 +57,7 @@ export {
   interpretDomainPack,
   regexIsSafe,
 } from './domain.js';
-export type { DomainPackV1, DomainRule, ProducerLimits } from './domain.js';
+export type { DomainPackV1, DomainRule, PolicyClass, ProducerLimits } from './domain.js';
 export { createRuleCegProducer, runRuleProducer } from './rules.js';
 export type { ProducerCache } from './rules.js';
 export { createOntologyCegProducer, runOntologyProducer } from './ontology.js';

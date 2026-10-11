@@ -1,0 +1,20 @@
+{
+  "id": "v2-patterns",
+  "documents": [
+    {
+      "source": "v2.md",
+      "text": "Notwithstanding the prior limit, the agreement may be terminated.\nA later sentence applies notwithstanding that limit.\nThe duty stands except as the schedule states.\nExcept as the schedule states, the duty stands.\nThis agreement supersedes all prior agreements.\nThe customer shall pay the fee.\nThe term will automatically renew.\nThe term is automatically renewed.\nThe customer shall not disclose the data.\nThe license may not be assigned.\nUnless the schedule states otherwise, the fee remains.\n",
+      "meta": {
+        "type": "contract"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "agreement"
+    ],
+    "relations": [],
+    "diagnosticCodes": [],
+    "bindings": []
+  }
+}

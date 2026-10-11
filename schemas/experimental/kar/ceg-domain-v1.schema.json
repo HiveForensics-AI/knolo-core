@@ -91,7 +91,7 @@
         "id": { "type": "string", "minLength": 1, "maxLength": 200 },
         "autoAccept": { "type": "boolean" },
         "kind": {
-          "enum": ["metadata", "heading", "phrase", "cue", "date", "authority", "section", "incomplete"]
+          "enum": ["metadata", "heading", "phrase", "cue", "date", "authority", "section", "incomplete", "clause"]
         },
         "pattern": { "type": "string", "maxLength": 256 },
         "patternMode": { "enum": ["exact", "regex"] },
@@ -108,7 +108,12 @@
         "dateField": { "enum": ["validFrom", "validUntil"] },
         "authorityMetadata": { "type": "string", "minLength": 1 },
         "targetPattern": { "type": "string", "maxLength": 256 },
-        "maxMatches": { "type": "integer", "minimum": 0 }
+        "maxMatches": { "type": "integer", "minimum": 0 },
+        "policyClass": { "enum": ["AUTO_ACCEPT", "NEEDS_REVIEW", "OBSERVATION_ONLY"] },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "headingContext": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "modal": { "enum": ["shall", "must", "will", "may", "agrees", "required"] },
+        "verb": { "type": "string", "minLength": 3, "maxLength": 25 }
       }
     },
     "limits": {

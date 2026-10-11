@@ -1,0 +1,237 @@
+{
+  "experimental": true,
+  "api": "experimental",
+  "version": "kar-1-research-1",
+  "status": "SATISFIED",
+  "code": null,
+  "proposition": "What evidence bears on retaining the record?",
+  "plan": {
+    "version": 1,
+    "anchor": {
+      "mode": "supplied",
+      "witness": [
+        {
+          "nodeId": "sha256-da7bb9eb13e0ea957be297b61395fb383ea00972b2e2397ad58cf4b3d4f2bd84",
+          "queryTerm": "evidence"
+        }
+      ]
+    },
+    "frontierMap": {
+      "requires": "F_S",
+      "excepts": "F_Q"
+    },
+    "depth": 2,
+    "cardinalityBound": 8,
+    "coverageMode": "requirements",
+    "requirements": {
+      "F_S": [
+        "retain-record"
+      ],
+      "F_O": [],
+      "F_Q": [
+        "litigation-hold"
+      ],
+      "F_T": [],
+      "F_A": []
+    },
+    "floors": {
+      "F_S": "1",
+      "F_O": "0",
+      "F_Q": "1",
+      "F_T": "0",
+      "F_A": "0"
+    },
+    "profile": "minimum-cover",
+    "asOf": "2026-06-01",
+    "minAuthority": null,
+    "bounds": {
+      "maxAnchorNodes": 8,
+      "maxClosureNodes": 32,
+      "maxClosureEdges": 32,
+      "maxFrontierEvidence": 8,
+      "maxRequirementsPerFrontier": 4,
+      "maxEvidenceBindings": 8,
+      "maxCoverVisits": 1000
+    },
+    "lexical": null
+  },
+  "image": {
+    "stateRoot": "sha256-de49fa114fd739c89cf02a512a53f0c4c62b49843f8f713438b5ba3362c51994",
+    "knowledgeRoot": "sha256-3ecb76c426ccc04b37e1c075952e2aee5e13b09e26b968a452af6897e1fbf441",
+    "objectRoot": "sha256-b681a9df7bdb7ded055d78ec9697540ed1a44f36788d2c1acae8d2cde3574e41",
+    "commitDigest": "sha256-1f5a9b590be4687bd52241c73eaf9b9fc011d4aee4cd5ae2e91a0828aff44c5f"
+  },
+  "frontiers": {
+    "F_S": [
+      "sha256-e47f8988659c95ab32c0084e19869705ce5c973c94b8a5950b09864e8437d866"
+    ],
+    "F_O": [],
+    "F_Q": [
+      "sha256-f396af3f537f33e4863edea832a87ff3862816c3b8aa7b720595604e23271de4"
+    ],
+    "F_T": [],
+    "F_A": []
+  },
+  "selectedEvidence": [
+    {
+      "id": "sha256-e47f8988659c95ab32c0084e19869705ce5c973c94b8a5950b09864e8437d866",
+      "frontiers": [
+        "F_S"
+      ],
+      "text": "The office must retain the record. This sentence is evidence for the plan.",
+      "source": "rule.txt",
+      "metadata": {
+        "kind": "chunk",
+        "meta": {
+          "source": "rule.txt"
+        }
+      }
+    },
+    {
+      "id": "sha256-f396af3f537f33e4863edea832a87ff3862816c3b8aa7b720595604e23271de4",
+      "frontiers": [
+        "F_Q"
+      ],
+      "text": "A litigation hold excepts ordinary destruction. This sentence is evidence for the plan.",
+      "source": "exception.txt",
+      "metadata": {
+        "kind": "chunk",
+        "meta": {
+          "source": "exception.txt"
+        }
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "evidenceId": "sha256-f396af3f537f33e4863edea832a87ff3862816c3b8aa7b720595604e23271de4",
+      "frontier": "F_Q",
+      "anchorId": "sha256-da7bb9eb13e0ea957be297b61395fb383ea00972b2e2397ad58cf4b3d4f2bd84",
+      "path": [
+        {
+          "node": "sha256-da7bb9eb13e0ea957be297b61395fb383ea00972b2e2397ad58cf4b3d4f2bd84"
+        },
+        {
+          "relation": "sha256-67120220d782dc1c66de081935da8fa50640cc1e992468ff4fee36510aa88cfc",
+          "node": "sha256-bc8fa7e8926d3f6b39820d8b0ee4f3e2c4ce6b0ecc17e8a4b73b3238883272d5"
+        }
+      ]
+    },
+    {
+      "evidenceId": "sha256-e47f8988659c95ab32c0084e19869705ce5c973c94b8a5950b09864e8437d866",
+      "frontier": "F_S",
+      "anchorId": "sha256-da7bb9eb13e0ea957be297b61395fb383ea00972b2e2397ad58cf4b3d4f2bd84",
+      "path": [
+        {
+          "node": "sha256-da7bb9eb13e0ea957be297b61395fb383ea00972b2e2397ad58cf4b3d4f2bd84"
+        },
+        {
+          "relation": "sha256-2022a966d2b9ba813c1498a944f23078ad00b6a4397c23eb5960d4bae26d2158",
+          "node": "sha256-b9332dd0c0db570eb525affcb184c9567a7e2134d60e7617ae9c859a8e5d477e"
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "version": "kar-1-research-1",
+    "status": "SATISFIED",
+    "evidenceIds": [
+      "sha256-e47f8988659c95ab32c0084e19869705ce5c973c94b8a5950b09864e8437d866",
+      "sha256-f396af3f537f33e4863edea832a87ff3862816c3b8aa7b720595604e23271de4"
+    ],
+    "choices": [
+      {
+        "evidenceId": "sha256-e47f8988659c95ab32c0084e19869705ce5c973c94b8a5950b09864e8437d866",
+        "frontiers": [
+          "F_S"
+        ]
+      },
+      {
+        "evidenceId": "sha256-f396af3f537f33e4863edea832a87ff3862816c3b8aa7b720595604e23271de4",
+        "frontiers": [
+          "F_Q"
+        ]
+      }
+    ],
+    "frontiers": {
+      "F_S": [
+        "sha256-e47f8988659c95ab32c0084e19869705ce5c973c94b8a5950b09864e8437d866"
+      ],
+      "F_O": [],
+      "F_Q": [
+        "sha256-f396af3f537f33e4863edea832a87ff3862816c3b8aa7b720595604e23271de4"
+      ],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [
+      {
+        "evidenceId": "sha256-f396af3f537f33e4863edea832a87ff3862816c3b8aa7b720595604e23271de4",
+        "frontier": "F_Q",
+        "anchorId": "sha256-da7bb9eb13e0ea957be297b61395fb383ea00972b2e2397ad58cf4b3d4f2bd84",
+        "path": [
+          {
+            "node": "sha256-da7bb9eb13e0ea957be297b61395fb383ea00972b2e2397ad58cf4b3d4f2bd84"
+          },
+          {
+            "relation": "sha256-67120220d782dc1c66de081935da8fa50640cc1e992468ff4fee36510aa88cfc",
+            "node": "sha256-bc8fa7e8926d3f6b39820d8b0ee4f3e2c4ce6b0ecc17e8a4b73b3238883272d5"
+          }
+        ]
+      },
+      {
+        "evidenceId": "sha256-e47f8988659c95ab32c0084e19869705ce5c973c94b8a5950b09864e8437d866",
+        "frontier": "F_S",
+        "anchorId": "sha256-da7bb9eb13e0ea957be297b61395fb383ea00972b2e2397ad58cf4b3d4f2bd84",
+        "path": [
+          {
+            "node": "sha256-da7bb9eb13e0ea957be297b61395fb383ea00972b2e2397ad58cf4b3d4f2bd84"
+          },
+          {
+            "relation": "sha256-2022a966d2b9ba813c1498a944f23078ad00b6a4397c23eb5960d4bae26d2158",
+            "node": "sha256-b9332dd0c0db570eb525affcb184c9567a7e2134d60e7617ae9c859a8e5d477e"
+          }
+        ]
+      }
+    ],
+    "decision": {
+      "status": "SATISFIED",
+      "profile": "minimum-cover",
+      "cardinality": 2,
+      "coverage": {
+        "F_S": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_O": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_Q": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-3ecb76c426ccc04b37e1c075952e2aee5e13b09e26b968a452af6897e1fbf441",
+      "semanticRoot": "sha256-2b2aae74c911cc407907c80b74e04fc47a5d61d6c00dec108066a50e7bac535a",
+      "queryRoot": "sha256-6aef8ea88abcbc1d6f7fba420313e0d712f4bd939a124909cbd0457f9b333acb",
+      "planRoot": "sha256-6808833dcaf6b4214485b2802c8ecd0d6eaf38af6aa7f282ee93f000f1a0c2f3",
+      "anchorRoot": "sha256-b5de587e896af2c96fd1910c33edb9418095cf4e28a06331b3b1a614f9aa0514",
+      "frontierRoot": "sha256-eff86aa99fa562032ea6ee5d524db3364e4b45d7fdd2926f7627e0e61359b69d",
+      "frontierWitnessRoot": "sha256-d2435728fc836296978de2cdab8aa5a4e50dcfb4b5208ec30350c1a08f07fe09",
+      "evidenceSetRoot": "sha256-c34e46883209241f2ffac26cd2ff20604f829d71af260a9165dbfbdc214bc78e",
+      "decisionRoot": "sha256-d585149a4f1e4d2000ea0012eef02125220e33d0bdf31ff0112d6503435898bf",
+      "karRoot": "sha256-483dbcf2d3d55427596262049733edbc18d046e6c82ee5238215337a6b6285c1"
+    }
+  }
+}

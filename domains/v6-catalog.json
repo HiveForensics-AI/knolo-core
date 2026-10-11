@@ -1,0 +1,30 @@
+{
+  "format": "knolo-domain-pack-catalog-1",
+  "note": "Maturity is release metadata. It is not part of DomainPackRoot and it does not change KAR.",
+  "packs": [
+    {
+      "id": "contracts",
+      "version": "4",
+      "path": "domains/contracts-v4",
+      "maturity": "review-required",
+      "domainPackRoot": "sha256-1ffea8ded1877f28ce61c9e98bb79644f8bbe237c22baae6984983d92ede39a5",
+      "containsCustomerEvidence": false
+    },
+    {
+      "id": "policy",
+      "version": "4",
+      "path": "domains/policy-v4",
+      "maturity": "review-required",
+      "domainPackRoot": "sha256-109ad58943b28a93453205ea86585843931eb69d8a989bcd071e8e48c70eacea",
+      "containsCustomerEvidence": false
+    },
+    {
+      "id": "operations",
+      "version": "4",
+      "path": "domains/operations-v4",
+      "maturity": "review-required",
+      "domainPackRoot": "sha256-edde04257c55c480c95ce3db90074238a54ab05ee8c9d25135190f5da70f6da4",
+      "containsCustomerEvidence": false
+    }
+  ]
+}

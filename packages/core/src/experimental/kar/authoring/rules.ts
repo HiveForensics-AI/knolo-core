@@ -15,6 +15,7 @@ import {
   type DomainConcept,
   type DomainPackV1,
   type DomainRule,
+  type PolicyClass,
   type ProducerLimits,
 } from './domain.js';
 import { isRealDate } from './model.js';
@@ -127,8 +128,9 @@ function produceRun(pack: DomainPackV1, catalog: EvidenceCatalog, limits: Produc
   const dates = new Map<string, { validFrom: Set<string>; validUntil: Set<string>; authority: Set<number> }>();
   for (const hit of hits) {
     const bucket = dates.get(hit.evidence.id) ?? { validFrom: new Set<string>(), validUntil: new Set<string>(), authority: new Set<number>() };
-    if (hit.rule.dateField && hit.date) bucket[hit.rule.dateField].add(hit.date);
-    if (hit.authority !== undefined) bucket.authority.add(hit.authority);
+    // A review-only or observation-only class must not paint dates or authority onto committed bindings.
+    if (commitsSideEffect(hit.rule) && hit.rule.dateField && hit.date) bucket[hit.rule.dateField].add(hit.date);
+    if (commitsSideEffect(hit.rule) && hit.authority !== undefined) bucket.authority.add(hit.authority);
     dates.set(hit.evidence.id, bucket);
   }
   for (const [evidenceId, bucket] of dates) {
@@ -159,12 +161,14 @@ function produceRun(pack: DomainPackV1, catalog: EvidenceCatalog, limits: Produc
     const built = buildFragment(hit, conceptsByName, dates.get(hit.evidence.id));
     const observation = makeObservation(hit, excerpt, digest, span, built.fragment);
     observations.push(observation);
-    if (hit.rule.kind === 'incomplete') {
+    if (hit.rule.kind === 'incomplete' || hit.rule.reason === 'INCOMPLETE_REFERENCE') {
       diagnostics.push(diagnostic('warning', 'CEG_PRODUCER_INCOMPLETE_REFERENCE', `rules.${hit.rule.id}`, `Rule "${hit.rule.id}" found a reference this pack will not complete.`));
     }
-    if (hit.rule.kind === 'incomplete' || hit.rule.kind === 'date' || hit.rule.kind === 'authority') continue;
+    const policy = policyOf(hit.rule);
+    const legacyObservation = !hit.rule.policyClass && (hit.rule.kind === 'incomplete' || hit.rule.kind === 'date' || hit.rule.kind === 'authority');
+    if (policy === 'OBSERVATION_ONLY' || legacyObservation) continue;
     if (!built.emit) continue;
-    const state: ProposalState = hit.rule.autoAccept ? 'ACCEPTED' : 'NEEDS_REVIEW';
+    const state: ProposalState = policy === 'AUTO_ACCEPT' ? 'ACCEPTED' : 'NEEDS_REVIEW';
     proposals.push(makeProposal(hit, observation.id, built.fragment, state));
   }
   if (proposals.length > limits.maxGeneratedRelations) {
@@ -207,12 +211,16 @@ function produceRun(pack: DomainPackV1, catalog: EvidenceCatalog, limits: Produc
 
 function matchRule(rule: DomainRule, evidence: EvidenceObject, limits: ProducerLimits, diagnostics: CegDiagnostic[]): Hit[] {
   const cap = rule.maxMatches ?? limits.maxMatchesPerRule;
-  if (rule.kind === 'metadata') return matchMetadata(rule, evidence);
-  if (rule.kind === 'authority') return matchAuthority(rule, evidence);
-  if (!rule.pattern) return [];
-  if (rule.kind === 'heading' || rule.kind === 'section') return matchHeading(rule, evidence, cap);
-  if (rule.patternMode === 'regex') return matchRegex(rule, evidence, cap, limits, diagnostics);
-  return matchExact(rule, evidence, cap, limits, diagnostics);
+  let hits: Hit[] = [];
+  if (rule.kind === 'metadata') hits = matchMetadata(rule, evidence);
+  else if (rule.kind === 'authority') hits = matchAuthority(rule, evidence);
+  else if (!rule.pattern) hits = [];
+  else if (rule.kind === 'clause') hits = matchClause(rule, evidence, cap);
+  else if (rule.kind === 'heading' || rule.kind === 'section') hits = matchHeading(rule, evidence, cap);
+  else if (rule.patternMode === 'regex') hits = matchRegex(rule, evidence, cap, limits, diagnostics);
+  else hits = matchExact(rule, evidence, cap, limits, diagnostics);
+  if (!rule.headingContext) return hits;
+  return hits.filter((hit) => nearestHeading(hit.evidence.text, hit.start) === rule.headingContext);
 }
 
 function matchMetadata(rule: DomainRule, evidence: EvidenceObject): Hit[] {
@@ -309,10 +317,9 @@ function matchRegex(rule: DomainRule, evidence: EvidenceObject, cap: number, lim
     return [];
   }
   const hits: Hit[] = [];
-  const started = Date.now();
   let match: RegExpExecArray | null;
   while ((match = expression.exec(evidence.text)) !== null) {
-    if (Date.now() - started > 50 || hits.length >= cap) {
+    if (hits.length >= cap) {
       diagnostics.push(diagnostic('error', 'CEG_PRODUCER_RULE_LIMIT', `rules.${rule.id}`, `Rule "${rule.id}" exceeded the regex budget.`));
       break;
     }
@@ -326,12 +333,119 @@ function matchRegex(rule: DomainRule, evidence: EvidenceObject, cap: number, lim
   return hits;
 }
 
+const CLAUSE_MODAL_WORDS = new Set(['shall', 'must', 'will', 'may']);
+const CLAUSE_CUES = ['unless', 'notwithstanding', 'subject to', 'provided that', 'except as', 'except when'];
+
+function matchClause(rule: DomainRule, evidence: EvidenceObject, cap: number): Hit[] {
+  const template = rule.pattern ?? '';
+  const hits: Hit[] = [];
+  for (const sentence of boundedSentences(evidence.text)) {
+    if (hits.length >= cap) break;
+    const parsed = parseClause(template, sentence.text);
+    if (!parsed) continue;
+    if (rule.modal && parsed.modal !== rule.modal) continue;
+    if (rule.verb && parsed.verb !== rule.verb) continue;
+    if (rule.excludePattern && sentence.text.includes(rule.excludePattern)) continue;
+    hits.push(hitOf(rule, evidence, sentence.start, sentence.end, sentence.text));
+  }
+  return hits;
+}
+
+function boundedSentences(text: string): Array<{ start: number; end: number; text: string }> {
+  const sentences: Array<{ start: number; end: number; text: string }> = [];
+  let start = 0;
+  for (let index = 0; index <= text.length; index += 1) {
+    const ch = index === text.length ? '\n' : text[index];
+    if (ch !== '.' && ch !== '!' && ch !== '?' && ch !== '\n' && index !== text.length) continue;
+    const end = ch === '\n' || index === text.length ? index : index + 1;
+    const raw = text.slice(start, end);
+    const trimmed = raw.trim();
+    if (trimmed.length >= 8 && trimmed.length <= 400) {
+      const lead = raw.indexOf(trimmed);
+      sentences.push({ start: start + lead, end: start + lead + trimmed.length, text: trimmed });
+    }
+    start = end;
+    if (sentences.length >= 200) break;
+  }
+  return sentences;
+}
+
+function parseClause(template: string, sentence: string): { modal: string; verb: string } | null {
+  const tokens = sentence.split(/[^A-Za-z0-9-]+/).filter((token) => token.length > 0);
+  const lower = tokens.map((token) => token.toLowerCase());
+  if (template === 'party-modal-verb') {
+    for (let index = 1; index < lower.length - 2; index += 1) {
+      if (!CLAUSE_MODAL_WORDS.has(lower[index] ?? '')) continue;
+      if (lower[index + 1] === 'not' || !isClauseVerb(tokens[index + 1] ?? '')) continue;
+      return { modal: lower[index] ?? '', verb: lower[index + 1] ?? '' };
+    }
+  }
+  if (template === 'party-modal-not') {
+    for (let index = 1; index < lower.length - 3; index += 1) {
+      if (!CLAUSE_MODAL_WORDS.has(lower[index] ?? '')) continue;
+      if (lower[index + 1] !== 'not' || !isClauseVerb(tokens[index + 2] ?? '')) continue;
+      return { modal: lower[index] ?? '', verb: lower[index + 2] ?? '' };
+    }
+  }
+  if (template === 'party-agrees-to') {
+    for (let index = 1; index < lower.length - 3; index += 1) {
+      if (lower[index] !== 'agrees' || lower[index + 1] !== 'to' || !isClauseVerb(tokens[index + 2] ?? '')) continue;
+      return { modal: 'agrees', verb: lower[index + 2] ?? '' };
+    }
+  }
+  if (template === 'object-is-required') {
+    for (let index = 0; index < lower.length - 4; index += 1) {
+      if ((lower[index] !== 'is' && lower[index] !== 'are') || lower[index + 1] !== 'required' || lower[index + 2] !== 'to') continue;
+      if (!isClauseVerb(tokens[index + 3] ?? '')) continue;
+      return { modal: 'required', verb: lower[index + 3] ?? '' };
+    }
+  }
+  if (template === 'condition-main') {
+    const padded = ` ${lower.join(' ')} `;
+    if (!CLAUSE_CUES.some((cue) => padded.includes(` ${cue} `))) return null;
+    for (let index = 0; index < lower.length; index += 1) {
+      if (!CLAUSE_MODAL_WORDS.has(lower[index] ?? '')) continue;
+      const next = tokens[index + 1] ?? '';
+      return { modal: lower[index] ?? '', verb: isClauseVerb(next) ? next.toLowerCase() : 'clause' };
+    }
+  }
+  return null;
+}
+
+function isClauseVerb(token: string): boolean {
+  return /^[A-Za-z][A-Za-z-]{2,24}$/.test(token) && token.toLowerCase() !== 'not';
+}
+
+function nearestHeading(text: string, index: number): string | null {
+  let offset = 0;
+  let last: string | null = null;
+  for (const line of text.split('\n')) {
+    if (offset >= index) break;
+    const heading = headingText(line);
+    if (heading) last = heading;
+    offset += line.length + 1;
+  }
+  return last;
+}
+
+function policyOf(rule: DomainRule): PolicyClass {
+  if (rule.policyClass) return rule.policyClass;
+  if (rule.kind === 'incomplete' || rule.kind === 'date' || rule.kind === 'authority') return 'OBSERVATION_ONLY';
+  return rule.autoAccept ? 'AUTO_ACCEPT' : 'NEEDS_REVIEW';
+}
+
+function commitsSideEffect(rule: DomainRule): boolean {
+  if (rule.policyClass === 'NEEDS_REVIEW' || rule.policyClass === 'OBSERVATION_ONLY') return false;
+  return true;
+}
+
 function buildFragment(
   hit: Hit,
   conceptsByName: Map<string, DomainConcept>,
   dates: { validFrom: Set<string>; validUntil: Set<string>; authority: Set<number> } | undefined,
 ): { emit: boolean; fragment: CegSourceFragment } {
-  if (hit.rule.kind === 'incomplete' || hit.rule.kind === 'date' || hit.rule.kind === 'authority') {
+  const reviewDate = hit.rule.kind === 'date' && hit.rule.policyClass === 'NEEDS_REVIEW' && Boolean(hit.date);
+  if (hit.rule.kind === 'incomplete' || hit.rule.kind === 'authority' || (hit.rule.kind === 'date' && !reviewDate)) {
     return { emit: false, fragment: {} };
   }
   const fragment: CegSourceFragment = { concepts: {}, evidence: {}, relations: [], bindings: [], requirements: [] };
@@ -354,8 +468,12 @@ function buildFragment(
       evidence: hit.evidence.id,
       requirements: [...hit.rule.binding.requirements],
     };
-    const from = dates && dates.validFrom.size === 1 ? [...dates.validFrom][0] : undefined;
-    const until = dates && dates.validUntil.size === 1 ? [...dates.validUntil][0] : undefined;
+    const from = reviewDate && hit.rule.dateField === 'validFrom'
+      ? hit.date
+      : dates && dates.validFrom.size === 1 ? [...dates.validFrom][0] : undefined;
+    const until = reviewDate && hit.rule.dateField === 'validUntil'
+      ? hit.date
+      : dates && dates.validUntil.size === 1 ? [...dates.validUntil][0] : undefined;
     const authority = dates && dates.authority.size === 1 ? [...dates.authority][0] : undefined;
     if (from) binding.validFrom = from;
     if (until) binding.validUntil = until;
@@ -380,6 +498,8 @@ function makeObservation(hit: Hit, excerpt: string, digest: string, span: { star
     proposedConcepts: Object.keys(fragment.concepts ?? {}).sort(compareText),
     proposedRelations: fragment.relations ?? [],
   };
+  if (hit.rule.policyClass) observation.policyClass = hit.rule.policyClass;
+  if (hit.rule.reason) observation.reason = hit.rule.reason;
   observation.id = observationId(observation);
   return observation;
 }
@@ -395,6 +515,8 @@ function makeProposal(hit: Hit, observation: string, fragment: CegSourceFragment
     observationId: observation,
     fragment,
   };
+  if (hit.rule.policyClass) proposal.policyClass = hit.rule.policyClass;
+  if (hit.rule.reason) proposal.reason = hit.rule.reason;
   proposal.id = proposalId(proposal);
   return proposal;
 }

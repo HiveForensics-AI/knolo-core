@@ -1,6 +1,6 @@
 import { canonicalize, digest } from '../canonicalize.js';
 import { validatePlan } from '../plan.js';
-import { diagnostic, sortDiagnostics, type CegDiagnostic } from './diagnostics.js';
+import { diagnostic, isReservedObjectKey, sortDiagnostics, type CegDiagnostic } from './diagnostics.js';
 import { cegNodeId } from './ids.js';
 
 /**
@@ -56,10 +56,19 @@ export type DomainBindingRule = {
   requirements: string[];
 };
 
+export const POLICY_CLASSES = ['AUTO_ACCEPT', 'NEEDS_REVIEW', 'OBSERVATION_ONLY'] as const;
+export type PolicyClass = (typeof POLICY_CLASSES)[number];
+
+/** Bounded clause templates. These are not a general parser. */
+export const CLAUSE_TEMPLATES = ['party-modal-verb', 'party-modal-not', 'party-agrees-to', 'object-is-required', 'condition-main'] as const;
+export type ClauseTemplate = (typeof CLAUSE_TEMPLATES)[number];
+
+export const CLAUSE_MODALS = ['shall', 'must', 'will', 'may', 'agrees', 'required'] as const;
+
 export type DomainRule = {
   id: string;
   autoAccept: boolean;
-  kind: 'metadata' | 'heading' | 'phrase' | 'cue' | 'date' | 'authority' | 'section' | 'incomplete';
+  kind: 'metadata' | 'heading' | 'phrase' | 'cue' | 'date' | 'authority' | 'section' | 'incomplete' | 'clause';
   pattern?: string;
   patternMode?: 'exact' | 'regex';
   ignoreCase?: boolean;
@@ -73,6 +82,16 @@ export type DomainRule = {
   authorityMetadata?: string;
   targetPattern?: string;
   maxMatches?: number;
+  /** Omitted from the canonical body when unset, so frozen packs keep their roots. */
+  policyClass?: PolicyClass;
+  /** Stable reason code, such as INCOMPLETE_REFERENCE. Not a probability. */
+  reason?: string;
+  /** Exact preceding heading required before a match. It does not replace the span. */
+  headingContext?: string;
+  /** Clause template filter. Exact modal token. */
+  modal?: string;
+  /** Clause template filter. Exact verb token. */
+  verb?: string;
 };
 
 export type DomainPackV1 = {
@@ -93,9 +112,9 @@ export type InterpretedDomain =
   | { ok: true; pack: DomainPackV1; diagnostics: CegDiagnostic[] }
   | { ok: false; diagnostics: CegDiagnostic[] };
 
-const RULE_KINDS = ['metadata', 'heading', 'phrase', 'cue', 'date', 'authority', 'section', 'incomplete'] as const;
+const RULE_KINDS = ['metadata', 'heading', 'phrase', 'cue', 'date', 'authority', 'section', 'incomplete', 'clause'] as const;
 const PACK_KEYS = ['format', 'id', 'version', 'description', 'conceptKinds', 'concepts', 'relations', 'rules', 'planTemplates', 'limits', 'fixtures'] as const;
-const RULE_KEYS = ['id', 'autoAccept', 'kind', 'pattern', 'patternMode', 'ignoreCase', 'excludePattern', 'metadata', 'metadataExists', 'concept', 'relation', 'binding', 'dateField', 'authorityMetadata', 'targetPattern', 'maxMatches'] as const;
+const RULE_KEYS = ['id', 'autoAccept', 'kind', 'pattern', 'patternMode', 'ignoreCase', 'excludePattern', 'metadata', 'metadataExists', 'concept', 'relation', 'binding', 'dateField', 'authorityMetadata', 'targetPattern', 'maxMatches', 'policyClass', 'reason', 'headingContext', 'modal', 'verb'] as const;
 
 export function resolveProducerLimits(override?: Partial<ProducerLimits>): ProducerLimits | CegDiagnostic {
   const limits: ProducerLimits = { ...PRODUCER_LIMITS };
@@ -201,7 +220,8 @@ export function compareText(left: string, right: string): number {
 }
 
 function canonicalRule(rule: DomainRule): unknown {
-  return {
+  // Optional keys stay absent when unset. Adding them as null would move every frozen DomainPackRoot.
+  const body: Record<string, unknown> = {
     id: rule.id,
     autoAccept: rule.autoAccept,
     kind: rule.kind,
@@ -219,6 +239,12 @@ function canonicalRule(rule: DomainRule): unknown {
     targetPattern: rule.targetPattern ?? null,
     maxMatches: rule.maxMatches ?? null,
   };
+  if (rule.policyClass) body.policyClass = rule.policyClass;
+  if (rule.reason) body.reason = rule.reason;
+  if (rule.headingContext) body.headingContext = rule.headingContext;
+  if (rule.modal) body.modal = rule.modal;
+  if (rule.verb) body.verb = rule.verb;
+  return body;
 }
 
 function planFromTemplate(template: Record<string, unknown>, _path: string): ReturnType<typeof validatePlan> {
@@ -281,7 +307,7 @@ function conceptsOf(value: unknown, kinds: DomainConceptKind[] | null, diagnosti
   const concepts: DomainConcept[] = [];
   const seen = new Set<string>();
   for (const [index, item] of value.entries()) {
-    if (!isRecord(item) || typeof item.name !== 'string' || !isToken(item.name) || portableString(item.name)) {
+    if (!isRecord(item) || typeof item.name !== 'string' || !isToken(item.name) || isReservedObjectKey(item.name) || portableString(item.name)) {
       diagnostics.push(diagnostic('error', portableString(typeof item.name === 'string' ? item.name : '') ? 'CEG_DOMAIN_PATH' : 'CEG_DOMAIN_INVALID', `concepts[${index}]`, 'Concept name is invalid.'));
       continue;
     }
@@ -450,8 +476,51 @@ function ruleOf(value: unknown, index: number, names: Set<string>, symbols: Set<
       diagnostics.push(diagnostic('error', 'CEG_PRODUCER_LIMIT', `${path}.maxMatches`, 'maxMatches is outside the supported range.'));
     } else rule.maxMatches = value.maxMatches;
   }
-  if ((rule.kind === 'phrase' || rule.kind === 'cue' || rule.kind === 'heading' || rule.kind === 'date' || rule.kind === 'incomplete' || rule.kind === 'section') && !rule.pattern) {
+  if (value.policyClass !== undefined) {
+    if (typeof value.policyClass !== 'string' || !(POLICY_CLASSES as readonly string[]).includes(value.policyClass)) {
+      diagnostics.push(diagnostic('error', 'CEG_DOMAIN_INVALID', `${path}.policyClass`, 'policyClass must be AUTO_ACCEPT, NEEDS_REVIEW, or OBSERVATION_ONLY.'));
+    } else rule.policyClass = value.policyClass as PolicyClass;
+  }
+  if (value.reason !== undefined) {
+    if (typeof value.reason !== 'string' || !isToken(value.reason) || value.reason.length > 80) {
+      diagnostics.push(diagnostic('error', 'CEG_DOMAIN_INVALID', `${path}.reason`, 'reason must be a short identifier.'));
+    } else rule.reason = value.reason;
+  }
+  if (value.headingContext !== undefined) {
+    if (typeof value.headingContext !== 'string' || value.headingContext.length === 0 || value.headingContext.length > 80 || portableString(value.headingContext) !== null) {
+      diagnostics.push(diagnostic('error', 'CEG_DOMAIN_INVALID', `${path}.headingContext`, 'headingContext must be a short heading.'));
+    } else rule.headingContext = value.headingContext;
+  }
+  if (value.modal !== undefined) {
+    if (typeof value.modal !== 'string' || !(CLAUSE_MODALS as readonly string[]).includes(value.modal)) {
+      diagnostics.push(diagnostic('error', 'CEG_DOMAIN_INVALID', `${path}.modal`, 'modal is not a supported clause modal.'));
+    } else rule.modal = value.modal;
+  }
+  if (value.verb !== undefined) {
+    if (typeof value.verb !== 'string' || !/^[a-z][a-z-]{2,24}$/.test(value.verb)) {
+      diagnostics.push(diagnostic('error', 'CEG_DOMAIN_INVALID', `${path}.verb`, 'verb must be a lowercase clause verb.'));
+    } else rule.verb = value.verb;
+  }
+  if (rule.policyClass === 'AUTO_ACCEPT' && rule.autoAccept !== true) {
+    diagnostics.push(diagnostic('error', 'CEG_DOMAIN_INVALID', `${path}.policyClass`, 'AUTO_ACCEPT requires autoAccept: true.'));
+  }
+  if (rule.policyClass && rule.policyClass !== 'AUTO_ACCEPT' && rule.autoAccept === true) {
+    diagnostics.push(diagnostic('error', 'CEG_DOMAIN_INVALID', `${path}.policyClass`, `${rule.policyClass} requires autoAccept: false.`));
+  }
+  if ((rule.kind === 'date' || rule.kind === 'incomplete') && rule.policyClass === 'AUTO_ACCEPT') {
+    diagnostics.push(diagnostic('error', 'CEG_DOMAIN_INVALID', `${path}.policyClass`, `${rule.kind} rules cannot be AUTO_ACCEPT.`));
+  }
+  if (rule.kind === 'clause' && rule.pattern === 'condition-main' && rule.policyClass === 'AUTO_ACCEPT') {
+    diagnostics.push(diagnostic('error', 'CEG_DOMAIN_INVALID', `${path}.policyClass`, 'condition-main does not resolve an endpoint and cannot be AUTO_ACCEPT.'));
+  }
+  if (rule.reason === 'INCOMPLETE_REFERENCE' && (rule.relation || rule.binding)) {
+    diagnostics.push(diagnostic('error', 'CEG_DOMAIN_INVALID', `${path}.reason`, 'INCOMPLETE_REFERENCE cannot invent a relation or binding.'));
+  }
+  if ((rule.kind === 'phrase' || rule.kind === 'cue' || rule.kind === 'heading' || rule.kind === 'date' || rule.kind === 'incomplete' || rule.kind === 'section' || rule.kind === 'clause') && !rule.pattern) {
     diagnostics.push(diagnostic('error', 'CEG_DOMAIN_INVALID', `${path}.pattern`, `${rule.kind} rules require a pattern.`));
+  }
+  if (rule.kind === 'clause' && rule.pattern && !(CLAUSE_TEMPLATES as readonly string[]).includes(rule.pattern)) {
+    diagnostics.push(diagnostic('error', 'CEG_DOMAIN_INVALID', `${path}.pattern`, 'clause pattern must name a bounded template.'));
   }
   if (rule.kind === 'section' && !rule.targetPattern) {
     diagnostics.push(diagnostic('error', 'CEG_DOMAIN_INVALID', `${path}.targetPattern`, 'section rules require targetPattern.'));
@@ -509,7 +578,7 @@ function plansOf(value: unknown, concepts: DomainConcept[] | null, diagnostics: 
   const conceptNames = new Set((concepts ?? []).map((concept) => concept.name));
   const templates: Record<string, unknown> = {};
   for (const name of names) {
-    if (!isToken(name)) {
+    if (!isToken(name) || isReservedObjectKey(name)) {
       diagnostics.push(diagnostic('error', 'CEG_DOMAIN_INVALID', `planTemplates.${name}`, 'Plan template name is invalid.'));
       continue;
     }

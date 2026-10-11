@@ -1,5 +1,5 @@
 import type { CegLimits } from './constants.js';
-import { diagnostic, type CegDiagnostic } from './diagnostics.js';
+import { diagnostic, isReservedObjectKey, type CegDiagnostic } from './diagnostics.js';
 
 export type JsonParse =
   | { ok: true; value: unknown }
@@ -33,6 +33,9 @@ function findDuplicateKey(text: string, limits: CegLimits): CegDiagnostic | null
       if (expectKey && stack.length > 0) {
         const keys = stack[stack.length - 1];
         if (keys) {
+          if (isReservedObjectKey(read.value)) {
+            return diagnostic('error', 'CEG_PARSE', read.value, `JSON key "${read.value}" is not allowed.`);
+          }
           if (keys.has(read.value)) {
             return diagnostic('error', 'CEG_DUPLICATE_KEY', read.value, `Duplicate JSON key "${read.value}".`);
           }

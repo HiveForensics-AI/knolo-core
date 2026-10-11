@@ -1,5 +1,6 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { KAR_CLI_MAX_IMAGE_BYTES, readBounded, readBoundedJson, readBoundedText } from './kar-limits.mjs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -390,7 +391,7 @@ function writeSource(authoring, file, source) {
 
 function readSource(authoring, file) {
   if (!file) throw new Error('Missing CEG source path');
-  return authoring.parseCegSource(readFileSync(resolve(file), 'utf8'));
+  return authoring.parseCegSource(readBoundedText(file));
 }
 
 async function maybeCatalog(authoring, image) {
@@ -430,11 +431,11 @@ function resolve(file) {
 }
 
 function readBytes(file) {
-  return readFileSync(resolve(file));
+  return readBounded(file, KAR_CLI_MAX_IMAGE_BYTES);
 }
 
 function readJson(file) {
-  return JSON.parse(readFileSync(resolve(file), 'utf8'));
+  return readBoundedJson(file);
 }
 
 async function loadAuthoring() {

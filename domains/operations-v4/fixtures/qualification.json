@@ -1,0 +1,25 @@
+{
+  "id": "qualification",
+  "documents": [
+    {
+      "source": "procedure.md",
+      "text": "The operator must complete the step.\nContinue unless authorized by the lead.\n",
+      "meta": {
+        "type": "procedure"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "procedure"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "exception-review",
+      "proposition": "Must the operator complete the step?",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS"
+    }
+  }
+}

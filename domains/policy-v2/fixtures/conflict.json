@@ -1,0 +1,61 @@
+{
+  "id": "conflict",
+  "documents": [
+    {
+      "source": "require.md",
+      "text": "The control is required before launch.\n",
+      "meta": {
+        "type": "policy"
+      }
+    },
+    {
+      "source": "bar.md",
+      "text": "The control is prohibited after review.\n",
+      "meta": {
+        "type": "policy"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "control",
+      "policy"
+    ],
+    "relations": [
+      {
+        "from": "policy",
+        "type": "requires",
+        "to": "control"
+      },
+      {
+        "from": "policy",
+        "type": "prohibits",
+        "to": "control"
+      }
+    ],
+    "bindings": [
+      {
+        "concept": "control",
+        "source": "require.md",
+        "requirements": [
+          "control-required"
+        ]
+      },
+      {
+        "concept": "control",
+        "source": "bar.md",
+        "requirements": [
+          "control-prohibited"
+        ]
+      }
+    ],
+    "diagnosticCodes": [
+      "CEG_PRODUCER_RELATION_CONFLICT"
+    ],
+    "kar": {
+      "template": "compliance-review",
+      "proposition": "Is the control required?",
+      "status": "SATISFIED"
+    }
+  }
+}

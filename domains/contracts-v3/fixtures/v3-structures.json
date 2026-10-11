@@ -1,0 +1,25 @@
+{
+  "id": "v3-structures",
+  "documents": [
+    {
+      "source": "structures.md",
+      "text": "Payment\nThe customer shall pay the invoice.\nThe supplier will deliver the goods.\nThe contractor agrees to maintain the equipment.\nThe report is required to include the total.\nThe customer shall not share the data.\nThe customer must wait unless the schedule states otherwise.\nFees are as set forth in Exhibit B.\nCosts are subject to Schedule A.\nPrices are subject to Exhibit C.\nWork is performed in accordance with the statement.\nThe agreement is effective 2026-04-01.\n",
+      "meta": {
+        "type": "contract"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "agreement"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE",
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE",
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE",
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE"
+    ]
+  }
+}

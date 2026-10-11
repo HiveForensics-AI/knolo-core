@@ -162,6 +162,196 @@ test('regex packs reject catastrophic patterns and do not execute them', () => {
   assert.equal(rejected.diagnostics.some((item) => item.code === 'CEG_PRODUCER_RULE_INVALID'), true);
 });
 
+test('frozen domain pack roots stay put when policyClass is optional', () => {
+  const frozen = {
+    contracts: 'sha256-f691628a70e0a28b6ddec59b7803c5326f7a17deddeb3c67af39516c382e4d07',
+    policy: 'sha256-0391d52bd3756a9ad7b491d8af034d98ae85fd6497c3ae60b3aac08e297d62d5',
+    operations: 'sha256-2f7a5a19bcb9b2310e578f0ee10fd115780f4c1e521abd4311732bcea6138681',
+    generic: 'sha256-c389d2847921fb405f3298f1c9cd98bd962cbc67c39c04d7429162f8dbdabaa2',
+    'contracts-v2': 'sha256-4c16fdb2edf41fd6c5ca5d20106059210291b01c457980fb0e9565845840cfd0',
+    'policy-v2': 'sha256-f412af2b1109b3a8d5837f5f96a98be17a80f4462deb411f4f8fb66a3169ca6e',
+    'operations-v2': 'sha256-e8967d09e25ce5f6037444088494773264800d333aecc5d600d0d332764357ed',
+  };
+  for (const [id, root] of Object.entries(frozen)) {
+    const loaded = domain(id);
+    assert.equal(authoring.domainPackRoot(loaded.pack), root, id);
+  }
+});
+
+test('policy class keeps review and observation matches out of committed source', () => {
+  const pack = {
+    format: 'ceg-domain-1',
+    id: 'policy-class',
+    version: '1',
+    conceptKinds: [{ id: 'agreement' }],
+    concepts: [
+      { name: 'agreement', kind: 'agreement' },
+      { name: 'payment', kind: 'agreement' },
+      { name: 'exception', kind: 'agreement' },
+      { name: 'effective-date', kind: 'agreement' },
+    ],
+    relations: ['requires', 'qualifies'],
+    rules: [
+      {
+        id: 'pay.v1',
+        autoAccept: true,
+        policyClass: 'AUTO_ACCEPT',
+        kind: 'clause',
+        pattern: 'party-modal-verb',
+        modal: 'shall',
+        verb: 'pay',
+        headingContext: 'Payment',
+        relation: { from: 'agreement', type: 'requires', to: 'payment' },
+        binding: { concept: 'payment', requirements: ['payment-duty'] },
+      },
+      {
+        id: 'unless.v1',
+        autoAccept: false,
+        policyClass: 'NEEDS_REVIEW',
+        kind: 'clause',
+        pattern: 'condition-main',
+        reason: 'CUE_WITHOUT_ENDPOINT',
+        relation: { from: 'agreement', type: 'qualifies', to: 'exception' },
+        binding: { concept: 'exception', requirements: ['stated-exception'] },
+      },
+      {
+        id: 'xref.v1',
+        autoAccept: false,
+        policyClass: 'OBSERVATION_ONLY',
+        kind: 'incomplete',
+        pattern: 'as set forth in',
+        reason: 'INCOMPLETE_REFERENCE',
+      },
+      {
+        id: 'date.v1',
+        autoAccept: false,
+        policyClass: 'NEEDS_REVIEW',
+        kind: 'date',
+        pattern: 'effective',
+        dateField: 'validFrom',
+        reason: 'EXPLICIT_DATE',
+        binding: { concept: 'effective-date', requirements: ['explicit-date'] },
+      },
+    ],
+    planTemplates: {},
+  };
+  const image = imageFrom('policy-class', [{
+    source: 'terms.md',
+    text: 'Payment\nThe customer shall pay the invoice.\nThe customer shall not pay the invoice.\nThe customer must wait unless the schedule says otherwise.\nFees are as set forth in Exhibit B.\nThe agreement is effective 2026-01-01.\n',
+    meta: { type: 'contract' },
+  }]);
+  const ran = runRuleProducer({ pack, image: image.bytes });
+  assert.equal(ran.ok, true, JSON.stringify(ran.diagnostics));
+  assert.equal(ran.run.fragment.relations.length, 1);
+  assert.equal(ran.run.fragment.relations[0].type, 'requires');
+  assert.equal(ran.run.fragment.bindings.some((binding) => binding.validFrom), false);
+  const states = Object.fromEntries(ran.run.proposals.map((proposal) => [proposal.ruleId, proposal.state]));
+  assert.equal(states['pay.v1'], 'ACCEPTED');
+  assert.equal(states['unless.v1'], 'NEEDS_REVIEW');
+  assert.equal(states['date.v1'], 'NEEDS_REVIEW');
+  assert.equal(states['xref.v1'], undefined);
+  const xref = ran.run.observations.find((item) => item.ruleId === 'xref.v1');
+  assert.equal(xref.policyClass, 'OBSERVATION_ONLY');
+  assert.equal(xref.reason, 'INCOMPLETE_REFERENCE');
+  assert.equal(ran.run.diagnostics.some((item) => item.code === 'CEG_PRODUCER_INCOMPLETE_REFERENCE'), true);
+  const denied = interpretDomainPack({
+    ...pack,
+    rules: [{ id: 'bad.v1', autoAccept: true, policyClass: 'NEEDS_REVIEW', kind: 'phrase', pattern: 'unless', concept: 'agreement' }],
+  });
+  assert.equal(denied.ok, false);
+  const bare = interpretDomainPack({
+    ...pack,
+    rules: [{
+      id: 'bare.v1',
+      autoAccept: true,
+      policyClass: 'AUTO_ACCEPT',
+      kind: 'clause',
+      pattern: 'condition-main',
+      concept: 'agreement',
+    }],
+  });
+  assert.equal(bare.ok, false);
+});
+
+test('version 3 packs keep relation proposals out of the committed fragment', () => {
+  const roots = {
+    'contracts-v3': 'sha256-6ae56377066d223902532a3cbc092965f377b9be754071891e8b0fcddbcf3008',
+    'policy-v3': 'sha256-e8b870e3153bc9037d6b8083fc89d742d320eb9ffa7af507ba3ad40ce0d724f8',
+    'operations-v3': 'sha256-b71574dd91b60e29766ebcefda39c13a11f9f5eca965934d1697fec13a9c6d01',
+  };
+  for (const [id, root] of Object.entries(roots)) {
+    const loaded = domain(id);
+    assert.equal(authoring.domainPackRoot(loaded.pack), root, id);
+    const report = testDomainFixtures(loaded.pack, loaded.fixtures);
+    assert.equal(report.ok, true, `${id} ${report.fixtures.filter((item) => !item.ok).map((item) => `${item.id}: ${item.message}`).join(' | ')}`);
+    assert.deepEqual(report.unmatchedRules, []);
+    for (const rule of loaded.pack.rules) {
+      if (rule.relation) assert.equal(rule.policyClass, 'NEEDS_REVIEW', rule.id);
+      if (rule.policyClass === 'AUTO_ACCEPT') assert.ok(rule.kind === 'metadata' || rule.kind === 'heading', rule.id);
+      if (rule.reason === 'INCOMPLETE_REFERENCE') assert.equal(rule.relation, undefined, rule.id);
+    }
+  }
+  const loaded = domain('contracts-v3');
+  const image = imageFrom('v3-review', [{
+    source: 'terms.md',
+    text: 'The customer may terminate this agreement.\nFees are as set forth in Exhibit B.\nThe agreement is effective 2026-04-01.\n',
+    meta: { type: 'contract' },
+  }]);
+  const ran = runRuleProducer({ pack: loaded.pack, image: image.bytes });
+  assert.equal(ran.ok, true, JSON.stringify(ran.diagnostics));
+  assert.equal(ran.run.fragment.relations.some((relation) => relation.type === 'permits'), false);
+  assert.equal(ran.run.fragment.bindings.some((binding) => binding.validFrom), false);
+  const termination = ran.run.proposals.find((proposal) => proposal.ruleId === 'contracts.termination.permission.v1');
+  assert.equal(termination.state, 'NEEDS_REVIEW');
+  const reference = ran.run.observations.find((item) => item.ruleId === 'contracts.reference.section.v3');
+  assert.equal(reference.policyClass, 'OBSERVATION_ONLY');
+  assert.deepEqual(reference.proposedRelations, []);
+});
+
+test('version 4 packs keep relation proposals out of the committed fragment', () => {
+  const roots = {
+    'contracts-v4': 'sha256-1ffea8ded1877f28ce61c9e98bb79644f8bbe237c22baae6984983d92ede39a5',
+    'policy-v4': 'sha256-109ad58943b28a93453205ea86585843931eb69d8a989bcd071e8e48c70eacea',
+    'operations-v4': 'sha256-edde04257c55c480c95ce3db90074238a54ab05ee8c9d25135190f5da70f6da4',
+  };
+  const frozen = {
+    'contracts-v3': 'sha256-6ae56377066d223902532a3cbc092965f377b9be754071891e8b0fcddbcf3008',
+    'policy-v3': 'sha256-e8b870e3153bc9037d6b8083fc89d742d320eb9ffa7af507ba3ad40ce0d724f8',
+    'operations-v3': 'sha256-b71574dd91b60e29766ebcefda39c13a11f9f5eca965934d1697fec13a9c6d01',
+  };
+  for (const [id, root] of Object.entries(frozen)) {
+    assert.equal(authoring.domainPackRoot(domain(id).pack), root, id);
+  }
+  for (const [id, root] of Object.entries(roots)) {
+    const loaded = domain(id);
+    assert.equal(loaded.pack.version, '4', id);
+    assert.equal(authoring.domainPackRoot(loaded.pack), root, id);
+    const report = testDomainFixtures(loaded.pack, loaded.fixtures);
+    assert.equal(report.ok, true, `${id} ${report.fixtures.filter((item) => !item.ok).map((item) => `${item.id}: ${item.message}`).join(' | ')}`);
+    assert.deepEqual(report.unmatchedRules, []);
+    for (const rule of loaded.pack.rules) {
+      if (rule.relation) assert.equal(rule.policyClass, 'NEEDS_REVIEW', rule.id);
+      if (rule.policyClass === 'AUTO_ACCEPT') assert.ok(rule.kind === 'metadata' || rule.kind === 'heading', rule.id);
+      if (rule.reason === 'INCOMPLETE_REFERENCE') assert.equal(rule.relation, undefined, rule.id);
+    }
+  }
+  const loaded = domain('contracts-v4');
+  const image = imageFrom('v4-review', [{
+    source: 'terms.md',
+    text: 'Payment\nThe customer shall pay the invoice.\nThe supplier shall be responsible for packing.\nWork is as provided in Exhibit B.\nThe agreement is effective 2026-04-01.\n',
+    meta: { type: 'contract' },
+  }]);
+  const ran = runRuleProducer({ pack: loaded.pack, image: image.bytes });
+  assert.equal(ran.ok, true, JSON.stringify(ran.diagnostics));
+  assert.equal(ran.run.fragment.relations.length, 0);
+  assert.equal(ran.run.fragment.bindings.some((binding) => binding.validFrom), false);
+  const duty = ran.run.proposals.find((proposal) => proposal.ruleId === 'contracts.duty.responsible.v4');
+  assert.equal(duty.state, 'NEEDS_REVIEW');
+  const reference = ran.run.observations.find((item) => item.ruleId === 'contracts.reference.as-provided.v4');
+  assert.equal(reference.policyClass, 'OBSERVATION_ONLY');
+  assert.deepEqual(reference.proposedRelations, []);
+});
+
 test('ontology producer maps explicit structure and preserves Phase 8 ambiguity', async () => {
   const documents = [
     { source: 'a.md', text: 'alpha' },

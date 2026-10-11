@@ -25,6 +25,11 @@ export function hasErrors(diagnostics: readonly CegDiagnostic[]): boolean {
   return diagnostics.some((item) => item.severity === 'error');
 }
 
+/** Keys that assign through `Object.prototype` instead of creating an own property. */
+export function isReservedObjectKey(key: string): boolean {
+  return key === '__proto__' || key === 'prototype' || key === 'constructor';
+}
+
 export function sortDiagnostics(diagnostics: readonly CegDiagnostic[]): CegDiagnostic[] {
   return [...diagnostics].sort((left, right) => {
     const severity = severityRank(left.severity) - severityRank(right.severity);

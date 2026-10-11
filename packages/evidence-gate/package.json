@@ -49,7 +49,7 @@
     "prepublishOnly": "npm run build && npm test"
   },
   "dependencies": {
-    "@knolo/core": "5.5.0"
+    "@knolo/core": ">=6.0.0-rc.1 <7"
   },
   "devDependencies": {
     "typescript": "^5.5.0"

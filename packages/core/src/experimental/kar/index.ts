@@ -1,5 +1,8 @@
 /**
- * Experimental KAR API for `@knolo/core/experimental/kar`.
+ * Compatibility entry for `@knolo/core/experimental/kar`.
+ *
+ * @deprecated Import from `@knolo/core/kar`, which re-exports this module.
+ * This path stays operational for the V6 cycle.
  *
  * Semantics are frozen at `kar-1-research-1`. This module is not exported
  * from the `@knolo/core` root. A normal import of `@knolo/core` does not
@@ -47,5 +50,13 @@ export { explainKarCertificate, explainKarResult, renderKarEvaluation, renderKar
 export type { KarExplanation, KarExplanationEvidence } from './explain.js';
 export { inspectKarComplexity } from './complexity.js';
 export type { KarComplexity, KarComplexityRisk } from './complexity.js';
+export {
+  KAR_DOSSIER_FORMAT,
+  createKarDossier,
+  karDossierStatusStatement,
+  renderKarDossier,
+  verifyKarDossier,
+} from './dossier.js';
+export type { KarDossier, KarDossierFrontier, KarDossierManifest } from './dossier.js';
 export { validateKarPlan, validateKarResult, validateKarSidecar } from './validate.js';
 export type { Validation } from './validate.js';

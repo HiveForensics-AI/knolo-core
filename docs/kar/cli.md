@@ -1,13 +1,34 @@
-# Experimental KAR CLI
+# KAR CLI
 
 ```bash
 knolo kar evaluate
 knolo kar verify
 knolo kar explain
 knolo kar inspect
+knolo kar graph build
+knolo kar graph lint
+knolo kar graph validate
+knolo kar graph inspect
+knolo kar graph diff
+knolo kar produce
+knolo kar produce review
+knolo kar produce apply
+knolo kar domain validate
+knolo kar domain inspect
+knolo kar domain test
+knolo kar package
+knolo kar package verify
+knolo kar dossier build
+knolo kar dossier verify
+knolo kar demo
+knolo kar conformance
 ```
 
-`knolo kar --help` prints the same contract. The command is experimental and uses `@knolo/core/experimental/kar`. It does not change `knolo query`.
+`knolo kar --help` prints the contract, a short example, `--json`, and the exit rule. The command uses `@knolo/core/kar` when that entry is installed, and it still accepts the experimental entry. It does not change `knolo query`.
+
+`evaluate` exits 0 for every completed status, including `UNSATISFIED_EVIDENCE_REQUIREMENTS`. `verify`, `dossier verify`, `package verify`, and `conformance` exit non-zero when a check fails. `demo` and `conformance` need a knolo-core checkout.
+
+`knolo --version` prints `@knolo/cli` and the resolved `@knolo/core` version.
 
 ## Evaluate
 

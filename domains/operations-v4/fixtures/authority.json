@@ -1,0 +1,26 @@
+{
+  "id": "authority",
+  "documents": [
+    {
+      "source": "procedure.md",
+      "text": "The operator must complete the step.\n",
+      "meta": {
+        "type": "procedure",
+        "authority": "80"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "procedure"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "current-procedure",
+      "proposition": "Must the operator complete the step?",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS"
+    }
+  }
+}

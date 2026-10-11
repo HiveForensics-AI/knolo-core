@@ -1,0 +1,28 @@
+{
+  "id": "v4-structures",
+  "documents": [
+    {
+      "source": "structures.md",
+      "text": "Payment\nObligations\nRenewal\nThe customer shall pay the invoice.\nThe supplier will deliver the goods.\nThe customer will pay the fee.\nThe contractor agrees to maintain the equipment.\nThe supplier shall be responsible for packing.\nThe customer has the right to audit the books.\nRenewal follows pursuant to Schedule 4.\nPursuant to Section 2.\nWork is as provided in Exhibit B.\nAs provided in Exhibit D.\n",
+      "meta": {
+        "type": "contract"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "agreement",
+      "obligation",
+      "payment",
+      "renewal"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE",
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE",
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE",
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE"
+    ]
+  }
+}

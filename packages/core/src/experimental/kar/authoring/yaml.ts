@@ -213,12 +213,19 @@ function splitKey(text: string, line: number): { key: string; rest: string | und
       const key = text.slice(0, index).trim();
       const after = text.slice(index + 1);
       if (key.length === 0) throw new YamlError('CEG_PARSE', String(line), 'YAML key is empty.');
-      if (after.length === 0) return { key: unquoteKey(key, line), rest: undefined };
+      if (after.length === 0) return { key: guardKey(unquoteKey(key, line), line), rest: undefined };
       if (!after.startsWith(' ')) throw new YamlError('CEG_PARSE', String(line), 'YAML keys require ": " before a value.');
-      return { key: unquoteKey(key, line), rest: after.trim() };
+      return { key: guardKey(unquoteKey(key, line), line), rest: after.trim() };
     }
   }
   throw new YamlError('CEG_PARSE', String(line), 'Expected a YAML key.');
+}
+
+function guardKey(key: string, line: number): string {
+  if (key === '__proto__' || key === 'prototype' || key === 'constructor') {
+    throw new YamlError('CEG_PARSE', String(line), `YAML key "${key}" is not allowed.`);
+  }
+  return key;
 }
 
 function unquoteKey(key: string, line: number): string {

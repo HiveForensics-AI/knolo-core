@@ -1,0 +1,14 @@
+{
+  "format": "kar-evidence-dossier-1",
+  "queryDigest": "sha256-a8eddf704181902e85e93c8dbb4fdeb9516f74b2bebd3b07268e1a9598de3656",
+  "image": {
+    "stateRoot": "sha256-6db4557125f77322e410bbbd4cb4d10d5ebab5f7b38b96dfc886fef84aeb6a77",
+    "knowledgeRoot": "sha256-35e5cd0b1e08472b38bafffd79b7dfd00db508cc129eb426cd6ba932a9a99a27",
+    "objectRoot": "sha256-a9c3711e7d5a0f9b075d113233ef7b409c7b793122070029aebcaf9c23c63c2c",
+    "commitDigest": "sha256-abc0dff874ad2bc6eed8426a8976324118d40c20760db32b5f3951365ac9d529"
+  },
+  "semanticRoot": "sha256-6e14e7639cff187a58b137e3507f65534edf728d0cf133e26e94f472eb322628",
+  "planRoot": "sha256-f9237b4e352511a4f22ef3510ac9edbe5e55338f91ab852aa604637d72977948",
+  "karRoot": "sha256-73735c412c2b86f8b026a6e0c9408af7afcbfdf035defb8919fa7a285dcf1985",
+  "resultDigest": "sha256-f8210263148d100d065cb57ede7c1e1f69c38313901e439d71bac8a99a34a12c"
+}

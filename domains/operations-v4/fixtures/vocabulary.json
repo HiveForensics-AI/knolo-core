@@ -1,0 +1,28 @@
+{
+  "id": "vocabulary",
+  "documents": [
+    {
+      "source": "vocabulary.md",
+      "text": "Procedure\nStep\nThe operator must complete the step.\nThe operator must not complete the step.\nThe operator must not start the line.\nInspect the guard before starting the line.\nContinue unless authorized by the lead.\nThe step is subject to approval.\nThe step is subject to the former limit.\nThis text is replaced by procedure 12.\nStart using the equipment listed here.\nThe step is valid before the audit.\nThe step is valid after the audit.\nThe procedure is effective 2026-01-01 until 2027-01-01.\n",
+      "meta": {
+        "type": "procedure"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "procedure",
+      "step"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE"
+    ],
+    "kar": {
+      "template": "procedure-review",
+      "proposition": "Must the operator complete the step?",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS"
+    }
+  }
+}

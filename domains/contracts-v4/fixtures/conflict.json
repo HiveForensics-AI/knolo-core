@@ -1,0 +1,32 @@
+{
+  "id": "conflict",
+  "documents": [
+    {
+      "source": "permit.md",
+      "text": "The agreement may terminate after notice.\n",
+      "meta": {
+        "type": "contract"
+      }
+    },
+    {
+      "source": "bar.md",
+      "text": "The agreement may not terminate during the annual term.\n",
+      "meta": {
+        "type": "contract"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "agreement"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "balanced-review",
+      "proposition": "May the agreement terminate?",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS"
+    }
+  }
+}

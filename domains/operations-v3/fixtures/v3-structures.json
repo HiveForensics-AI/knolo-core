@@ -1,0 +1,22 @@
+{
+  "id": "v3-structures",
+  "documents": [
+    {
+      "source": "structures.md",
+      "text": "Procedure\nThe operator must close the valve.\nThe technician shall record the reading.\nThe operator is required to stop the pump.\nThe operator must not open the cover.\nThe operator must wait unless the chief authorizes a delay.\nThe torque is as set forth in Section 4.\n",
+      "meta": {
+        "type": "procedure"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "procedure"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE"
+    ]
+  }
+}

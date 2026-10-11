@@ -1,6 +1,6 @@
 {
   "name": "@knolo/cli",
-  "version": "5.5.1",
+  "version": "6.0.0-rc.1",
   "type": "module",
   "bin": {
     "knolo": "bin/knolo.mjs"
@@ -9,7 +9,7 @@
     "bin/",
     "templates/"
   ],
-  "description": "CLI for building, inspecting, verifying, and operating Knolo V4 packs and V5 Knowledge Images.",
+  "description": "CLI for Knolo V4 packs, V5 Knowledge Images, and KAR evidence-set retrieval.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -32,7 +32,7 @@
     "test:hub": "node --test test/hub.integration.test.mjs"
   },
   "dependencies": {
-    "@knolo/core": "^5.5.0"
+    "@knolo/core": ">=6.0.0-rc.1 <7"
   },
   "private": false
 }

@@ -1,0 +1,25 @@
+{
+  "id": "support",
+  "documents": [
+    {
+      "source": "procedure.md",
+      "text": "The operator must complete the step.\nThe room probably means lodging.\n",
+      "meta": {
+        "type": "procedure"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "procedure"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "current-procedure",
+      "proposition": "Must the operator complete the step?",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS"
+    }
+  }
+}

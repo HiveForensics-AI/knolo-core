@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schema/experimental/kar/kar-dossier-v1.schema.json",
+  "title": "KAR Evidence Dossier manifest v1",
+  "description": "Packaging manifest for one frozen kar-1-research-1 evaluation. This object is not a semantic root. Verification recomputes the certificate from the Knowledge Image, Committed Evidence Graph, plan, and proposition.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "queryDigest", "image", "semanticRoot", "planRoot", "karRoot", "resultDigest"],
+  "properties": {
+    "format": { "const": "kar-evidence-dossier-1" },
+    "queryDigest": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stateRoot", "knowledgeRoot", "objectRoot", "commitDigest"],
+      "properties": {
+        "stateRoot": { "type": ["string", "null"] },
+        "knowledgeRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+        "objectRoot": { "type": ["string", "null"] },
+        "commitDigest": { "type": ["string", "null"] }
+      }
+    },
+    "semanticRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+    "planRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+    "karRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+    "resultDigest": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" }
+  }
+}

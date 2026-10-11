@@ -1,0 +1,117 @@
+format: ceg-domain-1
+id: contracts
+version: 3
+description: Version 3 precision-calibrated contracts semantics. AUTO_ACCEPT is limited to metadata and heading context. Relation rules are NEEDS_REVIEW unless development calibration later promotes them. Version 2 is unchanged.
+conceptKinds:
+  - id: agreement
+    label: Agreement
+  - id: amendment
+    label: Amendment
+  - id: effective-date
+    label: Effective date
+  - id: exception
+    label: Exception
+  - id: obligation
+    label: Obligation
+  - id: party
+    label: Party
+  - id: payment
+    label: Payment
+  - id: renewal
+    label: Renewal
+  - id: restriction
+    label: Restriction
+  - id: right
+    label: Right
+  - id: scope
+    label: Scope
+  - id: termination
+    label: Termination
+concepts:
+  - name: agreement
+    kind: agreement
+    label: Agreement
+    phrases:
+      - agreement
+      - contract
+  - name: termination
+    kind: termination
+    label: Termination
+    phrases:
+      - may terminate
+      - may not terminate
+  - name: cancellation
+    kind: right
+    label: Cancellation
+    phrases:
+      - may cancel
+      - may not cancel
+  - name: renewal
+    kind: renewal
+    label: Renewal
+    phrases:
+      - must renew
+      - automatically renew
+  - name: payment
+    kind: payment
+    label: Payment
+    phrases:
+      - shall pay
+  - name: prior-agreement
+    kind: agreement
+    label: Prior agreement
+    phrases:
+      - supersedes all
+  - name: obligation
+    kind: obligation
+    label: Obligation
+    phrases:
+      - must provide
+  - name: restriction
+    kind: restriction
+    label: Restriction
+    phrases:
+      - shall not assign
+  - name: exception
+    kind: exception
+    label: Exception
+    phrases:
+      - except when
+      - unless stated
+      - provided that
+      - subject to
+  - name: party
+    kind: party
+    label: Party
+    phrases:
+      - applies to the party
+  - name: amendment
+    kind: amendment
+    label: Amendment
+    phrases:
+      - supersedes the agreement
+      - overrides the restriction
+  - name: scope
+    kind: scope
+    label: Scope
+    phrases:
+      - applies to the party
+  - name: effective-date
+    kind: effective-date
+    label: Effective date
+    phrases:
+      - valid before
+      - valid after
+      - effective
+      - until
+relations:
+  - permits
+  - prohibits
+  - requires
+  - qualifies
+  - excepts
+  - overrides
+  - supersedes
+  - applies_to
+  - valid_before
+  - valid_after

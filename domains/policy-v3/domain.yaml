@@ -1,0 +1,90 @@
+format: ceg-domain-1
+id: policy
+version: 3
+description: Version 3 precision-calibrated policy semantics. AUTO_ACCEPT is limited to metadata and heading context. Relation rules are NEEDS_REVIEW unless development calibration later promotes them. Version 2 is unchanged.
+conceptKinds:
+  - id: control
+    label: Control
+  - id: effective-date
+    label: Effective date
+  - id: exception
+    label: Exception
+  - id: policy
+    label: Policy
+  - id: prohibition
+    label: Prohibition
+  - id: requirement
+    label: Requirement
+  - id: role
+    label: Role
+  - id: scope
+    label: Scope
+concepts:
+  - name: policy
+    kind: policy
+    label: Policy
+    phrases:
+      - policy
+  - name: control
+    kind: control
+    label: Control
+    phrases:
+      - is required
+      - is prohibited
+  - name: prohibition
+    kind: prohibition
+    label: Prohibition
+    phrases:
+      - action is prohibited
+  - name: exception
+    kind: exception
+    label: Exception
+    phrases:
+      - exception applies
+      - unless approved
+      - subject to
+  - name: role
+    kind: role
+    label: Role
+    phrases:
+      - applies to the role
+  - name: scope
+    kind: scope
+    label: Scope
+    phrases:
+      - applies to
+  - name: authorization
+    kind: control
+    label: Authorization
+    phrases:
+      - is authorized
+  - name: replacement
+    kind: policy
+    label: Replacement
+    phrases:
+      - replaced by
+  - name: effective-date
+    kind: effective-date
+    label: Effective date
+    phrases:
+      - valid before
+      - valid after
+      - effective
+      - until
+  - name: requirement
+    kind: requirement
+    label: Requirement
+    phrases:
+      - must
+      - shall
+relations:
+  - permits
+  - requires
+  - prohibits
+  - qualifies
+  - excepts
+  - supersedes
+  - overrides
+  - applies_to
+  - valid_before
+  - valid_after

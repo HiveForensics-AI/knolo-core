@@ -1,0 +1,23 @@
+{
+  "id": "v2-patterns",
+  "documents": [
+    {
+      "source": "policy-v2.md",
+      "text": "The agency shall not store the material.\nThis directive supersedes the prior directive.\nThe duty stands except when the director approves.\nThe duty stands provided that the director approves.\nThe duty stands only if the director approves.\nThe office is authorized to keep the record.\nThe directive applies to every office.\nThe offices are subject to the directive.\nThe record will be subject to the directive.\nexcept as provided in the missing exhibit, stop.\nExcept as provided in the missing exhibit, stop.\n",
+      "meta": {
+        "type": "policy"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "policy"
+    ],
+    "relations": [],
+    "diagnosticCodes": [
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE",
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE"
+    ],
+    "bindings": []
+  }
+}

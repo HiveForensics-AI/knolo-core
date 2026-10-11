@@ -1,0 +1,28 @@
+{
+  "id": "vocabulary",
+  "documents": [
+    {
+      "source": "vocabulary.md",
+      "text": "Agreement\nTermination\nThe agreement may terminate after notice.\nThe agreement may not terminate during the term.\nThe customer may cancel the order.\nThe customer may not cancel the order.\nThe parties must renew the agreement.\nThe supplier must provide the service.\nThe customer shall not assign the agreement.\nThe duty stands except when notice is late.\nRenewal applies unless stated otherwise.\nThe duty stands provided that notice is given.\nThe duty stands subject to approval.\nThe duty is subject to the former limit.\nThe amendment supersedes the agreement.\nThe amendment overrides the restriction.\nThe scope applies to the party.\nThe clause is valid before the renewal.\nThe clause is valid after the amendment.\nThe agreement is effective 2026-01-01 until 2027-01-01.\n",
+      "meta": {
+        "type": "contract"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "agreement",
+      "termination"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE"
+    ],
+    "kar": {
+      "template": "balanced-review",
+      "proposition": "May the agreement terminate?",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS"
+    }
+  }
+}

@@ -1,5 +1,6 @@
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { KAR_CLI_MAX_IMAGE_BYTES, readBounded, readBoundedJson, readBoundedText } from './kar-limits.mjs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -194,7 +195,7 @@ function writeRun(file, run) {
 
 export function loadDomainDirectory(authoring, directory) {
   const resolved = resolve(directory);
-  const parsed = authoring.parseAuthoringDocument(readFileSync(path.join(resolved, 'domain.yaml'), 'utf8'));
+  const parsed = authoring.parseAuthoringDocument(readBoundedText(path.join(resolved, 'domain.yaml')));
   if (!parsed.ok) return parsed;
   const value = parsed.value;
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -204,7 +205,7 @@ export function loadDomainDirectory(authoring, directory) {
   const rulesDir = path.join(resolved, 'rules');
   if (existsSync(rulesDir)) {
     for (const name of readdirSync(rulesDir).filter((entry) => /\.(ya?ml|json)$/i.test(entry)).sort()) {
-      const item = authoring.parseAuthoringDocument(readFileSync(path.join(rulesDir, name), 'utf8'));
+      const item = authoring.parseAuthoringDocument(readBoundedText(path.join(rulesDir, name)));
       if (!item.ok) return item;
       if (Array.isArray(item.value)) rules.push(...item.value);
       else rules.push(item.value);
@@ -216,7 +217,7 @@ export function loadDomainDirectory(authoring, directory) {
   const plansDir = path.join(resolved, 'plans');
   if (existsSync(plansDir)) {
     for (const name of readdirSync(plansDir).filter((entry) => entry.endsWith('.json')).sort()) {
-      planTemplates[name.replace(/\.json$/, '')] = JSON.parse(readFileSync(path.join(plansDir, name), 'utf8'));
+      planTemplates[name.replace(/\.json$/, '')] = readBoundedJson(path.join(plansDir, name));
     }
   }
   value.planTemplates = planTemplates;
@@ -224,7 +225,7 @@ export function loadDomainDirectory(authoring, directory) {
   const fixturesDir = path.join(resolved, 'fixtures');
   if (existsSync(fixturesDir)) {
     for (const name of readdirSync(fixturesDir).filter((entry) => entry.endsWith('.json')).sort()) {
-      fixtures.push(JSON.parse(readFileSync(path.join(fixturesDir, name), 'utf8')));
+      fixtures.push(readBoundedJson(path.join(fixturesDir, name)));
     }
   }
   const interpreted = authoring.interpretDomainPack(value);
@@ -260,11 +261,11 @@ function resolve(file) {
 }
 
 function readBytes(file) {
-  return readFileSync(resolve(file));
+  return readBounded(file, KAR_CLI_MAX_IMAGE_BYTES);
 }
 
 function readJson(file) {
-  return JSON.parse(readFileSync(resolve(file), 'utf8'));
+  return readBoundedJson(file);
 }
 
 async function loadAuthoring() {

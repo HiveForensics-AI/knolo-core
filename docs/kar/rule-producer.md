@@ -25,6 +25,32 @@ A rule is data. The pack cannot call `eval`, `Function`, dynamic import, a shell
 
 `autoAccept: true` makes a concept, relation, or binding proposal `ACCEPTED`. Otherwise the state is `NEEDS_REVIEW`. Date, authority, and incomplete rules are observations even when `autoAccept` is true. They explain a binding. They do not invent a second semantic item.
 
+## Policy class
+
+A rule may set `policyClass` to `AUTO_ACCEPT`, `NEEDS_REVIEW`, or `OBSERVATION_ONLY`. There is no probability score. When `policyClass` is absent, the producer keeps the `autoAccept` behavior above, and date, authority, and incomplete rules stay observations. The canonical Domain Pack body omits `policyClass` when it is unset, so version 1 and version 2 roots do not move.
+
+| Class | Committed fragment |
+| --- | --- |
+| `AUTO_ACCEPT` | The proposal state is `ACCEPTED` and it enters the generated CEG Source. `autoAccept` must be true. Date and incomplete rules cannot use this class. `condition-main` cannot use it. |
+| `NEEDS_REVIEW` | The proposal is recorded with evidence, span, rule id, proposed relation, and reason. It stays out of the fragment until a `ceg-decisions-1` file accepts it. `autoAccept` must be false. |
+| `OBSERVATION_ONLY` | The match is an observation only. It does not propose a committed relationship. `autoAccept` must be false. |
+
+`reason: INCOMPLETE_REFERENCE` cannot carry a relation or a binding. The producer emits `CEG_PRODUCER_INCOMPLETE_REFERENCE` and does not invent the missing target. A `NEEDS_REVIEW` or `OBSERVATION_ONLY` date or authority rule does not copy that value onto other committed bindings. An explicit integer authority with no policy class, or with `AUTO_ACCEPT`, still attaches, because the source stated the integer.
+
+## Clause templates
+
+`kind: clause` matches one bounded sentence, at most 400 characters, and at most 200 sentences in an evidence object. The pattern is a template name, not a free grammar:
+
+| Template | Shape |
+| --- | --- |
+| `party-modal-verb` | A subject, then `shall`, `must`, `will`, or `may`, then a verb that is not `not`, then an object. |
+| `party-modal-not` | A subject, then one of those modals, then `not`, then a verb and an object. |
+| `party-agrees-to` | A subject, then `agrees to`, then a verb and an object. |
+| `object-is-required` | `is required to` or `are required to`, then a verb and an object. |
+| `condition-main` | A qualifier cue and a modal in the same sentence. The qualified endpoint is not resolved, so this template cannot be `AUTO_ACCEPT`. |
+
+Optional `modal` and `verb` filters keep a template on one lexical choice. Optional `headingContext` requires the nearest preceding short heading to match exactly. The heading is context. The sentence span remains the evidence. This is not an LLM, a dependency parser, or a network service.
+
 CLI `--auto` writes that accepted fragment as CEG Source. It is available for this deterministic producer. See [Producers](producers.md).
 
 ## Evidence

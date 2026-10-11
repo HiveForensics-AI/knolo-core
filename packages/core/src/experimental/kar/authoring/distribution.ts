@@ -179,11 +179,28 @@ function interpretManifest(value: unknown): { ok: true; value: KarDistributionMa
   if (!value || typeof value !== 'object') {
     return { ok: false, diagnostics: [diagnostic('error', 'CEG_MANIFEST_MISMATCH', '', 'Distribution manifest must be an object.')] };
   }
-  const record = value as Partial<KarDistributionManifest>;
+  const record = value as Partial<KarDistributionManifest> & Record<string, unknown>;
   if (record.format !== KAR_DISTRIBUTION_FORMAT || !record.image || !record.kar) {
     return { ok: false, diagnostics: [diagnostic('error', 'CEG_MANIFEST_MISMATCH', 'format', 'Manifest format must be kar-distribution-1.')] };
   }
+  if (extraKeys(record, ['format', 'image', 'kar'])) {
+    return { ok: false, diagnostics: [diagnostic('error', 'CEG_MANIFEST_MISMATCH', 'manifest', 'Distribution manifest has an unknown field.')] };
+  }
+  if (!isPlain(record.image) || extraKeys(record.image, ['file', 'stateRoot', 'objectRoot', 'commitDigest', 'knowledgeRoot', 'sha256'])) {
+    return { ok: false, diagnostics: [diagnostic('error', 'CEG_MANIFEST_MISMATCH', 'image', 'Distribution image record has an unknown field.')] };
+  }
+  if (!isPlain(record.kar) || extraKeys(record.kar, ['file', 'semanticRoot', 'sha256'])) {
+    return { ok: false, diagnostics: [diagnostic('error', 'CEG_MANIFEST_MISMATCH', 'kar', 'Distribution CEG record has an unknown field.')] };
+  }
   return { ok: true, value: record as KarDistributionManifest };
+}
+
+function isPlain(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function extraKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
+  return Object.keys(value).some((key) => !keys.includes(key));
 }
 
 function interpretBuild(value: unknown): { ok: true; value: CegBuildRecord } | { ok: false; diagnostics: CegDiagnostic[] } {

@@ -1,71 +1,74 @@
-# Experimental KAR
+# KAR
 
-KAR answers a different question from ordinary Knolo retrieval.
+Knolo V6 introduces KAR: deterministic evidence-set retrieval over committed knowledge.
 
-A normal Knolo query asks which evidence best matches the query. KAR asks what minimum evidence set satisfies the declared support, opposition, qualification, temporal, and authority requirements.
+KAR retrieves a minimum evidence set under explicit evidence requirements rather than returning another ranked list of similar passages. Evidence remains typed as support, opposition, qualification, temporal/applicability, or authority according to the declared plan. The evaluation is deterministic and replayable over a committed Knowledge Image and Committed Evidence Graph.
 
-The semantics are frozen at `kar-1-research-1`. This package path is experimental. It is not exported from the `@knolo/core` root, so existing callers do not load it.
+KAR does not find all truth, prove a claim, guarantee that source documents are correct, understand every contract, or fully extract semantics by itself.
 
-```ts
-import {
-  createKarSession,
-  evaluateKar,
-  explainKarResult,
-  verifyKar,
-} from '@knolo/core/experimental/kar';
+## Four layers
+
+```text
+documents
+    ↓
+Knowledge Image
+    ↓
+semantic producer / manual authoring
+    ↓
+CEG Source
+    ↓
+deterministic CEG compiler
+    ↓
+Committed Evidence Graph
+    ↓
+KAR
+    ↓
+minimum sufficient typed evidence set
+    ↓
+Evidence Dossier
+    ↓
+independent verification
 ```
 
-```bash
-knolo kar evaluate \
-  --image knowledge.knolo \
-  --graph knowledge.kar.json \
-  --plan plan.json \
-  --query "Can this enterprise customer cancel?"
-```
+1. Knowledge Image. Portable evidence. V5 `stateRoot` is its identity.
+2. CEG authoring and compiler. Editable CEG Source becomes a KarSidecarV1.
+3. KAR evaluation. Minimum applicable evidence under the declared plan.
+4. Evidence Dossier and verification. The packaged result and an independent recomputation.
 
-## The three objects
+Normal Knolo retrieval still asks which evidence best matches a query. KAR asks a different question: what is the minimum applicable evidence set required to evaluate this proposition under the declared plan?
 
-- The Knowledge Image is the evidence. Its `stateRoot` is the mounted V5 identity.
-- The Committed Evidence Graph (CEG) is a sidecar of relationships over that evidence. Its `knowledgeRoot` is the frozen research projection of the image, and it is not the V5 `stateRoot`.
-- KAR is deterministic evidence-set retrieval over that committed graph.
+## Start here
 
-The CEG stays in a sidecar such as `knowledge.kar.json`. This phase does not put those bytes inside `.knolo`.
-
-## What KAR does not do
-
-KAR does not:
-
-- decide objective truth;
-- infer semantic relationships at query time;
-- replace BM25;
-- replace MMR;
-- require embeddings;
-- require a vector database;
-- claim that absence from its result is global absence of evidence;
-- silently approximate exact cover;
-- generate the CEG by itself. Authoring and compilation live beside retrieval. See [Authoring](authoring.md).
-
-`SATISFIED` means the selected set meets the plan. It does not mean the proposition is true. `UNSATISFIED_EVIDENCE_REQUIREMENTS` means the plan's requirements were not met inside the closure. It does not mean the proposition is false.
-
-When exact cover exceeds `maxCoverVisits`, the status is `SEARCH_BOUND_EXCEEDED` and the selected set is empty. There is no greedy fallback.
-
-## Read next
-
-- [Concepts](concepts.md)
+- [Quickstart](quickstart.md)
 - [API](api.md)
-- [CLI](cli.md)
-- [Certificates](certificates.md)
-- [Phase 7 report](EXPERIMENTAL_CORE_REPORT.md)
+- [Plans](plans.md)
+- [Committed Evidence Graph](ceg.md)
 - [Authoring](authoring.md)
-- [CEG Source](ceg-source.md)
-- [Compilation](compilation.md)
-- [Distribution](distribution.md)
-- [Importing](importing.md)
-- [CEG toolchain report](CEG_TOOLCHAIN_REPORT.md)
 - [Producers](producers.md)
 - [Domain Packs](domain-packs.md)
-- [Rule producer](rule-producer.md)
-- [Model producer](model-producer.md)
-- [Semantic producers report](SEMANTIC_PRODUCERS_REPORT.md)
+- [Evidence Dossiers](dossiers.md)
+- [Verification](verification.md)
+- [CLI](cli.md)
+- [Browser](browser.md)
+- [Security](security.md)
+- [Migration to V6](migration-v6.md)
+- [Limitations](limitations.md)
+- [Hub labels](hub.md)
+- [Concepts](concepts.md)
+- [Research history](research/README.md)
 
-The worked example is [`examples/kar`](../../examples/kar/README.md). Schemas live in [`schemas/experimental/kar`](../../schemas/experimental/kar/).
+The worked product examples are [`examples/kar-v6`](../../examples/kar-v6/README.md). Public vectors are [`conformance/kar/v1`](../../conformance/kar/v1/README.md).
+
+```ts
+import { createKarSession, evaluateKar, verifyKar, explainKarResult, createKarDossier } from '@knolo/core/kar';
+```
+
+`@knolo/core` does not load this module. `@knolo/core/experimental/kar` remains operational for the V6 cycle.
+
+## Semantic production validation
+
+Initial Domain Packs are experimental and review-oriented. Human gold for automatic relation commitment is not complete. KAR itself operates deterministically over the committed graph regardless of how the graph was produced.
+
+Domain Pack maturity for the bundled v4 packs is `review-required`. See [`domains/v6-catalog.json`](../../domains/v6-catalog.json). A later human-validation pass can move a pack to `validated` without a new KAR version.
+
+`SATISFIED` means the evidence requirements were satisfied. It does not mean the claim is proven. `UNSATISFIED_EVIDENCE_REQUIREMENTS` means the evidence requirements were not satisfied. It does not mean the claim is false.
