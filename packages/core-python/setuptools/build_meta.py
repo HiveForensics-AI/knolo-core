@@ -13,7 +13,28 @@ from typing import Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_NAME = "knolo"
-VERSION = "5.5.0"
+
+
+def _project_version() -> str:
+    """Read [project].version. This file is the build backend, so a hardcoded version is what gets published."""
+    section = ""
+    for raw in (ROOT / "pyproject.toml").read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if line.startswith("[") and line.endswith("]"):
+            section = line
+            continue
+        if section != "[project]" or "=" not in line:
+            continue
+        key, value = (part.strip() for part in line.split("=", 1))
+        if key != "version":
+            continue
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+            return value[1:-1]
+        raise RuntimeError(f"unsupported [project].version value: {value}")
+    raise RuntimeError("pyproject.toml [project] has no version")
+
+
+VERSION = _project_version()
 DIST_INFO = f"{PACKAGE_NAME}-{VERSION}.dist-info"
 WHEEL_NAME = f"{PACKAGE_NAME}-{VERSION}-py3-none-any.whl"
 SDIST_NAME = f"{PACKAGE_NAME}-{VERSION}.tar.gz"
