@@ -1,8 +1,8 @@
 {
   "name": "@knolo/core",
-  "version": "5.5.1",
+  "version": "6.0.0",
   "type": "module",
-  "description": "Deterministic, verifiable Knowledge Images and local-first retrieval for trustworthy AI.",
+  "description": "Deterministic, verifiable Knowledge Images, local-first retrieval, and KAR evidence-set retrieval over a Committed Evidence Graph.",
   "keywords": [
     "llm",
     "knowledge-base",
@@ -39,17 +39,42 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
+    "./package.json": "./package.json",
     "./node": {
       "import": "./dist/node.js",
       "types": "./dist/node.d.ts"
+    },
+    "./experimental/kar": {
+      "browser": "./dist/experimental/kar/index.js",
+      "react-native": "./dist/experimental/kar/index.js",
+      "import": "./dist/experimental/kar/index.js",
+      "types": "./dist/experimental/kar/index.d.ts"
+    },
+    "./experimental/kar/authoring": {
+      "browser": "./dist/experimental/kar/authoring/index.js",
+      "react-native": "./dist/experimental/kar/authoring/index.js",
+      "import": "./dist/experimental/kar/authoring/index.js",
+      "types": "./dist/experimental/kar/authoring/index.d.ts"
+    },
+    "./kar": {
+      "browser": "./dist/kar/index.js",
+      "react-native": "./dist/kar/index.js",
+      "import": "./dist/kar/index.js",
+      "types": "./dist/kar/index.d.ts"
+    },
+    "./kar/authoring": {
+      "browser": "./dist/kar/authoring/index.js",
+      "react-native": "./dist/kar/authoring/index.js",
+      "import": "./dist/kar/authoring/index.js",
+      "types": "./dist/kar/authoring/index.d.ts"
     }
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node scripts/copy-kar-schemas.mjs",
     "prepublishOnly": "npm run build",
     "smoke": "node scripts/smoke.mjs",
-    "test": "npm run build && node scripts/check-runtime-no-node.mjs && node --test test/*.test.mjs && node scripts/test.mjs",
+    "test": "npm run build && node scripts/check-runtime-no-node.mjs && npm run build --prefix ../../research/kar-1 && node --test test/*.test.mjs && node scripts/test.mjs",
     "format": "prettier --write src/agent.ts src/pack.ts src/pack.runtime.ts src/pack.node.ts src/node.ts src/builder.ts src/live.ts src/index.ts src/knowledge_studio_v5.ts src/knowledge_studio_v5.node.ts src/knowledge_sync_host_v5.ts src/knowledge_sync_host_v5.node.ts src/knowledge_lease_v5.node.ts src/knowledge_authorized_operations_v5.ts scripts/test.mjs scripts/check-runtime-no-node.mjs ../../README.md README.md",
     "format:check": "prettier --check src/agent.ts src/pack.ts src/pack.runtime.ts src/pack.node.ts src/node.ts src/builder.ts src/live.ts src/index.ts src/knowledge_studio_v5.ts src/knowledge_studio_v5.node.ts src/knowledge_sync_host_v5.ts src/knowledge_sync_host_v5.node.ts src/knowledge_lease_v5.node.ts src/knowledge_authorized_operations_v5.ts scripts/test.mjs scripts/check-runtime-no-node.mjs ../../README.md README.md",
     "check:runtime-no-node": "node scripts/check-runtime-no-node.mjs"

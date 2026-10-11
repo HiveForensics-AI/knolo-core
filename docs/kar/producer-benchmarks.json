@@ -1,0 +1,175 @@
+{
+  "benchmark": "ceg-producer-quality",
+  "scenariosPerDomain": 100,
+  "producers": [
+    {
+      "producer": "contracts-rules-v1",
+      "domain": "contracts",
+      "scenarios": 100,
+      "concept": {
+        "precision": 1,
+        "recall": 1,
+        "microPrecision": 1,
+        "microRecall": 1,
+        "proposed": 209,
+        "reference": 209
+      },
+      "relation": {
+        "precision": 1,
+        "recall": 1,
+        "microPrecision": 1,
+        "microRecall": 1,
+        "proposed": 127,
+        "reference": 127
+      },
+      "binding": {
+        "precision": 1,
+        "recall": 1,
+        "microPrecision": 1,
+        "microRecall": 1,
+        "proposed": 127,
+        "reference": 127
+      },
+      "evidenceGroundingPrecision": 1,
+      "temporalAccuracy": 1,
+      "authorityAccuracy": 1,
+      "contradictionsKept": 1,
+      "kar": {
+        "statusAgreement": 1,
+        "frontierAgreement": 1,
+        "selectedEvidenceAgreement": 1,
+        "abstentionAgreement": 1
+      }
+    },
+    {
+      "producer": "policy-rules-v1",
+      "domain": "policy",
+      "scenarios": 100,
+      "concept": {
+        "precision": 1,
+        "recall": 1,
+        "microPrecision": 1,
+        "microRecall": 1,
+        "proposed": 209,
+        "reference": 209
+      },
+      "relation": {
+        "precision": 1,
+        "recall": 1,
+        "microPrecision": 1,
+        "microRecall": 1,
+        "proposed": 127,
+        "reference": 127
+      },
+      "binding": {
+        "precision": 1,
+        "recall": 1,
+        "microPrecision": 1,
+        "microRecall": 1,
+        "proposed": 127,
+        "reference": 127
+      },
+      "evidenceGroundingPrecision": 1,
+      "temporalAccuracy": 1,
+      "authorityAccuracy": 1,
+      "contradictionsKept": 1,
+      "kar": {
+        "statusAgreement": 1,
+        "frontierAgreement": 1,
+        "selectedEvidenceAgreement": 1,
+        "abstentionAgreement": 1
+      }
+    },
+    {
+      "producer": "operations-rules-v1",
+      "domain": "operations",
+      "scenarios": 100,
+      "concept": {
+        "precision": 1,
+        "recall": 1,
+        "microPrecision": 1,
+        "microRecall": 1,
+        "proposed": 209,
+        "reference": 209
+      },
+      "relation": {
+        "precision": 1,
+        "recall": 1,
+        "microPrecision": 1,
+        "microRecall": 1,
+        "proposed": 127,
+        "reference": 127
+      },
+      "binding": {
+        "precision": 1,
+        "recall": 1,
+        "microPrecision": 1,
+        "microRecall": 1,
+        "proposed": 127,
+        "reference": 127
+      },
+      "evidenceGroundingPrecision": 1,
+      "temporalAccuracy": 1,
+      "authorityAccuracy": 1,
+      "contradictionsKept": 1,
+      "kar": {
+        "statusAgreement": 1,
+        "frontierAgreement": 1,
+        "selectedEvidenceAgreement": 1,
+        "abstentionAgreement": 1
+      }
+    },
+    {
+      "producer": "generic-rules-v1",
+      "domain": "generic",
+      "scenarios": 100,
+      "concept": {
+        "precision": 1,
+        "recall": 1,
+        "microPrecision": 1,
+        "microRecall": 1,
+        "proposed": 192,
+        "reference": 192
+      },
+      "relation": {
+        "precision": 1,
+        "recall": 1,
+        "microPrecision": 1,
+        "microRecall": 1,
+        "proposed": 92,
+        "reference": 92
+      },
+      "binding": {
+        "precision": 1,
+        "recall": 1,
+        "microPrecision": 1,
+        "microRecall": 1,
+        "proposed": 92,
+        "reference": 92
+      },
+      "evidenceGroundingPrecision": 1,
+      "temporalAccuracy": 1,
+      "authorityAccuracy": 1,
+      "contradictionsKept": 1,
+      "kar": {
+        "statusAgreement": 1,
+        "frontierAgreement": 1,
+        "selectedEvidenceAgreement": 1,
+        "abstentionAgreement": 1
+      }
+    },
+    {
+      "producer": "ontology-producer",
+      "scenarios": 100,
+      "relationRecall": 1,
+      "evidenceGroundingPrecision": 1
+    },
+    {
+      "producer": "model-producer",
+      "classification": "MODEL_PRODUCER_EXPERIMENTAL_ONLY",
+      "measured": false,
+      "autoAcceptModelOutput": false,
+      "note": "No live local model was scored. Malformed and ungrounded JSON is rejected by the core validator. Model output stays PROPOSED."
+    }
+  ]
+}

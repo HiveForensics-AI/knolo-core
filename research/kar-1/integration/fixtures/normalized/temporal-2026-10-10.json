@@ -1,0 +1,252 @@
+{
+  "name": "temporal-2026-10-10",
+  "scenario": "temporal-applicability",
+  "image": {
+    "version": 1,
+    "evidence": [
+      {
+        "id": "sha256-70208fca2b542d4c25659a3b0fcd5ea63af986018c5cda6cf4912421a175d35a",
+        "text": "Until 2024 a customer could cancel a lodging reservation on the day of arrival."
+      },
+      {
+        "id": "sha256-7886b3695ed37520451e27e4c132902496225ef2245b7596d3d58f9b76ee7006",
+        "text": "Beginning in 2027 a lodging cancellation requires fourteen days of notice."
+      },
+      {
+        "id": "sha256-b3c8dad9b53fba4e81fdd195bb4fa76c7e2fc54088a1105757c003367035ffe3",
+        "text": "From 2024 through 2026 a customer may cancel a lodging reservation until the day before arrival."
+      }
+    ]
+  },
+  "graph": {
+    "version": 1,
+    "knowledgeRoot": "sha256-1fe8399c7ed6bd3976d49f5a55e17a274d381a808d95570d0faac090d9c66b80",
+    "provenance": {
+      "producer": "hand",
+      "note": "kar-sidecar:temporal-applicability"
+    },
+    "nodes": [
+      {
+        "id": "lodging"
+      },
+      {
+        "id": "old-rule"
+      },
+      {
+        "id": "current-rule"
+      },
+      {
+        "id": "future-rule"
+      }
+    ],
+    "relations": [
+      {
+        "id": "r-old",
+        "from": "lodging",
+        "relation": "permits",
+        "to": "old-rule"
+      },
+      {
+        "id": "r-current",
+        "from": "lodging",
+        "relation": "permits",
+        "to": "current-rule"
+      },
+      {
+        "id": "r-future",
+        "from": "lodging",
+        "relation": "permits",
+        "to": "future-rule"
+      }
+    ],
+    "bindings": [
+      {
+        "id": "b-old",
+        "nodeId": "old-rule",
+        "evidenceId": "sha256-70208fca2b542d4c25659a3b0fcd5ea63af986018c5cda6cf4912421a175d35a",
+        "requirements": [
+          "rule"
+        ],
+        "validFrom": "2020-01-01",
+        "validUntil": "2024-01-01",
+        "provenance": "hand:old-rule"
+      },
+      {
+        "id": "b-current",
+        "nodeId": "current-rule",
+        "evidenceId": "sha256-b3c8dad9b53fba4e81fdd195bb4fa76c7e2fc54088a1105757c003367035ffe3",
+        "requirements": [
+          "rule"
+        ],
+        "validFrom": "2024-01-01",
+        "validUntil": "2027-01-01",
+        "provenance": "hand:current-rule"
+      },
+      {
+        "id": "b-future",
+        "nodeId": "future-rule",
+        "evidenceId": "sha256-7886b3695ed37520451e27e4c132902496225ef2245b7596d3d58f9b76ee7006",
+        "requirements": [
+          "rule"
+        ],
+        "validFrom": "2027-01-01",
+        "provenance": "hand:future-rule"
+      }
+    ]
+  },
+  "query": "Which cancellation rule applies to the lodging?",
+  "plan": {
+    "version": 1,
+    "anchor": {
+      "mode": "supplied",
+      "witness": [
+        {
+          "nodeId": "lodging",
+          "queryTerm": "room"
+        }
+      ]
+    },
+    "frontierMap": {
+      "permits": "F_S"
+    },
+    "depth": 1,
+    "cardinalityBound": 5,
+    "coverageMode": "requirements",
+    "requirements": {
+      "F_S": [
+        "rule"
+      ],
+      "F_O": [],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "floors": {
+      "F_S": "1",
+      "F_O": "0",
+      "F_Q": "0",
+      "F_T": "0",
+      "F_A": "0"
+    },
+    "profile": "minimum-cover",
+    "asOf": "2026-10-10",
+    "minAuthority": null,
+    "bounds": {
+      "maxAnchorNodes": 8,
+      "maxClosureNodes": 32,
+      "maxClosureEdges": 64,
+      "maxFrontierEvidence": 16,
+      "maxRequirementsPerFrontier": 8,
+      "maxEvidenceBindings": 32,
+      "maxCoverVisits": 10000
+    },
+    "lexical": null
+  },
+  "stateRoot": "sha256-06124513f8f096dc09d9047b2c74eed92594853f575350dcc3ea35af16b272a5",
+  "status": "SATISFIED",
+  "evidenceIds": [
+    "sha256-b3c8dad9b53fba4e81fdd195bb4fa76c7e2fc54088a1105757c003367035ffe3"
+  ],
+  "choices": [
+    {
+      "evidenceId": "sha256-b3c8dad9b53fba4e81fdd195bb4fa76c7e2fc54088a1105757c003367035ffe3",
+      "frontiers": [
+        "F_S"
+      ]
+    }
+  ],
+  "frontiers": {
+    "F_S": [
+      "sha256-70208fca2b542d4c25659a3b0fcd5ea63af986018c5cda6cf4912421a175d35a",
+      "sha256-7886b3695ed37520451e27e4c132902496225ef2245b7596d3d58f9b76ee7006",
+      "sha256-b3c8dad9b53fba4e81fdd195bb4fa76c7e2fc54088a1105757c003367035ffe3"
+    ],
+    "F_O": [],
+    "F_Q": [],
+    "F_T": [],
+    "F_A": []
+  },
+  "witnesses": [
+    {
+      "evidenceId": "sha256-70208fca2b542d4c25659a3b0fcd5ea63af986018c5cda6cf4912421a175d35a",
+      "frontier": "F_S",
+      "anchorId": "lodging",
+      "path": [
+        {
+          "node": "lodging"
+        },
+        {
+          "relation": "r-old",
+          "node": "old-rule"
+        }
+      ]
+    },
+    {
+      "evidenceId": "sha256-7886b3695ed37520451e27e4c132902496225ef2245b7596d3d58f9b76ee7006",
+      "frontier": "F_S",
+      "anchorId": "lodging",
+      "path": [
+        {
+          "node": "lodging"
+        },
+        {
+          "relation": "r-future",
+          "node": "future-rule"
+        }
+      ]
+    },
+    {
+      "evidenceId": "sha256-b3c8dad9b53fba4e81fdd195bb4fa76c7e2fc54088a1105757c003367035ffe3",
+      "frontier": "F_S",
+      "anchorId": "lodging",
+      "path": [
+        {
+          "node": "lodging"
+        },
+        {
+          "relation": "r-current",
+          "node": "current-rule"
+        }
+      ]
+    }
+  ],
+  "decision": {
+    "status": "SATISFIED",
+    "profile": "minimum-cover",
+    "cardinality": 1,
+    "coverage": {
+      "F_S": {
+        "covered": 1,
+        "required": 1
+      },
+      "F_O": {
+        "covered": 0,
+        "required": 0
+      },
+      "F_Q": {
+        "covered": 0,
+        "required": 0
+      },
+      "F_T": {
+        "covered": 0,
+        "required": 0
+      },
+      "F_A": {
+        "covered": 0,
+        "required": 0
+      }
+    }
+  },
+  "roots": {
+    "knowledgeRoot": "sha256-1fe8399c7ed6bd3976d49f5a55e17a274d381a808d95570d0faac090d9c66b80",
+    "semanticRoot": "sha256-33be0548b95a8cf9cf0e02d89b7d4abf768c5b73b34eae03d753e47fb2d23c8e",
+    "queryRoot": "sha256-1d3324722b93140593ce76f71f741d8480de1eeb47ad538382adce8dd3bc1c6d",
+    "planRoot": "sha256-c7c07c88613ef8799f7f9865106c5eb6a25b62e9890bd991161f221cbd5714de",
+    "anchorRoot": "sha256-ed9b2b77a366c24cdaeeb76c976638d526ebe4b8eeec381e48fbd67c5366182c",
+    "frontierRoot": "sha256-9a7e506142aa2e1baf9c2adb0e232b18b5a4bfc8c204afafa5f64ff2c11d8ea2",
+    "frontierWitnessRoot": "sha256-66299992cfc814826605914acb6bae95118417faa5e6f45d89db61418eb2d35d",
+    "evidenceSetRoot": "sha256-392add68df50252877711c51f4510ccc4ad1dc5377d38b2c7dc3d41fe6490014",
+    "decisionRoot": "sha256-fae61f2297742ed62dd71cf2d4ac2750e866711202318182b797d98dfb0e9810",
+    "karRoot": "sha256-ed2a30b77e6ed77941aef329d2238a86f5124ca51f8f349e0092182aa5d967de"
+  }
+}

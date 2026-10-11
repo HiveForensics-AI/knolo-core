@@ -1,0 +1,25 @@
+{
+  "id": "amendment",
+  "documents": [
+    {
+      "source": "amendment.md",
+      "text": "Agreement\nThe amendment supersedes the agreement.\n",
+      "meta": {
+        "type": "contract"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "agreement"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "amendment-review",
+      "proposition": "Does the amendment supersede the agreement?",
+      "status": "ANCHOR_REJECTED"
+    }
+  }
+}

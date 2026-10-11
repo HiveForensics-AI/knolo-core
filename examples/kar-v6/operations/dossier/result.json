@@ -1,0 +1,181 @@
+{
+  "experimental": true,
+  "api": "experimental",
+  "version": "kar-1-research-1",
+  "status": "SATISFIED",
+  "code": null,
+  "proposition": "What evidence shows the valve is closed?",
+  "plan": {
+    "version": 1,
+    "anchor": {
+      "mode": "supplied",
+      "witness": [
+        {
+          "nodeId": "sha256-e3710b57553a6b7f4a5ba181a3d59316951405dff44df24d1617fdf7c1a7fa28",
+          "queryTerm": "evidence"
+        }
+      ]
+    },
+    "frontierMap": {
+      "requires": "F_S"
+    },
+    "depth": 2,
+    "cardinalityBound": 8,
+    "coverageMode": "requirements",
+    "requirements": {
+      "F_S": [
+        "close-valve"
+      ],
+      "F_O": [],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "floors": {
+      "F_S": "1",
+      "F_O": "0",
+      "F_Q": "0",
+      "F_T": "0",
+      "F_A": "0"
+    },
+    "profile": "minimum-cover",
+    "asOf": "2026-06-01",
+    "minAuthority": null,
+    "bounds": {
+      "maxAnchorNodes": 8,
+      "maxClosureNodes": 32,
+      "maxClosureEdges": 32,
+      "maxFrontierEvidence": 8,
+      "maxRequirementsPerFrontier": 4,
+      "maxEvidenceBindings": 8,
+      "maxCoverVisits": 1000
+    },
+    "lexical": null
+  },
+  "image": {
+    "stateRoot": "sha256-34d1307fec5d3167618a88c8ac0f11bb1be55c892d68d8aa76eb620d6e7f14eb",
+    "knowledgeRoot": "sha256-552234a126fd4adc7899ea471739ad218d351c0ea143d689a7a944a0f8fbdc5e",
+    "objectRoot": "sha256-64653d693383c272cbbc0368b8bdae7c7c946051af46ee0ff3968e6c5512399a",
+    "commitDigest": "sha256-77cc5503d9a1084a69d032afc55ba8ff43852f8d00052d87dfd4f58e5378c9d7"
+  },
+  "frontiers": {
+    "F_S": [
+      "sha256-0e7c0fed13b133cae38567177029378f8a1f14031d8e174af502d68b483f8d4c"
+    ],
+    "F_O": [],
+    "F_Q": [],
+    "F_T": [],
+    "F_A": []
+  },
+  "selectedEvidence": [
+    {
+      "id": "sha256-0e7c0fed13b133cae38567177029378f8a1f14031d8e174af502d68b483f8d4c",
+      "frontiers": [
+        "F_S"
+      ],
+      "text": "The operator must close the valve. This sentence is evidence for the plan.",
+      "source": "step.txt",
+      "metadata": {
+        "kind": "chunk",
+        "meta": {
+          "source": "step.txt"
+        }
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "evidenceId": "sha256-0e7c0fed13b133cae38567177029378f8a1f14031d8e174af502d68b483f8d4c",
+      "frontier": "F_S",
+      "anchorId": "sha256-e3710b57553a6b7f4a5ba181a3d59316951405dff44df24d1617fdf7c1a7fa28",
+      "path": [
+        {
+          "node": "sha256-e3710b57553a6b7f4a5ba181a3d59316951405dff44df24d1617fdf7c1a7fa28"
+        },
+        {
+          "relation": "sha256-5ab4582559a5e97bb0567c3252cc01032db3337134657b62c4687648ce0c3e47",
+          "node": "sha256-2e44f6183ec2179511aeee72f256b63fca1c4f10f98259ffb11f71aaefb3ef49"
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "version": "kar-1-research-1",
+    "status": "SATISFIED",
+    "evidenceIds": [
+      "sha256-0e7c0fed13b133cae38567177029378f8a1f14031d8e174af502d68b483f8d4c"
+    ],
+    "choices": [
+      {
+        "evidenceId": "sha256-0e7c0fed13b133cae38567177029378f8a1f14031d8e174af502d68b483f8d4c",
+        "frontiers": [
+          "F_S"
+        ]
+      }
+    ],
+    "frontiers": {
+      "F_S": [
+        "sha256-0e7c0fed13b133cae38567177029378f8a1f14031d8e174af502d68b483f8d4c"
+      ],
+      "F_O": [],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [
+      {
+        "evidenceId": "sha256-0e7c0fed13b133cae38567177029378f8a1f14031d8e174af502d68b483f8d4c",
+        "frontier": "F_S",
+        "anchorId": "sha256-e3710b57553a6b7f4a5ba181a3d59316951405dff44df24d1617fdf7c1a7fa28",
+        "path": [
+          {
+            "node": "sha256-e3710b57553a6b7f4a5ba181a3d59316951405dff44df24d1617fdf7c1a7fa28"
+          },
+          {
+            "relation": "sha256-5ab4582559a5e97bb0567c3252cc01032db3337134657b62c4687648ce0c3e47",
+            "node": "sha256-2e44f6183ec2179511aeee72f256b63fca1c4f10f98259ffb11f71aaefb3ef49"
+          }
+        ]
+      }
+    ],
+    "decision": {
+      "status": "SATISFIED",
+      "profile": "minimum-cover",
+      "cardinality": 1,
+      "coverage": {
+        "F_S": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_O": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_Q": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-552234a126fd4adc7899ea471739ad218d351c0ea143d689a7a944a0f8fbdc5e",
+      "semanticRoot": "sha256-b583962a239dffb7a1ee741952abd85bf2a8c6c0e328a392cb749cdb7f5093a1",
+      "queryRoot": "sha256-8e73d8a5c8ec870da211fa89ebba751944a2a1c46e944bf5dc137eec4e05a126",
+      "planRoot": "sha256-e136b4f38dde7b637e437485d1b4583bf9d01b77701b1bf12a6ca595e3c534b7",
+      "anchorRoot": "sha256-6cf060f80bb46af6357eacce123e4b00fb0002efd390c2e3a80fea2757160a1a",
+      "frontierRoot": "sha256-87d08572a8f6697384195c0cb19e308a46711b3a56b8a7c77b5527ba96b8fdf3",
+      "frontierWitnessRoot": "sha256-f508c816e996f57baf9582c1cb917394b3a052835d4ffd2d363425c3a6b00618",
+      "evidenceSetRoot": "sha256-e04c19b8fdbe2ad199135559191b5462ace59fd481499598d3e3624dc714198c",
+      "decisionRoot": "sha256-fae61f2297742ed62dd71cf2d4ac2750e866711202318182b797d98dfb0e9810",
+      "karRoot": "sha256-06c7b24c1bb782f4fc2df9082e0b08b71cf59fd0f1b40862d5cf22379e8ea844"
+    }
+  }
+}

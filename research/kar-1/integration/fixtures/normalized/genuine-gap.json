@@ -1,0 +1,189 @@
+{
+  "name": "genuine-gap",
+  "scenario": "genuine-gap",
+  "image": {
+    "version": 1,
+    "evidence": [
+      {
+        "id": "sha256-13841b4d369c4aa0abc103ce2ecbadf56b0a1bb43d599d1f1b964d1772a86db5",
+        "text": "A guest may cancel a lodging reservation before the day of arrival and receive the deposit back."
+      },
+      {
+        "id": "sha256-c68f29494144739fe975e93b5beb35e60b41261426f337289262884273f966db",
+        "text": "The welcome brochure describes the room, the view, and the breakfast hour."
+      }
+    ]
+  },
+  "graph": {
+    "version": 1,
+    "knowledgeRoot": "sha256-88a349c6f5ccb047c164c5374a2c95d380a41828dcb7821081439370345a4907",
+    "provenance": {
+      "producer": "hand",
+      "note": "kar-sidecar:genuine-gap"
+    },
+    "nodes": [
+      {
+        "id": "lodging"
+      },
+      {
+        "id": "general-policy"
+      },
+      {
+        "id": "brochure"
+      }
+    ],
+    "relations": [
+      {
+        "id": "r-permit",
+        "from": "lodging",
+        "relation": "permits",
+        "to": "general-policy"
+      },
+      {
+        "id": "r-mention",
+        "from": "lodging",
+        "relation": "mentions",
+        "to": "brochure"
+      }
+    ],
+    "bindings": [
+      {
+        "id": "b-policy",
+        "nodeId": "general-policy",
+        "evidenceId": "sha256-13841b4d369c4aa0abc103ce2ecbadf56b0a1bb43d599d1f1b964d1772a86db5",
+        "requirements": [
+          "cancel-allowed"
+        ],
+        "provenance": "hand:general-policy"
+      },
+      {
+        "id": "b-brochure",
+        "nodeId": "brochure",
+        "evidenceId": "sha256-c68f29494144739fe975e93b5beb35e60b41261426f337289262884273f966db",
+        "requirements": [
+          "amenities"
+        ],
+        "provenance": "hand:brochure"
+      }
+    ]
+  },
+  "query": "Can the customer cancel the room?",
+  "plan": {
+    "version": 1,
+    "anchor": {
+      "mode": "supplied",
+      "witness": [
+        {
+          "nodeId": "lodging",
+          "queryTerm": "room"
+        }
+      ]
+    },
+    "frontierMap": {
+      "permits": "F_S",
+      "prohibits": "F_O"
+    },
+    "depth": 1,
+    "cardinalityBound": 5,
+    "coverageMode": "requirements",
+    "requirements": {
+      "F_S": [
+        "cancel-allowed"
+      ],
+      "F_O": [
+        "commitment-bars-cancel"
+      ],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "floors": {
+      "F_S": "1",
+      "F_O": "1",
+      "F_Q": "0",
+      "F_T": "0",
+      "F_A": "0"
+    },
+    "profile": "minimum-cover",
+    "asOf": "2026-10-10",
+    "minAuthority": null,
+    "bounds": {
+      "maxAnchorNodes": 8,
+      "maxClosureNodes": 32,
+      "maxClosureEdges": 64,
+      "maxFrontierEvidence": 16,
+      "maxRequirementsPerFrontier": 8,
+      "maxEvidenceBindings": 32,
+      "maxCoverVisits": 10000
+    },
+    "lexical": null
+  },
+  "stateRoot": "sha256-23aae6e7c2f5063dff3c38d346cc12dc092bcb5fa08d25e284255a8ce3875aac",
+  "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS",
+  "evidenceIds": [],
+  "choices": [],
+  "frontiers": {
+    "F_S": [
+      "sha256-13841b4d369c4aa0abc103ce2ecbadf56b0a1bb43d599d1f1b964d1772a86db5"
+    ],
+    "F_O": [],
+    "F_Q": [],
+    "F_T": [],
+    "F_A": []
+  },
+  "witnesses": [
+    {
+      "evidenceId": "sha256-13841b4d369c4aa0abc103ce2ecbadf56b0a1bb43d599d1f1b964d1772a86db5",
+      "frontier": "F_S",
+      "anchorId": "lodging",
+      "path": [
+        {
+          "node": "lodging"
+        },
+        {
+          "relation": "r-permit",
+          "node": "general-policy"
+        }
+      ]
+    }
+  ],
+  "decision": {
+    "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS",
+    "profile": "minimum-cover",
+    "cardinality": 0,
+    "coverage": {
+      "F_S": {
+        "covered": 0,
+        "required": 1
+      },
+      "F_O": {
+        "covered": 0,
+        "required": 1
+      },
+      "F_Q": {
+        "covered": 0,
+        "required": 0
+      },
+      "F_T": {
+        "covered": 0,
+        "required": 0
+      },
+      "F_A": {
+        "covered": 0,
+        "required": 0
+      }
+    }
+  },
+  "roots": {
+    "knowledgeRoot": "sha256-88a349c6f5ccb047c164c5374a2c95d380a41828dcb7821081439370345a4907",
+    "semanticRoot": "sha256-602ed49051d50c9ef31e1a35a63c4f7aefd947bc05ed65d09e9dc281aa16c91c",
+    "queryRoot": "sha256-d551e83e07a43df818a7a11b9d9cff659e3ff5e7140cabda1cda013f62049585",
+    "planRoot": "sha256-b43f51fc4d88b0adee9f123de01abe3bf80aeca56593ff4d75879b70f7ffb9f3",
+    "anchorRoot": "sha256-ed9b2b77a366c24cdaeeb76c976638d526ebe4b8eeec381e48fbd67c5366182c",
+    "frontierRoot": "sha256-ef50be990048339da69d096e68191521e2e3ddc195e231789524fc2a3aa62a27",
+    "frontierWitnessRoot": "sha256-709cdccaea3f2a4fd17a4fc42dedee5788d59557f4a7f0c6e03bc07a512e89c0",
+    "evidenceSetRoot": "sha256-4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "decisionRoot": "sha256-624d13a2619077903e12c86b6bc02ff938e62eab61350b264cb129040494f0ad",
+    "karRoot": "sha256-18c7bea68ac65ed1bde36cfbde3d97c0c87fee4817c710238511f2eff42561a7"
+  }
+}

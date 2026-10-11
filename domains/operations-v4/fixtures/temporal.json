@@ -1,0 +1,25 @@
+{
+  "id": "temporal",
+  "documents": [
+    {
+      "source": "procedure.md",
+      "text": "The operator must complete the step.\nThe procedure is effective 2026-01-01 until 2027-01-01.\n",
+      "meta": {
+        "type": "procedure"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "procedure"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "current-procedure",
+      "proposition": "Must the operator complete the step?",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS"
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "anchor": {
+    "mode": "supplied",
+    "witness": [
+      {
+        "nodeId": "sha256-e3710b57553a6b7f4a5ba181a3d59316951405dff44df24d1617fdf7c1a7fa28",
+        "queryTerm": "evidence"
+      }
+    ]
+  },
+  "frontierMap": {
+    "requires": "F_S"
+  },
+  "depth": 2,
+  "cardinalityBound": 4,
+  "coverageMode": "requirements",
+  "requirements": {
+    "F_S": [
+      "close-valve"
+    ],
+    "F_O": [],
+    "F_Q": [],
+    "F_T": [],
+    "F_A": []
+  },
+  "floors": {
+    "F_S": "1",
+    "F_O": "0",
+    "F_Q": "0",
+    "F_T": "0",
+    "F_A": "0"
+  },
+  "profile": "minimum-cover",
+  "asOf": "2026-06-01",
+  "minAuthority": null,
+  "bounds": {
+    "maxAnchorNodes": 8,
+    "maxClosureNodes": 32,
+    "maxClosureEdges": 32,
+    "maxFrontierEvidence": 8,
+    "maxRequirementsPerFrontier": 4,
+    "maxEvidenceBindings": 8,
+    "maxCoverVisits": 256
+  },
+  "lexical": null
+}

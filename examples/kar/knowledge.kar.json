@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "stateRoot": "sha256-866223845fddfde2bba6d10b4f89e02f447dd95b36c773be0631ffef5c674ad9",
+  "objectRoot": "sha256-624294fd10cf551794f6bffaf0121f4d15e7ae78d68b5d9622756cd262cc3ab7",
+  "commitDigest": "sha256-fe9b981131fee7e801b28e6b8c039117fb503333ed97e9aab5806e0307aa2e30",
+  "knowledgeRoot": "sha256-d61a57849a8230a45690af4eecabbcf67ccd1f000224697fcc2d3eef9468b0be",
+  "graph": {
+    "version": 1,
+    "knowledgeRoot": "sha256-d61a57849a8230a45690af4eecabbcf67ccd1f000224697fcc2d3eef9468b0be",
+    "provenance": {
+      "producer": "hand",
+      "note": "enterprise-cancel"
+    },
+    "nodes": [
+      {
+        "id": "lodging"
+      },
+      {
+        "id": "policy"
+      },
+      {
+        "id": "contract"
+      }
+    ],
+    "relations": [
+      {
+        "id": "r-support",
+        "from": "lodging",
+        "relation": "supports",
+        "to": "policy"
+      },
+      {
+        "id": "r-oppose",
+        "from": "lodging",
+        "relation": "prohibits",
+        "to": "contract"
+      }
+    ],
+    "bindings": [
+      {
+        "id": "b-policy",
+        "nodeId": "policy",
+        "evidenceId": "sha256-00446cb20191782f952130e3c81d389a6986ce03a4f4261ea98f8ff24c506a81",
+        "requirements": [
+          "cancel-allowed"
+        ]
+      },
+      {
+        "id": "b-contract",
+        "nodeId": "contract",
+        "evidenceId": "sha256-4329cc17d44280d26cd8bce1b028db6ab14ef7a97f9683917f16003233ed32ba",
+        "requirements": [
+          "cancel-barred"
+        ]
+      }
+    ]
+  }
+}

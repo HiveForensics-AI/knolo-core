@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "anchor": {
+    "mode": "supplied",
+    "witness": [
+      {
+        "nodeId": "sha256-ca9862ca023562276ebeeaf7b94f0c57215b461943ad3ed5e068943b417e17f8",
+        "queryTerm": "cancel"
+      }
+    ]
+  },
+  "frontierMap": {
+    "permits": "F_S",
+    "prohibits": "F_O"
+  },
+  "depth": 1,
+  "cardinalityBound": 4,
+  "coverageMode": "requirements",
+  "requirements": {
+    "F_S": [
+      "cancel-allowed"
+    ],
+    "F_O": [
+      "cancel-barred"
+    ],
+    "F_Q": [],
+    "F_T": [],
+    "F_A": []
+  },
+  "floors": {
+    "F_S": "1",
+    "F_O": "1",
+    "F_Q": "0",
+    "F_T": "0",
+    "F_A": "0"
+  },
+  "profile": "minimum-cover",
+  "asOf": "2026-06-01",
+  "minAuthority": null,
+  "bounds": {
+    "maxAnchorNodes": 4,
+    "maxClosureNodes": 16,
+    "maxClosureEdges": 16,
+    "maxFrontierEvidence": 8,
+    "maxRequirementsPerFrontier": 4,
+    "maxEvidenceBindings": 8,
+    "maxCoverVisits": 100
+  },
+  "lexical": null
+}

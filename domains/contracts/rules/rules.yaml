@@ -1,0 +1,235 @@
+- id: contracts.metadata.agreement.v1
+  autoAccept: true
+  kind: metadata
+  metadata:
+    type: contract
+  concept: agreement
+- id: contracts.heading.termination.v1
+  autoAccept: true
+  kind: heading
+  pattern: Termination
+  concept: termination
+- id: contracts.section.termination.v1
+  autoAccept: true
+  kind: section
+  pattern: Termination
+  relation:
+    from: agreement
+    type: applies_to
+    to: termination
+  binding:
+    concept: termination
+    requirements:
+      - termination-right
+  targetPattern: Agreement
+- id: contracts.termination.permission.v1
+  autoAccept: true
+  kind: phrase
+  pattern: may terminate
+  relation:
+    from: agreement
+    type: permits
+    to: termination
+  binding:
+    concept: termination
+    requirements:
+      - termination-right
+- id: contracts.termination.prohibition.v1
+  autoAccept: true
+  kind: phrase
+  pattern: may not terminate
+  relation:
+    from: agreement
+    type: prohibits
+    to: termination
+  binding:
+    concept: termination
+    requirements:
+      - termination-barred
+- id: contracts.cancellation.permission.v1
+  autoAccept: true
+  kind: phrase
+  pattern: may cancel
+  relation:
+    from: agreement
+    type: permits
+    to: cancellation
+  binding:
+    concept: cancellation
+    requirements:
+      - cancellation-right
+- id: contracts.cancellation.prohibition.v1
+  autoAccept: true
+  kind: phrase
+  pattern: may not cancel
+  relation:
+    from: agreement
+    type: prohibits
+    to: cancellation
+  binding:
+    concept: cancellation
+    requirements:
+      - cancellation-barred
+- id: contracts.renewal.duty.v1
+  autoAccept: true
+  kind: phrase
+  pattern: must renew
+  relation:
+    from: agreement
+    type: requires
+    to: renewal
+  binding:
+    concept: renewal
+    requirements:
+      - renewal-duty
+- id: contracts.obligation.duty.v1
+  autoAccept: true
+  kind: phrase
+  pattern: must provide
+  relation:
+    from: agreement
+    type: requires
+    to: obligation
+  binding:
+    concept: obligation
+    requirements:
+      - stated-obligation
+- id: contracts.restriction.assign.v1
+  autoAccept: true
+  kind: phrase
+  pattern: shall not assign
+  relation:
+    from: agreement
+    type: prohibits
+    to: restriction
+  binding:
+    concept: restriction
+    requirements:
+      - stated-restriction
+- id: contracts.exception.when.v1
+  autoAccept: true
+  kind: cue
+  pattern: except when
+  relation:
+    from: agreement
+    type: qualifies
+    to: exception
+  binding:
+    concept: exception
+    requirements:
+      - stated-exception
+- id: contracts.exception.unless.v1
+  autoAccept: true
+  kind: cue
+  pattern: unless stated
+  relation:
+    from: agreement
+    type: qualifies
+    to: exception
+  binding:
+    concept: exception
+    requirements:
+      - stated-exception
+- id: contracts.exception.provided.v1
+  autoAccept: true
+  kind: cue
+  pattern: provided that
+  relation:
+    from: agreement
+    type: qualifies
+    to: exception
+  binding:
+    concept: exception
+    requirements:
+      - stated-exception
+- id: contracts.exception.subject.v1
+  autoAccept: true
+  kind: cue
+  pattern: subject to
+  excludePattern: former
+  relation:
+    from: agreement
+    type: qualifies
+    to: exception
+  binding:
+    concept: exception
+    requirements:
+      - stated-exception
+- id: contracts.exception.former.v1
+  autoAccept: true
+  kind: incomplete
+  pattern: subject to the former
+- id: contracts.amendment.supersedes.v1
+  autoAccept: true
+  kind: phrase
+  pattern: supersedes the agreement
+  relation:
+    from: amendment
+    type: supersedes
+    to: agreement
+  binding:
+    concept: agreement
+    requirements:
+      - amendment-effect
+- id: contracts.amendment.overrides.v1
+  autoAccept: true
+  kind: phrase
+  pattern: overrides the restriction
+  relation:
+    from: amendment
+    type: overrides
+    to: restriction
+  binding:
+    concept: restriction
+    requirements:
+      - stated-restriction
+- id: contracts.scope.party.v1
+  autoAccept: true
+  kind: phrase
+  pattern: applies to the party
+  relation:
+    from: scope
+    type: applies_to
+    to: party
+  binding:
+    concept: party
+    requirements:
+      - party-scope
+- id: contracts.temporal.before.v1
+  autoAccept: true
+  kind: phrase
+  pattern: valid before
+  relation:
+    from: agreement
+    type: valid_before
+    to: effective-date
+  binding:
+    concept: effective-date
+    requirements:
+      - temporal-bound
+- id: contracts.temporal.after.v1
+  autoAccept: true
+  kind: phrase
+  pattern: valid after
+  relation:
+    from: agreement
+    type: valid_after
+    to: effective-date
+  binding:
+    concept: effective-date
+    requirements:
+      - temporal-bound
+- id: contracts.date.effective.v1
+  autoAccept: true
+  kind: date
+  pattern: effective
+  dateField: validFrom
+- id: contracts.date.until.v1
+  autoAccept: true
+  kind: date
+  pattern: until
+  dateField: validUntil
+- id: contracts.authority.v1
+  autoAccept: true
+  kind: authority
+  authorityMetadata: authority

@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "anchor": {
+    "mode": "supplied",
+    "witness": [
+      {
+        "nodeId": "sha256-da7bb9eb13e0ea957be297b61395fb383ea00972b2e2397ad58cf4b3d4f2bd84",
+        "queryTerm": "evidence"
+      }
+    ]
+  },
+  "frontierMap": {
+    "requires": "F_S",
+    "excepts": "F_Q"
+  },
+  "depth": 2,
+  "cardinalityBound": 8,
+  "coverageMode": "requirements",
+  "requirements": {
+    "F_S": [
+      "retain-record"
+    ],
+    "F_O": [],
+    "F_Q": [
+      "litigation-hold"
+    ],
+    "F_T": [],
+    "F_A": []
+  },
+  "floors": {
+    "F_S": "1",
+    "F_O": "0",
+    "F_Q": "1",
+    "F_T": "0",
+    "F_A": "0"
+  },
+  "profile": "minimum-cover",
+  "asOf": "2026-06-01",
+  "minAuthority": null,
+  "bounds": {
+    "maxAnchorNodes": 8,
+    "maxClosureNodes": 32,
+    "maxClosureEdges": 32,
+    "maxFrontierEvidence": 8,
+    "maxRequirementsPerFrontier": 4,
+    "maxEvidenceBindings": 8,
+    "maxCoverVisits": 1000
+  },
+  "lexical": null
+}

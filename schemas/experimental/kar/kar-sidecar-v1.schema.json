@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schema/experimental/kar/kar-sidecar-v1.schema.json",
+  "title": "KAR sidecar v1",
+  "description": "External Committed Evidence Graph sidecar. It is not embedded in a V5 .knolo image. stateRoot is the mounted V5 identity. knowledgeRoot is the frozen kar-1-research-1 projection root. The two digests are not interchangeable.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "stateRoot", "objectRoot", "commitDigest", "knowledgeRoot", "graph"],
+  "properties": {
+    "version": { "const": 1 },
+    "stateRoot": { "$ref": "#/$defs/digest" },
+    "objectRoot": { "$ref": "#/$defs/digest" },
+    "commitDigest": { "$ref": "#/$defs/digest" },
+    "knowledgeRoot": { "$ref": "#/$defs/digest" },
+    "graph": { "$ref": "#/$defs/committedEvidenceGraph" }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256-[0-9a-f]{64}$"
+    },
+    "committedEvidenceGraph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "knowledgeRoot", "provenance", "nodes", "relations", "bindings"],
+      "properties": {
+        "version": { "const": 1 },
+        "knowledgeRoot": { "$ref": "#/$defs/digest" },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["producer"],
+          "properties": {
+            "producer": { "type": "string", "minLength": 1 },
+            "note": { "type": "string" }
+          }
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id"],
+            "properties": { "id": { "type": "string", "minLength": 1 } }
+          }
+        },
+        "relations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "from", "relation", "to"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "from": { "type": "string", "minLength": 1 },
+              "relation": { "type": "string", "minLength": 1 },
+              "to": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "bindings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "nodeId", "evidenceId", "requirements"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "nodeId": { "type": "string", "minLength": 1 },
+              "evidenceId": { "type": "string", "minLength": 1 },
+              "requirements": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+              "authority": { "type": "integer" },
+              "unauthorized": { "const": true },
+              "validFrom": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+              "validUntil": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+              "provenance": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

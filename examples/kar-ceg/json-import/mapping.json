@@ -1,0 +1,14 @@
+{
+  "format": "ceg-import-map-1",
+  "concepts": { "path": "nodes", "name": "id", "label": "name" },
+  "relations": { "path": "edges", "from": "source", "type": "rel", "to": "target" },
+  "evidence": { "path": "documents", "alias": "alias", "source": "path" },
+  "bindings": {
+    "path": "supports",
+    "concept": "node",
+    "evidence": "doc",
+    "requirements": "rules",
+    "authority": "rank",
+    "validFrom": "start"
+  }
+}

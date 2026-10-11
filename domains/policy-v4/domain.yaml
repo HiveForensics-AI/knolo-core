@@ -1,0 +1,97 @@
+format: ceg-domain-1
+id: policy
+version: 4
+description: Version 4 review-coverage policy semantics. AUTO_ACCEPT remains metadata and heading context. Relation rules stay NEEDS_REVIEW until development calibration promotes one. Version 3 is unchanged. Dates are not committed. Incomplete references invent no target.
+conceptKinds:
+  - id: condition
+    label: Condition
+  - id: control
+    label: Control
+  - id: effective-date
+    label: Effective date
+  - id: exception
+    label: Exception
+  - id: policy
+    label: Policy
+  - id: prohibition
+    label: Prohibition
+  - id: requirement
+    label: Requirement
+  - id: role
+    label: Role
+  - id: scope
+    label: Scope
+concepts:
+  - name: policy
+    kind: policy
+    label: Policy
+    phrases:
+      - policy
+  - name: control
+    kind: control
+    label: Control
+    phrases:
+      - is required
+      - is prohibited
+  - name: prohibition
+    kind: prohibition
+    label: Prohibition
+    phrases:
+      - action is prohibited
+  - name: exception
+    kind: exception
+    label: Exception
+    phrases:
+      - exception applies
+      - unless approved
+      - subject to
+  - name: role
+    kind: role
+    label: Role
+    phrases:
+      - applies to the role
+  - name: scope
+    kind: scope
+    label: Scope
+    phrases:
+      - applies to
+  - name: authorization
+    kind: control
+    label: Authorization
+    phrases:
+      - is authorized
+  - name: replacement
+    kind: policy
+    label: Replacement
+    phrases:
+      - replaced by
+  - name: effective-date
+    kind: effective-date
+    label: Effective date
+    phrases:
+      - valid before
+      - valid after
+      - effective
+      - until
+  - name: requirement
+    kind: requirement
+    label: Requirement
+    phrases:
+      - must
+      - shall
+  - name: condition
+    kind: condition
+    label: Condition
+relations:
+  - applies_to
+  - contradicts
+  - excepts
+  - overrides
+  - permits
+  - prohibits
+  - qualifies
+  - requires
+  - supersedes
+  - supports
+  - valid_after
+  - valid_before

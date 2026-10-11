@@ -1,0 +1,983 @@
+[
+  {
+    "id": "contracts.metadata.agreement.v1",
+    "autoAccept": true,
+    "kind": "metadata",
+    "metadata": {
+      "type": "contract"
+    },
+    "concept": "agreement",
+    "policyClass": "AUTO_ACCEPT"
+  },
+  {
+    "id": "contracts.heading.termination.v1",
+    "autoAccept": true,
+    "kind": "heading",
+    "pattern": "Termination",
+    "concept": "termination",
+    "policyClass": "AUTO_ACCEPT"
+  },
+  {
+    "id": "contracts.section.termination.v1",
+    "autoAccept": false,
+    "kind": "section",
+    "pattern": "Termination",
+    "relation": {
+      "from": "agreement",
+      "type": "applies_to",
+      "to": "termination"
+    },
+    "binding": {
+      "concept": "termination",
+      "requirements": [
+        "termination-right"
+      ]
+    },
+    "targetPattern": "Agreement",
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.termination.permission.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "may terminate",
+    "relation": {
+      "from": "agreement",
+      "type": "permits",
+      "to": "termination"
+    },
+    "binding": {
+      "concept": "termination",
+      "requirements": [
+        "termination-right"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.termination.prohibition.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "may not terminate",
+    "relation": {
+      "from": "agreement",
+      "type": "prohibits",
+      "to": "termination"
+    },
+    "binding": {
+      "concept": "termination",
+      "requirements": [
+        "termination-barred"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.cancellation.permission.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "may cancel",
+    "relation": {
+      "from": "agreement",
+      "type": "permits",
+      "to": "cancellation"
+    },
+    "binding": {
+      "concept": "cancellation",
+      "requirements": [
+        "cancellation-right"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.cancellation.prohibition.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "may not cancel",
+    "relation": {
+      "from": "agreement",
+      "type": "prohibits",
+      "to": "cancellation"
+    },
+    "binding": {
+      "concept": "cancellation",
+      "requirements": [
+        "cancellation-barred"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.renewal.duty.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "must renew",
+    "relation": {
+      "from": "agreement",
+      "type": "requires",
+      "to": "renewal"
+    },
+    "binding": {
+      "concept": "renewal",
+      "requirements": [
+        "renewal-duty"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.obligation.duty.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "must provide",
+    "relation": {
+      "from": "agreement",
+      "type": "requires",
+      "to": "obligation"
+    },
+    "binding": {
+      "concept": "obligation",
+      "requirements": [
+        "stated-obligation"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.restriction.assign.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "shall not assign",
+    "relation": {
+      "from": "agreement",
+      "type": "prohibits",
+      "to": "restriction"
+    },
+    "binding": {
+      "concept": "restriction",
+      "requirements": [
+        "stated-restriction"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.exception.when.v1",
+    "autoAccept": false,
+    "kind": "cue",
+    "pattern": "except when",
+    "relation": {
+      "from": "agreement",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "contracts.exception.unless.v1",
+    "autoAccept": false,
+    "kind": "cue",
+    "pattern": "unless stated",
+    "relation": {
+      "from": "agreement",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "contracts.exception.provided.v1",
+    "autoAccept": false,
+    "kind": "cue",
+    "pattern": "provided that",
+    "relation": {
+      "from": "agreement",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "contracts.exception.subject.v1",
+    "autoAccept": false,
+    "kind": "cue",
+    "pattern": "subject to",
+    "excludePattern": "former",
+    "relation": {
+      "from": "agreement",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "contracts.exception.former.v1",
+    "autoAccept": false,
+    "kind": "incomplete",
+    "pattern": "subject to the former",
+    "policyClass": "OBSERVATION_ONLY",
+    "reason": "INCOMPLETE_REFERENCE"
+  },
+  {
+    "id": "contracts.amendment.supersedes.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "supersedes the agreement",
+    "relation": {
+      "from": "amendment",
+      "type": "supersedes",
+      "to": "agreement"
+    },
+    "binding": {
+      "concept": "agreement",
+      "requirements": [
+        "amendment-effect"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.amendment.overrides.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "overrides the restriction",
+    "relation": {
+      "from": "amendment",
+      "type": "overrides",
+      "to": "restriction"
+    },
+    "binding": {
+      "concept": "restriction",
+      "requirements": [
+        "stated-restriction"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.scope.party.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "applies to the party",
+    "relation": {
+      "from": "scope",
+      "type": "applies_to",
+      "to": "party"
+    },
+    "binding": {
+      "concept": "party",
+      "requirements": [
+        "party-scope"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.temporal.before.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "valid before",
+    "relation": {
+      "from": "agreement",
+      "type": "valid_before",
+      "to": "effective-date"
+    },
+    "binding": {
+      "concept": "effective-date",
+      "requirements": [
+        "temporal-bound"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.temporal.after.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "valid after",
+    "relation": {
+      "from": "agreement",
+      "type": "valid_after",
+      "to": "effective-date"
+    },
+    "binding": {
+      "concept": "effective-date",
+      "requirements": [
+        "temporal-bound"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.date.effective.v1",
+    "autoAccept": false,
+    "kind": "date",
+    "pattern": "effective",
+    "binding": {
+      "concept": "effective-date",
+      "requirements": [
+        "temporal-bound"
+      ]
+    },
+    "dateField": "validFrom",
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "EXPLICIT_DATE"
+  },
+  {
+    "id": "contracts.date.until.v1",
+    "autoAccept": false,
+    "kind": "date",
+    "pattern": "until",
+    "binding": {
+      "concept": "effective-date",
+      "requirements": [
+        "temporal-bound"
+      ]
+    },
+    "dateField": "validUntil",
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "EXPLICIT_DATE"
+  },
+  {
+    "id": "contracts.authority.v1",
+    "autoAccept": true,
+    "kind": "authority",
+    "authorityMetadata": "authority"
+  },
+  {
+    "id": "contracts.override.notwithstanding.v2",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "Notwithstanding",
+    "relation": {
+      "from": "agreement",
+      "type": "overrides",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "contracts.override.notwithstanding-lower.v2",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "notwithstanding",
+    "relation": {
+      "from": "agreement",
+      "type": "overrides",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "contracts.exception.except-as.v2",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "except as",
+    "excludePattern": "provided",
+    "relation": {
+      "from": "agreement",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "contracts.exception.except-as-capital.v2",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "Except as",
+    "excludePattern": "provided",
+    "relation": {
+      "from": "agreement",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "contracts.supersedes-all.v2",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "supersedes all",
+    "relation": {
+      "from": "agreement",
+      "type": "supersedes",
+      "to": "prior-agreement"
+    },
+    "binding": {
+      "concept": "prior-agreement",
+      "requirements": [
+        "amendment-effect"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.payment.shall-pay.v2",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "shall pay",
+    "relation": {
+      "from": "agreement",
+      "type": "requires",
+      "to": "payment"
+    },
+    "binding": {
+      "concept": "payment",
+      "requirements": [
+        "payment-duty"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.renewal.automatic.v2",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "automatically renew",
+    "relation": {
+      "from": "agreement",
+      "type": "requires",
+      "to": "renewal"
+    },
+    "binding": {
+      "concept": "renewal",
+      "requirements": [
+        "renewal-duty"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.renewal.automatic-passive.v2",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "automatically renewed",
+    "relation": {
+      "from": "agreement",
+      "type": "requires",
+      "to": "renewal"
+    },
+    "binding": {
+      "concept": "renewal",
+      "requirements": [
+        "renewal-duty"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.termination.passive.v2",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "may be terminated",
+    "relation": {
+      "from": "agreement",
+      "type": "permits",
+      "to": "termination"
+    },
+    "binding": {
+      "concept": "termination",
+      "requirements": [
+        "termination-right"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.restriction.shall-not.v2",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "shall not",
+    "excludePattern": "as shall not",
+    "relation": {
+      "from": "agreement",
+      "type": "prohibits",
+      "to": "restriction"
+    },
+    "binding": {
+      "concept": "restriction",
+      "requirements": [
+        "stated-restriction"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "BROAD_DUTY"
+  },
+  {
+    "id": "contracts.restriction.may-not-be.v2",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "may not be",
+    "relation": {
+      "from": "agreement",
+      "type": "prohibits",
+      "to": "restriction"
+    },
+    "binding": {
+      "concept": "restriction",
+      "requirements": [
+        "stated-restriction"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "contracts.exception.unless-general.v2",
+    "autoAccept": false,
+    "kind": "cue",
+    "pattern": "unless",
+    "relation": {
+      "from": "agreement",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "contracts.exception.unless-capital.v2",
+    "autoAccept": false,
+    "kind": "cue",
+    "pattern": "Unless",
+    "relation": {
+      "from": "agreement",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "contracts.duty.will.v3",
+    "autoAccept": false,
+    "kind": "clause",
+    "pattern": "party-modal-verb",
+    "relation": {
+      "from": "agreement",
+      "type": "requires",
+      "to": "obligation"
+    },
+    "binding": {
+      "concept": "obligation",
+      "requirements": [
+        "stated-obligation"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "BROAD_DUTY",
+    "modal": "will"
+  },
+  {
+    "id": "contracts.duty.agrees.v3",
+    "autoAccept": false,
+    "kind": "clause",
+    "pattern": "party-agrees-to",
+    "relation": {
+      "from": "agreement",
+      "type": "requires",
+      "to": "obligation"
+    },
+    "binding": {
+      "concept": "obligation",
+      "requirements": [
+        "stated-obligation"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "BROAD_DUTY"
+  },
+  {
+    "id": "contracts.duty.required.v3",
+    "autoAccept": false,
+    "kind": "clause",
+    "pattern": "object-is-required",
+    "relation": {
+      "from": "agreement",
+      "type": "requires",
+      "to": "obligation"
+    },
+    "binding": {
+      "concept": "obligation",
+      "requirements": [
+        "stated-obligation"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "BROAD_DUTY"
+  },
+  {
+    "id": "contracts.payment.shall-pay-clause.v3",
+    "autoAccept": false,
+    "kind": "clause",
+    "pattern": "party-modal-verb",
+    "relation": {
+      "from": "agreement",
+      "type": "requires",
+      "to": "payment"
+    },
+    "binding": {
+      "concept": "payment",
+      "requirements": [
+        "payment-duty"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE",
+    "modal": "shall",
+    "verb": "pay"
+  },
+  {
+    "id": "contracts.restriction.not.v3",
+    "autoAccept": false,
+    "kind": "clause",
+    "pattern": "party-modal-not",
+    "relation": {
+      "from": "agreement",
+      "type": "prohibits",
+      "to": "restriction"
+    },
+    "binding": {
+      "concept": "restriction",
+      "requirements": [
+        "stated-restriction"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "BROAD_DUTY"
+  },
+  {
+    "id": "contracts.exception.condition.v3",
+    "autoAccept": false,
+    "kind": "clause",
+    "pattern": "condition-main",
+    "relation": {
+      "from": "agreement",
+      "type": "qualifies",
+      "to": "exception"
+    },
+    "binding": {
+      "concept": "exception",
+      "requirements": [
+        "stated-exception"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CUE_WITHOUT_ENDPOINT"
+  },
+  {
+    "id": "contracts.reference.section.v3",
+    "autoAccept": false,
+    "kind": "incomplete",
+    "pattern": "as set forth in",
+    "policyClass": "OBSERVATION_ONLY",
+    "reason": "INCOMPLETE_REFERENCE"
+  },
+  {
+    "id": "contracts.reference.accordance.v3",
+    "autoAccept": false,
+    "kind": "incomplete",
+    "pattern": "in accordance with",
+    "policyClass": "OBSERVATION_ONLY",
+    "reason": "INCOMPLETE_REFERENCE"
+  },
+  {
+    "id": "contracts.reference.schedule.v3",
+    "autoAccept": false,
+    "kind": "incomplete",
+    "pattern": "subject to Schedule",
+    "policyClass": "OBSERVATION_ONLY",
+    "reason": "INCOMPLETE_REFERENCE"
+  },
+  {
+    "id": "contracts.reference.exhibit.v3",
+    "autoAccept": false,
+    "kind": "incomplete",
+    "pattern": "subject to Exhibit",
+    "policyClass": "OBSERVATION_ONLY",
+    "reason": "INCOMPLETE_REFERENCE"
+  },
+  {
+    "id": "contracts.heading.payment.v4",
+    "autoAccept": true,
+    "policyClass": "AUTO_ACCEPT",
+    "kind": "heading",
+    "pattern": "Payment",
+    "concept": "payment"
+  },
+  {
+    "id": "contracts.heading.renewal.v4",
+    "autoAccept": true,
+    "policyClass": "AUTO_ACCEPT",
+    "kind": "heading",
+    "pattern": "Renewal",
+    "concept": "renewal"
+  },
+  {
+    "id": "contracts.heading.obligations.v4",
+    "autoAccept": true,
+    "policyClass": "AUTO_ACCEPT",
+    "kind": "heading",
+    "pattern": "Obligations",
+    "concept": "obligation"
+  },
+  {
+    "id": "contracts.duty.must.v4",
+    "autoAccept": false,
+    "policyClass": "NEEDS_REVIEW",
+    "kind": "clause",
+    "pattern": "party-modal-verb",
+    "reason": "BROAD_DUTY",
+    "relation": {
+      "from": "agreement",
+      "type": "requires",
+      "to": "obligation"
+    },
+    "binding": {
+      "concept": "obligation",
+      "requirements": [
+        "stated-obligation"
+      ]
+    },
+    "modal": "must"
+  },
+  {
+    "id": "contracts.duty.shall.v4",
+    "autoAccept": false,
+    "policyClass": "NEEDS_REVIEW",
+    "kind": "clause",
+    "pattern": "party-modal-verb",
+    "reason": "BROAD_DUTY",
+    "relation": {
+      "from": "agreement",
+      "type": "requires",
+      "to": "obligation"
+    },
+    "binding": {
+      "concept": "obligation",
+      "requirements": [
+        "stated-obligation"
+      ]
+    },
+    "modal": "shall"
+  },
+  {
+    "id": "contracts.right.may.v4",
+    "autoAccept": false,
+    "policyClass": "NEEDS_REVIEW",
+    "kind": "clause",
+    "pattern": "party-modal-verb",
+    "reason": "BROAD_DUTY",
+    "relation": {
+      "from": "agreement",
+      "type": "permits",
+      "to": "right"
+    },
+    "binding": {
+      "concept": "right",
+      "requirements": [
+        "stated-permission"
+      ]
+    },
+    "modal": "may"
+  },
+  {
+    "id": "contracts.payment.will-pay.v4",
+    "autoAccept": false,
+    "policyClass": "NEEDS_REVIEW",
+    "kind": "clause",
+    "pattern": "party-modal-verb",
+    "reason": "CONSTRAINED_PHRASE",
+    "relation": {
+      "from": "agreement",
+      "type": "requires",
+      "to": "payment"
+    },
+    "binding": {
+      "concept": "payment",
+      "requirements": [
+        "payment-duty"
+      ]
+    },
+    "modal": "will",
+    "verb": "pay"
+  },
+  {
+    "id": "contracts.renewal.renew.v4",
+    "autoAccept": false,
+    "policyClass": "NEEDS_REVIEW",
+    "kind": "clause",
+    "pattern": "party-modal-verb",
+    "reason": "CONSTRAINED_PHRASE",
+    "relation": {
+      "from": "agreement",
+      "type": "requires",
+      "to": "renewal"
+    },
+    "binding": {
+      "concept": "renewal",
+      "requirements": [
+        "renewal-duty"
+      ]
+    },
+    "verb": "renew"
+  },
+  {
+    "id": "contracts.duty.responsible.v4",
+    "autoAccept": false,
+    "policyClass": "NEEDS_REVIEW",
+    "kind": "phrase",
+    "pattern": "shall be responsible",
+    "reason": "CONSTRAINED_PHRASE",
+    "relation": {
+      "from": "agreement",
+      "type": "requires",
+      "to": "obligation"
+    },
+    "binding": {
+      "concept": "obligation",
+      "requirements": [
+        "stated-obligation"
+      ]
+    }
+  },
+  {
+    "id": "contracts.right.has-right.v4",
+    "autoAccept": false,
+    "policyClass": "NEEDS_REVIEW",
+    "kind": "phrase",
+    "pattern": "has the right to",
+    "reason": "CONSTRAINED_PHRASE",
+    "relation": {
+      "from": "agreement",
+      "type": "permits",
+      "to": "right"
+    },
+    "binding": {
+      "concept": "right",
+      "requirements": [
+        "stated-permission"
+      ]
+    }
+  },
+  {
+    "id": "contracts.reference.pursuant.v4",
+    "autoAccept": false,
+    "policyClass": "OBSERVATION_ONLY",
+    "kind": "incomplete",
+    "pattern": "pursuant to",
+    "reason": "INCOMPLETE_REFERENCE"
+  },
+  {
+    "id": "contracts.reference.pursuant-capital.v4",
+    "autoAccept": false,
+    "policyClass": "OBSERVATION_ONLY",
+    "kind": "incomplete",
+    "pattern": "Pursuant to",
+    "reason": "INCOMPLETE_REFERENCE"
+  },
+  {
+    "id": "contracts.reference.as-provided.v4",
+    "autoAccept": false,
+    "policyClass": "OBSERVATION_ONLY",
+    "kind": "incomplete",
+    "pattern": "as provided in",
+    "reason": "INCOMPLETE_REFERENCE"
+  },
+  {
+    "id": "contracts.reference.as-provided-capital.v4",
+    "autoAccept": false,
+    "policyClass": "OBSERVATION_ONLY",
+    "kind": "incomplete",
+    "pattern": "As provided in",
+    "reason": "INCOMPLETE_REFERENCE"
+  }
+]

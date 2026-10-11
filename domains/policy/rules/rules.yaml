@@ -1,0 +1,163 @@
+- id: policy.metadata.policy.v1
+  autoAccept: true
+  kind: metadata
+  metadata:
+    type: policy
+  concept: policy
+- id: policy.heading.control.v1
+  autoAccept: true
+  kind: heading
+  pattern: Control
+  concept: control
+- id: policy.section.control.v1
+  autoAccept: true
+  kind: section
+  pattern: Control
+  relation:
+    from: policy
+    type: applies_to
+    to: control
+  binding:
+    concept: control
+    requirements:
+      - control-required
+  targetPattern: Policy
+- id: policy.control.required.v1
+  autoAccept: true
+  kind: phrase
+  pattern: is required
+  relation:
+    from: policy
+    type: requires
+    to: control
+  binding:
+    concept: control
+    requirements:
+      - control-required
+- id: policy.control.prohibited.v1
+  autoAccept: true
+  kind: phrase
+  pattern: is prohibited
+  relation:
+    from: policy
+    type: prohibits
+    to: control
+  binding:
+    concept: control
+    requirements:
+      - control-prohibited
+- id: policy.action.prohibited.v1
+  autoAccept: true
+  kind: phrase
+  pattern: action is prohibited
+  relation:
+    from: policy
+    type: prohibits
+    to: prohibition
+  binding:
+    concept: prohibition
+    requirements:
+      - control-prohibited
+- id: policy.exception.applies.v1
+  autoAccept: true
+  kind: cue
+  pattern: exception applies
+  relation:
+    from: policy
+    type: qualifies
+    to: exception
+  binding:
+    concept: exception
+    requirements:
+      - stated-exception
+- id: policy.exception.unless.v1
+  autoAccept: true
+  kind: cue
+  pattern: unless approved
+  relation:
+    from: policy
+    type: qualifies
+    to: exception
+  binding:
+    concept: exception
+    requirements:
+      - stated-exception
+- id: policy.exception.subject.v1
+  autoAccept: true
+  kind: cue
+  pattern: subject to
+  excludePattern: former
+  relation:
+    from: policy
+    type: qualifies
+    to: exception
+  binding:
+    concept: exception
+    requirements:
+      - stated-exception
+- id: policy.exception.former.v1
+  autoAccept: true
+  kind: incomplete
+  pattern: subject to the former
+- id: policy.replacement.supersedes.v1
+  autoAccept: true
+  kind: phrase
+  pattern: replaced by
+  relation:
+    from: policy
+    type: supersedes
+    to: replacement
+  binding:
+    concept: replacement
+    requirements:
+      - stated-replacement
+- id: policy.scope.role.v1
+  autoAccept: true
+  kind: phrase
+  pattern: applies to the role
+  relation:
+    from: policy
+    type: applies_to
+    to: role
+  binding:
+    concept: role
+    requirements:
+      - role-scope
+- id: policy.temporal.before.v1
+  autoAccept: true
+  kind: phrase
+  pattern: valid before
+  relation:
+    from: policy
+    type: valid_before
+    to: effective-date
+  binding:
+    concept: effective-date
+    requirements:
+      - temporal-bound
+- id: policy.temporal.after.v1
+  autoAccept: true
+  kind: phrase
+  pattern: valid after
+  relation:
+    from: policy
+    type: valid_after
+    to: effective-date
+  binding:
+    concept: effective-date
+    requirements:
+      - temporal-bound
+- id: policy.date.effective.v1
+  autoAccept: true
+  kind: date
+  pattern: effective
+  dateField: validFrom
+- id: policy.date.until.v1
+  autoAccept: true
+  kind: date
+  pattern: until
+  dateField: validUntil
+- id: policy.authority.v1
+  autoAccept: true
+  kind: authority
+  authorityMetadata: authority

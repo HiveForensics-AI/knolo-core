@@ -1,0 +1,15 @@
+{
+  "name": "kar-1-research",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Research reference for KAR-1. Not a Knolo package and not a V5 root.",
+  "scripts": {
+    "build": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",
+    "test": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json && node --test --test-concurrency=1 test/*.test.mjs",
+    "bench": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json && node bench/run.mjs",
+    "test:integration": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json && node --test --test-concurrency=1 integration/test/*.test.mjs",
+    "bench:integration": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json && node --expose-gc integration/bench/scale.mjs && node integration/bench/cover.mjs",
+    "test:rust": "cargo test --manifest-path rust/Cargo.toml"
+  }
+}

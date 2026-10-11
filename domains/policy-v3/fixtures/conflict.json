@@ -1,0 +1,32 @@
+{
+  "id": "conflict",
+  "documents": [
+    {
+      "source": "require.md",
+      "text": "The control is required before launch.\n",
+      "meta": {
+        "type": "policy"
+      }
+    },
+    {
+      "source": "bar.md",
+      "text": "The control is prohibited after review.\n",
+      "meta": {
+        "type": "policy"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "policy"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "compliance-review",
+      "proposition": "Is the control required?",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS"
+    }
+  }
+}

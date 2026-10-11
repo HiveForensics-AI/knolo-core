@@ -1,0 +1,27 @@
+{
+  "id": "gap",
+  "documents": [
+    {
+      "source": "policy.md",
+      "text": "The control is subject to the former limit.\n",
+      "meta": {
+        "type": "policy"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "policy"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE"
+    ],
+    "kar": {
+      "template": "current-policy",
+      "proposition": "Is the control required?",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS"
+    }
+  }
+}

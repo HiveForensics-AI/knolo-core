@@ -1,0 +1,47 @@
+PROPOSITION
+What evidence shows the valve is closed?
+
+STATUS
+SATISFIED
+Evidence requirements satisfied
+
+SELECTED EVIDENCE
+sha256-0e7c0fed13b133cae38567177029378f8a1f14031d8e174af502d68b483f8d4c  source step.txt  frontiers F_S
+The operator must close the valve. This sentence is evidence for the plan.
+
+SUPPORT
+sha256-0e7c0fed13b133cae38567177029378f8a1f14031d8e174af502d68b483f8d4c  source step.txt  frontiers F_S
+The operator must close the valve. This sentence is evidence for the plan.
+
+OPPOSITION
+(none)
+
+QUALIFICATIONS
+(none)
+
+TEMPORAL/APPLICABILITY
+(none)
+
+AUTHORITY
+(none)
+
+WHY THESE ITEMS WERE SELECTED
+sha256-0e7c0fed13b133cae38567177029378f8a1f14031d8e174af502d68b483f8d4c F_S required for this set; contributes close-valve
+
+CERTIFICATE ROOTS
+KnowledgeRoot sha256-552234a126fd4adc7899ea471739ad218d351c0ea143d689a7a944a0f8fbdc5e
+SemanticRoot sha256-b583962a239dffb7a1ee741952abd85bf2a8c6c0e328a392cb749cdb7f5093a1
+PlanRoot sha256-e136b4f38dde7b637e437485d1b4583bf9d01b77701b1bf12a6ca595e3c534b7
+AnchorRoot sha256-6cf060f80bb46af6357eacce123e4b00fb0002efd390c2e3a80fea2757160a1a
+FrontierRoot sha256-87d08572a8f6697384195c0cb19e308a46711b3a56b8a7c77b5527ba96b8fdf3
+EvidenceSetRoot sha256-e04c19b8fdbe2ad199135559191b5462ace59fd481499598d3e3624dc714198c
+DecisionRoot sha256-fae61f2297742ed62dd71cf2d4ac2750e866711202318182b797d98dfb0e9810
+KARRoot sha256-06c7b24c1bb782f4fc2df9082e0b08b71cf59fd0f1b40862d5cf22379e8ea844
+QueryRoot sha256-8e73d8a5c8ec870da211fa89ebba751944a2a1c46e944bf5dc137eec4e05a126
+FrontierWitnessRoot sha256-f508c816e996f57baf9582c1cb917394b3a052835d4ffd2d363425c3a6b00618
+V5StateRoot sha256-34d1307fec5d3167618a88c8ac0f11bb1be55c892d68d8aa76eb620d6e7f14eb
+
+HOW TO VERIFY
+Recompute the frozen KAR certificate from the Knowledge Image, the Committed Evidence Graph, the plan, and the proposition.
+knolo kar dossier verify <dossier-directory>
+A change to the certificate, manifest, selected evidence, or this rendering fails closed.

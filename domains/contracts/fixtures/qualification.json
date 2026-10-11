@@ -1,0 +1,53 @@
+{
+  "id": "qualification",
+  "documents": [
+    {
+      "source": "terms.md",
+      "text": "The agreement may terminate after notice.\nThe duty stands except when notice is late.\n",
+      "meta": {
+        "type": "contract"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "agreement",
+      "exception",
+      "termination"
+    ],
+    "relations": [
+      {
+        "from": "agreement",
+        "type": "permits",
+        "to": "termination"
+      },
+      {
+        "from": "agreement",
+        "type": "qualifies",
+        "to": "exception"
+      }
+    ],
+    "bindings": [
+      {
+        "concept": "termination",
+        "source": "terms.md",
+        "requirements": [
+          "termination-right"
+        ]
+      },
+      {
+        "concept": "exception",
+        "source": "terms.md",
+        "requirements": [
+          "stated-exception"
+        ]
+      }
+    ],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "qualification-review",
+      "proposition": "May the agreement terminate?",
+      "status": "SATISFIED"
+    }
+  }
+}

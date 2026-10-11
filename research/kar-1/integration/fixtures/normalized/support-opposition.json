@@ -1,0 +1,221 @@
+{
+  "name": "support-opposition",
+  "scenario": "support-opposition",
+  "image": {
+    "version": 1,
+    "evidence": [
+      {
+        "id": "sha256-13841b4d369c4aa0abc103ce2ecbadf56b0a1bb43d599d1f1b964d1772a86db5",
+        "text": "A guest may cancel a lodging reservation before the day of arrival and receive the deposit back."
+      },
+      {
+        "id": "sha256-5a62dde978bc98565bf7c6aa810c210b98b744f490d6ef03c2c544921be6e5db",
+        "text": "An enterprise lodging commitment cannot be cancelled after the agreement is signed."
+      }
+    ]
+  },
+  "graph": {
+    "version": 1,
+    "knowledgeRoot": "sha256-f4d0c63d0ca3fdbd8a1d660c2232e07819731b814194f66e9441f04ccef93a8d",
+    "provenance": {
+      "producer": "hand",
+      "note": "kar-sidecar:support-opposition"
+    },
+    "nodes": [
+      {
+        "id": "lodging"
+      },
+      {
+        "id": "general-policy"
+      },
+      {
+        "id": "enterprise-clause"
+      }
+    ],
+    "relations": [
+      {
+        "id": "r-permit",
+        "from": "lodging",
+        "relation": "permits",
+        "to": "general-policy"
+      },
+      {
+        "id": "r-prohibit",
+        "from": "lodging",
+        "relation": "prohibits",
+        "to": "enterprise-clause"
+      }
+    ],
+    "bindings": [
+      {
+        "id": "b-policy",
+        "nodeId": "general-policy",
+        "evidenceId": "sha256-13841b4d369c4aa0abc103ce2ecbadf56b0a1bb43d599d1f1b964d1772a86db5",
+        "requirements": [
+          "cancel-allowed"
+        ],
+        "provenance": "hand:general-policy"
+      },
+      {
+        "id": "b-enterprise",
+        "nodeId": "enterprise-clause",
+        "evidenceId": "sha256-5a62dde978bc98565bf7c6aa810c210b98b744f490d6ef03c2c544921be6e5db",
+        "requirements": [
+          "commitment-bars-cancel"
+        ],
+        "provenance": "hand:enterprise-clause"
+      }
+    ]
+  },
+  "query": "Can the customer cancel the room?",
+  "plan": {
+    "version": 1,
+    "anchor": {
+      "mode": "supplied",
+      "witness": [
+        {
+          "nodeId": "lodging",
+          "queryTerm": "room"
+        }
+      ]
+    },
+    "frontierMap": {
+      "permits": "F_S",
+      "prohibits": "F_O"
+    },
+    "depth": 1,
+    "cardinalityBound": 5,
+    "coverageMode": "requirements",
+    "requirements": {
+      "F_S": [
+        "cancel-allowed"
+      ],
+      "F_O": [
+        "commitment-bars-cancel"
+      ],
+      "F_Q": [],
+      "F_T": [],
+      "F_A": []
+    },
+    "floors": {
+      "F_S": "1",
+      "F_O": "1",
+      "F_Q": "0",
+      "F_T": "0",
+      "F_A": "0"
+    },
+    "profile": "minimum-cover",
+    "asOf": "2026-10-10",
+    "minAuthority": null,
+    "bounds": {
+      "maxAnchorNodes": 8,
+      "maxClosureNodes": 32,
+      "maxClosureEdges": 64,
+      "maxFrontierEvidence": 16,
+      "maxRequirementsPerFrontier": 8,
+      "maxEvidenceBindings": 32,
+      "maxCoverVisits": 10000
+    },
+    "lexical": null
+  },
+  "stateRoot": "sha256-fe6ac66f9e0f14a11d72d0125b95750bc0fa46dd53e49639e5eeb362cb26f7a6",
+  "status": "SATISFIED",
+  "evidenceIds": [
+    "sha256-13841b4d369c4aa0abc103ce2ecbadf56b0a1bb43d599d1f1b964d1772a86db5",
+    "sha256-5a62dde978bc98565bf7c6aa810c210b98b744f490d6ef03c2c544921be6e5db"
+  ],
+  "choices": [
+    {
+      "evidenceId": "sha256-13841b4d369c4aa0abc103ce2ecbadf56b0a1bb43d599d1f1b964d1772a86db5",
+      "frontiers": [
+        "F_S"
+      ]
+    },
+    {
+      "evidenceId": "sha256-5a62dde978bc98565bf7c6aa810c210b98b744f490d6ef03c2c544921be6e5db",
+      "frontiers": [
+        "F_O"
+      ]
+    }
+  ],
+  "frontiers": {
+    "F_S": [
+      "sha256-13841b4d369c4aa0abc103ce2ecbadf56b0a1bb43d599d1f1b964d1772a86db5"
+    ],
+    "F_O": [
+      "sha256-5a62dde978bc98565bf7c6aa810c210b98b744f490d6ef03c2c544921be6e5db"
+    ],
+    "F_Q": [],
+    "F_T": [],
+    "F_A": []
+  },
+  "witnesses": [
+    {
+      "evidenceId": "sha256-5a62dde978bc98565bf7c6aa810c210b98b744f490d6ef03c2c544921be6e5db",
+      "frontier": "F_O",
+      "anchorId": "lodging",
+      "path": [
+        {
+          "node": "lodging"
+        },
+        {
+          "relation": "r-prohibit",
+          "node": "enterprise-clause"
+        }
+      ]
+    },
+    {
+      "evidenceId": "sha256-13841b4d369c4aa0abc103ce2ecbadf56b0a1bb43d599d1f1b964d1772a86db5",
+      "frontier": "F_S",
+      "anchorId": "lodging",
+      "path": [
+        {
+          "node": "lodging"
+        },
+        {
+          "relation": "r-permit",
+          "node": "general-policy"
+        }
+      ]
+    }
+  ],
+  "decision": {
+    "status": "SATISFIED",
+    "profile": "minimum-cover",
+    "cardinality": 2,
+    "coverage": {
+      "F_S": {
+        "covered": 1,
+        "required": 1
+      },
+      "F_O": {
+        "covered": 1,
+        "required": 1
+      },
+      "F_Q": {
+        "covered": 0,
+        "required": 0
+      },
+      "F_T": {
+        "covered": 0,
+        "required": 0
+      },
+      "F_A": {
+        "covered": 0,
+        "required": 0
+      }
+    }
+  },
+  "roots": {
+    "knowledgeRoot": "sha256-f4d0c63d0ca3fdbd8a1d660c2232e07819731b814194f66e9441f04ccef93a8d",
+    "semanticRoot": "sha256-22fb00919d1a84b54abbec1194850242ff81c80f30057d9dd2515896b7a7da14",
+    "queryRoot": "sha256-d551e83e07a43df818a7a11b9d9cff659e3ff5e7140cabda1cda013f62049585",
+    "planRoot": "sha256-b43f51fc4d88b0adee9f123de01abe3bf80aeca56593ff4d75879b70f7ffb9f3",
+    "anchorRoot": "sha256-ed9b2b77a366c24cdaeeb76c976638d526ebe4b8eeec381e48fbd67c5366182c",
+    "frontierRoot": "sha256-08d716fbb644df4bf5ca718c7c4ecad2abea66effa5e90a642a559c9f5052c4e",
+    "frontierWitnessRoot": "sha256-e6cd5955d4549da03809810ca95ffe78a73cf93e76028148353ae1a52c721970",
+    "evidenceSetRoot": "sha256-eaa3f067f4e986461b72dd567909e70bd85a462ed0bc7bae536dca6460086797",
+    "decisionRoot": "sha256-ba643ef0dcb933a375cfd8f7bc3bb47ddad181564c32ed1918cffe0224a14550",
+    "karRoot": "sha256-ff8aa7a6978951c2c3e5d25a2d0039b00b718a6615216661b45c64bd9558d04f"
+  }
+}

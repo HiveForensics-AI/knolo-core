@@ -1,0 +1,26 @@
+{
+  "id": "authority",
+  "documents": [
+    {
+      "source": "terms.md",
+      "text": "The agreement may terminate after notice.\n",
+      "meta": {
+        "type": "contract",
+        "authority": "80"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "agreement"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "authority-review",
+      "proposition": "May the agreement terminate?",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "v4-structures",
+  "documents": [
+    {
+      "source": "structures.md",
+      "text": "Procedure\nSafety\nResponsibilities\nThe operator must close the valve.\nThe technician will record the reading.\nThe operator agrees to stop the pump.\nInspect the seal prior to startup.\nThe torque is pursuant to Section 4.\nPursuant to Section 5.\nTools are subject to Exhibit A.\n",
+      "meta": {
+        "type": "procedure"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "procedure",
+      "role"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE",
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE",
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE"
+    ]
+  }
+}

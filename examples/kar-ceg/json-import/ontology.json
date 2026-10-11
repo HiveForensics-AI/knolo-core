@@ -1,0 +1,18 @@
+{
+  "nodes": [
+    { "id": "customer", "name": "Enterprise customer" },
+    { "id": "cancellation", "name": "Cancellation" }
+  ],
+  "edges": [
+    { "source": "customer", "rel": "permits", "target": "cancellation" },
+    { "source": "customer", "rel": "prohibits", "target": "cancellation" }
+  ],
+  "documents": [
+    { "alias": "policy", "path": "policy.md" },
+    { "alias": "contract", "path": "contract.md" }
+  ],
+  "supports": [
+    { "node": "cancellation", "doc": "policy", "rules": ["cancel-allowed"], "rank": 40 },
+    { "node": "cancellation", "doc": "contract", "rules": ["cancel-barred"], "rank": 80, "start": "2026-01-01" }
+  ]
+}

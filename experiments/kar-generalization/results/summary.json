@@ -1,0 +1,1032 @@
+{
+  "experiment": "kar-generalization-1",
+  "seed": 20261012,
+  "holdoutSeed": 20261013,
+  "negativeSeed": 20261014,
+  "limit": null,
+  "gates": {
+    "opposition": 0.85,
+    "qualifier": 0.8,
+    "supportDrop": 0.05,
+    "damage": 0.1,
+    "lexiconControl": 0.15,
+    "parseFailure": 0.2
+  },
+  "counts": {
+    "development": 36,
+    "holdout": 60,
+    "negative": 100,
+    "negativeCorpus": 500,
+    "devTarget": 36
+  },
+  "development": {
+    "b0": {
+      "support": {
+        "n": 36,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "opposition": {
+        "n": 36,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "qualifier": {
+        "n": 36,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "l0": {
+      "support": {
+        "n": 36,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "opposition": {
+        "n": 36,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "qualifier": {
+        "n": 36,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "g1": {
+      "support": {
+        "n": 36,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "opposition": {
+        "n": 36,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "qualifier": {
+        "n": 36,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "oracle": {
+      "support": {
+        "n": 36,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "opposition": {
+        "n": 36,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "qualifier": {
+        "n": 36,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      }
+    }
+  },
+  "holdout": {
+    "b0": {
+      "support": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "opposition": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "qualifier": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "l0": {
+      "support": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "opposition": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "qualifier": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "g1": {
+      "support": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "opposition": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "qualifier": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "oracle": {
+      "support": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "opposition": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "qualifier": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      }
+    }
+  },
+  "holdoutDomains": {
+    "field-equipment": {
+      "opposition": {
+        "n": 20,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "qualifier": {
+        "n": 20,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "lodging": {
+      "opposition": {
+        "n": 20,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "qualifier": {
+        "n": 20,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "software-access": {
+      "opposition": {
+        "n": 20,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "qualifier": {
+        "n": 20,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    }
+  },
+  "ablations": {
+    "holdout": {
+      "full": {
+        "support": {
+          "n": 60,
+          "mean": 1,
+          "median": 1,
+          "min": 1,
+          "max": 1,
+          "ci95": [
+            1,
+            1
+          ]
+        },
+        "opposition": {
+          "n": 60,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        },
+        "qualifier": {
+          "n": 60,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        }
+      },
+      "action-only": {
+        "support": {
+          "n": 60,
+          "mean": 1,
+          "median": 1,
+          "min": 1,
+          "max": 1,
+          "ci95": [
+            1,
+            1
+          ]
+        },
+        "opposition": {
+          "n": 60,
+          "mean": 0.016666666666666666,
+          "median": 0,
+          "min": 0,
+          "max": 1,
+          "ci95": [
+            0,
+            0.05
+          ]
+        },
+        "qualifier": {
+          "n": 60,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        }
+      },
+      "entity-only": {
+        "support": {
+          "n": 60,
+          "mean": 1,
+          "median": 1,
+          "min": 1,
+          "max": 1,
+          "ci95": [
+            1,
+            1
+          ]
+        },
+        "opposition": {
+          "n": 60,
+          "mean": 0.18333333333333332,
+          "median": 0,
+          "min": 0,
+          "max": 1,
+          "ci95": [
+            0.09958333333333336,
+            0.2833333333333333
+          ]
+        },
+        "qualifier": {
+          "n": 60,
+          "mean": 0.03333333333333333,
+          "median": 0,
+          "min": 0,
+          "max": 1,
+          "ci95": [
+            0,
+            0.08333333333333333
+          ]
+        }
+      },
+      "surface-only": {
+        "support": {
+          "n": 60,
+          "mean": 1,
+          "median": 1,
+          "min": 1,
+          "max": 1,
+          "ci95": [
+            1,
+            1
+          ]
+        },
+        "opposition": {
+          "n": 60,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        },
+        "qualifier": {
+          "n": 60,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        }
+      },
+      "siblings": {
+        "support": {
+          "n": 60,
+          "mean": 1,
+          "median": 1,
+          "min": 1,
+          "max": 1,
+          "ci95": [
+            1,
+            1
+          ]
+        },
+        "opposition": {
+          "n": 60,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        },
+        "qualifier": {
+          "n": 60,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        }
+      },
+      "no-lexical-union": {
+        "support": {
+          "n": 60,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        },
+        "opposition": {
+          "n": 60,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        },
+        "qualifier": {
+          "n": 60,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "development": {
+      "full": {
+        "support": {
+          "n": 36,
+          "mean": 1,
+          "median": 1,
+          "min": 1,
+          "max": 1,
+          "ci95": [
+            1,
+            1
+          ]
+        },
+        "opposition": {
+          "n": 36,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        },
+        "qualifier": {
+          "n": 36,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        }
+      },
+      "action-only": {
+        "support": {
+          "n": 36,
+          "mean": 1,
+          "median": 1,
+          "min": 1,
+          "max": 1,
+          "ci95": [
+            1,
+            1
+          ]
+        },
+        "opposition": {
+          "n": 36,
+          "mean": 0.027777777777777776,
+          "median": 0,
+          "min": 0,
+          "max": 1,
+          "ci95": [
+            0,
+            0.08333333333333333
+          ]
+        },
+        "qualifier": {
+          "n": 36,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        }
+      },
+      "entity-only": {
+        "support": {
+          "n": 36,
+          "mean": 1,
+          "median": 1,
+          "min": 1,
+          "max": 1,
+          "ci95": [
+            1,
+            1
+          ]
+        },
+        "opposition": {
+          "n": 36,
+          "mean": 0.4166666666666667,
+          "median": 0,
+          "min": 0,
+          "max": 1,
+          "ci95": [
+            0.25,
+            0.5833333333333334
+          ]
+        },
+        "qualifier": {
+          "n": 36,
+          "mean": 0.027777777777777776,
+          "median": 0,
+          "min": 0,
+          "max": 1,
+          "ci95": [
+            0,
+            0.08333333333333333
+          ]
+        }
+      },
+      "surface-only": {
+        "support": {
+          "n": 36,
+          "mean": 1,
+          "median": 1,
+          "min": 1,
+          "max": 1,
+          "ci95": [
+            1,
+            1
+          ]
+        },
+        "opposition": {
+          "n": 36,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        },
+        "qualifier": {
+          "n": 36,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        }
+      },
+      "siblings": {
+        "support": {
+          "n": 36,
+          "mean": 1,
+          "median": 1,
+          "min": 1,
+          "max": 1,
+          "ci95": [
+            1,
+            1
+          ]
+        },
+        "opposition": {
+          "n": 36,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        },
+        "qualifier": {
+          "n": 36,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        }
+      },
+      "no-lexical-union": {
+        "support": {
+          "n": 36,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        },
+        "opposition": {
+          "n": 36,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        },
+        "qualifier": {
+          "n": 36,
+          "mean": 0,
+          "median": 0,
+          "min": 0,
+          "max": 0,
+          "ci95": [
+            0,
+            0
+          ]
+        }
+      }
+    }
+  },
+  "damage": {
+    "baselineOpposition": {
+      "n": 100,
+      "mean": 0,
+      "median": 0,
+      "min": 0,
+      "max": 0,
+      "ci95": [
+        0,
+        0
+      ]
+    },
+    "baselineQualifier": {
+      "n": 100,
+      "mean": 0,
+      "median": 0,
+      "min": 0,
+      "max": 0,
+      "ci95": [
+        0,
+        0
+      ]
+    },
+    "g1Opposition": {
+      "n": 100,
+      "mean": 0,
+      "median": 0,
+      "min": 0,
+      "max": 0,
+      "ci95": [
+        0,
+        0
+      ]
+    },
+    "g1Qualifier": {
+      "n": 100,
+      "mean": 0,
+      "median": 0,
+      "min": 0,
+      "max": 0,
+      "ci95": [
+        0,
+        0
+      ]
+    },
+    "opposition": {
+      "n": 100,
+      "mean": 0,
+      "median": 0,
+      "min": 0,
+      "max": 0,
+      "ci95": [
+        0,
+        0
+      ]
+    },
+    "qualifier": {
+      "n": 100,
+      "mean": 0,
+      "median": 0,
+      "min": 0,
+      "max": 0,
+      "ci95": [
+        0,
+        0
+      ]
+    },
+    "actionOnlyOpposition": {
+      "n": 100,
+      "mean": 1,
+      "median": 1,
+      "min": 1,
+      "max": 1,
+      "ci95": [
+        1,
+        1
+      ]
+    },
+    "actionOnlyQualifier": {
+      "n": 100,
+      "mean": 0,
+      "median": 0,
+      "min": 0,
+      "max": 0,
+      "ci95": [
+        0,
+        0
+      ]
+    },
+    "poolGrowth": {
+      "n": 100,
+      "mean": 0,
+      "median": 0,
+      "min": 0,
+      "max": 0,
+      "ci95": [
+        0,
+        0
+      ]
+    }
+  },
+  "audits": {
+    "l0": {
+      "claims": {
+        "n": 196,
+        "mean": 15.581632653061224,
+        "median": 30,
+        "min": 0,
+        "max": 30
+      },
+      "edges": {
+        "n": 196,
+        "mean": 15.581632653061224,
+        "median": 30,
+        "min": 0,
+        "max": 30
+      },
+      "aliasSlots": {
+        "n": 196,
+        "mean": 732.3367346938776,
+        "median": 1410,
+        "min": 0,
+        "max": 1410
+      },
+      "bytes": {
+        "n": 196,
+        "mean": 16278.729591836734,
+        "median": 30862,
+        "min": 93,
+        "max": 31282
+      },
+      "buildMs": {
+        "n": 196,
+        "mean": 2.190924352039544,
+        "median": 3.259922999946866,
+        "min": 0.12159300001803786,
+        "max": 13.97618700005114
+      }
+    },
+    "g1": {
+      "claims": {
+        "n": 196,
+        "mean": 5.061224489795919,
+        "median": 8,
+        "min": 2,
+        "max": 8
+      },
+      "edges": {
+        "n": 196,
+        "mean": 5.061224489795919,
+        "median": 8,
+        "min": 2,
+        "max": 8
+      },
+      "aliasSlots": {
+        "n": 196,
+        "mean": 44.326530612244895,
+        "median": 71,
+        "min": 12,
+        "max": 71
+      },
+      "bytes": {
+        "n": 196,
+        "mean": 2108.6428571428573,
+        "median": 3181,
+        "min": 892,
+        "max": 3213
+      },
+      "buildMs": {
+        "n": 196,
+        "mean": 3146.8187511887736,
+        "median": 1.6434585000388324,
+        "min": 0.8717500000202563,
+        "max": 8005.783378999971
+      }
+    }
+  },
+  "relationTotals": [
+    {
+      "relation": "equivalent",
+      "count": 508
+    },
+    {
+      "relation": "permits",
+      "count": 11
+    },
+    {
+      "relation": "prohibits",
+      "count": 473
+    }
+  ],
+  "proof": {
+    "instance": "D-clinic-visits-00",
+    "first": "sha256-6784984ed1d3f9f648a45f9d91396bbc3d674b4df2615817608cc0f10286f3f6",
+    "second": "sha256-6784984ed1d3f9f648a45f9d91396bbc3d674b4df2615817608cc0f10286f3f6",
+    "reloaded": "sha256-6784984ed1d3f9f648a45f9d91396bbc3d674b4df2615817608cc0f10286f3f6",
+    "identical": true,
+    "canonicalBytes": 1111
+  },
+  "determinism": {
+    "runs": 200,
+    "mismatches": 0
+  },
+  "model": {
+    "available": true,
+    "provider": "ollama",
+    "model": "llama3.1:latest",
+    "digest": "46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e",
+    "temperature": 0,
+    "promptDigest": "sha256-42a3a21ff6ff9c9646df2cbf193f517b75568e2c2c419975e3746b1e386b8836",
+    "compiler": "kar-generalization-g1-1",
+    "calls": 188,
+    "cacheHits": 808,
+    "failures": 0,
+    "attempted": 188,
+    "parseRate": 0
+  },
+  "decision": {
+    "label": "GENERALIZATION_NOT_SHOWN",
+    "candidate": "g1",
+    "gatesOk": false,
+    "fixtureBroken": false,
+    "supportDrop": 0,
+    "oppGain": 0,
+    "qualGain": 0
+  }
+}

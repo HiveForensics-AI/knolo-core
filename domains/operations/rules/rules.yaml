@@ -1,0 +1,163 @@
+- id: operations.metadata.procedure.v1
+  autoAccept: true
+  kind: metadata
+  metadata:
+    type: procedure
+  concept: procedure
+- id: operations.heading.step.v1
+  autoAccept: true
+  kind: heading
+  pattern: Step
+  concept: step
+- id: operations.section.step.v1
+  autoAccept: true
+  kind: section
+  pattern: Step
+  relation:
+    from: procedure
+    type: applies_to
+    to: step
+  binding:
+    concept: step
+    requirements:
+      - required-step
+  targetPattern: Procedure
+- id: operations.step.required.v1
+  autoAccept: true
+  kind: phrase
+  pattern: must complete
+  relation:
+    from: procedure
+    type: requires
+    to: step
+  binding:
+    concept: step
+    requirements:
+      - required-step
+- id: operations.step.barred.v1
+  autoAccept: true
+  kind: phrase
+  pattern: must not complete
+  relation:
+    from: procedure
+    type: prohibits
+    to: step
+  binding:
+    concept: step
+    requirements:
+      - prohibited-state
+- id: operations.state.barred.v1
+  autoAccept: true
+  kind: phrase
+  pattern: must not start
+  relation:
+    from: procedure
+    type: prohibits
+    to: prohibited-state
+  binding:
+    concept: prohibited-state
+    requirements:
+      - prohibited-state
+- id: operations.precondition.v1
+  autoAccept: true
+  kind: phrase
+  pattern: before starting
+  relation:
+    from: procedure
+    type: requires
+    to: precondition
+  binding:
+    concept: precondition
+    requirements:
+      - precondition
+- id: operations.exception.unless.v1
+  autoAccept: true
+  kind: cue
+  pattern: unless authorized
+  relation:
+    from: procedure
+    type: qualifies
+    to: exception
+  binding:
+    concept: exception
+    requirements:
+      - stated-exception
+- id: operations.exception.subject.v1
+  autoAccept: true
+  kind: cue
+  pattern: subject to
+  excludePattern: former
+  relation:
+    from: procedure
+    type: qualifies
+    to: exception
+  binding:
+    concept: exception
+    requirements:
+      - stated-exception
+- id: operations.exception.former.v1
+  autoAccept: true
+  kind: incomplete
+  pattern: subject to the former
+- id: operations.replacement.v1
+  autoAccept: true
+  kind: phrase
+  pattern: replaced by procedure
+  relation:
+    from: procedure
+    type: supersedes
+    to: replacement
+  binding:
+    concept: replacement
+    requirements:
+      - procedure-replacement
+- id: operations.equipment.v1
+  autoAccept: true
+  kind: phrase
+  pattern: using the equipment
+  relation:
+    from: procedure
+    type: applies_to
+    to: equipment
+  binding:
+    concept: equipment
+    requirements:
+      - equipment-used
+- id: operations.temporal.before.v1
+  autoAccept: true
+  kind: phrase
+  pattern: valid before
+  relation:
+    from: procedure
+    type: valid_before
+    to: effective-date
+  binding:
+    concept: effective-date
+    requirements:
+      - temporal-bound
+- id: operations.temporal.after.v1
+  autoAccept: true
+  kind: phrase
+  pattern: valid after
+  relation:
+    from: procedure
+    type: valid_after
+    to: effective-date
+  binding:
+    concept: effective-date
+    requirements:
+      - temporal-bound
+- id: operations.date.effective.v1
+  autoAccept: true
+  kind: date
+  pattern: effective
+  dateField: validFrom
+- id: operations.date.until.v1
+  autoAccept: true
+  kind: date
+  pattern: until
+  dateField: validUntil
+- id: operations.authority.v1
+  autoAccept: true
+  kind: authority
+  authorityMetadata: authority

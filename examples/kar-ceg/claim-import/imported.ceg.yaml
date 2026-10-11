@@ -1,0 +1,10 @@
+format: ceg-source-1
+concepts:
+  cancellation:
+    label: Cancellation
+  customer:
+    label: Enterprise customer
+relations:
+  - from: customer
+    type: related
+    to: cancellation

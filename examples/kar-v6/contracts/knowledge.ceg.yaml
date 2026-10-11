@@ -1,0 +1,32 @@
+format: ceg-source-1
+concepts:
+  customer:
+    label: Customer
+  allowance:
+    label: Cancellation allowance
+  bar:
+    label: Cancellation bar
+evidence:
+  policy:
+    source: policy.txt
+  contract:
+    source: contract.txt
+relations:
+  - from: customer
+    type: permits
+    to: allowance
+  - from: customer
+    type: prohibits
+    to: bar
+bindings:
+  - concept: allowance
+    evidence: policy
+    requirements:
+      - cancel-allowed
+  - concept: bar
+    evidence: contract
+    requirements:
+      - cancel-barred
+requirements:
+  - cancel-allowed
+  - cancel-barred

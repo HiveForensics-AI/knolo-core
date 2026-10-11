@@ -1,0 +1,26 @@
+{
+  "id": "authority",
+  "documents": [
+    {
+      "source": "policy.md",
+      "text": "The control is required before launch.\n",
+      "meta": {
+        "type": "policy",
+        "authority": "80"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "policy"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "current-policy",
+      "proposition": "Is the control required?",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS"
+    }
+  }
+}

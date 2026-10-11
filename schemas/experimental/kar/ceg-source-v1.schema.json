@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schema/experimental/kar/ceg-source-v1.schema.json",
+  "title": "CEG Source v1",
+  "description": "Human authoring object for ceg-source-1. YAML and JSON are encodings of this object. It is not a KarSidecarV1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "concepts", "evidence", "relations", "bindings", "requirements"],
+  "properties": {
+    "format": { "const": "ceg-source-1" },
+    "concepts": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/concept" }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/selector" }
+    },
+    "relations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/relation" }
+    },
+    "bindings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/binding" }
+    },
+    "requirements": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "concept": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "label": { "type": "string" },
+        "note": { "type": "string" }
+      }
+    },
+    "selector": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["objectId"],
+          "properties": { "objectId": { "type": "string", "minLength": 1 } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source"],
+          "properties": {
+            "source": { "type": "string", "minLength": 1 },
+            "namespace": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["locator"],
+          "properties": { "locator": { "type": "string", "minLength": 1 } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["meta"],
+          "properties": {
+            "meta": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            }
+          }
+        }
+      ]
+    },
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "type", "to"],
+      "properties": {
+        "from": { "type": "string", "minLength": 1 },
+        "type": { "type": "string", "minLength": 1 },
+        "to": { "type": "string", "minLength": 1 }
+      }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["concept", "evidence", "requirements"],
+      "properties": {
+        "concept": { "type": "string", "minLength": 1 },
+        "evidence": { "type": "string", "minLength": 1 },
+        "requirements": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "authority": { "type": "integer" },
+        "unauthorized": { "type": "boolean" },
+        "validFrom": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "validUntil": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "provenance": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

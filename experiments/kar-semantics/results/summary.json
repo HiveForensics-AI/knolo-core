@@ -1,0 +1,2411 @@
+{
+  "experiment": "kar-semantics-1",
+  "seed": 20261009,
+  "holdoutSeed": 20261010,
+  "negativeSeed": 20261011,
+  "limit": null,
+  "gates": {
+    "opposition": 0.9,
+    "qualifier": 0.85,
+    "disconnect": 0.75,
+    "supportDrop": 0.05,
+    "damage": 0.1
+  },
+  "s2Status": "RUN",
+  "s2Totals": {
+    "calls": 222,
+    "cacheHits": 669,
+    "failures": 0
+  },
+  "counts": {
+    "development": 220,
+    "adversarial": 160,
+    "scenarioD": 20,
+    "holdout": 60,
+    "holdoutDisconnect": 60,
+    "holdoutQualifier": 60,
+    "holdoutTemporal": 30,
+    "negative": 100,
+    "negativeCorpus": 500
+  },
+  "development": {
+    "b0": {
+      "support": {
+        "n": 160,
+        "mean": 0.96875,
+        "median": 1,
+        "min": 0.5,
+        "max": 1,
+        "ci95": [
+          0.95,
+          0.984375
+        ]
+      },
+      "opposition": {
+        "n": 160,
+        "mean": 0.78125,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.728125,
+          0.831328125
+        ]
+      },
+      "qualifier": {
+        "n": 40,
+        "mean": 0.5,
+        "median": 0.5,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.34937500000000005,
+          0.65
+        ]
+      },
+      "temporal": {
+        "n": 20,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "scenarioD": {
+        "n": 20,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "b1": {
+      "support": {
+        "n": 160,
+        "mean": 0.96875,
+        "median": 1,
+        "min": 0.5,
+        "max": 1,
+        "ci95": [
+          0.95,
+          0.9844531249999999
+        ]
+      },
+      "opposition": {
+        "n": 160,
+        "mean": 0.78125,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.725,
+          0.834375
+        ]
+      },
+      "qualifier": {
+        "n": 40,
+        "mean": 0.5,
+        "median": 0.5,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.34937500000000005,
+          0.65
+        ]
+      },
+      "temporal": {
+        "n": 20,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "scenarioD": {
+        "n": 20,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "b2": {
+      "support": {
+        "n": 160,
+        "mean": 0.96875,
+        "median": 1,
+        "min": 0.5,
+        "max": 1,
+        "ci95": [
+          0.946875,
+          0.984375
+        ]
+      },
+      "opposition": {
+        "n": 160,
+        "mean": 0.78125,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.725,
+          0.83125
+        ]
+      },
+      "qualifier": {
+        "n": 40,
+        "mean": 0.5,
+        "median": 0.5,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.35,
+          0.65
+        ]
+      },
+      "temporal": {
+        "n": 20,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "scenarioD": {
+        "n": 20,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "b3": {
+      "support": {
+        "n": 160,
+        "mean": 0.96875,
+        "median": 1,
+        "min": 0.5,
+        "max": 1,
+        "ci95": [
+          0.95,
+          0.9875
+        ]
+      },
+      "opposition": {
+        "n": 160,
+        "mean": 0.78125,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.725,
+          0.834375
+        ]
+      },
+      "qualifier": {
+        "n": 40,
+        "mean": 0.5,
+        "median": 0.5,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.35,
+          0.65
+        ]
+      },
+      "temporal": {
+        "n": 20,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "scenarioD": {
+        "n": 20,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "s0": {
+      "support": {
+        "n": 160,
+        "mean": 0.96875,
+        "median": 1,
+        "min": 0.5,
+        "max": 1,
+        "ci95": [
+          0.95,
+          0.984375
+        ]
+      },
+      "opposition": {
+        "n": 160,
+        "mean": 0.78125,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.725,
+          0.83125
+        ]
+      },
+      "qualifier": {
+        "n": 40,
+        "mean": 0.5,
+        "median": 0.5,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.35,
+          0.6506249999999995
+        ]
+      },
+      "temporal": {
+        "n": 20,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "scenarioD": {
+        "n": 20,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "s1": {
+      "support": {
+        "n": 160,
+        "mean": 0.96875,
+        "median": 1,
+        "min": 0.5,
+        "max": 1,
+        "ci95": [
+          0.95,
+          0.984375
+        ]
+      },
+      "opposition": {
+        "n": 160,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "qualifier": {
+        "n": 40,
+        "mean": 0.5,
+        "median": 0.5,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.35,
+          0.65
+        ]
+      },
+      "temporal": {
+        "n": 20,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "scenarioD": {
+        "n": 20,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      }
+    },
+    "s2": {
+      "support": {
+        "n": 160,
+        "mean": 0.96875,
+        "median": 1,
+        "min": 0.5,
+        "max": 1,
+        "ci95": [
+          0.95,
+          0.984375
+        ]
+      },
+      "opposition": {
+        "n": 160,
+        "mean": 0.86875,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.8233984375000001,
+          0.9078125
+        ]
+      },
+      "qualifier": {
+        "n": 40,
+        "mean": 0.775,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.65,
+          0.9
+        ]
+      },
+      "temporal": {
+        "n": 20,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "scenarioD": {
+        "n": 20,
+        "mean": 0.55,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.34875000000000006,
+          0.75
+        ]
+      }
+    },
+    "oracle": {
+      "support": {
+        "n": 160,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "opposition": {
+        "n": 160,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "qualifier": {
+        "n": 40,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "temporal": {
+        "n": 20,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "scenarioD": {
+        "n": 20,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      }
+    }
+  },
+  "holdout": {
+    "b0": {
+      "support": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "opposition": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "qualifier": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "temporal": {
+        "n": 30,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "disconnect": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "inLexiconOpposition": {
+        "n": 54,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "stressOpposition": {
+        "n": 6,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "inLexiconQualifier": {
+        "n": 51,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "stressQualifier": {
+        "n": 9,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "b1": {
+      "support": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "opposition": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "qualifier": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "temporal": {
+        "n": 30,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "disconnect": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "inLexiconOpposition": {
+        "n": 54,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "stressOpposition": {
+        "n": 6,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "inLexiconQualifier": {
+        "n": 51,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "stressQualifier": {
+        "n": 9,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "b2": {
+      "support": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "opposition": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "qualifier": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "temporal": {
+        "n": 30,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "disconnect": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "inLexiconOpposition": {
+        "n": 54,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "stressOpposition": {
+        "n": 6,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "inLexiconQualifier": {
+        "n": 51,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "stressQualifier": {
+        "n": 9,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "b3": {
+      "support": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "opposition": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "qualifier": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "temporal": {
+        "n": 30,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "disconnect": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "inLexiconOpposition": {
+        "n": 54,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "stressOpposition": {
+        "n": 6,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "inLexiconQualifier": {
+        "n": 51,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "stressQualifier": {
+        "n": 9,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "s0": {
+      "support": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "opposition": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "qualifier": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "temporal": {
+        "n": 30,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "disconnect": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "inLexiconOpposition": {
+        "n": 54,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "stressOpposition": {
+        "n": 6,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "inLexiconQualifier": {
+        "n": 51,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "stressQualifier": {
+        "n": 9,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "s1": {
+      "support": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "opposition": {
+        "n": 60,
+        "mean": 0.9,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.8166666666666667,
+          0.9666666666666667
+        ]
+      },
+      "qualifier": {
+        "n": 60,
+        "mean": 0.85,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.75,
+          0.9333333333333333
+        ]
+      },
+      "temporal": {
+        "n": 30,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "disconnect": {
+        "n": 60,
+        "mean": 0.9,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.8166666666666667,
+          0.9666666666666667
+        ]
+      },
+      "inLexiconOpposition": {
+        "n": 54,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "stressOpposition": {
+        "n": 6,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "inLexiconQualifier": {
+        "n": 51,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "stressQualifier": {
+        "n": 9,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "s2": {
+      "support": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "opposition": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "qualifier": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "temporal": {
+        "n": 30,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "disconnect": {
+        "n": 60,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "inLexiconOpposition": {
+        "n": 54,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "stressOpposition": {
+        "n": 6,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "inLexiconQualifier": {
+        "n": 51,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "stressQualifier": {
+        "n": 9,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "oracle": {
+      "support": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "opposition": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "qualifier": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "temporal": {
+        "n": 30,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "disconnect": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "inLexiconOpposition": {
+        "n": 54,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "stressOpposition": {
+        "n": 6,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "inLexiconQualifier": {
+        "n": 51,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "stressQualifier": {
+        "n": 9,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      }
+    }
+  },
+  "damage": {
+    "s1": {
+      "opposition": {
+        "n": 100,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "qualifier": {
+        "n": 100,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "baselineOpposition": {
+        "n": 100,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "methodOpposition": {
+        "n": 100,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "baselineQualifier": {
+        "n": 100,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "methodQualifier": {
+        "n": 100,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "poolGrowth": {
+        "n": 100,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    },
+    "s2": {
+      "opposition": {
+        "n": 100,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "qualifier": {
+        "n": 100,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "baselineOpposition": {
+        "n": 100,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "methodOpposition": {
+        "n": 100,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "baselineQualifier": {
+        "n": 100,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "methodQualifier": {
+        "n": 100,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "poolGrowth": {
+        "n": 100,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      }
+    }
+  },
+  "ablations": {
+    "full": {
+      "developmentOpposition": {
+        "n": 160,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "developmentQualifier": {
+        "n": 40,
+        "mean": 0.5,
+        "median": 0.5,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.35,
+          0.65
+        ]
+      },
+      "scenarioD": {
+        "n": 20,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "holdoutOpposition": {
+        "n": 60,
+        "mean": 0.9,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.8166666666666667,
+          0.9666666666666667
+        ]
+      },
+      "holdoutQualifier": {
+        "n": 60,
+        "mean": 0.85,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.75,
+          0.9333333333333333
+        ]
+      },
+      "holdoutSupport": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "holdoutTemporal": {
+        "n": 30,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      }
+    },
+    "no-aliases": {
+      "developmentOpposition": {
+        "n": 160,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "developmentQualifier": {
+        "n": 40,
+        "mean": 0.5,
+        "median": 0.5,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.35,
+          0.675
+        ]
+      },
+      "scenarioD": {
+        "n": 20,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "holdoutOpposition": {
+        "n": 60,
+        "mean": 0.9,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.8166666666666667,
+          0.9666666666666667
+        ]
+      },
+      "holdoutQualifier": {
+        "n": 60,
+        "mean": 0.85,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.75,
+          0.9333333333333333
+        ]
+      },
+      "holdoutSupport": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "holdoutTemporal": {
+        "n": 30,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      }
+    },
+    "no-typed": {
+      "developmentOpposition": {
+        "n": 160,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "developmentQualifier": {
+        "n": 40,
+        "mean": 0.5,
+        "median": 0.5,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.35,
+          0.65
+        ]
+      },
+      "scenarioD": {
+        "n": 20,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "holdoutOpposition": {
+        "n": 60,
+        "mean": 0.9,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.8166666666666667,
+          0.9666666666666667
+        ]
+      },
+      "holdoutQualifier": {
+        "n": 60,
+        "mean": 0.85,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.7666666666666667,
+          0.9333333333333333
+        ]
+      },
+      "holdoutSupport": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "holdoutTemporal": {
+        "n": 30,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      }
+    },
+    "no-reverse": {
+      "developmentOpposition": {
+        "n": 160,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "developmentQualifier": {
+        "n": 40,
+        "mean": 0.5,
+        "median": 0.5,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.35,
+          0.65
+        ]
+      },
+      "scenarioD": {
+        "n": 20,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "holdoutOpposition": {
+        "n": 60,
+        "mean": 0.9,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.8166666666666667,
+          0.9666666666666667
+        ]
+      },
+      "holdoutQualifier": {
+        "n": 60,
+        "mean": 0.85,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.75,
+          0.9333333333333333
+        ]
+      },
+      "holdoutSupport": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "holdoutTemporal": {
+        "n": 30,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      }
+    },
+    "no-exceptions": {
+      "developmentOpposition": {
+        "n": 160,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "developmentQualifier": {
+        "n": 40,
+        "mean": 0.5,
+        "median": 0.5,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.35,
+          0.65
+        ]
+      },
+      "scenarioD": {
+        "n": 20,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "holdoutOpposition": {
+        "n": 60,
+        "mean": 0.9,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.8166666666666667,
+          0.9666666666666667
+        ]
+      },
+      "holdoutQualifier": {
+        "n": 60,
+        "mean": 0.85,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.75,
+          0.9333333333333333
+        ]
+      },
+      "holdoutSupport": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "holdoutTemporal": {
+        "n": 30,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      }
+    },
+    "no-temporal": {
+      "developmentOpposition": {
+        "n": 160,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "developmentQualifier": {
+        "n": 40,
+        "mean": 0.5,
+        "median": 0.5,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.375,
+          0.675
+        ]
+      },
+      "scenarioD": {
+        "n": 20,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "holdoutOpposition": {
+        "n": 60,
+        "mean": 0.9,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.8166666666666667,
+          0.9666666666666667
+        ]
+      },
+      "holdoutQualifier": {
+        "n": 60,
+        "mean": 0.85,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.75,
+          0.9333333333333333
+        ]
+      },
+      "holdoutSupport": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "holdoutTemporal": {
+        "n": 30,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      }
+    },
+    "no-lexical-union": {
+      "developmentOpposition": {
+        "n": 160,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "developmentQualifier": {
+        "n": 40,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "scenarioD": {
+        "n": 20,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "holdoutOpposition": {
+        "n": 60,
+        "mean": 0.9,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.8333333333333334,
+          0.9666666666666667
+        ]
+      },
+      "holdoutQualifier": {
+        "n": 60,
+        "mean": 0.85,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.75,
+          0.95
+        ]
+      },
+      "holdoutSupport": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "holdoutTemporal": {
+        "n": 30,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      }
+    },
+    "no-alias-no-reverse": {
+      "developmentOpposition": {
+        "n": 160,
+        "mean": 0.78125,
+        "median": 1,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.725,
+          0.834375
+        ]
+      },
+      "developmentQualifier": {
+        "n": 40,
+        "mean": 0.5,
+        "median": 0.5,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.325,
+          0.65
+        ]
+      },
+      "scenarioD": {
+        "n": 20,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "holdoutOpposition": {
+        "n": 60,
+        "mean": 0.16666666666666666,
+        "median": 0,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.08333333333333333,
+          0.26666666666666666
+        ]
+      },
+      "holdoutQualifier": {
+        "n": 60,
+        "mean": 0.11666666666666667,
+        "median": 0,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.05,
+          0.2
+        ]
+      },
+      "holdoutSupport": {
+        "n": 60,
+        "mean": 1,
+        "median": 1,
+        "min": 1,
+        "max": 1,
+        "ci95": [
+          1,
+          1
+        ]
+      },
+      "holdoutTemporal": {
+        "n": 30,
+        "mean": 0.3333333333333333,
+        "median": 0,
+        "min": 0,
+        "max": 1,
+        "ci95": [
+          0.16666666666666666,
+          0.5
+        ]
+      }
+    }
+  },
+  "best": "s1",
+  "audits": {
+    "s0": {
+      "claims": {
+        "n": 380,
+        "mean": 2.9105263157894736,
+        "median": 2,
+        "min": 1,
+        "max": 6,
+        "ci95": [
+          2.7341447368421052,
+          3.1
+        ]
+      },
+      "edges": {
+        "n": 380,
+        "mean": 2.9105263157894736,
+        "median": 2,
+        "min": 1,
+        "max": 6,
+        "ci95": [
+          2.718421052631579,
+          3.110526315789474
+        ]
+      },
+      "aliasCount": {
+        "n": 380,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "bytes": {
+        "n": 380,
+        "mean": 1083.6315789473683,
+        "median": 885,
+        "min": 419,
+        "max": 1978,
+        "ci95": [
+          1024.5228289473685,
+          1141.261644736842
+        ]
+      },
+      "latencyMs": {
+        "n": 380,
+        "mean": 0,
+        "median": 0,
+        "min": 0,
+        "max": 0,
+        "ci95": [
+          0,
+          0
+        ]
+      },
+      "packBytes": {
+        "n": 380,
+        "mean": 260576.86842105264,
+        "median": 104415,
+        "min": 21320,
+        "max": 638097,
+        "ci95": [
+          237497.0445394737,
+          284904.66144736845
+        ]
+      },
+      "relations": {
+        "equivalent": 1106
+      }
+    },
+    "s1": {
+      "claims": {
+        "n": 380,
+        "mean": 33.52368421052632,
+        "median": 18.5,
+        "min": 3,
+        "max": 143,
+        "ci95": [
+          30.175394736842104,
+          37.016513157894735
+        ]
+      },
+      "edges": {
+        "n": 380,
+        "mean": 65.41315789473684,
+        "median": 35,
+        "min": 5,
+        "max": 284,
+        "ci95": [
+          58.04993421052632,
+          71.99105263157894
+        ]
+      },
+      "aliasCount": {
+        "n": 380,
+        "mean": 1482.6394736842105,
+        "median": 869.5,
+        "min": 70,
+        "max": 6674,
+        "ci95": [
+          1318.3542763157895,
+          1653.2923026315789
+        ]
+      },
+      "bytes": {
+        "n": 380,
+        "mean": 37435.142105263156,
+        "median": 22089,
+        "min": 3847,
+        "max": 163001,
+        "ci95": [
+          33546.18309210526,
+          41495.552828947366
+        ]
+      },
+      "latencyMs": {
+        "n": 380,
+        "mean": 3.3512128157895438,
+        "median": 3.015612500021234,
+        "min": 0.1796309999190271,
+        "max": 19.49639100000013,
+        "ci95": [
+          3.125588462305818,
+          3.6054286102592257
+        ]
+      },
+      "packBytes": {
+        "n": 380,
+        "mean": 260576.86842105264,
+        "median": 104415,
+        "min": 21320,
+        "max": 638097,
+        "ci95": [
+          237086.9834868421,
+          285588.9246710526
+        ]
+      },
+      "relations": {
+        "equivalent": 4889,
+        "valid_before": 530,
+        "prohibits": 1024,
+        "permits": 6826,
+        "valid_after": 9319,
+        "applies_to": 1287,
+        "excepts": 491,
+        "qualifies": 491
+      }
+    },
+    "s2": {
+      "claims": {
+        "n": 380,
+        "mean": 27.486842105263158,
+        "median": 16,
+        "min": 1,
+        "max": 174,
+        "ci95": [
+          24.623026315789478,
+          30.24519736842105
+        ]
+      },
+      "edges": {
+        "n": 380,
+        "mean": 50.20263157894737,
+        "median": 23,
+        "min": 2,
+        "max": 263,
+        "ci95": [
+          45.19440789473684,
+          55.17144736842105
+        ]
+      },
+      "aliasCount": {
+        "n": 380,
+        "mean": 99.96052631578948,
+        "median": 42,
+        "min": 1,
+        "max": 567,
+        "ci95": [
+          88.75263157894737,
+          111.98157894736842
+        ]
+      },
+      "bytes": {
+        "n": 380,
+        "mean": 12153.007894736842,
+        "median": 6908,
+        "min": 599,
+        "max": 58972,
+        "ci95": [
+          11045.445065789474,
+          13392.202236842104
+        ]
+      },
+      "latencyMs": {
+        "n": 380,
+        "mean": 6270.788893815789,
+        "median": 2.670898499782197,
+        "min": 1.0202410000001692,
+        "max": 60690.44111700001,
+        "ci95": [
+          5047.913577277444,
+          7577.835938631317
+        ]
+      },
+      "packBytes": {
+        "n": 380,
+        "mean": 260576.86842105264,
+        "median": 104415,
+        "min": 21320,
+        "max": 638097,
+        "ci95": [
+          237177.6692763158,
+          284834.04210526316
+        ]
+      },
+      "relations": {
+        "equivalent": 4688,
+        "prohibits": 587,
+        "permits": 6436,
+        "applies_to": 3048,
+        "valid_after": 985,
+        "excepts": 314,
+        "valid_before": 731,
+        "qualifies": 2103,
+        "requires": 64,
+        "overrides": 120,
+        "supports": 1
+      }
+    }
+  },
+  "selector": {
+    "b0": {
+      "n": 160,
+      "mean": 0.6875,
+      "median": 1,
+      "min": 0,
+      "max": 1,
+      "ci95": [
+        0.61875,
+        0.75625
+      ]
+    },
+    "s1": {
+      "n": 160,
+      "mean": 0.8125,
+      "median": 1,
+      "min": 0,
+      "max": 1,
+      "ci95": [
+        0.75,
+        0.86875
+      ]
+    },
+    "holdoutB0": {
+      "n": 60,
+      "mean": 0,
+      "median": 0,
+      "min": 0,
+      "max": 0,
+      "ci95": [
+        0,
+        0
+      ]
+    },
+    "holdoutS1": {
+      "n": 60,
+      "mean": 0.75,
+      "median": 1,
+      "min": 0,
+      "max": 1,
+      "ci95": [
+        0.6333333333333333,
+        0.8666666666666667
+      ]
+    }
+  },
+  "proof": {
+    "instance": "A-00",
+    "first": "sha256-544d8cd420e7509e8365a97376ba0cc27d69e78f07f8aa10516b8c0224539fed",
+    "second": "sha256-544d8cd420e7509e8365a97376ba0cc27d69e78f07f8aa10516b8c0224539fed",
+    "reloaded": "sha256-544d8cd420e7509e8365a97376ba0cc27d69e78f07f8aa10516b8c0224539fed",
+    "identical": true,
+    "canonicalBytes": 98994
+  },
+  "determinism": {
+    "runs": 200,
+    "mismatches": 0
+  },
+  "compilerClassification": {
+    "s1": "deterministic compiler",
+    "s2": "non-deterministic compiler with committed frozen output"
+  },
+  "model": {
+    "provider": "ollama",
+    "model": "llama3.1:latest",
+    "digest": "46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e",
+    "temperature": 0,
+    "promptDigest": "sha256-329d2667a153447f2cfcd86ac877ab27af27e1337b5b8ba99c028888a08bba37",
+    "compiler": "kar-semantics-s2-1",
+    "calls": 222,
+    "cacheHits": 669,
+    "failures": 0
+  },
+  "decision": {
+    "label": "SEMANTIC_LAYER_PROMISING_BUT_BLOCKED",
+    "candidate": "s1",
+    "holdoutPass": true,
+    "devPass": false,
+    "damagePass": true,
+    "detPass": true,
+    "oppGain": 0.9,
+    "disconnectGain": 0.9,
+    "devDGain": 1,
+    "substantial": true
+  }
+}

@@ -1,0 +1,428 @@
+{
+  "diagnostics": [
+    {
+      "code": "CEG_PRODUCER_RELATION_CONFLICT",
+      "message": "Both support and opposition relate agreement to termination. Both are kept.",
+      "path": "relations",
+      "severity": "warning"
+    }
+  ],
+  "format": "ceg-producer-run-1",
+  "fragment": {
+    "bindings": [
+      {
+        "concept": "exception",
+        "evidence": "sha256-2afc51db28eee5001a20a88335fa6fcf91146701c05583c9ad340b8490382730",
+        "requirements": [
+          "stated-exception"
+        ]
+      },
+      {
+        "concept": "termination",
+        "evidence": "sha256-3302b3311f79a894ca669a9d88ff8db6c6b1d5afbfc36e1c738aa1b0bd71649f",
+        "requirements": [
+          "termination-right"
+        ]
+      },
+      {
+        "concept": "termination",
+        "evidence": "sha256-3ddced14d95d425c9f4ce17156d94e08689e44484a32671e4fd230047fd8899e",
+        "requirements": [
+          "termination-barred"
+        ]
+      }
+    ],
+    "concepts": {
+      "agreement": {
+        "label": "Agreement"
+      },
+      "exception": {
+        "label": "Exception"
+      },
+      "termination": {
+        "label": "Termination"
+      }
+    },
+    "evidence": {
+      "sha256-2afc51db28eee5001a20a88335fa6fcf91146701c05583c9ad340b8490382730": {
+        "objectId": "sha256-2afc51db28eee5001a20a88335fa6fcf91146701c05583c9ad340b8490382730"
+      },
+      "sha256-3302b3311f79a894ca669a9d88ff8db6c6b1d5afbfc36e1c738aa1b0bd71649f": {
+        "objectId": "sha256-3302b3311f79a894ca669a9d88ff8db6c6b1d5afbfc36e1c738aa1b0bd71649f"
+      },
+      "sha256-3ddced14d95d425c9f4ce17156d94e08689e44484a32671e4fd230047fd8899e": {
+        "objectId": "sha256-3ddced14d95d425c9f4ce17156d94e08689e44484a32671e4fd230047fd8899e"
+      }
+    },
+    "format": "ceg-source-1",
+    "relations": [
+      {
+        "from": "agreement",
+        "to": "termination",
+        "type": "permits"
+      },
+      {
+        "from": "agreement",
+        "to": "termination",
+        "type": "prohibits"
+      },
+      {
+        "from": "agreement",
+        "to": "exception",
+        "type": "qualifies"
+      }
+    ],
+    "requirements": [
+      "stated-exception",
+      "termination-barred",
+      "termination-right"
+    ]
+  },
+  "observations": [
+    {
+      "evidenceId": "sha256-3302b3311f79a894ca669a9d88ff8db6c6b1d5afbfc36e1c738aa1b0bd71649f",
+      "excerpt": "may terminate",
+      "id": "sha256-0457c0c8e3f6f9b041675158aadd63b391ad24f6cb04f52a9bec30b69b4e969d",
+      "producerId": "knolo-ceg-rule-producer",
+      "producerVersion": "ceg-rules-1",
+      "proposedConcepts": [
+        "agreement",
+        "termination"
+      ],
+      "proposedRelations": [
+        {
+          "from": "agreement",
+          "to": "termination",
+          "type": "permits"
+        }
+      ],
+      "ruleId": "contracts.termination.permission.v1",
+      "span": {
+        "end": 27,
+        "start": 14
+      },
+      "textDigest": "sha256-a715191633310a03528378bdec924b25178c30f1d9e85e1e851122e94cb47391"
+    },
+    {
+      "evidenceId": "sha256-2afc51db28eee5001a20a88335fa6fcf91146701c05583c9ad340b8490382730",
+      "excerpt": "",
+      "id": "sha256-0747d6bb6713e48dd86c7b75f4ceefbe86ea06e829fdae2e992d6cd178d88369",
+      "producerId": "knolo-ceg-rule-producer",
+      "producerVersion": "ceg-rules-1",
+      "proposedConcepts": [
+        "agreement"
+      ],
+      "proposedRelations": [],
+      "ruleId": "contracts.metadata.agreement.v1",
+      "span": {
+        "end": 0,
+        "start": 0
+      },
+      "textDigest": "sha256-a4361065ce7f11bfe1a086b4fccf02cbf559a7b5e39fe07f60bd56796514d1f9"
+    },
+    {
+      "evidenceId": "sha256-2afc51db28eee5001a20a88335fa6fcf91146701c05583c9ad340b8490382730",
+      "excerpt": "except when",
+      "id": "sha256-8d0645c6b4fc77b9735636e8780131ba64e4d71e2fbf96c03bad326dd692f14c",
+      "producerId": "knolo-ceg-rule-producer",
+      "producerVersion": "ceg-rules-1",
+      "proposedConcepts": [
+        "agreement",
+        "exception"
+      ],
+      "proposedRelations": [
+        {
+          "from": "agreement",
+          "to": "exception",
+          "type": "qualifies"
+        }
+      ],
+      "ruleId": "contracts.exception.when.v1",
+      "span": {
+        "end": 27,
+        "start": 16
+      },
+      "textDigest": "sha256-62a11014eb71fae0a1e4ea08cb701a21ebe2bb4a576f106f072481ba659fbab8"
+    },
+    {
+      "evidenceId": "sha256-3ddced14d95d425c9f4ce17156d94e08689e44484a32671e4fd230047fd8899e",
+      "excerpt": "",
+      "id": "sha256-9eb4f1691d2e4f76ccf50adfdaf952659ce6530ab7cf520918038e78970739e1",
+      "producerId": "knolo-ceg-rule-producer",
+      "producerVersion": "ceg-rules-1",
+      "proposedConcepts": [
+        "agreement"
+      ],
+      "proposedRelations": [],
+      "ruleId": "contracts.metadata.agreement.v1",
+      "span": {
+        "end": 0,
+        "start": 0
+      },
+      "textDigest": "sha256-a4361065ce7f11bfe1a086b4fccf02cbf559a7b5e39fe07f60bd56796514d1f9"
+    },
+    {
+      "evidenceId": "sha256-3ddced14d95d425c9f4ce17156d94e08689e44484a32671e4fd230047fd8899e",
+      "excerpt": "may not terminate",
+      "id": "sha256-a51c2a380e50c8a829d13a427e369cd7c669353aed39479e8ed9c93a87f15896",
+      "producerId": "knolo-ceg-rule-producer",
+      "producerVersion": "ceg-rules-1",
+      "proposedConcepts": [
+        "agreement",
+        "termination"
+      ],
+      "proposedRelations": [
+        {
+          "from": "agreement",
+          "to": "termination",
+          "type": "prohibits"
+        }
+      ],
+      "ruleId": "contracts.termination.prohibition.v1",
+      "span": {
+        "end": 31,
+        "start": 14
+      },
+      "textDigest": "sha256-f46b48dc873abb7f590e22ee1e8dadde98974015bfabd7db923a597a447f1fd5"
+    },
+    {
+      "evidenceId": "sha256-3302b3311f79a894ca669a9d88ff8db6c6b1d5afbfc36e1c738aa1b0bd71649f",
+      "excerpt": "",
+      "id": "sha256-b26dc0e5d93bb77fd1b895e87e1b04ebe5c5d2629a02e46effe370be6ac9fdce",
+      "producerId": "knolo-ceg-rule-producer",
+      "producerVersion": "ceg-rules-1",
+      "proposedConcepts": [
+        "agreement"
+      ],
+      "proposedRelations": [],
+      "ruleId": "contracts.metadata.agreement.v1",
+      "span": {
+        "end": 0,
+        "start": 0
+      },
+      "textDigest": "sha256-a4361065ce7f11bfe1a086b4fccf02cbf559a7b5e39fe07f60bd56796514d1f9"
+    }
+  ],
+  "producer": {
+    "id": "knolo-ceg-rule-producer",
+    "version": "ceg-rules-1"
+  },
+  "proposals": [
+    {
+      "evidenceId": "sha256-3302b3311f79a894ca669a9d88ff8db6c6b1d5afbfc36e1c738aa1b0bd71649f",
+      "fragment": {
+        "bindings": [],
+        "concepts": {
+          "agreement": {
+            "label": "Agreement"
+          }
+        },
+        "evidence": {
+          "sha256-3302b3311f79a894ca669a9d88ff8db6c6b1d5afbfc36e1c738aa1b0bd71649f": {
+            "objectId": "sha256-3302b3311f79a894ca669a9d88ff8db6c6b1d5afbfc36e1c738aa1b0bd71649f"
+          }
+        },
+        "relations": [],
+        "requirements": []
+      },
+      "id": "sha256-5add1de1ac4fd41df259e2eb5f356c1d436863b87f1b3e489cde01f2adc2a249",
+      "observationId": "sha256-b26dc0e5d93bb77fd1b895e87e1b04ebe5c5d2629a02e46effe370be6ac9fdce",
+      "producerId": "knolo-ceg-rule-producer",
+      "producerVersion": "ceg-rules-1",
+      "ruleId": "contracts.metadata.agreement.v1",
+      "state": "ACCEPTED"
+    },
+    {
+      "evidenceId": "sha256-2afc51db28eee5001a20a88335fa6fcf91146701c05583c9ad340b8490382730",
+      "fragment": {
+        "bindings": [
+          {
+            "concept": "exception",
+            "evidence": "sha256-2afc51db28eee5001a20a88335fa6fcf91146701c05583c9ad340b8490382730",
+            "requirements": [
+              "stated-exception"
+            ]
+          }
+        ],
+        "concepts": {
+          "agreement": {
+            "label": "Agreement"
+          },
+          "exception": {
+            "label": "Exception"
+          }
+        },
+        "evidence": {
+          "sha256-2afc51db28eee5001a20a88335fa6fcf91146701c05583c9ad340b8490382730": {
+            "objectId": "sha256-2afc51db28eee5001a20a88335fa6fcf91146701c05583c9ad340b8490382730"
+          }
+        },
+        "relations": [
+          {
+            "from": "agreement",
+            "to": "exception",
+            "type": "qualifies"
+          }
+        ],
+        "requirements": [
+          "stated-exception"
+        ]
+      },
+      "id": "sha256-5bf760863e01d4558351bdce511d79b6e3f89afac271172e14fa570850a8d27a",
+      "observationId": "sha256-8d0645c6b4fc77b9735636e8780131ba64e4d71e2fbf96c03bad326dd692f14c",
+      "producerId": "knolo-ceg-rule-producer",
+      "producerVersion": "ceg-rules-1",
+      "ruleId": "contracts.exception.when.v1",
+      "state": "ACCEPTED"
+    },
+    {
+      "evidenceId": "sha256-2afc51db28eee5001a20a88335fa6fcf91146701c05583c9ad340b8490382730",
+      "fragment": {
+        "bindings": [],
+        "concepts": {
+          "agreement": {
+            "label": "Agreement"
+          }
+        },
+        "evidence": {
+          "sha256-2afc51db28eee5001a20a88335fa6fcf91146701c05583c9ad340b8490382730": {
+            "objectId": "sha256-2afc51db28eee5001a20a88335fa6fcf91146701c05583c9ad340b8490382730"
+          }
+        },
+        "relations": [],
+        "requirements": []
+      },
+      "id": "sha256-9b84f5b2ad9237a8e6e13ecaa642c78376913b41192941a02dd8851432237fa7",
+      "observationId": "sha256-0747d6bb6713e48dd86c7b75f4ceefbe86ea06e829fdae2e992d6cd178d88369",
+      "producerId": "knolo-ceg-rule-producer",
+      "producerVersion": "ceg-rules-1",
+      "ruleId": "contracts.metadata.agreement.v1",
+      "state": "ACCEPTED"
+    },
+    {
+      "evidenceId": "sha256-3302b3311f79a894ca669a9d88ff8db6c6b1d5afbfc36e1c738aa1b0bd71649f",
+      "fragment": {
+        "bindings": [
+          {
+            "concept": "termination",
+            "evidence": "sha256-3302b3311f79a894ca669a9d88ff8db6c6b1d5afbfc36e1c738aa1b0bd71649f",
+            "requirements": [
+              "termination-right"
+            ]
+          }
+        ],
+        "concepts": {
+          "agreement": {
+            "label": "Agreement"
+          },
+          "termination": {
+            "label": "Termination"
+          }
+        },
+        "evidence": {
+          "sha256-3302b3311f79a894ca669a9d88ff8db6c6b1d5afbfc36e1c738aa1b0bd71649f": {
+            "objectId": "sha256-3302b3311f79a894ca669a9d88ff8db6c6b1d5afbfc36e1c738aa1b0bd71649f"
+          }
+        },
+        "relations": [
+          {
+            "from": "agreement",
+            "to": "termination",
+            "type": "permits"
+          }
+        ],
+        "requirements": [
+          "termination-right"
+        ]
+      },
+      "id": "sha256-a23925a48838d837e08b92a7fbf49abf9230dc5670ec95f519d8c299750e4dbd",
+      "observationId": "sha256-0457c0c8e3f6f9b041675158aadd63b391ad24f6cb04f52a9bec30b69b4e969d",
+      "producerId": "knolo-ceg-rule-producer",
+      "producerVersion": "ceg-rules-1",
+      "ruleId": "contracts.termination.permission.v1",
+      "state": "ACCEPTED"
+    },
+    {
+      "evidenceId": "sha256-3ddced14d95d425c9f4ce17156d94e08689e44484a32671e4fd230047fd8899e",
+      "fragment": {
+        "bindings": [
+          {
+            "concept": "termination",
+            "evidence": "sha256-3ddced14d95d425c9f4ce17156d94e08689e44484a32671e4fd230047fd8899e",
+            "requirements": [
+              "termination-barred"
+            ]
+          }
+        ],
+        "concepts": {
+          "agreement": {
+            "label": "Agreement"
+          },
+          "termination": {
+            "label": "Termination"
+          }
+        },
+        "evidence": {
+          "sha256-3ddced14d95d425c9f4ce17156d94e08689e44484a32671e4fd230047fd8899e": {
+            "objectId": "sha256-3ddced14d95d425c9f4ce17156d94e08689e44484a32671e4fd230047fd8899e"
+          }
+        },
+        "relations": [
+          {
+            "from": "agreement",
+            "to": "termination",
+            "type": "prohibits"
+          }
+        ],
+        "requirements": [
+          "termination-barred"
+        ]
+      },
+      "id": "sha256-b7021a22384d8869dfa9cd2e996bcaa0638796228c09c51ba7a30ce463cb04eb",
+      "observationId": "sha256-a51c2a380e50c8a829d13a427e369cd7c669353aed39479e8ed9c93a87f15896",
+      "producerId": "knolo-ceg-rule-producer",
+      "producerVersion": "ceg-rules-1",
+      "ruleId": "contracts.termination.prohibition.v1",
+      "state": "ACCEPTED"
+    },
+    {
+      "evidenceId": "sha256-3ddced14d95d425c9f4ce17156d94e08689e44484a32671e4fd230047fd8899e",
+      "fragment": {
+        "bindings": [],
+        "concepts": {
+          "agreement": {
+            "label": "Agreement"
+          }
+        },
+        "evidence": {
+          "sha256-3ddced14d95d425c9f4ce17156d94e08689e44484a32671e4fd230047fd8899e": {
+            "objectId": "sha256-3ddced14d95d425c9f4ce17156d94e08689e44484a32671e4fd230047fd8899e"
+          }
+        },
+        "relations": [],
+        "requirements": []
+      },
+      "id": "sha256-f9f5df4f8c377b4a24c28d32fe4b68512b4e69c54749b30b4ab1b86e87de9601",
+      "observationId": "sha256-9eb4f1691d2e4f76ccf50adfdaf952659ce6530ab7cf520918038e78970739e1",
+      "producerId": "knolo-ceg-rule-producer",
+      "producerVersion": "ceg-rules-1",
+      "ruleId": "contracts.metadata.agreement.v1",
+      "state": "ACCEPTED"
+    }
+  ],
+  "provenance": {
+    "configRoot": "sha256-a7e871df3e7df65642ed2923ca0a30b67da4779b7c967d004fa6ead894736c06",
+    "domainPackId": "contracts",
+    "domainPackRoot": "sha256-f691628a70e0a28b6ddec59b7803c5326f7a17deddeb3c67af39516c382e4d07",
+    "domainPackVersion": "1",
+    "image": {
+      "commitDigest": "sha256-4efc23932c16a26985c30ada37eba2abb403defe366dad96af6e45df14163486",
+      "knowledgeRoot": "sha256-feeae09ec3cdf4bb297e0fedbf2ff03a1030cd5052351cb7c84973fc5d5a8349",
+      "objectRoot": "sha256-d10e0ae7ee0b0f574322380afe8865093a54103df42c80999985e4b23984f673",
+      "stateRoot": "sha256-5d503a0056bb4c159d834f86b4654c24beaefee12a9e286db1cbe561a7647df1"
+    },
+    "inputRoot": "sha256-db607c2f11b6ff349cc3d2be4ea4c68747437bbba172f6f0cfbda89c1a993bd7",
+    "producerId": "knolo-ceg-rule-producer",
+    "producerVersion": "ceg-rules-1"
+  }
+}

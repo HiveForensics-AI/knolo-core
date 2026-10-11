@@ -1,0 +1,33 @@
+format: ceg-source-1
+concepts:
+  cancellation:
+    label: Cancellation
+  customer:
+    label: Enterprise customer
+evidence:
+  contract:
+    source: contract.md
+  policy:
+    source: policy.md
+relations:
+  - from: customer
+    type: permits
+    to: cancellation
+  - from: customer
+    type: prohibits
+    to: cancellation
+bindings:
+  - concept: cancellation
+    evidence: policy
+    requirements:
+      - cancel-allowed
+    authority: 40
+  - concept: cancellation
+    evidence: contract
+    requirements:
+      - cancel-barred
+    authority: 80
+    validFrom: 2026-01-01
+requirements:
+  - cancel-allowed
+  - cancel-barred

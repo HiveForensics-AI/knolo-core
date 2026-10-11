@@ -8,7 +8,28 @@ AI products are becoming easier to build. The hard problem is making their knowl
 
 > **Knowledge should be an asset you can inspect, verify, migrate, and run—not opaque context trapped inside an application.**
 
-**V5 Foundation · V4 Compatible · Local-first · Deterministic · Verifiable**
+**V6 · KAR · V5 Knowledge Images · V4 compatible · Local-first · Deterministic · Verifiable**
+
+## Current release
+
+This tree is Knolo 6.0.0. V6 adds [KAR](docs/kar/README.md): deterministic retrieval of a minimum evidence set from a V5 Knowledge Image and a Committed Evidence Graph. Lexical retrieval, V5 images, and V4 packs stay in place.
+
+```ts
+import {
+  createKarSession,
+  evaluateKar,
+  verifyKar,
+  explainKarResult,
+  createKarDossier,
+  createKarCoverage,
+} from '@knolo/core/kar';
+```
+
+The root `@knolo/core` entry does not load KAR. `@knolo/core/experimental/kar` remains a compatibility entry for this cycle. `SATISFIED` means the declared evidence requirements were met. It does not mean a claim is proven. `UNSATISFIED_EVIDENCE_REQUIREMENTS` means those requirements were not met. It does not mean the claim is false.
+
+The npm packages in this repository are `6.0.0` and depend on `@knolo/core` `^6.0.0`. Publishing that version, and moving the npm `latest` dist-tag, is a separate step. `@knolo/reflex` stays `0.2.0`. `@knolo/evidence-gate` stays `0.1.0`. Rust, Python, and the ICP canister stay `5.5.1` and do not implement KAR. The bundled contracts, policy, and operations Domain Packs are `review-required`.
+
+Start with the [KAR guide](docs/kar/README.md), the [6.0.0 release notes](docs/releases/v6.0.0.md), [`examples/kar-v6`](examples/kar-v6/README.md), and [`examples/kar-coverage`](examples/kar-coverage/README.md).
 
 ## The opportunity
 
@@ -39,7 +60,7 @@ Knolo does not try to be another model provider or another chat application. It 
 
 ## What exists today
 
-The repository contains a working V5 foundation release alongside the unchanged V4 reference path.
+The repository contains the V6 KAR surface on the V5 Knowledge Image foundation, alongside the unchanged V4 reference path.
 
 ### Knowledge Images
 
@@ -52,7 +73,15 @@ V5 defines a minimum verifiable container with:
 - fail-closed validation for required sections, offsets, overlaps, duplicate sections, integer overflow, and digest mismatches;
 - forward-compatible handling of unknown optional sections.
 
-The result is a bounded byte artifact that can be mounted, inspected, verified, copied, and compared across runtimes.
+The result is a bounded byte artifact that can be mounted, inspected, verified, copied, and compared across runtimes. V5 `stateRoot` identifies the image. KAR's `knowledgeRoot` is a different digest.
+
+### KAR
+
+KAR asks for the minimum applicable evidence set required to evaluate a proposition under a declared plan. Support, opposition, qualification, temporal applicability, and authority stay typed by that plan. The evaluation is replayable. It is not a ranked-passage search and it does not replace `query()`.
+
+A Committed Evidence Graph is compiled from editable CEG Source. `compileCegSource()` is the writer of those bytes. Authoring imports come from `@knolo/core/kar/authoring`. A coverage report says which supplied evidence requirements are met, which are gaps, and which plans did not decide. The worked demos are [`examples/kar-v6`](examples/kar-v6/README.md) and [`examples/kar-coverage`](examples/kar-coverage/README.md). Public vectors are [`conformance/kar/v1`](conformance/kar/v1/README.md) and [`conformance/kar/coverage-v1`](conformance/kar/coverage-v1/README.md).
+
+Contracts, policy, and operations Domain Packs can propose CEG Source. Their maturity is `review-required` in [`domains/v6-catalog.json`](domains/v6-catalog.json). Human review is still required before those proposals are treated as validated semantics. KAR evaluates an already committed graph either way.
 
 ### Deterministic contracts
 
@@ -102,11 +131,17 @@ Sources, claims, agents, metadata
        └──────────────────────────┘
           │          │          │
           ▼          ▼          ▼
-       Verify      Query      Sync / merge
+       Verify      Query     CEG Source
+          │          │          │
+          │          │          ▼
+          │          │   Committed Evidence Graph
+          │          │          │
+          │          │          ▼
+          │          │         KAR
           │          │          │
           └──────────┼──────────┘
                      ▼
-          Agents, products, and Studio
+          Agents, products, dossiers, and Studio
 ```
 
 The boundary is intentional. Knolo owns the artifact, identity, evidence, roots, validation, deterministic planning, and bounded runtime state. Host applications own networking, credentials, model inference, external side effects, and deployment choices.
@@ -118,6 +153,9 @@ The boundary is intentional. Knolo owns the artifact, identity, evidence, roots,
 | Knowledge artifact      | Portable sources, chunks, claims, agents, metadata, objects, and events       | `@knolo/core`                  |
 | Verification            | Container validation, roots, digests, receipts, and recovery                  | TypeScript and Rust            |
 | Retrieval               | Lexical V4 retrieval plus bounded V5 query planning and indexes               | `@knolo/core`                  |
+| KAR                     | Minimum evidence set under a declared plan                                    | `@knolo/core/kar`              |
+| CEG authoring           | Compile CEG Source into a Committed Evidence Graph                            | `@knolo/core/kar/authoring`    |
+| Domain Packs            | Review-required rules, vocabulary, and plan templates                         | `domains/`                     |
 | Agent boundary          | Durable runs, evidence-aware context, policy, and authority primitives        | `@knolo/core`                  |
 | Evidence Gate           | Claim-level support, conflict, abstention, and offline certificate checks     | `@knolo/evidence-gate`         |
 | Operations              | Health, diagnostics, Studio snapshot, sync, merge, and replay                 | `@knolo/core` and `@knolo/cli` |
@@ -212,7 +250,18 @@ console.log({
 });
 ```
 
-The V5 APIs are additive. Existing V4 retrieval APIs and behavior remain the compatibility default for this release.
+The V5 APIs are additive. Existing V4 retrieval APIs and behavior remain the compatibility default for ordinary search.
+
+### Evaluate a committed graph with KAR
+
+From a checkout:
+
+```bash
+npm run build --workspace @knolo/core
+node examples/kar-v6/run.mjs
+```
+
+`knolo kar demo` runs the same script. `knolo kar conformance` checks the public vectors. The [KAR quickstart](docs/kar/quickstart.md) covers the session, the dossier, and verification.
 
 ### Add deterministic behavior with Reflex
 
@@ -240,9 +289,8 @@ if (selection.disposition === 'ready') {
 }
 ```
 
-The package is independently versioned as `0.2.0` and declares
-`@knolo/core` `5.5.1`. The current `@knolo/core` and `@knolo/cli` release is
-`5.5.1`. Reflex includes an optional adapter for a local Ollama
+The package is independently versioned as `0.2.0`, compatible with
+`@knolo/core` `^6.0.0`, and includes an optional adapter for a local Ollama
 server. See the [Reflex package guide](packages/reflex/README.md) for the CLI,
 verification, evaluation, optimization, distillation, and security details.
 
@@ -304,19 +352,26 @@ The active roadmap is maintained in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 - read-only retrieval, indexes, history, policy, authority, key rotation, sync, merge, replay, and durable runs;
 - runtime diagnostics and the KIP-0026 Studio snapshot;
 - CLI inspection, health, and Studio management commands;
-- preserved V4 compatibility.
+- preserved V4 compatibility;
+- KAR evaluation, explanation, verification, Evidence Dossiers, and evidence coverage reports;
+- CEG Source compilation and public KAR conformance vectors;
+- contracts, policy, and operations Domain Packs at maturity `review-required`.
 
-### Next product wave
+### Still ahead
 
-- hosted CI confirmation and publication verification for the V5 release;
-- written V5-to-V6 handoff against the reviewed V6 specification;
+- publish `6.0.0` and run the registry smoke;
+- human validation before a Domain Pack is treated as validated;
+- KAR on Rust, Python, and ICP, which stay at `5.5.1`;
 - host-owned extensions for model providers and external tools.
 
-The current scope is intentionally a foundation release. It proves the portable artifact and verification layer before adding broader mutation, coordination, and hosted-management surfaces.
+V5 remains the portable image and verification layer. V6 adds KAR on that layer. Domain Pack extraction is not a validated automatic semantic layer.
 
 ## Documentation
 
 - [Documentation index](docs/README.md)
+- [KAR](docs/kar/README.md)
+- [KAR quickstart](docs/kar/quickstart.md)
+- [Knolo 6.0.0 release notes](docs/releases/v6.0.0.md)
 - [V5 roadmap](docs/ROADMAP.md)
 - [V5 release guide](docs/RELEASE.md)
 - [VQF-1 format freeze boundary](docs/VQF1_FORMAT_FREEZE.md)
@@ -333,20 +388,24 @@ The current scope is intentionally a foundation release. It proves the portable 
 ## Repository layout
 
 ```text
-packages/core/       TypeScript V4 and V5 knowledge runtime
-packages/core-rust/  Native Rust V5 kernel and verifier
-packages/cli/        Knolo command-line interface
-packages/core-python/ Python V5 verifier/query package with legacy pack APIs
-packages/icp-canister/ Internet Computer compatibility package
+packages/core/       TypeScript runtime, including `@knolo/core/kar`
+packages/core-rust/  Native Rust V5 kernel and verifier (5.5.1, no KAR)
+packages/cli/        Knolo command-line interface, including `knolo kar`
+packages/core-python/ Python V5 verifier/query package (5.5.1, no KAR)
+packages/icp-canister/ Internet Computer compatibility package (5.5.1, no KAR)
+domains/             Review-required Domain Packs
+examples/kar-v6/     Redistributable KAR demos
 examples/            Framework and product integration examples
-spec/                KIP contracts and normative schemas
+spec/                KIP contracts, including KAR-1
+conformance/kar/v1/  Public KAR vectors
+conformance/kar/coverage-v1/  Evidence coverage vectors
 conformance/         Cross-runtime fixtures and acceptance tests
-docs/                Architecture, roadmap, and operational guides
+docs/kar/            KAR, CEG, dossiers, and the V6 release notes
 ```
 
 ## Status and contribution
 
-Knolo V5 is an active foundation release. Interfaces marked V5 are evolving toward the published specification; V4 compatibility remains the stable adoption path while the new contracts harden.
+Knolo 6.0.0 is the product line in this repository. V5 Knowledge Images remain the evidence container. V4 retrieval remains the compatibility path for ordinary search. KAR semantics stay `kar-1-research-1`. Domain Packs stay review-required until a person validates them.
 
 Before opening a change, run the relevant package tests and `npm run release:check`. Changes to byte formats, digest domains, identity rules, or required sections must include updated specification text and cross-runtime fixtures.
 

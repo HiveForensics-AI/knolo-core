@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schema/experimental/kar/kar-coverage-report-v1.schema.json",
+  "title": "KAR coverage report manifest v1",
+  "description": "Packaging manifest for one deterministic evidence-gap report. CoverageRoot is not an input to KARRoot. Verification recomputes the report from the Knowledge Image, Committed Evidence Graph, and the supplied cases.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "coverageRoot", "semanticRoot", "knowledgeRoot", "stateRoot", "counts", "caseRoots", "maxCases", "domainPack"],
+  "properties": {
+    "format": { "const": "kar-coverage-report-1" },
+    "coverageRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+    "semanticRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+    "knowledgeRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+    "stateRoot": { "type": ["string", "null"] },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cases", "met", "gap", "blocked"],
+      "properties": {
+        "cases": { "type": "integer", "minimum": 0, "maximum": 32 },
+        "met": { "type": "integer", "minimum": 0, "maximum": 32 },
+        "gap": { "type": "integer", "minimum": 0, "maximum": 32 },
+        "blocked": { "type": "integer", "minimum": 0, "maximum": 32 }
+      }
+    },
+    "caseRoots": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "planRoot", "karRoot", "disposition"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "planRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+          "karRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+          "disposition": { "enum": ["met", "gap", "blocked"] }
+        }
+      }
+    },
+    "maxCases": { "const": 32 },
+    "domainPack": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "version", "root"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "version": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "root": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" }
+          }
+        }
+      ]
+    }
+  }
+}

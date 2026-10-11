@@ -1,0 +1,32 @@
+format: ceg-source-1
+concepts:
+  office:
+    label: Office
+  retention:
+    label: Retention rule
+  hold:
+    label: Litigation hold
+evidence:
+  rule:
+    source: rule.txt
+  exception:
+    source: exception.txt
+relations:
+  - from: office
+    type: requires
+    to: retention
+  - from: office
+    type: excepts
+    to: hold
+bindings:
+  - concept: retention
+    evidence: rule
+    requirements:
+      - retain-record
+  - concept: hold
+    evidence: exception
+    requirements:
+      - litigation-hold
+requirements:
+  - retain-record
+  - litigation-hold

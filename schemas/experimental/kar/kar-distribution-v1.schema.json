@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schema/experimental/kar/kar-distribution-v1.schema.json",
+  "title": "KAR distribution manifest v1",
+  "description": "Packaging record that pairs one Knowledge Image file with one KarSidecarV1 file. It does not change KARRoot, SemanticRoot, or KnowledgeRoot.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "image", "kar"],
+  "properties": {
+    "format": { "const": "kar-distribution-1" },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "stateRoot", "objectRoot", "commitDigest", "knowledgeRoot", "sha256"],
+      "properties": {
+        "file": { "const": "knowledge.knolo" },
+        "stateRoot": { "$ref": "#/$defs/digest" },
+        "objectRoot": { "$ref": "#/$defs/digest" },
+        "commitDigest": { "$ref": "#/$defs/digest" },
+        "knowledgeRoot": { "$ref": "#/$defs/digest" },
+        "sha256": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "kar": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "semanticRoot", "sha256"],
+      "properties": {
+        "file": { "const": "knowledge.kar.json" },
+        "semanticRoot": { "$ref": "#/$defs/digest" },
+        "sha256": { "$ref": "#/$defs/digest" }
+      }
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256-[0-9a-f]{64}$"
+    }
+  }
+}

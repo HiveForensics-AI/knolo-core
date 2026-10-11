@@ -72,6 +72,7 @@ const SUBCOMMANDS = new Set([
   'semantic:index',
   'semantic:inspect',
   'semantic:validate',
+  'kar',
 ]);
 const ICP_SUBCOMMANDS = new Set([
   'init',
@@ -128,6 +129,18 @@ async function loadCore() {
   );
 }
 
+function printVersion() {
+  const cli = JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf8'));
+  let coreVersion = 'unavailable';
+  try {
+    coreVersion = JSON.parse(readFileSync(require.resolve('@knolo/core/package.json'), 'utf8')).version;
+  } catch {
+    coreVersion = 'unavailable';
+  }
+  console.log(`@knolo/cli ${cli.version}`);
+  console.log(`@knolo/core ${coreVersion}`);
+}
+
 function printRootHelp() {
   console.log(`KnoLo CLI
 
@@ -154,11 +167,13 @@ Commands:
   diff <pack-a> <pack-b>  Compare pack identities and source/chunk counts
   dev                     Watch config/sources and rebuild on change
   v5                      Inspect, compress, decompress, and health-check a V5 Knowledge Image
+  kar                     KAR evidence-set retrieval over a Committed Evidence Graph
   icp                     Scaffold and operate an ICP-native knowledge canister
 
 Global options:
   --debug                 Print stack traces for errors
   -h, --help              Show help
+  -v, --version           Print the CLI and @knolo/core versions
 
 Run "knolo <command> --help" for command details.`);
 }
@@ -188,6 +203,7 @@ function printCommandHelp(command) {
     diff: 'Usage: knolo diff <pack-a.knolo> <pack-b.knolo>',
     dev: 'Usage: knolo dev',
     v5: 'Usage: knolo v5 <info|health|studio|query|compress|decompress> <image.v5> [--out <file>] [--mode fast|balanced|max] [--attach-index]\n\nFor query: knolo v5 query <image.v5> <EQL> [--json] [--receipt <file>].',
+    kar: 'Usage: knolo kar <evaluate|verify|explain|inspect|graph|package|produce|domain|dossier|coverage|benchmark|demo|conformance> [options]\n\nKnolo Adversarial Retrieval. Semantics are frozen at kar-1-research-1.\n\n  knolo kar evaluate --image knowledge.knolo --graph knowledge.kar.json --plan plan.json --query "..."\n  knolo kar verify   --image knowledge.knolo --graph knowledge.kar.json --plan plan.json --query "..." --result result.json\n  knolo kar explain  --result result.json\n  knolo kar inspect  --image knowledge.knolo --graph knowledge.kar.json [--plan plan.json]\n  knolo kar graph build --image knowledge.knolo --source knowledge.ceg.yaml --out knowledge.kar.json\n  knolo kar package --image knowledge.knolo --graph knowledge.kar.json --out dist/my-knowledge-kar/\n  knolo kar produce rules --image knowledge.knolo --domain domains/contracts-v4 --out proposals.json\n  knolo kar domain validate domains/contracts-v4\n  knolo kar dossier build --image knowledge.knolo --graph knowledge.kar.json --plan plan.json --query "..." --out dossier/\n  knolo kar dossier verify dossier/\n  knolo kar coverage build --image knowledge.knolo --graph knowledge.kar.json --plan plan.json --query "..." --out coverage/\n  knolo kar coverage verify coverage/\n  knolo kar benchmark annotate --packet packet.json --decisions decisions.json --out labels.json --role human --reviewer-id <id>\n  knolo kar demo\n  knolo kar conformance\n\n--json prints the machine-readable result. verify exits non-zero when the certificate does not match. Abstention is a result and exits 0. graph and package author a Committed Evidence Graph without changing retrieval. produce proposes CEG Source and does not write committed bytes. dossier packages one evaluation and fails closed when committed fields change. coverage reports met requirements, gaps, and plans that did not decide. A gap is not a false claim. benchmark labels gold without showing producer output. demo and conformance run from a knolo-core checkout.',
     icp: 'Usage: knolo icp <command> [options]',
     'semantic:index':
       'Usage: knolo semantic:index --pack <path> [--out <path>] [--model <id>] [--endpoint <url>]',
@@ -288,6 +304,8 @@ function parseArgv(argv) {
   }
   if (args[0] === '--help' || args[0] === '-h')
     return { global, command: 'help', commandArgs: [] };
+  if (args[0] === '--version' || args[0] === '-v')
+    return { global, command: 'version', commandArgs: [] };
   return { global, command: args[0] || 'help', commandArgs: args.slice(1) };
 }
 
@@ -1816,6 +1834,7 @@ async function main() {
   const { global, command, commandArgs } = parseArgv(process.argv.slice(2));
   try {
     if (command === 'help') return printRootHelp();
+    if (command === 'version') return printVersion();
     if (command === 'icp') {
       if (
         commandArgs.length === 0 ||
@@ -1830,6 +1849,10 @@ async function main() {
     if (SUBCOMMANDS.has(command)) {
       if (commandArgs.includes('--help') || commandArgs.includes('-h'))
         return printCommandHelp(command);
+      if (command === 'kar') {
+        const { runKarCli } = await import('./kar.mjs');
+        return runKarCli(commandArgs);
+      }
       if (command === 'init') return await cmdInit();
       if (command === 'add') return await cmdAdd(commandArgs);
       if (command === 'search') return await runHubSearch(commandArgs);

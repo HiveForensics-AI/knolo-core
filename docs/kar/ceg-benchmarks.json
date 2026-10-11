@@ -1,0 +1,87 @@
+{
+  "generated": "2026-10-10",
+  "compiler": "ceg-source-1",
+  "note": "compileMs includes lint, evidence resolution, id derivation, and canonical sidecar serialization. Rebuild is a full compile. Incremental compilation is not implemented.",
+  "rows": [
+    {
+      "nodes": 100,
+      "relations": 99,
+      "bindings": 100,
+      "sourceBytes": 15920,
+      "sidecarBytes": 63497,
+      "parseMs": 4.108,
+      "lintMs": 1.334,
+      "resolveMs": 0.004,
+      "compileMs": 18.371,
+      "heapBeforeLint": 6128184,
+      "heapBeforeCompile": 6185528,
+      "heapAfterCompile": 6413280,
+      "semanticRoot": "sha256-b39c35386debbb85a51504e485786cf42e61db382bae5b89c36485b869fc0fd8"
+    },
+    {
+      "nodes": 1000,
+      "relations": 999,
+      "bindings": 1000,
+      "sourceBytes": 158923,
+      "sidecarBytes": 632200,
+      "parseMs": 11.238,
+      "lintMs": 3.091,
+      "resolveMs": 0.004,
+      "compileMs": 76.773,
+      "heapBeforeLint": 7303784,
+      "heapBeforeCompile": 7340576,
+      "heapAfterCompile": 8499136,
+      "semanticRoot": "sha256-43d637a39e772c13fa02ea96b96b2f4b5548ea9c56af14f2414e1813ff5a09df"
+    },
+    {
+      "nodes": 10000,
+      "relations": 9999,
+      "bindings": 10000,
+      "sourceBytes": 1597994,
+      "sidecarBytes": 6319271,
+      "parseMs": 80.02,
+      "lintMs": 38.066,
+      "resolveMs": 0.011,
+      "compileMs": 735.351,
+      "heapBeforeLint": 15678608,
+      "heapBeforeCompile": 16221784,
+      "heapAfterCompile": 28108472,
+      "semanticRoot": "sha256-b1e3ce19a4bf928ef4e38ddba6e33cb601c5f1f627ff1decdc839cfcd31d804f"
+    },
+    {
+      "nodes": 50000,
+      "relations": 49999,
+      "bindings": 50000,
+      "sourceBytes": 8033873,
+      "sidecarBytes": 31595150,
+      "parseMs": 317.865,
+      "lintMs": 175.778,
+      "resolveMs": 0.004,
+      "compileMs": 3813.624,
+      "heapBeforeLint": 62481288,
+      "heapBeforeCompile": 64687304,
+      "heapAfterCompile": 117820808,
+      "semanticRoot": "sha256-07ba5b06b0ca5c79e8e23880b248daaf2a1f5dc79d940b67a34ed70e8fe5a743"
+    },
+    {
+      "nodes": 100000,
+      "relations": 99999,
+      "bindings": 100000,
+      "sourceBytes": 16078723,
+      "sidecarBytes": 63190000,
+      "parseMs": 689.684,
+      "lintMs": 480.773,
+      "resolveMs": 0.004,
+      "compileMs": 8146.1,
+      "heapBeforeLint": 160379536,
+      "heapBeforeCompile": 160317800,
+      "heapAfterCompile": 229548336,
+      "semanticRoot": "sha256-fe0d701098ce1e624b66e23c21a2bfa5f41518d8204d27281845fa3402d62857"
+    }
+  ],
+  "rebuild50k": {
+    "fullCompileMs": 3779.182,
+    "oneRelationFullRebuildMs": 3962.491,
+    "semanticRootChanged": true
+  }
+}

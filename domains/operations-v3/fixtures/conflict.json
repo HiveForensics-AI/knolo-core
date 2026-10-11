@@ -1,0 +1,32 @@
+{
+  "id": "conflict",
+  "documents": [
+    {
+      "source": "do.md",
+      "text": "The operator must complete the step.\n",
+      "meta": {
+        "type": "procedure"
+      }
+    },
+    {
+      "source": "dont.md",
+      "text": "The operator must not complete the step.\n",
+      "meta": {
+        "type": "procedure"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "procedure"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "procedure-review",
+      "proposition": "Must the operator complete the step?",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS"
+    }
+  }
+}

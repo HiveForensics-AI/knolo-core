@@ -1,0 +1,27 @@
+{
+  "id": "v4-structures",
+  "documents": [
+    {
+      "source": "structures.md",
+      "text": "Requirements\nProhibited Conduct\nExceptions\nThe employee must submit the report.\nThe office will retain the record.\nThe contractor agrees to file the notice.\nDetails are pursuant to Section 12.\nPursuant to Section 3.\nUse is as provided in Exhibit B.\nAs provided in Exhibit D.\n",
+      "meta": {
+        "type": "policy"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "exception",
+      "policy",
+      "prohibition",
+      "requirement"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE",
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE",
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE"
+    ]
+  }
+}

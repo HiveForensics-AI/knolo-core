@@ -1,0 +1,20 @@
+{
+  "id": "v2-patterns",
+  "documents": [
+    {
+      "source": "procedure-v2.md",
+      "text": "The operator must record the time.\nThis is a MUST ENTER field.\nThe position must not be combined.\nDo not authorize the operation.\nContinue unless the lead stops the line.\n",
+      "meta": {
+        "type": "procedure"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "procedure"
+    ],
+    "relations": [],
+    "diagnosticCodes": [],
+    "bindings": []
+  }
+}

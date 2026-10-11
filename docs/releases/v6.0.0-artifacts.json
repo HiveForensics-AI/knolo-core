@@ -1,0 +1,112 @@
+{
+  "generatedFromPackageTree": "172fcf79a477db35cbe296b70a001ccf774652b4",
+  "note": "Hashes are of npm tarballs packed from the package directories. docs/ and release/ are not part of those tarballs. A repack after this documentation commit must reproduce the same SHA-256 values. npm publish has not been run.",
+  "node": "v20.20.2",
+  "npm": "10.8.2",
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "coreExcludesConfirmed": [
+    "research corpora",
+    "restricted documents",
+    "private annotations",
+    "temporary benchmark output"
+  ],
+  "coreIncludesConfirmed": [
+    "package.json",
+    "dist/index.js",
+    "dist/index.d.ts",
+    "dist/kar/index.js",
+    "dist/kar/authoring/index.js",
+    "dist/schemas/kar"
+  ],
+  "packages": [
+    {
+      "name": "@knolo/core",
+      "version": "6.0.0",
+      "filename": "knolo-core-6.0.0.tgz",
+      "sha256": "8e990b2ff73da0ba077d256957669013c87c48297079675bf9ef5e0e963863ae",
+      "npmShasum": "95657ee537a5d6e335c69069f8863401dec5a2c1",
+      "fileCount": 285,
+      "packedBytes": 238229,
+      "unpackedBytes": 1104024,
+      "badPaths": []
+    },
+    {
+      "name": "@knolo/cli",
+      "version": "6.0.0",
+      "filename": "knolo-cli-6.0.0.tgz",
+      "sha256": "ee45fab2dadbc5515e1effc3162c62814cb220b9c1c431d9961eb3bfec0a64a9",
+      "npmShasum": "c5ddea42e0faa7a8cb393a93a8900958e1187cc2",
+      "fileCount": 42,
+      "packedBytes": 84604,
+      "unpackedBytes": 363508,
+      "badPaths": []
+    },
+    {
+      "name": "@knolo/langchain",
+      "version": "6.0.0",
+      "filename": "knolo-langchain-6.0.0.tgz",
+      "sha256": "f304bb135b869c6c386782bc6bb425a9debb1e6fac3b263046be2ea744a81b8d",
+      "npmShasum": "25fb350a2b362c9a26b4206c102cb644895ddea7",
+      "fileCount": 4,
+      "packedBytes": 1933,
+      "unpackedBytes": 4753,
+      "badPaths": []
+    },
+    {
+      "name": "@knolo/llamaindex",
+      "version": "6.0.0",
+      "filename": "knolo-llamaindex-6.0.0.tgz",
+      "sha256": "d091fbc901383762c72506f612a84bf2b6a332a888582075b9b43442405e48ab",
+      "npmShasum": "038b818c56d50b994bf2fa2882e31dfe03604c0c",
+      "fileCount": 4,
+      "packedBytes": 1888,
+      "unpackedBytes": 4627,
+      "badPaths": []
+    },
+    {
+      "name": "@knolo/semantic-ollama",
+      "version": "6.0.0",
+      "filename": "knolo-semantic-ollama-6.0.0.tgz",
+      "sha256": "bd3b01507a3b2fac4037c7fbe4606bf071bb2a679d2aa448889260e6ff519f5f",
+      "npmShasum": "1fa7e8c7001188315fada53c643eea121af0af48",
+      "fileCount": 6,
+      "packedBytes": 3807,
+      "unpackedBytes": 11466,
+      "badPaths": []
+    },
+    {
+      "name": "@knolo/reflex",
+      "version": "0.2.0",
+      "filename": "knolo-reflex-0.2.0.tgz",
+      "sha256": "745b1a243da172fa01b58911041dae6db93bb50ecdbf8a98ac108566b36d6da5",
+      "npmShasum": "2ceb9a99b8503882759db23c1c0838058c4d6bac",
+      "fileCount": 29,
+      "packedBytes": 36947,
+      "unpackedBytes": 170201,
+      "badPaths": []
+    },
+    {
+      "name": "@knolo/evidence-gate",
+      "version": "0.1.0",
+      "filename": "knolo-evidence-gate-0.1.0.tgz",
+      "sha256": "5ce24c4c219f751052db3c27bd47ba55bb0ce56a460bd7241a34bf5b6caeb6a6",
+      "npmShasum": "8fbd24f35708351968a144e7787d6c10a45dadcf",
+      "fileCount": 5,
+      "packedBytes": 5973,
+      "unpackedBytes": 22014,
+      "badPaths": []
+    },
+    {
+      "name": "create-knolo-app",
+      "version": "6.0.0",
+      "filename": "create-knolo-app-6.0.0.tgz",
+      "sha256": "683eb8727c7fcf663fe982dd8a2bd4ff9e45ec9071c36d4b75f3e933480e5f4e",
+      "npmShasum": "1863f6ec2807e97d30d577911b15a44a05f5123e",
+      "fileCount": 13,
+      "packedBytes": 5146,
+      "unpackedBytes": 11670,
+      "badPaths": []
+    }
+  ]
+}

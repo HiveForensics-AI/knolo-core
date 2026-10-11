@@ -1,0 +1,77 @@
+format: ceg-domain-1
+id: operations
+version: 1
+description: Reusable procedure semantics for required steps, prohibited states, preconditions, exceptions, and equipment.
+conceptKinds:
+  - id: procedure
+    label: Procedure
+  - id: step
+    label: Step
+  - id: state
+    label: State
+  - id: exception
+    label: Exception
+  - id: role
+    label: Role
+  - id: effective-date
+    label: Effective date
+concepts:
+  - name: procedure
+    kind: procedure
+    label: Procedure
+    phrases:
+      - procedure
+  - name: step
+    kind: step
+    label: Step
+    phrases:
+      - must complete
+      - must not complete
+  - name: prohibited-state
+    kind: state
+    label: Prohibited state
+    phrases:
+      - must not start
+  - name: precondition
+    kind: step
+    label: Precondition
+    phrases:
+      - before starting
+  - name: exception
+    kind: exception
+    label: Exception
+    phrases:
+      - unless authorized
+      - subject to
+  - name: equipment
+    kind: procedure
+    label: Equipment
+    phrases:
+      - using the equipment
+  - name: role
+    kind: role
+    label: Role
+    phrases:
+      - operator
+  - name: replacement
+    kind: procedure
+    label: Replacement
+    phrases:
+      - replaced by procedure
+  - name: effective-date
+    kind: effective-date
+    label: Effective date
+    phrases:
+      - valid before
+      - valid after
+      - effective
+      - until
+relations:
+  - requires
+  - prohibits
+  - qualifies
+  - excepts
+  - supersedes
+  - applies_to
+  - valid_before
+  - valid_after

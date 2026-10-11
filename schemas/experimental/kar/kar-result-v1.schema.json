@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schema/experimental/kar/kar-result-v1.schema.json",
+  "title": "KAR result v1",
+  "description": "Frozen kar-1-research-1 certificate. The experimental evaluation wraps this object in certificate and adds display fields. Those display fields are outside this schema. KARRoot does not include frontierWitnessRoot. Verification recomputes this object from the image bytes, sidecar, proposition, and plan.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "status", "evidenceIds", "choices", "frontiers", "witnesses", "decision", "roots"],
+  "properties": {
+    "version": { "const": "kar-1-research-1" },
+    "status": {
+      "enum": [
+        "SATISFIED",
+        "UNSATISFIED_EVIDENCE_REQUIREMENTS",
+        "SEARCH_BOUND_EXCEEDED",
+        "CLOSURE_BOUND_EXCEEDED",
+        "ANCHOR_REJECTED",
+        "GRAPH_NOT_BOUND",
+        "GRAPH_INVALID",
+        "PLAN_INVALID"
+      ]
+    },
+    "evidenceIds": { "type": "array", "items": { "type": "string" } },
+    "choices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidenceId", "frontiers"],
+        "properties": {
+          "evidenceId": { "type": "string" },
+          "frontiers": { "type": "array", "items": { "enum": ["F_S", "F_O", "F_Q", "F_T", "F_A"] } }
+        }
+      }
+    },
+    "frontiers": { "$ref": "#/$defs/frontierIds" },
+    "witnesses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidenceId", "frontier", "anchorId", "path"],
+        "properties": {
+          "evidenceId": { "type": "string" },
+          "frontier": { "enum": ["F_S", "F_O", "F_Q", "F_T", "F_A"] },
+          "anchorId": { "type": ["string", "null"] },
+          "path": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["node"],
+              "properties": {
+                "node": { "type": "string" },
+                "relation": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "profile", "cardinality", "coverage"],
+      "properties": {
+        "status": { "type": "string" },
+        "profile": { "type": "string" },
+        "cardinality": { "type": "integer", "minimum": 0 },
+        "coverage": { "$ref": "#/$defs/coverage" },
+        "redundancy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["numerator", "denominator"],
+          "properties": {
+            "numerator": { "type": "integer" },
+            "denominator": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "roots": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "knowledgeRoot", "semanticRoot", "queryRoot", "planRoot", "anchorRoot",
+        "frontierRoot", "frontierWitnessRoot", "evidenceSetRoot", "decisionRoot", "karRoot"
+      ],
+      "properties": {
+        "knowledgeRoot": { "$ref": "#/$defs/digest" },
+        "semanticRoot": { "$ref": "#/$defs/digest" },
+        "queryRoot": { "$ref": "#/$defs/digest" },
+        "planRoot": { "$ref": "#/$defs/digest" },
+        "anchorRoot": { "$ref": "#/$defs/digest" },
+        "frontierRoot": { "$ref": "#/$defs/digest" },
+        "frontierWitnessRoot": { "$ref": "#/$defs/digest" },
+        "evidenceSetRoot": { "$ref": "#/$defs/digest" },
+        "decisionRoot": { "$ref": "#/$defs/digest" },
+        "karRoot": { "$ref": "#/$defs/digest" }
+      }
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+    "frontierIds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["F_S", "F_O", "F_Q", "F_T", "F_A"],
+      "properties": {
+        "F_S": { "type": "array", "items": { "type": "string" } },
+        "F_O": { "type": "array", "items": { "type": "string" } },
+        "F_Q": { "type": "array", "items": { "type": "string" } },
+        "F_T": { "type": "array", "items": { "type": "string" } },
+        "F_A": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["F_S", "F_O", "F_Q", "F_T", "F_A"],
+      "properties": {
+        "F_S": { "$ref": "#/$defs/pair" },
+        "F_O": { "$ref": "#/$defs/pair" },
+        "F_Q": { "$ref": "#/$defs/pair" },
+        "F_T": { "$ref": "#/$defs/pair" },
+        "F_A": { "$ref": "#/$defs/pair" }
+      }
+    },
+    "pair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["covered", "required"],
+      "properties": {
+        "covered": { "type": "integer", "minimum": 0 },
+        "required": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

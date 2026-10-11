@@ -18,6 +18,9 @@ scripts/*
 !scripts/create-reflex-dataset-review-template.mjs
 !scripts/apply-reflex-dataset-review.mjs
 !scripts/smoke-v5.mjs
+!scripts/smoke-v6-rc.sh
+!scripts/check-kar-bundle-graph.mjs
+!scripts/bench-kar-v6-surface.mjs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

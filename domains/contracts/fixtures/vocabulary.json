@@ -1,0 +1,210 @@
+{
+  "id": "vocabulary",
+  "documents": [
+    {
+      "source": "vocabulary.md",
+      "text": "Agreement\nTermination\nThe agreement may terminate after notice.\nThe agreement may not terminate during the term.\nThe customer may cancel the order.\nThe customer may not cancel the order.\nThe parties must renew the agreement.\nThe supplier must provide the service.\nThe customer shall not assign the agreement.\nThe duty stands except when notice is late.\nRenewal applies unless stated otherwise.\nThe duty stands provided that notice is given.\nThe duty stands subject to approval.\nThe duty is subject to the former limit.\nThe amendment supersedes the agreement.\nThe amendment overrides the restriction.\nThe scope applies to the party.\nThe clause is valid before the renewal.\nThe clause is valid after the amendment.\nThe agreement is effective 2026-01-01 until 2027-01-01.\n",
+      "meta": {
+        "type": "contract"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "agreement",
+      "amendment",
+      "cancellation",
+      "effective-date",
+      "exception",
+      "obligation",
+      "party",
+      "renewal",
+      "restriction",
+      "scope",
+      "termination"
+    ],
+    "relations": [
+      {
+        "from": "agreement",
+        "type": "applies_to",
+        "to": "termination"
+      },
+      {
+        "from": "agreement",
+        "type": "permits",
+        "to": "termination"
+      },
+      {
+        "from": "agreement",
+        "type": "prohibits",
+        "to": "termination"
+      },
+      {
+        "from": "agreement",
+        "type": "permits",
+        "to": "cancellation"
+      },
+      {
+        "from": "agreement",
+        "type": "prohibits",
+        "to": "cancellation"
+      },
+      {
+        "from": "agreement",
+        "type": "requires",
+        "to": "renewal"
+      },
+      {
+        "from": "agreement",
+        "type": "requires",
+        "to": "obligation"
+      },
+      {
+        "from": "agreement",
+        "type": "prohibits",
+        "to": "restriction"
+      },
+      {
+        "from": "agreement",
+        "type": "qualifies",
+        "to": "exception"
+      },
+      {
+        "from": "amendment",
+        "type": "supersedes",
+        "to": "agreement"
+      },
+      {
+        "from": "amendment",
+        "type": "overrides",
+        "to": "restriction"
+      },
+      {
+        "from": "scope",
+        "type": "applies_to",
+        "to": "party"
+      },
+      {
+        "from": "agreement",
+        "type": "valid_before",
+        "to": "effective-date"
+      },
+      {
+        "from": "agreement",
+        "type": "valid_after",
+        "to": "effective-date"
+      }
+    ],
+    "bindings": [
+      {
+        "concept": "termination",
+        "source": "vocabulary.md",
+        "requirements": [
+          "termination-right"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "termination",
+        "source": "vocabulary.md",
+        "requirements": [
+          "termination-barred"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "cancellation",
+        "source": "vocabulary.md",
+        "requirements": [
+          "cancellation-right"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "cancellation",
+        "source": "vocabulary.md",
+        "requirements": [
+          "cancellation-barred"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "renewal",
+        "source": "vocabulary.md",
+        "requirements": [
+          "renewal-duty"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "obligation",
+        "source": "vocabulary.md",
+        "requirements": [
+          "stated-obligation"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "restriction",
+        "source": "vocabulary.md",
+        "requirements": [
+          "stated-restriction"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "exception",
+        "source": "vocabulary.md",
+        "requirements": [
+          "stated-exception"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "agreement",
+        "source": "vocabulary.md",
+        "requirements": [
+          "amendment-effect"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "party",
+        "source": "vocabulary.md",
+        "requirements": [
+          "party-scope"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "effective-date",
+        "source": "vocabulary.md",
+        "requirements": [
+          "temporal-bound"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      }
+    ],
+    "diagnosticCodes": [
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE",
+      "CEG_PRODUCER_RELATION_CONFLICT",
+      "CEG_PRODUCER_RELATION_CONFLICT"
+    ],
+    "kar": {
+      "template": "balanced-review",
+      "proposition": "May the agreement terminate?",
+      "status": "SATISFIED"
+    }
+  }
+}

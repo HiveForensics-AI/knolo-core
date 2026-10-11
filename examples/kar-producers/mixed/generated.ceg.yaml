@@ -1,0 +1,41 @@
+format: ceg-source-1
+concepts:
+  agreement:
+    label: Agreement
+  exception:
+    label: Exception
+  termination:
+    label: Termination
+evidence:
+  sha256-984ebde48e30411144202327ea6f559e73ab24d68da71274d0e03450e70c5db6:
+    objectId: sha256-984ebde48e30411144202327ea6f559e73ab24d68da71274d0e03450e70c5db6
+  sha256-b149979573c682752379268bff017727ee2a2410f3e8bd03cf99deb263654b73:
+    objectId: sha256-b149979573c682752379268bff017727ee2a2410f3e8bd03cf99deb263654b73
+  sha256-b59bb75956e46aca03aff0bdf011be736af78d0eae11cb6c0eb02ce717e4e0fa:
+    objectId: sha256-b59bb75956e46aca03aff0bdf011be736af78d0eae11cb6c0eb02ce717e4e0fa
+relations:
+  - from: agreement
+    type: permits
+    to: termination
+  - from: agreement
+    type: prohibits
+    to: termination
+  - from: agreement
+    type: qualifies
+    to: exception
+bindings:
+  - concept: exception
+    evidence: sha256-b59bb75956e46aca03aff0bdf011be736af78d0eae11cb6c0eb02ce717e4e0fa
+    requirements:
+      - stated-exception
+  - concept: termination
+    evidence: sha256-984ebde48e30411144202327ea6f559e73ab24d68da71274d0e03450e70c5db6
+    requirements:
+      - termination-barred
+  - concept: termination
+    evidence: sha256-b149979573c682752379268bff017727ee2a2410f3e8bd03cf99deb263654b73
+    requirements:
+      - termination-right
+requirements:
+  - stated-exception
+  - termination-right

@@ -1,0 +1,159 @@
+{
+  "id": "vocabulary",
+  "documents": [
+    {
+      "source": "vocabulary.md",
+      "text": "Procedure\nStep\nThe operator must complete the step.\nThe operator must not complete the step.\nThe operator must not start the line.\nInspect the guard before starting the line.\nContinue unless authorized by the lead.\nThe step is subject to approval.\nThe step is subject to the former limit.\nThis text is replaced by procedure 12.\nStart using the equipment listed here.\nThe step is valid before the audit.\nThe step is valid after the audit.\nThe procedure is effective 2026-01-01 until 2027-01-01.\n",
+      "meta": {
+        "type": "procedure"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "effective-date",
+      "equipment",
+      "exception",
+      "precondition",
+      "procedure",
+      "prohibited-state",
+      "replacement",
+      "step"
+    ],
+    "relations": [
+      {
+        "from": "procedure",
+        "type": "applies_to",
+        "to": "step"
+      },
+      {
+        "from": "procedure",
+        "type": "requires",
+        "to": "step"
+      },
+      {
+        "from": "procedure",
+        "type": "prohibits",
+        "to": "step"
+      },
+      {
+        "from": "procedure",
+        "type": "prohibits",
+        "to": "prohibited-state"
+      },
+      {
+        "from": "procedure",
+        "type": "requires",
+        "to": "precondition"
+      },
+      {
+        "from": "procedure",
+        "type": "qualifies",
+        "to": "exception"
+      },
+      {
+        "from": "procedure",
+        "type": "supersedes",
+        "to": "replacement"
+      },
+      {
+        "from": "procedure",
+        "type": "applies_to",
+        "to": "equipment"
+      },
+      {
+        "from": "procedure",
+        "type": "valid_before",
+        "to": "effective-date"
+      },
+      {
+        "from": "procedure",
+        "type": "valid_after",
+        "to": "effective-date"
+      }
+    ],
+    "bindings": [
+      {
+        "concept": "step",
+        "source": "vocabulary.md",
+        "requirements": [
+          "required-step"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "step",
+        "source": "vocabulary.md",
+        "requirements": [
+          "prohibited-state"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "prohibited-state",
+        "source": "vocabulary.md",
+        "requirements": [
+          "prohibited-state"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "precondition",
+        "source": "vocabulary.md",
+        "requirements": [
+          "precondition"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "exception",
+        "source": "vocabulary.md",
+        "requirements": [
+          "stated-exception"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "replacement",
+        "source": "vocabulary.md",
+        "requirements": [
+          "procedure-replacement"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "equipment",
+        "source": "vocabulary.md",
+        "requirements": [
+          "equipment-used"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      },
+      {
+        "concept": "effective-date",
+        "source": "vocabulary.md",
+        "requirements": [
+          "temporal-bound"
+        ],
+        "validFrom": "2026-01-01",
+        "validUntil": "2027-01-01"
+      }
+    ],
+    "diagnosticCodes": [
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE",
+      "CEG_PRODUCER_RELATION_CONFLICT"
+    ],
+    "kar": {
+      "template": "procedure-review",
+      "proposition": "Must the operator complete the step?",
+      "status": "SATISFIED"
+    }
+  }
+}

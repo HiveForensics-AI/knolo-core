@@ -1,0 +1,367 @@
+{
+  "experimental": true,
+  "api": "experimental",
+  "version": "kar-1-research-1",
+  "status": "SATISFIED",
+  "code": null,
+  "proposition": "May the agreement terminate?",
+  "plan": {
+    "version": 1,
+    "anchor": {
+      "mode": "supplied",
+      "witness": [
+        {
+          "nodeId": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f",
+          "queryTerm": "terminate"
+        }
+      ]
+    },
+    "frontierMap": {
+      "permits": "F_S",
+      "requires": "F_S",
+      "supersedes": "F_S",
+      "prohibits": "F_O",
+      "overrides": "F_O",
+      "qualifies": "F_Q",
+      "excepts": "F_Q",
+      "valid_before": "F_T",
+      "valid_after": "F_T",
+      "applies_to": "F_T"
+    },
+    "depth": 2,
+    "cardinalityBound": 4,
+    "coverageMode": "requirements",
+    "requirements": {
+      "F_S": [
+        "termination-right"
+      ],
+      "F_O": [
+        "termination-barred"
+      ],
+      "F_Q": [
+        "stated-exception"
+      ],
+      "F_T": [],
+      "F_A": []
+    },
+    "floors": {
+      "F_S": "1",
+      "F_O": "1",
+      "F_Q": "1",
+      "F_T": "0",
+      "F_A": "0"
+    },
+    "profile": "minimum-cover",
+    "asOf": "2026-06-01",
+    "minAuthority": null,
+    "bounds": {
+      "maxAnchorNodes": 8,
+      "maxClosureNodes": 32,
+      "maxClosureEdges": 64,
+      "maxFrontierEvidence": 16,
+      "maxRequirementsPerFrontier": 8,
+      "maxEvidenceBindings": 32,
+      "maxCoverVisits": 256
+    },
+    "lexical": null
+  },
+  "image": {
+    "stateRoot": "sha256-c25fc5ac0071f2c12cc0c78efb11bf688b898fb45d558452f1eaaad45eded51e",
+    "knowledgeRoot": "sha256-dea44ff490db9545476d86d69b7e8b28fb943802145534183c342b8a20ba35db",
+    "objectRoot": "sha256-d5b175f17543e873dc310f4f4362cd065efeb1b1ed047a607c7a8a5c665f8c2c",
+    "commitDigest": "sha256-ec822494b19d27f2a7f2aa5798274e1eaf9770e62567d404e5db87a3c8062a3a"
+  },
+  "frontiers": {
+    "F_S": [
+      "sha256-984ebde48e30411144202327ea6f559e73ab24d68da71274d0e03450e70c5db6",
+      "sha256-b149979573c682752379268bff017727ee2a2410f3e8bd03cf99deb263654b73"
+    ],
+    "F_O": [
+      "sha256-984ebde48e30411144202327ea6f559e73ab24d68da71274d0e03450e70c5db6",
+      "sha256-b149979573c682752379268bff017727ee2a2410f3e8bd03cf99deb263654b73"
+    ],
+    "F_Q": [
+      "sha256-b59bb75956e46aca03aff0bdf011be736af78d0eae11cb6c0eb02ce717e4e0fa"
+    ],
+    "F_T": [],
+    "F_A": []
+  },
+  "selectedEvidence": [
+    {
+      "id": "sha256-984ebde48e30411144202327ea6f559e73ab24d68da71274d0e03450e70c5db6",
+      "frontiers": [
+        "F_O",
+        "F_S"
+      ],
+      "text": "Opposition record T-14.\n",
+      "source": "schedule.md",
+      "metadata": {
+        "kind": "chunk",
+        "meta": {
+          "source": "schedule.md",
+          "type": "contract"
+        }
+      }
+    },
+    {
+      "id": "sha256-b149979573c682752379268bff017727ee2a2410f3e8bd03cf99deb263654b73",
+      "frontiers": [
+        "F_O",
+        "F_S"
+      ],
+      "text": "The agreement may terminate after notice.\n",
+      "source": "terms.md",
+      "metadata": {
+        "kind": "chunk",
+        "meta": {
+          "source": "terms.md",
+          "type": "contract"
+        }
+      }
+    },
+    {
+      "id": "sha256-b59bb75956e46aca03aff0bdf011be736af78d0eae11cb6c0eb02ce717e4e0fa",
+      "frontiers": [
+        "F_Q"
+      ],
+      "text": "Qualification record Q-3.\n",
+      "source": "note.md",
+      "metadata": {
+        "kind": "chunk",
+        "meta": {
+          "source": "note.md",
+          "type": "contract"
+        }
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "evidenceId": "sha256-984ebde48e30411144202327ea6f559e73ab24d68da71274d0e03450e70c5db6",
+      "frontier": "F_O",
+      "anchorId": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f",
+      "path": [
+        {
+          "node": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f"
+        },
+        {
+          "relation": "sha256-c02141737def5c365ff3054139f35d663eb6bd61cefd6d1a7e948ff0976b97fb",
+          "node": "sha256-89b7ebc138b8beeaa8522f3bcbb7297341edc8f4b16b169443e46d0e94bee5bc"
+        }
+      ]
+    },
+    {
+      "evidenceId": "sha256-b149979573c682752379268bff017727ee2a2410f3e8bd03cf99deb263654b73",
+      "frontier": "F_O",
+      "anchorId": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f",
+      "path": [
+        {
+          "node": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f"
+        },
+        {
+          "relation": "sha256-c02141737def5c365ff3054139f35d663eb6bd61cefd6d1a7e948ff0976b97fb",
+          "node": "sha256-89b7ebc138b8beeaa8522f3bcbb7297341edc8f4b16b169443e46d0e94bee5bc"
+        }
+      ]
+    },
+    {
+      "evidenceId": "sha256-b59bb75956e46aca03aff0bdf011be736af78d0eae11cb6c0eb02ce717e4e0fa",
+      "frontier": "F_Q",
+      "anchorId": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f",
+      "path": [
+        {
+          "node": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f"
+        },
+        {
+          "relation": "sha256-20827b99ec57910bfa39dedafb8037a6d7382a69dcf1dbda07da1b57d256aa1e",
+          "node": "sha256-bbef78dc92b654c5ed1db1aba67f60f12b7438eb28d552232b9256cce52e3f94"
+        }
+      ]
+    },
+    {
+      "evidenceId": "sha256-984ebde48e30411144202327ea6f559e73ab24d68da71274d0e03450e70c5db6",
+      "frontier": "F_S",
+      "anchorId": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f",
+      "path": [
+        {
+          "node": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f"
+        },
+        {
+          "relation": "sha256-0ebb430f296b44ae4aedcf981d9501784bd354775ecf12b5d83264401c833c4e",
+          "node": "sha256-89b7ebc138b8beeaa8522f3bcbb7297341edc8f4b16b169443e46d0e94bee5bc"
+        }
+      ]
+    },
+    {
+      "evidenceId": "sha256-b149979573c682752379268bff017727ee2a2410f3e8bd03cf99deb263654b73",
+      "frontier": "F_S",
+      "anchorId": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f",
+      "path": [
+        {
+          "node": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f"
+        },
+        {
+          "relation": "sha256-0ebb430f296b44ae4aedcf981d9501784bd354775ecf12b5d83264401c833c4e",
+          "node": "sha256-89b7ebc138b8beeaa8522f3bcbb7297341edc8f4b16b169443e46d0e94bee5bc"
+        }
+      ]
+    }
+  ],
+  "certificate": {
+    "version": "kar-1-research-1",
+    "status": "SATISFIED",
+    "evidenceIds": [
+      "sha256-984ebde48e30411144202327ea6f559e73ab24d68da71274d0e03450e70c5db6",
+      "sha256-b149979573c682752379268bff017727ee2a2410f3e8bd03cf99deb263654b73",
+      "sha256-b59bb75956e46aca03aff0bdf011be736af78d0eae11cb6c0eb02ce717e4e0fa"
+    ],
+    "choices": [
+      {
+        "evidenceId": "sha256-984ebde48e30411144202327ea6f559e73ab24d68da71274d0e03450e70c5db6",
+        "frontiers": [
+          "F_O",
+          "F_S"
+        ]
+      },
+      {
+        "evidenceId": "sha256-b149979573c682752379268bff017727ee2a2410f3e8bd03cf99deb263654b73",
+        "frontiers": [
+          "F_O",
+          "F_S"
+        ]
+      },
+      {
+        "evidenceId": "sha256-b59bb75956e46aca03aff0bdf011be736af78d0eae11cb6c0eb02ce717e4e0fa",
+        "frontiers": [
+          "F_Q"
+        ]
+      }
+    ],
+    "frontiers": {
+      "F_S": [
+        "sha256-984ebde48e30411144202327ea6f559e73ab24d68da71274d0e03450e70c5db6",
+        "sha256-b149979573c682752379268bff017727ee2a2410f3e8bd03cf99deb263654b73"
+      ],
+      "F_O": [
+        "sha256-984ebde48e30411144202327ea6f559e73ab24d68da71274d0e03450e70c5db6",
+        "sha256-b149979573c682752379268bff017727ee2a2410f3e8bd03cf99deb263654b73"
+      ],
+      "F_Q": [
+        "sha256-b59bb75956e46aca03aff0bdf011be736af78d0eae11cb6c0eb02ce717e4e0fa"
+      ],
+      "F_T": [],
+      "F_A": []
+    },
+    "witnesses": [
+      {
+        "evidenceId": "sha256-984ebde48e30411144202327ea6f559e73ab24d68da71274d0e03450e70c5db6",
+        "frontier": "F_O",
+        "anchorId": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f",
+        "path": [
+          {
+            "node": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f"
+          },
+          {
+            "relation": "sha256-c02141737def5c365ff3054139f35d663eb6bd61cefd6d1a7e948ff0976b97fb",
+            "node": "sha256-89b7ebc138b8beeaa8522f3bcbb7297341edc8f4b16b169443e46d0e94bee5bc"
+          }
+        ]
+      },
+      {
+        "evidenceId": "sha256-b149979573c682752379268bff017727ee2a2410f3e8bd03cf99deb263654b73",
+        "frontier": "F_O",
+        "anchorId": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f",
+        "path": [
+          {
+            "node": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f"
+          },
+          {
+            "relation": "sha256-c02141737def5c365ff3054139f35d663eb6bd61cefd6d1a7e948ff0976b97fb",
+            "node": "sha256-89b7ebc138b8beeaa8522f3bcbb7297341edc8f4b16b169443e46d0e94bee5bc"
+          }
+        ]
+      },
+      {
+        "evidenceId": "sha256-b59bb75956e46aca03aff0bdf011be736af78d0eae11cb6c0eb02ce717e4e0fa",
+        "frontier": "F_Q",
+        "anchorId": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f",
+        "path": [
+          {
+            "node": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f"
+          },
+          {
+            "relation": "sha256-20827b99ec57910bfa39dedafb8037a6d7382a69dcf1dbda07da1b57d256aa1e",
+            "node": "sha256-bbef78dc92b654c5ed1db1aba67f60f12b7438eb28d552232b9256cce52e3f94"
+          }
+        ]
+      },
+      {
+        "evidenceId": "sha256-984ebde48e30411144202327ea6f559e73ab24d68da71274d0e03450e70c5db6",
+        "frontier": "F_S",
+        "anchorId": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f",
+        "path": [
+          {
+            "node": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f"
+          },
+          {
+            "relation": "sha256-0ebb430f296b44ae4aedcf981d9501784bd354775ecf12b5d83264401c833c4e",
+            "node": "sha256-89b7ebc138b8beeaa8522f3bcbb7297341edc8f4b16b169443e46d0e94bee5bc"
+          }
+        ]
+      },
+      {
+        "evidenceId": "sha256-b149979573c682752379268bff017727ee2a2410f3e8bd03cf99deb263654b73",
+        "frontier": "F_S",
+        "anchorId": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f",
+        "path": [
+          {
+            "node": "sha256-a949a9890b5ea2760cdffc727e911309e209216440ec99ade985fecd0aa9084f"
+          },
+          {
+            "relation": "sha256-0ebb430f296b44ae4aedcf981d9501784bd354775ecf12b5d83264401c833c4e",
+            "node": "sha256-89b7ebc138b8beeaa8522f3bcbb7297341edc8f4b16b169443e46d0e94bee5bc"
+          }
+        ]
+      }
+    ],
+    "decision": {
+      "status": "SATISFIED",
+      "profile": "minimum-cover",
+      "cardinality": 3,
+      "coverage": {
+        "F_S": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_O": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_Q": {
+          "covered": 1,
+          "required": 1
+        },
+        "F_T": {
+          "covered": 0,
+          "required": 0
+        },
+        "F_A": {
+          "covered": 0,
+          "required": 0
+        }
+      }
+    },
+    "roots": {
+      "knowledgeRoot": "sha256-dea44ff490db9545476d86d69b7e8b28fb943802145534183c342b8a20ba35db",
+      "semanticRoot": "sha256-5cb518b7e4e8bfc22148fa51d64a7e2928184ee85ce310b448f77fae76f78144",
+      "queryRoot": "sha256-de0712b0e10dfb3b1439cd031ce384e1e50f204edf6934e26008a7c47db7ec83",
+      "planRoot": "sha256-a466d7842c57b9104cd32a21815700760ce727e2481df7353615de9720ed6901",
+      "anchorRoot": "sha256-5389b78522f3fa465a374e47b697a0fb8dcad2fc38ce3052eba5b1a4d2744c50",
+      "frontierRoot": "sha256-74e84d1893ac3292727ef0fc24dde30dfb47032a4e423fda4d98c4f4310ac848",
+      "frontierWitnessRoot": "sha256-5dbe450586a23f6e0dc77444b525a8fb1a57017694a7fbb6d227cfe00c506a1d",
+      "evidenceSetRoot": "sha256-62fae55f832dd5382b2d92537fd7a6d2cb0f5a5f0eaa72fc93bcd5ca1582b94d",
+      "decisionRoot": "sha256-eaad2480d6c01dae407eae3d742a84f3ae41d40ea2929bf4dbf7196a9e3facb0",
+      "karRoot": "sha256-3bdf982da272427b07e665cf4ecd300e2c149bd67d09318192f8bcc8c488d823"
+    }
+  }
+}

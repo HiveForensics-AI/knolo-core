@@ -1,0 +1,24 @@
+{
+  "id": "v3-structures",
+  "documents": [
+    {
+      "source": "structures.md",
+      "text": "Requirements\nThe employee must submit the report.\nThe office shall retain the record.\nThe form is required to include the date.\nUsers shall not share passwords.\nThe rule applies unless the director approves a waiver.\nDetails are as set forth in Section 9.\nUse is in accordance with the order.\n",
+      "meta": {
+        "type": "policy"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "policy",
+      "requirement"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE",
+      "CEG_PRODUCER_INCOMPLETE_REFERENCE"
+    ]
+  }
+}

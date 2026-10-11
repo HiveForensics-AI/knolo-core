@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "kind": "kar-committed-evidence-graph",
+  "semantics": "kar-1-research-1",
+  "stateRoot": "sha256-fe6ac66f9e0f14a11d72d0125b95750bc0fa46dd53e49639e5eeb362cb26f7a6",
+  "objectRoot": "sha256-164729af6fd15d1d287d08a97acddee8e1645d5eb000584290af9237bc154c95",
+  "commitDigest": "sha256-5875c4629c3321a25f26ab732f34f27b94ab6a352a12b717f8e1c05f22bf337c",
+  "knowledgeRoot": "sha256-f4d0c63d0ca3fdbd8a1d660c2232e07819731b814194f66e9441f04ccef93a8d",
+  "graph": {
+    "version": 1,
+    "knowledgeRoot": "sha256-f4d0c63d0ca3fdbd8a1d660c2232e07819731b814194f66e9441f04ccef93a8d",
+    "provenance": {
+      "producer": "hand",
+      "note": "kar-sidecar:support-opposition"
+    },
+    "nodes": [
+      {
+        "id": "lodging"
+      },
+      {
+        "id": "general-policy"
+      },
+      {
+        "id": "enterprise-clause"
+      }
+    ],
+    "relations": [
+      {
+        "id": "r-permit",
+        "from": "lodging",
+        "relation": "permits",
+        "to": "general-policy"
+      },
+      {
+        "id": "r-prohibit",
+        "from": "lodging",
+        "relation": "prohibits",
+        "to": "enterprise-clause"
+      }
+    ],
+    "bindings": [
+      {
+        "id": "b-policy",
+        "nodeId": "general-policy",
+        "evidenceId": "sha256-13841b4d369c4aa0abc103ce2ecbadf56b0a1bb43d599d1f1b964d1772a86db5",
+        "requirements": [
+          "cancel-allowed"
+        ],
+        "provenance": "hand:general-policy"
+      },
+      {
+        "id": "b-enterprise",
+        "nodeId": "enterprise-clause",
+        "evidenceId": "sha256-5a62dde978bc98565bf7c6aa810c210b98b744f490d6ef03c2c544921be6e5db",
+        "requirements": [
+          "commitment-bars-cancel"
+        ],
+        "provenance": "hand:enterprise-clause"
+      }
+    ]
+  }
+}

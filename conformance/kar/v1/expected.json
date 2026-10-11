@@ -1,0 +1,144 @@
+{
+  "format": "kar-conformance-v1",
+  "vectors": [
+    {
+      "id": "support",
+      "status": "SATISFIED",
+      "code": null,
+      "verified": true,
+      "frontier": "F_S",
+      "frontierCount": 1,
+      "selected": 1,
+      "karRoot": "sha256-7f6fabd02a5a32f5afa19d887e897c206c8e2e9fbc25f8a6b70db367a087d0a8",
+      "knowledgeRoot": "sha256-caa17d10f63b7236b5c0b8377b91e7606420dffa18879c2c81954709fb055b86",
+      "semanticRoot": "sha256-f191c16f6dcb938d0c0f92666ba09a5ae5d41da7c609525e8de2343d7b5db611",
+      "anchorMode": "supplied"
+    },
+    {
+      "id": "opposition",
+      "status": "SATISFIED",
+      "code": null,
+      "verified": true,
+      "frontier": "F_O",
+      "frontierCount": 1,
+      "selected": 1,
+      "karRoot": "sha256-7ed5103729a107d371cd6fd9fd8356f891fb44d71cf58c06483138a037c3e9a0",
+      "knowledgeRoot": "sha256-70cbe4bebf65e7e56e98a7ed89527ecd31dab95967a4e2dfed5efe1b1bdc9df7",
+      "semanticRoot": "sha256-647eacfba4a285181f087e0aac6f0ccff28288712b1f845ffad17c2a46fafba5",
+      "anchorMode": "supplied"
+    },
+    {
+      "id": "qualification",
+      "status": "SATISFIED",
+      "code": null,
+      "verified": true,
+      "frontier": "F_Q",
+      "frontierCount": 1,
+      "selected": 1,
+      "karRoot": "sha256-6f17838fab4648041b59cb3b8256057b0f68423dd8e3ad2fc14c8d9ca7e8a692",
+      "knowledgeRoot": "sha256-fe8a503de77daa271c07869586aa7beed10793cedcb53244a4cc1ac40d24d183",
+      "semanticRoot": "sha256-3a281320b2885ea4c5abcd1c746acd9e2b8ffda4ef809a5516ab06f96bb208ad",
+      "anchorMode": "supplied"
+    },
+    {
+      "id": "temporal",
+      "status": "SATISFIED",
+      "code": null,
+      "verified": true,
+      "frontier": "F_T",
+      "frontierCount": 1,
+      "selected": 1,
+      "karRoot": "sha256-3208f32de16fb3b59b880d34253ec962881236bcab1e6b2d48927d360dd90c20",
+      "knowledgeRoot": "sha256-f0b266744e40ad748a382da6703f6939a0d0ad2f020601627671bc7ac48c5446",
+      "semanticRoot": "sha256-9cd189703b13722c7d817c233927d8cca0aea2b3bf9661fe82d54bde5c35c945",
+      "anchorMode": "supplied"
+    },
+    {
+      "id": "authority",
+      "status": "SATISFIED",
+      "code": null,
+      "verified": true,
+      "frontier": "F_A",
+      "frontierCount": 1,
+      "selected": 1,
+      "karRoot": "sha256-50904a171c0e878de7a5b7910218d9513e28743d35d21b964f358342e1fa5500",
+      "knowledgeRoot": "sha256-b20e4b3e77a21bc4e8de96dbe3410edb8124744b2fc2c731179dd30213ec5bf2",
+      "semanticRoot": "sha256-0a25673184166b1172cfe9e7b41af9cda44ff05398e4008740b6ad7e97ed33bd",
+      "anchorMode": "supplied"
+    },
+    {
+      "id": "supplied-anchor",
+      "status": "SATISFIED",
+      "code": null,
+      "verified": true,
+      "frontier": "F_S",
+      "frontierCount": 1,
+      "selected": 1,
+      "karRoot": "sha256-54d2132fd15c2d920a431d3b72e92ec44d92fd13712f5b83d1bea0ca74748d5e",
+      "knowledgeRoot": "sha256-caa17d10f63b7236b5c0b8377b91e7606420dffa18879c2c81954709fb055b86",
+      "semanticRoot": "sha256-f191c16f6dcb938d0c0f92666ba09a5ae5d41da7c609525e8de2343d7b5db611",
+      "anchorMode": "supplied"
+    },
+    {
+      "id": "abstention",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS",
+      "code": null,
+      "verified": true,
+      "frontierCount": 0,
+      "selected": 0,
+      "karRoot": "sha256-c13374c843f8dce74adda35b579108c9eaa72642fac23457a2d4365cd5d7a554",
+      "knowledgeRoot": "sha256-caa17d10f63b7236b5c0b8377b91e7606420dffa18879c2c81954709fb055b86",
+      "semanticRoot": "sha256-f191c16f6dcb938d0c0f92666ba09a5ae5d41da7c609525e8de2343d7b5db611",
+      "anchorMode": "supplied"
+    },
+    {
+      "id": "search-bound",
+      "status": "SEARCH_BOUND_EXCEEDED",
+      "code": "KAR_SEARCH_BOUND_EXCEEDED",
+      "verified": true,
+      "frontierCount": 0,
+      "selected": 0,
+      "karRoot": "sha256-6936131d834a3b33ad59586ede28b706594a0aff5857b9147d823ec281b4e378",
+      "knowledgeRoot": "sha256-caa17d10f63b7236b5c0b8377b91e7606420dffa18879c2c81954709fb055b86",
+      "semanticRoot": "sha256-f191c16f6dcb938d0c0f92666ba09a5ae5d41da7c609525e8de2343d7b5db611",
+      "anchorMode": "supplied"
+    },
+    {
+      "id": "closure-bound",
+      "status": "CLOSURE_BOUND_EXCEEDED",
+      "code": "KAR_CLOSURE_BOUND_EXCEEDED",
+      "verified": true,
+      "frontierCount": 0,
+      "selected": 0,
+      "karRoot": "sha256-c4f368d41758b562937085c675080e69c0e0da92231077e2f48fcbf2f078c39b",
+      "knowledgeRoot": "sha256-caa17d10f63b7236b5c0b8377b91e7606420dffa18879c2c81954709fb055b86",
+      "semanticRoot": "sha256-f191c16f6dcb938d0c0f92666ba09a5ae5d41da7c609525e8de2343d7b5db611",
+      "anchorMode": "supplied"
+    },
+    {
+      "id": "anchor-rejected",
+      "status": "ANCHOR_REJECTED",
+      "code": "KAR_ANCHOR_REJECTED",
+      "verified": true,
+      "frontierCount": 0,
+      "selected": 0,
+      "karRoot": "sha256-ae46d3be9375ddd6ca2186ae82359e7dd601d4dd8b6e6bab3e5f7cc635399aef",
+      "knowledgeRoot": "sha256-caa17d10f63b7236b5c0b8377b91e7606420dffa18879c2c81954709fb055b86",
+      "semanticRoot": "sha256-f191c16f6dcb938d0c0f92666ba09a5ae5d41da7c609525e8de2343d7b5db611",
+      "anchorMode": "supplied"
+    },
+    {
+      "id": "tamper-rejection",
+      "status": "SATISFIED",
+      "verifyOk": false,
+      "verifyCode": "KAR_RESULT_MISMATCH",
+      "karRoot": "sha256-7f6fabd02a5a32f5afa19d887e897c206c8e2e9fbc25f8a6b70db367a087d0a8"
+    },
+    {
+      "id": "dossier-language-tamper",
+      "statusStatement": "Evidence requirements satisfied",
+      "verifyOk": false,
+      "verifyCode": "KAR_RESULT_MISMATCH"
+    }
+  ]
+}

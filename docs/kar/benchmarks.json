@@ -1,0 +1,525 @@
+{
+  "generatedAt": "2026-10-10",
+  "results": [
+    {
+      "family": "chain-degree-1",
+      "nodes": 100,
+      "degree": 1,
+      "depth": 99,
+      "relations": 99,
+      "reps": 15,
+      "status": "SATISFIED",
+      "visitedEdges": 99,
+      "frontierWitnessRoot": "sha256-1605360927f51c9f41317b69447dac984f080f13155d7205a38d37023041cbdf",
+      "karRoot": "sha256-562ca2695d07ccd3cfffda86228ba4e86f4dabad143c2121780e3363c6d18f88",
+      "certificateEqual": true,
+      "witnessesEqual": true,
+      "sessionMs": {
+        "p50": 0.658,
+        "p95": 5.521,
+        "max": 5.521
+      },
+      "coldEvalMs": {
+        "p50": 0.519,
+        "p95": 4.567,
+        "max": 4.567
+      },
+      "warmEvalMs": {
+        "p50": 0.4,
+        "p95": 2.494,
+        "max": 2.494
+      },
+      "closureMs": {
+        "p50": 0.113,
+        "p95": 0.141,
+        "max": 0.141
+      },
+      "coverMs": {
+        "p50": 0.052,
+        "p95": 0.108,
+        "max": 0.108
+      },
+      "verifyMs": {
+        "p50": 1.292,
+        "p95": 5.905,
+        "max": 5.905
+      },
+      "researchClosureMs": {
+        "p50": 0.197,
+        "p95": 0.352,
+        "max": 0.352
+      },
+      "researchCoverMs": {
+        "p50": 0.1,
+        "p95": 0.246,
+        "max": 0.246
+      },
+      "researchVerifyMs": {
+        "p50": 1.34,
+        "p95": 1.768,
+        "max": 1.768
+      },
+      "heapBytes": {
+        "p50": 1237664,
+        "p95": 1273880,
+        "max": 1273880
+      },
+      "closureSpeedup": 1.75
+    },
+    {
+      "family": "chain-degree-1",
+      "nodes": 1000,
+      "degree": 1,
+      "depth": 999,
+      "relations": 999,
+      "reps": 9,
+      "status": "SATISFIED",
+      "visitedEdges": 999,
+      "frontierWitnessRoot": "sha256-18471d5d0aff6c554ceb6dc9f1ebb0393f2a32ca0682c1db215daa66ed32bd84",
+      "karRoot": "sha256-3467e8382b6da993387999806ad34dfaf26179493fc0fb42f559c0615196f0e6",
+      "certificateEqual": true,
+      "witnessesEqual": true,
+      "sessionMs": {
+        "p50": 3.189,
+        "p95": 5.764,
+        "max": 5.764
+      },
+      "coldEvalMs": {
+        "p50": 0.88,
+        "p95": 4.178,
+        "max": 4.178
+      },
+      "warmEvalMs": {
+        "p50": 0.891,
+        "p95": 3.066,
+        "max": 3.066
+      },
+      "closureMs": {
+        "p50": 0.474,
+        "p95": 3.227,
+        "max": 3.227
+      },
+      "coverMs": {
+        "p50": 0.061,
+        "p95": 0.202,
+        "max": 0.202
+      },
+      "verifyMs": {
+        "p50": 5.229,
+        "p95": 8.773,
+        "max": 8.773
+      },
+      "researchClosureMs": {
+        "p50": 3.759,
+        "p95": 9.135,
+        "max": 9.135
+      },
+      "researchCoverMs": {
+        "p50": 0.128,
+        "p95": 0.306,
+        "max": 0.306
+      },
+      "researchVerifyMs": {
+        "p50": 8.116,
+        "p95": 15.883,
+        "max": 15.883
+      },
+      "heapBytes": {
+        "p50": 6643136,
+        "p95": 7007992,
+        "max": 7007992
+      },
+      "closureSpeedup": 7.93
+    },
+    {
+      "family": "chain-degree-1",
+      "nodes": 10000,
+      "degree": 1,
+      "depth": 9999,
+      "relations": 9999,
+      "reps": 5,
+      "status": "SATISFIED",
+      "visitedEdges": 9999,
+      "frontierWitnessRoot": "sha256-c30ab77128f3d473a09ea72f8f3eb11e78704249dd73b72c0ffeb0dfb15a5cd4",
+      "karRoot": "sha256-63726e8f1925e244ef6ac691a2b03227f191c56bfa31874554c0eebdef2e854d",
+      "certificateEqual": true,
+      "witnessesEqual": true,
+      "sessionMs": {
+        "p50": 34.14,
+        "p95": 38.629,
+        "max": 38.629
+      },
+      "coldEvalMs": {
+        "p50": 9.732,
+        "p95": 11.453,
+        "max": 11.453
+      },
+      "warmEvalMs": {
+        "p50": 6.419,
+        "p95": 7.741,
+        "max": 7.741
+      },
+      "closureMs": {
+        "p50": 6.941,
+        "p95": 10.81,
+        "max": 10.81
+      },
+      "coverMs": {
+        "p50": 0.091,
+        "p95": 0.12,
+        "max": 0.12
+      },
+      "verifyMs": {
+        "p50": 42.421,
+        "p95": 48.2,
+        "max": 48.2
+      },
+      "researchClosureMs": {
+        "p50": 183.015,
+        "p95": 207.645,
+        "max": 207.645
+      },
+      "researchCoverMs": {
+        "p50": 0.114,
+        "p95": 0.141,
+        "max": 0.141
+      },
+      "researchVerifyMs": {
+        "p50": 221.185,
+        "p95": 232.779,
+        "max": 232.779
+      },
+      "heapBytes": {
+        "p50": 9419528,
+        "p95": 9819128,
+        "max": 9819128
+      },
+      "closureSpeedup": 26.37
+    },
+    {
+      "family": "chain-degree-1",
+      "nodes": 50000,
+      "degree": 1,
+      "depth": 49999,
+      "relations": 49999,
+      "reps": 3,
+      "status": "SATISFIED",
+      "visitedEdges": 49999,
+      "frontierWitnessRoot": "sha256-034712eae3a07b6825a0c578ab290379b260d80f464050e103267cdd9e98d712",
+      "karRoot": "sha256-5610b21b0d7584916b9fe1c643ff74cd2373499c215bfadd932d264c27c1ddc3",
+      "certificateEqual": true,
+      "witnessesEqual": true,
+      "sessionMs": {
+        "p50": 202.995,
+        "p95": 207.712,
+        "max": 207.712
+      },
+      "coldEvalMs": {
+        "p50": 48.938,
+        "p95": 50.673,
+        "max": 50.673
+      },
+      "warmEvalMs": {
+        "p50": 44.433,
+        "p95": 45.949,
+        "max": 45.949
+      },
+      "closureMs": {
+        "p50": 45.06,
+        "p95": 48.22,
+        "max": 48.22
+      },
+      "coverMs": {
+        "p50": 0.095,
+        "p95": 0.169,
+        "max": 0.169
+      },
+      "verifyMs": {
+        "p50": 237.94,
+        "p95": 342.713,
+        "max": 342.713
+      },
+      "researchClosureMs": {
+        "p50": 16885.609,
+        "p95": 16952.023,
+        "max": 16952.023
+      },
+      "researchCoverMs": {
+        "p50": 0.086,
+        "p95": 0.092,
+        "max": 0.092
+      },
+      "researchVerifyMs": {
+        "p50": 16881.061,
+        "p95": 17153.802,
+        "max": 17153.802
+      },
+      "heapBytes": {
+        "p50": 72707648,
+        "p95": 80434912,
+        "max": 80434912
+      },
+      "closureSpeedup": 374.74
+    },
+    {
+      "family": "local-degree-3-depth-4",
+      "nodes": 100,
+      "degree": 3,
+      "depth": 4,
+      "relations": 294,
+      "reps": 15,
+      "status": "SATISFIED",
+      "visitedEdges": 30,
+      "frontierWitnessRoot": "sha256-1ac19507ffd8ab4ab6f15fd2d5499b065c4caa66cca4255c6887b8ec1b34dcb6",
+      "karRoot": "sha256-c24e37154be41f1eb5a6822cb0ebe33a6ef2fce213c50ebb40f9b1980c031c81",
+      "certificateEqual": true,
+      "witnessesEqual": true,
+      "sessionMs": {
+        "p50": 0.846,
+        "p95": 1.263,
+        "max": 1.263
+      },
+      "coldEvalMs": {
+        "p50": 0.272,
+        "p95": 0.345,
+        "max": 0.345
+      },
+      "warmEvalMs": {
+        "p50": 0.189,
+        "p95": 0.273,
+        "max": 0.273
+      },
+      "closureMs": {
+        "p50": 0.018,
+        "p95": 0.061,
+        "max": 0.061
+      },
+      "coverMs": {
+        "p50": 0.031,
+        "p95": 0.035,
+        "max": 0.035
+      },
+      "verifyMs": {
+        "p50": 1.136,
+        "p95": 1.557,
+        "max": 1.557
+      },
+      "researchClosureMs": {
+        "p50": 0.121,
+        "p95": 0.186,
+        "max": 0.186
+      },
+      "researchCoverMs": {
+        "p50": 0.076,
+        "p95": 0.09,
+        "max": 0.09
+      },
+      "researchVerifyMs": {
+        "p50": 1.053,
+        "p95": 1.18,
+        "max": 1.18
+      },
+      "heapBytes": {
+        "p50": 1441824,
+        "p95": 1469976,
+        "max": 1469976
+      },
+      "closureSpeedup": 6.6
+    },
+    {
+      "family": "local-degree-3-depth-4",
+      "nodes": 1000,
+      "degree": 3,
+      "depth": 4,
+      "relations": 2994,
+      "reps": 9,
+      "status": "SATISFIED",
+      "visitedEdges": 30,
+      "frontierWitnessRoot": "sha256-ac1795c31430880e6ec7856239f45763411976645ead1c3f9518c84d1e7628c1",
+      "karRoot": "sha256-78d4cea31d96c198ed9a448ed67a8be85d813e11ddebfb39934f378808ce3ace",
+      "certificateEqual": true,
+      "witnessesEqual": true,
+      "sessionMs": {
+        "p50": 7.794,
+        "p95": 8.015,
+        "max": 8.015
+      },
+      "coldEvalMs": {
+        "p50": 0.324,
+        "p95": 0.408,
+        "max": 0.408
+      },
+      "warmEvalMs": {
+        "p50": 0.194,
+        "p95": 0.259,
+        "max": 0.259
+      },
+      "closureMs": {
+        "p50": 0.019,
+        "p95": 0.049,
+        "max": 0.049
+      },
+      "coverMs": {
+        "p50": 0.032,
+        "p95": 0.046,
+        "max": 0.046
+      },
+      "verifyMs": {
+        "p50": 9.397,
+        "p95": 10.361,
+        "max": 10.361
+      },
+      "researchClosureMs": {
+        "p50": 0.462,
+        "p95": 0.632,
+        "max": 0.632
+      },
+      "researchCoverMs": {
+        "p50": 0.073,
+        "p95": 0.103,
+        "max": 0.103
+      },
+      "researchVerifyMs": {
+        "p50": 7.162,
+        "p95": 7.347,
+        "max": 7.347
+      },
+      "heapBytes": {
+        "p50": 10009448,
+        "p95": 10020904,
+        "max": 10020904
+      },
+      "closureSpeedup": 24.78
+    },
+    {
+      "family": "local-degree-3-depth-4",
+      "nodes": 10000,
+      "degree": 3,
+      "depth": 4,
+      "relations": 29994,
+      "reps": 5,
+      "status": "SATISFIED",
+      "visitedEdges": 30,
+      "frontierWitnessRoot": "sha256-97ab0904ba6ca3dbd5070304608682e27534f0bdd3e236e8f72e3bc77fc9321c",
+      "karRoot": "sha256-3f626c13a743301abe49c681b5385b76ec3d2fdd72f7fd4038344ea41fb661e8",
+      "certificateEqual": true,
+      "witnessesEqual": true,
+      "sessionMs": {
+        "p50": 89.183,
+        "p95": 90.943,
+        "max": 90.943
+      },
+      "coldEvalMs": {
+        "p50": 0.332,
+        "p95": 0.383,
+        "max": 0.383
+      },
+      "warmEvalMs": {
+        "p50": 0.189,
+        "p95": 0.19,
+        "max": 0.19
+      },
+      "closureMs": {
+        "p50": 0.021,
+        "p95": 0.064,
+        "max": 0.064
+      },
+      "coverMs": {
+        "p50": 0.029,
+        "p95": 0.039,
+        "max": 0.039
+      },
+      "verifyMs": {
+        "p50": 86.407,
+        "p95": 92.089,
+        "max": 92.089
+      },
+      "researchClosureMs": {
+        "p50": 3.915,
+        "p95": 3.979,
+        "max": 3.979
+      },
+      "researchCoverMs": {
+        "p50": 0.086,
+        "p95": 0.168,
+        "max": 0.168
+      },
+      "researchVerifyMs": {
+        "p50": 73.622,
+        "p95": 74.265,
+        "max": 74.265
+      },
+      "heapBytes": {
+        "p50": 25006616,
+        "p95": 25019760,
+        "max": 25019760
+      },
+      "closureSpeedup": 183.2
+    },
+    {
+      "family": "local-degree-3-depth-4",
+      "nodes": 50000,
+      "degree": 3,
+      "depth": 4,
+      "relations": 149994,
+      "reps": 3,
+      "status": "SATISFIED",
+      "visitedEdges": 30,
+      "frontierWitnessRoot": "sha256-75788bfa427ef39f9f8f311f074184b8e0939a5cb1dd2d48133f78c66eb684c0",
+      "karRoot": "sha256-a8333fb3a76b264a3953889d5b85c308daecec854e415f2f924445d1df2595c4",
+      "certificateEqual": true,
+      "witnessesEqual": true,
+      "sessionMs": {
+        "p50": 498.924,
+        "p95": 516.023,
+        "max": 516.023
+      },
+      "coldEvalMs": {
+        "p50": 0.347,
+        "p95": 0.442,
+        "max": 0.442
+      },
+      "warmEvalMs": {
+        "p50": 0.229,
+        "p95": 0.244,
+        "max": 0.244
+      },
+      "closureMs": {
+        "p50": 0.028,
+        "p95": 0.029,
+        "max": 0.029
+      },
+      "coverMs": {
+        "p50": 0.048,
+        "p95": 0.058,
+        "max": 0.058
+      },
+      "verifyMs": {
+        "p50": 482.247,
+        "p95": 536.965,
+        "max": 536.965
+      },
+      "researchClosureMs": {
+        "p50": 29.751,
+        "p95": 34.631,
+        "max": 34.631
+      },
+      "researchCoverMs": {
+        "p50": 0.094,
+        "p95": 0.094,
+        "max": 0.094
+      },
+      "researchVerifyMs": {
+        "p50": 418.87,
+        "p95": 454.619,
+        "max": 454.619
+      },
+      "heapBytes": {
+        "p50": 118354992,
+        "p95": 118355272,
+        "max": 118355272
+      },
+      "closureSpeedup": 1057.04
+    }
+  ]
+}

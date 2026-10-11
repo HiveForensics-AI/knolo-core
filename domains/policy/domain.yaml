@@ -1,0 +1,69 @@
+format: ceg-domain-1
+id: policy
+version: 1
+description: Reusable policy and compliance semantics for controls, prohibitions, exceptions, roles, and replacement.
+conceptKinds:
+  - id: policy
+    label: Policy
+  - id: control
+    label: Control
+  - id: prohibition
+    label: Prohibition
+  - id: exception
+    label: Exception
+  - id: role
+    label: Role
+  - id: effective-date
+    label: Effective date
+concepts:
+  - name: policy
+    kind: policy
+    label: Policy
+    phrases:
+      - policy
+  - name: control
+    kind: control
+    label: Control
+    phrases:
+      - is required
+      - is prohibited
+  - name: prohibition
+    kind: prohibition
+    label: Prohibition
+    phrases:
+      - action is prohibited
+  - name: exception
+    kind: exception
+    label: Exception
+    phrases:
+      - exception applies
+      - unless approved
+      - subject to
+  - name: role
+    kind: role
+    label: Role
+    phrases:
+      - applies to the role
+  - name: replacement
+    kind: policy
+    label: Replacement
+    phrases:
+      - replaced by
+  - name: effective-date
+    kind: effective-date
+    label: Effective date
+    phrases:
+      - valid before
+      - valid after
+      - effective
+      - until
+relations:
+  - requires
+  - prohibits
+  - qualifies
+  - excepts
+  - supersedes
+  - overrides
+  - applies_to
+  - valid_before
+  - valid_after

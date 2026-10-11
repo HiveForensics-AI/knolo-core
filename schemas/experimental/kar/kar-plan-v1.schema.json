@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schema/experimental/kar/kar-plan-v1.schema.json",
+  "title": "KAR plan v1",
+  "description": "Developer schema for a frozen kar-1-research-1 plan. Runtime validation in @knolo/core/experimental/kar is stricter: every frontier key is required, floors are decimal strings, and a missing bound is KAR_PLAN_INVALID.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version", "anchor", "frontierMap", "depth", "cardinalityBound", "coverageMode",
+    "requirements", "floors", "profile", "asOf", "minAuthority", "bounds", "lexical"
+  ],
+  "properties": {
+    "version": { "const": 1 },
+    "anchor": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "procedure"],
+          "properties": {
+            "mode": { "const": "recompute" },
+            "procedure": { "const": "member-id-v1" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "witness"],
+          "properties": {
+            "mode": { "const": "supplied" },
+            "witness": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["nodeId"],
+                "properties": {
+                  "nodeId": { "type": "string", "minLength": 1 },
+                  "queryTerm": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "frontierMap": {
+      "type": "object",
+      "additionalProperties": { "enum": ["F_S", "F_O", "F_Q", "F_T", "F_A"] }
+    },
+    "depth": { "type": "integer", "minimum": 0 },
+    "cardinalityBound": { "type": "integer", "minimum": 0 },
+    "coverageMode": { "enum": ["requirements", "nonempty"] },
+    "requirements": { "$ref": "#/$defs/frontierLists" },
+    "floors": { "$ref": "#/$defs/frontierFloors" },
+    "profile": { "enum": ["minimum-cover", "minimum-cover-redundancy-v1", "exp1-lexicographic"] },
+    "asOf": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+    "minAuthority": { "type": ["integer", "null"] },
+    "bounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxAnchorNodes", "maxClosureNodes", "maxClosureEdges", "maxFrontierEvidence",
+        "maxRequirementsPerFrontier", "maxEvidenceBindings", "maxCoverVisits"
+      ],
+      "properties": {
+        "maxAnchorNodes": { "type": "integer", "minimum": 0 },
+        "maxClosureNodes": { "type": "integer", "minimum": 0 },
+        "maxClosureEdges": { "type": "integer", "minimum": 0 },
+        "maxFrontierEvidence": { "type": "integer", "minimum": 0 },
+        "maxRequirementsPerFrontier": { "type": "integer", "minimum": 0 },
+        "maxEvidenceBindings": { "type": "integer", "minimum": 0 },
+        "maxCoverVisits": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "lexical": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["frontier", "evidenceIds"],
+          "properties": {
+            "frontier": { "enum": ["F_S", "F_O", "F_Q", "F_T", "F_A"] },
+            "evidenceIds": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "frontierLists": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["F_S", "F_O", "F_Q", "F_T", "F_A"],
+      "properties": {
+        "F_S": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "F_O": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "F_Q": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "F_T": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "F_A": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "frontierFloors": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["F_S", "F_O", "F_Q", "F_T", "F_A"],
+      "properties": {
+        "F_S": { "type": "string", "pattern": "^\\d+(\\.\\d{1,6})?$" },
+        "F_O": { "type": "string", "pattern": "^\\d+(\\.\\d{1,6})?$" },
+        "F_Q": { "type": "string", "pattern": "^\\d+(\\.\\d{1,6})?$" },
+        "F_T": { "type": "string", "pattern": "^\\d+(\\.\\d{1,6})?$" },
+        "F_A": { "type": "string", "pattern": "^\\d+(\\.\\d{1,6})?$" }
+      }
+    }
+  }
+}

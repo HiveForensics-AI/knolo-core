@@ -74,7 +74,10 @@ test('scaffolded app installs and builds with publish-style tarball dependencies
   const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
   assert.equal(packageJson.name, 'my-kb-chat');
   assert.equal(packageJson.scripts['knolo:build'], 'knolo build');
-  assert.match(packageJson.devDependencies['@knolo/cli'], /^\^\d+\.\d+\.\d+/);
+  const v6Range = '^6.0.0';
+  assert.equal(packageJson.dependencies['@knolo/core'], v6Range);
+  assert.equal(packageJson.devDependencies['@knolo/cli'], v6Range);
+  assert.doesNotMatch(packageJson.dependencies['@knolo/core'], /^(file:|workspace:|link:)/);
   assert.doesNotMatch(packageJson.devDependencies['@knolo/cli'], /^(file:|workspace:|link:)/);
 
   const installPackageJson = {

@@ -1,0 +1,25 @@
+{
+  "id": "gap",
+  "documents": [
+    {
+      "source": "note.md",
+      "text": "The room probably means lodging.\n",
+      "meta": {
+        "type": "record"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": [
+      "record"
+    ],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "related-review",
+      "proposition": "Is the record related to the topic?",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS"
+    }
+  }
+}
