@@ -20,13 +20,15 @@ knolo kar package
 knolo kar package verify
 knolo kar dossier build
 knolo kar dossier verify
+knolo kar coverage build
+knolo kar coverage verify
 knolo kar demo
 knolo kar conformance
 ```
 
 `knolo kar --help` prints the contract, a short example, `--json`, and the exit rule. The command uses `@knolo/core/kar` when that entry is installed, and it still accepts the experimental entry. It does not change `knolo query`.
 
-`evaluate` exits 0 for every completed status, including `UNSATISFIED_EVIDENCE_REQUIREMENTS`. `verify`, `dossier verify`, `package verify`, and `conformance` exit non-zero when a check fails. `demo` and `conformance` need a knolo-core checkout.
+`evaluate` exits 0 for every completed status, including `UNSATISFIED_EVIDENCE_REQUIREMENTS`. `coverage build` exits 0 when the report is written, including gap and blocked rows. `verify`, `dossier verify`, `coverage verify`, `package verify`, and `conformance` exit non-zero when a check fails. `demo` and `conformance` need a knolo-core checkout.
 
 `knolo --version` prints `@knolo/cli` and the resolved `@knolo/core` version.
 
@@ -122,6 +124,20 @@ knolo kar domain test domains/contracts
 ```
 
 `--auto` writes the already-accepted deterministic fragment as CEG Source and a sibling `*.production.json`. It does not accept model output. An existing `--out` file, and an existing production sibling, are left unchanged. Compile the source with `knolo kar graph build`.
+
+## Coverage
+
+`knolo kar coverage build` evaluates one or more plans, or the templates in a Domain Pack, and writes a directory that `knolo kar coverage verify` recomputes. Repeated `--plan` flags pair with repeated `--query` flags. `--domain` takes one `--query` for every selected template, or a `--queries` object. `--plan` and `--domain` cannot be mixed. The contract is [Evidence coverage](coverage.md).
+
+```bash
+knolo kar coverage build \
+  --image knowledge.knolo \
+  --graph knowledge.kar.json \
+  --plan plan.json \
+  --query "What evidence shows the valve is closed?" \
+  --out coverage/
+knolo kar coverage verify coverage/
+```
 
 ## Example
 

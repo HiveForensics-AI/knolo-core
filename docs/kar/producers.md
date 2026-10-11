@@ -27,7 +27,7 @@ documents / ontology / model
  frozen KAR
 ```
 
-A producer proposes authoring semantics. `compileCegSource()` remains the only writer of committed CEG bytes. Producer output is not a committed graph.
+A producer proposes authoring semantics. `compileCegSource()` remains the only writer of committed CEG bytes. Producer output is not a committed graph. A coverage report is a check after that compile: an unaccepted proposal cannot close a gap until a person accepts it and `compileCegSource()` writes a new sidecar.
 
 The existing producer interface is unchanged:
 

@@ -49,7 +49,9 @@ V5 `stateRoot` is reported beside these roots. It is not `KnowledgeRoot`.
 
 Tamper checks fail closed. A changed root, a changed manifest, or a changed dossier sentence returns a non-zero CLI status and a stable code.
 
-Public vectors: [conformance/kar/v1](../../conformance/kar/v1/README.md).
+`verifyKarCoverage` uses the same rule for a coverage report. It remounts the image, recomputes every case, and compares the manifest, the report, and the optional rendering. `CoverageRoot` is checked and is not an input to `KARRoot`. A gap row can verify. See [Evidence coverage](coverage.md).
+
+Public vectors: [conformance/kar/v1](../../conformance/kar/v1/README.md) and [conformance/kar/coverage-v1](../../conformance/kar/coverage-v1/README.md).
 
 Research oracle, including the Rust verifier:
 

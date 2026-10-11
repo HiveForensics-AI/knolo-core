@@ -71,6 +71,8 @@ export {
 export type { CegObservation, CegProducerProvenance, CegProducerRun, CegProposal, ProposalState } from './proposals.js';
 export { renderDomainTest, testDomainFixtures } from './domain-test.js';
 export type { DomainFixture, DomainTestReport } from './domain-test.js';
+export { coverageCasesFromDomainPack } from './coverage-cases.js';
+export type { KarCoveragePackCase, KarCoveragePackExpansion } from './coverage-cases.js';
 
 export type CegProducerInput = {
   image?: KarImageInput;

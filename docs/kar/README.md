@@ -25,7 +25,7 @@ KAR
     ↓
 minimum sufficient typed evidence set
     ↓
-Evidence Dossier
+Evidence Dossier / coverage report
     ↓
 independent verification
 ```
@@ -33,7 +33,7 @@ independent verification
 1. Knowledge Image. Portable evidence. V5 `stateRoot` is its identity.
 2. CEG authoring and compiler. Editable CEG Source becomes a KarSidecarV1.
 3. KAR evaluation. Minimum applicable evidence under the declared plan.
-4. Evidence Dossier and verification. The packaged result and an independent recomputation.
+4. Evidence Dossier, coverage report, and verification. The packaged result and an independent recomputation. A coverage report says which supplied requirements are met, which are gaps, and which plans did not decide.
 
 Normal Knolo retrieval still asks which evidence best matches a query. KAR asks a different question: what is the minimum applicable evidence set required to evaluate this proposition under the declared plan?
 
@@ -47,6 +47,7 @@ Normal Knolo retrieval still asks which evidence best matches a query. KAR asks 
 - [Producers](producers.md)
 - [Domain Packs](domain-packs.md)
 - [Evidence Dossiers](dossiers.md)
+- [Evidence coverage](coverage.md)
 - [Verification](verification.md)
 - [CLI](cli.md)
 - [Browser](browser.md)
@@ -57,10 +58,10 @@ Normal Knolo retrieval still asks which evidence best matches a query. KAR asks 
 - [Concepts](concepts.md)
 - [Research history](research/README.md)
 
-The worked product examples are [`examples/kar-v6`](../../examples/kar-v6/README.md). Public vectors are [`conformance/kar/v1`](../../conformance/kar/v1/README.md).
+The worked product examples are [`examples/kar-v6`](../../examples/kar-v6/README.md) and [`examples/kar-coverage`](../../examples/kar-coverage/README.md). Public vectors are [`conformance/kar/v1`](../../conformance/kar/v1/README.md) and [`conformance/kar/coverage-v1`](../../conformance/kar/coverage-v1/README.md).
 
 ```ts
-import { createKarSession, evaluateKar, verifyKar, explainKarResult, createKarDossier } from '@knolo/core/kar';
+import { createKarSession, evaluateKar, verifyKar, explainKarResult, createKarDossier, createKarCoverage } from '@knolo/core/kar';
 ```
 
 `@knolo/core` does not load this module. `@knolo/core/experimental/kar` remains operational for the V6 cycle.

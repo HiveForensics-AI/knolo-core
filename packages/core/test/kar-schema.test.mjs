@@ -4,7 +4,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { createKnowledgeImageV5 } from '../dist/index.js';
-import { createKarDossier, createKarSession, evaluateKar, verifyKarDossier } from '../dist/kar/index.js';
+import { createKarCoverage, createKarDossier, createKarSession, evaluateKar, verifyKarCoverage, verifyKarDossier } from '../dist/kar/index.js';
 import { compileCegSource, interpretDomainPack, validateCegSource } from '../dist/kar/authoring/index.js';
 import { buildDistributionFiles, loadKarBundle } from '../dist/experimental/kar/authoring/index.js';
 import { validateKarPlan, validateKarResult, validateKarSidecar } from '../dist/experimental/kar/index.js';
@@ -122,6 +122,7 @@ test('packed schemas match the repository schemas', () => {
     'ceg-domain-v1.schema.json',
     'kar-distribution-v1.schema.json',
     'kar-dossier-v1.schema.json',
+    'kar-coverage-report-v1.schema.json',
   ]) {
     assert.equal(readFileSync(path.join(packedSchemaDir, name), 'utf8'), readFileSync(path.join(schemaDir, name), 'utf8'));
   }
@@ -167,6 +168,11 @@ test('published schemas accept runtime objects and reject the paired invalid obj
   const session = createKarSession({ image: image.bytes, graph: compiled.sidecar });
   const result = evaluateKar(session, { proposition: 'What evidence supports cancellation?', plan });
   const dossier = createKarDossier({ image: image.bytes, graph: compiled.sidecar, plan, proposition: result.proposition });
+  const coverage = createKarCoverage({
+    image: image.bytes,
+    graph: compiled.sidecar,
+    cases: [{ id: 'cancel', proposition: result.proposition, plan }],
+  });
   const distribution = buildDistributionFiles({ image: image.bytes, graphBytes: compiled.bytes, graph: compiled.sidecar });
   assert.equal(distribution.ok, true);
   const domain = {
@@ -183,6 +189,13 @@ test('published schemas accept runtime objects and reject the paired invalid obj
   const interpreted = interpretDomainPack(domain);
   assert.equal(interpreted.ok, true, JSON.stringify(interpreted.diagnostics));
 
+  const badCoverage = verifyKarCoverage({
+    image: image.bytes,
+    graph: compiled.sidecar,
+    cases: [{ id: 'cancel', proposition: result.proposition, plan }],
+    manifest: { ...coverage.manifest, extra: true },
+    report: coverage,
+  }).ok;
   const badDossier = verifyKarDossier({
     image: image.bytes,
     graph: compiled.sidecar,
@@ -204,6 +217,7 @@ test('published schemas accept runtime objects and reject the paired invalid obj
     ['kar-plan-v1.schema.json', plan, validateKarPlan(plan).ok, { version: 1 }, validateKarPlan({ version: 1 }).ok],
     ['kar-result-v1.schema.json', result.certificate, validateKarResult(result.certificate).ok, { version: 'kar-1-research-1' }, validateKarResult({ version: 'kar-1-research-1' }).ok],
     ['kar-dossier-v1.schema.json', dossier.manifest, true, { ...dossier.manifest, extra: true }, badDossier],
+    ['kar-coverage-report-v1.schema.json', coverage.manifest, true, { ...coverage.manifest, extra: true }, badCoverage],
     ['kar-distribution-v1.schema.json', distribution.manifest, true, { ...distribution.manifest, maturity: 'review-required' }, badDistribution],
     ['ceg-domain-v1.schema.json', domain, interpreted.ok, { ...domain, maturity: 'validated' }, interpretDomainPack({ ...domain, maturity: 'validated' }).ok],
   ];

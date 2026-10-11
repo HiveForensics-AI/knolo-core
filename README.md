@@ -21,6 +21,7 @@ import {
   verifyKar,
   explainKarResult,
   createKarDossier,
+  createKarCoverage,
 } from '@knolo/core/kar';
 ```
 
@@ -28,7 +29,7 @@ The root `@knolo/core` entry does not load KAR. `@knolo/core/experimental/kar` r
 
 The npm packages in this repository are `6.0.0` and depend on `@knolo/core` `^6.0.0`. Publishing that version, and moving the npm `latest` dist-tag, is a separate step. `@knolo/reflex` stays `0.2.0`. `@knolo/evidence-gate` stays `0.1.0`. Rust, Python, and the ICP canister stay `5.5.1` and do not implement KAR. The bundled contracts, policy, and operations Domain Packs are `review-required`.
 
-Start with the [KAR guide](docs/kar/README.md), the [6.0.0 release notes](docs/releases/v6.0.0.md), and [`examples/kar-v6`](examples/kar-v6/README.md).
+Start with the [KAR guide](docs/kar/README.md), the [6.0.0 release notes](docs/releases/v6.0.0.md), [`examples/kar-v6`](examples/kar-v6/README.md), and [`examples/kar-coverage`](examples/kar-coverage/README.md).
 
 ## The opportunity
 
@@ -78,7 +79,7 @@ The result is a bounded byte artifact that can be mounted, inspected, verified, 
 
 KAR asks for the minimum applicable evidence set required to evaluate a proposition under a declared plan. Support, opposition, qualification, temporal applicability, and authority stay typed by that plan. The evaluation is replayable. It is not a ranked-passage search and it does not replace `query()`.
 
-A Committed Evidence Graph is compiled from editable CEG Source. `compileCegSource()` is the writer of those bytes. Authoring imports come from `@knolo/core/kar/authoring`. The worked demos are [`examples/kar-v6`](examples/kar-v6/README.md). Public vectors are [`conformance/kar/v1`](conformance/kar/v1/README.md).
+A Committed Evidence Graph is compiled from editable CEG Source. `compileCegSource()` is the writer of those bytes. Authoring imports come from `@knolo/core/kar/authoring`. A coverage report says which supplied evidence requirements are met, which are gaps, and which plans did not decide. The worked demos are [`examples/kar-v6`](examples/kar-v6/README.md) and [`examples/kar-coverage`](examples/kar-coverage/README.md). Public vectors are [`conformance/kar/v1`](conformance/kar/v1/README.md) and [`conformance/kar/coverage-v1`](conformance/kar/coverage-v1/README.md).
 
 Contracts, policy, and operations Domain Packs can propose CEG Source. Their maturity is `review-required` in [`domains/v6-catalog.json`](domains/v6-catalog.json). Human review is still required before those proposals are treated as validated semantics. KAR evaluates an already committed graph either way.
 
@@ -352,7 +353,7 @@ The active roadmap is maintained in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 - runtime diagnostics and the KIP-0026 Studio snapshot;
 - CLI inspection, health, and Studio management commands;
 - preserved V4 compatibility;
-- KAR evaluation, explanation, verification, and Evidence Dossiers;
+- KAR evaluation, explanation, verification, Evidence Dossiers, and evidence coverage reports;
 - CEG Source compilation and public KAR conformance vectors;
 - contracts, policy, and operations Domain Packs at maturity `review-required`.
 
@@ -397,6 +398,7 @@ examples/kar-v6/     Redistributable KAR demos
 examples/            Framework and product integration examples
 spec/                KIP contracts, including KAR-1
 conformance/kar/v1/  Public KAR vectors
+conformance/kar/coverage-v1/  Evidence coverage vectors
 conformance/         Cross-runtime fixtures and acceptance tests
 docs/kar/            KAR, CEG, dossiers, and the V6 release notes
 ```

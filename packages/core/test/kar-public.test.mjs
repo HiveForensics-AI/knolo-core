@@ -20,6 +20,8 @@ const publicKar = readFileSync(new URL('../dist/kar/index.js', import.meta.url),
 test('root entry does not load KAR or authoring', () => {
   assert.equal(root.includes('experimental/kar'), false);
   assert.equal(root.includes('/kar/index'), false);
+  assert.equal(root.includes('createKarCoverage'), false);
+  assert.equal(root.includes('kar-coverage-report-1'), false);
   assert.equal(publicKar.includes('/authoring'), false);
   assert.equal(publicKar.includes('node:fs'), false);
   assert.equal(publicKar.includes('node:crypto'), false);

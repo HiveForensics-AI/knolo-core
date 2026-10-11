@@ -9,6 +9,7 @@ import {
   verifyKar,
   explainKarResult,
   createKarDossier,
+  createKarCoverage,
 } from '@knolo/core/kar';
 ```
 
@@ -134,6 +135,26 @@ const verification = verifyKar({
 Verification builds a new session from the bytes and recomputes the certificate. A matching certificate returns `{ ok: true, code: 'VERIFIED' }`. A mismatch returns `KAR_RESULT_MISMATCH` with the first differing field. A corrupt image returns `KAR_IMAGE_REJECTED`. A sidecar that does not bind returns `KAR_GRAPH_NOT_BOUND`.
 
 `verifyKarProjection` is the research-image verifier used by the differential and tamper suites.
+
+## Coverage
+
+```ts
+const report = createKarCoverage({
+  image,
+  graph,
+  cases: [{ id: 'met', proposition, plan }],
+});
+const verification = verifyKarCoverage({
+  image,
+  graph,
+  cases: [{ id: 'met', proposition, plan }],
+  manifest: report.manifest,
+  report,
+  rendering: renderKarCoverage(report),
+});
+```
+
+`createKarCoverage`, `verifyKarCoverage`, `renderKarCoverage`, and `karCoverageStatement` package several frozen evaluations. `CoverageRoot` is not part of `KARRoot`. The narrative is [Evidence coverage](coverage.md). `coverageCasesFromDomainPack` is exported from `@knolo/core/kar/authoring` and is not loaded by the retrieval entry.
 
 ## Complexity
 

@@ -22,6 +22,10 @@ Exact cover is bounded by `maxCoverVisits`. Past that bound the status is `SEARC
 
 Verification replays the committed inputs. It does not establish real-world truth, author correctness, or evidence that was never committed. See [Verification](verification.md).
 
+## Coverage
+
+A coverage report is relative to the cases or templates that were supplied. `met` is not truth. `gap` is not a false proposition. `blocked` means this plan did not decide. It does not discover missing plans, accept producer output, or write a Committed Evidence Graph. See [Evidence coverage](coverage.md). v4 Domain Packs stay review-required.
+
 ## Packaging
 
 The public conformance vectors run in TypeScript on V5 images. The Rust verifier reproduces `research/kar-1` fixtures. It does not execute those V5 vectors.

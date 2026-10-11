@@ -25,6 +25,8 @@ test('root barrel does not load experimental KAR', () => {
   const source = readFileSync(new URL('../src/index.ts', import.meta.url), 'utf8');
   assert.equal(dist.includes('experimental/kar'), false);
   assert.equal(source.includes('experimental/kar'), false);
+  assert.equal(dist.includes('createKarCoverage'), false);
+  assert.equal(source.includes('createKarCoverage'), false);
 });
 
 test('V5 session evaluates, explains, and verifies the frozen certificate', () => {

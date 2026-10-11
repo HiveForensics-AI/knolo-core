@@ -1,0 +1,329 @@
+{
+  "format": "kar-coverage-conformance-v1",
+  "vectors": [
+    {
+      "id": "balanced-met",
+      "coverageRoot": "sha256-0e4690cabcf6ad028ce2d9f2a6a0ef4406e17baebe3f067486d9946d2caab788",
+      "semanticRoot": "sha256-a02e6e5d1e3c481050288194583e0c518f20c766b30e0993d099af319ca2e7fc",
+      "case": {
+        "id": "balanced",
+        "status": "SATISFIED",
+        "code": null,
+        "disposition": "met",
+        "statement": "Evidence requirements satisfied",
+        "planRoot": "sha256-9b134bfa96ac3d0518a318b74965de64de592c52c1b164986363649e3ae1d5a7",
+        "karRoot": "sha256-2a19ed0d429ff4020800e96279c3e97d8081e77f66e42dac4627ccfba967eff0",
+        "selectedCount": 2,
+        "slots": [
+          {
+            "frontier": "F_S",
+            "slot": "met",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_O",
+            "slot": "met",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_Q",
+            "slot": "not-required",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_T",
+            "slot": "not-required",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_A",
+            "slot": "not-required",
+            "unadmittedTokens": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "support-only-met",
+      "coverageRoot": "sha256-23cecbfd45c476953f1b0983068760a098815cbee99d18eb3d111aa82410229b",
+      "semanticRoot": "sha256-a02e6e5d1e3c481050288194583e0c518f20c766b30e0993d099af319ca2e7fc",
+      "case": {
+        "id": "support-only",
+        "status": "SATISFIED",
+        "code": null,
+        "disposition": "met",
+        "statement": "Evidence requirements satisfied",
+        "planRoot": "sha256-e5c760cf5a440955dc4fdc3fbb28a0bf90e56f22bb7df0491bd3f1ea9453c62d",
+        "karRoot": "sha256-d72560900c111401ae886241b9212fdf2d2b96e85aa40f90d0fc9db2c6fb99fd",
+        "selectedCount": 1,
+        "slots": [
+          {
+            "frontier": "F_S",
+            "slot": "met",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_O",
+            "slot": "not-required",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_Q",
+            "slot": "not-required",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_T",
+            "slot": "not-required",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_A",
+            "slot": "not-required",
+            "unadmittedTokens": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "operations-gap",
+      "coverageRoot": "sha256-352fa7b6da453e32502f39a41a7afff57fc25f6114e2d76212cebbf1387e96e2",
+      "semanticRoot": "sha256-a02e6e5d1e3c481050288194583e0c518f20c766b30e0993d099af319ca2e7fc",
+      "case": {
+        "id": "operations",
+        "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS",
+        "code": null,
+        "disposition": "gap",
+        "statement": "Evidence requirements not satisfied",
+        "planRoot": "sha256-150d4989d7099965ced5ce52e502cc6309c2f73ff3fa3cbd821eaef90938d045",
+        "karRoot": "sha256-e1b87a11356e8f846c3fa19f27e3d24a0b43e4e907eb9d482564d4759a29fa41",
+        "selectedCount": 0,
+        "slots": [
+          {
+            "frontier": "F_S",
+            "slot": "unadmitted",
+            "unadmittedTokens": [
+              "missing-permit"
+            ]
+          },
+          {
+            "frontier": "F_O",
+            "slot": "not-required",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_Q",
+            "slot": "not-required",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_T",
+            "slot": "not-required",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_A",
+            "slot": "not-required",
+            "unadmittedTokens": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "anchor-rejected",
+      "coverageRoot": "sha256-dd407c3b1ed13da72329322e0b29e0d4514b8a52a9d2559ecd751493e0536e67",
+      "semanticRoot": "sha256-a02e6e5d1e3c481050288194583e0c518f20c766b30e0993d099af319ca2e7fc",
+      "case": {
+        "id": "anchor",
+        "status": "ANCHOR_REJECTED",
+        "code": "KAR_ANCHOR_REJECTED",
+        "disposition": "blocked",
+        "statement": "Evaluation did not decide evidence requirements: ANCHOR_REJECTED",
+        "planRoot": "sha256-0f66e6a97cbefaffcd6918dc801d47ca9bf09657c9ca4ecd11cd4379e489addb",
+        "karRoot": "sha256-6cc83463e484da319c9368abf870fbc20bd1df0b34d3f9be14844707290780e6",
+        "selectedCount": 0,
+        "slots": [
+          {
+            "frontier": "F_S",
+            "slot": "not-evaluated",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_O",
+            "slot": "not-evaluated",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_Q",
+            "slot": "not-evaluated",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_T",
+            "slot": "not-evaluated",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_A",
+            "slot": "not-evaluated",
+            "unadmittedTokens": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "search-bound",
+      "coverageRoot": "sha256-e260f1398a8ec14f2974950698070a74fca9dce9c59473b435e7f9591f24745f",
+      "semanticRoot": "sha256-a02e6e5d1e3c481050288194583e0c518f20c766b30e0993d099af319ca2e7fc",
+      "case": {
+        "id": "search-bound",
+        "status": "SEARCH_BOUND_EXCEEDED",
+        "code": "KAR_SEARCH_BOUND_EXCEEDED",
+        "disposition": "blocked",
+        "statement": "Evaluation did not decide evidence requirements: SEARCH_BOUND_EXCEEDED",
+        "planRoot": "sha256-ab11310b2e6d48b52bc0d47bdd1d8d43417f898d60e5e0cbe09ede072f520c2c",
+        "karRoot": "sha256-e5b3a8814cc1147f21b31badbc051d512293d6bb7abbd448520079964b84fff5",
+        "selectedCount": 0,
+        "slots": [
+          {
+            "frontier": "F_S",
+            "slot": "admitted-but-uncovered",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_O",
+            "slot": "admitted-but-uncovered",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_Q",
+            "slot": "not-required",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_T",
+            "slot": "not-required",
+            "unadmittedTokens": []
+          },
+          {
+            "frontier": "F_A",
+            "slot": "not-required",
+            "unadmittedTokens": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "reorder",
+      "coverageRoot": "sha256-89e4acdd59663bf9662248ad4ec5a4a814c242dd87065415198806642a7c6b79",
+      "same": true
+    },
+    {
+      "id": "coverage-root-tamper",
+      "verifyOk": false,
+      "verifyCode": "KAR_RESULT_MISMATCH"
+    },
+    {
+      "id": "kar-root-tamper",
+      "verifyOk": false,
+      "verifyCode": "KAR_RESULT_MISMATCH"
+    },
+    {
+      "id": "rendering-tamper",
+      "verifyOk": false,
+      "verifyCode": "KAR_RESULT_MISMATCH"
+    },
+    {
+      "id": "graph-tamper",
+      "verifyOk": false,
+      "verifyCode": "KAR_GRAPH_INVALID"
+    },
+    {
+      "id": "too-many-cases",
+      "code": "KAR_COVERAGE_INVALID",
+      "verifyCode": "KAR_COVERAGE_INVALID"
+    },
+    {
+      "id": "contracts-v4-templates",
+      "domainPackRoot": "sha256-1ffea8ded1877f28ce61c9e98bb79644f8bbe237c22baae6984983d92ede39a5",
+      "coverageRoot": "sha256-b3d08029d227345adf32d2fa201bb539ca813d858f0fc18e87aa1b48dae2cc5a",
+      "semanticRoot": "sha256-860f73b6bd2012eaad9b531223abb0bc58f7b7a0ac5a1ff22a31696a31c6ef93",
+      "cases": [
+        {
+          "id": "balanced-review",
+          "status": "SATISFIED",
+          "code": null,
+          "disposition": "met",
+          "statement": "Evidence requirements satisfied",
+          "planRoot": "sha256-dd23a4638c190065d1bf61eb0bb3a97983e7a0304ea0253ad4c8e12ba0cdee01",
+          "karRoot": "sha256-c79ca873d0298783d79a9ea7195efb147e9fdda3cdcba3d231dede72955df0d3",
+          "selectedCount": 2,
+          "slots": [
+            {
+              "frontier": "F_S",
+              "slot": "met",
+              "unadmittedTokens": []
+            },
+            {
+              "frontier": "F_O",
+              "slot": "met",
+              "unadmittedTokens": []
+            },
+            {
+              "frontier": "F_Q",
+              "slot": "not-required",
+              "unadmittedTokens": []
+            },
+            {
+              "frontier": "F_T",
+              "slot": "not-required",
+              "unadmittedTokens": []
+            },
+            {
+              "frontier": "F_A",
+              "slot": "not-required",
+              "unadmittedTokens": []
+            }
+          ]
+        },
+        {
+          "id": "support-only",
+          "status": "SATISFIED",
+          "code": null,
+          "disposition": "met",
+          "statement": "Evidence requirements satisfied",
+          "planRoot": "sha256-ce6d867aeea13bbaaf6aeea0d868802a2afadd4eef6a39b3ebf85331dfa31ac1",
+          "karRoot": "sha256-1517d5f67d3b7e1ce07ff7d2f073c786d4da4a575d1fb0a042f4c5a67b0454d2",
+          "selectedCount": 1,
+          "slots": [
+            {
+              "frontier": "F_S",
+              "slot": "met",
+              "unadmittedTokens": []
+            },
+            {
+              "frontier": "F_O",
+              "slot": "not-required",
+              "unadmittedTokens": []
+            },
+            {
+              "frontier": "F_Q",
+              "slot": "not-required",
+              "unadmittedTokens": []
+            },
+            {
+              "frontier": "F_T",
+              "slot": "not-required",
+              "unadmittedTokens": []
+            },
+            {
+              "frontier": "F_A",
+              "slot": "not-required",
+              "unadmittedTokens": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

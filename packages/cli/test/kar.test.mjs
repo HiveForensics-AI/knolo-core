@@ -29,6 +29,8 @@ test('kar help is available and experimental', () => {
   const root = run(['help']);
   assert.match(root.stdout, /KAR evidence-set retrieval/);
   assert.match(help.stdout, /knolo kar conformance/);
+  assert.match(help.stdout, /knolo kar coverage build/);
+  assert.match(help.stdout, /knolo kar coverage verify/);
 });
 
 test('kar evaluate, verify, explain, and inspect the example', () => {
@@ -142,6 +144,60 @@ test('kar dossier builds, repeats, and fails closed on tampering', () => {
     certificate.roots.karRoot = `${certificate.roots.karRoot.slice(0, -1)}0`;
     writeFileSync(path.join(out, 'certificate.json'), JSON.stringify(certificate));
     const failed = run(['kar', 'dossier', 'verify', out]);
+    assert.notEqual(failed.status, 0);
+    assert.match(failed.stdout, /KAR_RESULT_MISMATCH/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('kar coverage builds a gap report and fails closed on tampering', () => {
+  const built = spawnSync(process.execPath, [path.join(repo, 'examples', 'kar-coverage', 'run.mjs')], {
+    cwd: repo,
+    encoding: 'utf8',
+  });
+  assert.equal(built.status, 0, built.stderr || built.stdout);
+  assert.match(built.stdout, /Evidence requirements not satisfied/);
+  const exampleDir = path.join(repo, 'examples', 'kar-coverage');
+  const dir = mkdtempSync(path.join(tmpdir(), 'kar-coverage-'));
+  const out = path.join(dir, 'coverage');
+  const args = [
+    '--image', path.join(exampleDir, 'knowledge.knolo'),
+    '--graph', path.join(exampleDir, 'knowledge.kar.json'),
+    '--plan', path.join(exampleDir, 'met.json'),
+    '--query', 'What evidence shows the valve is closed?',
+    '--plan', path.join(exampleDir, 'gap.json'),
+    '--query', 'What evidence shows the missing permit?',
+    '--out', out,
+  ];
+  try {
+    const first = run(['kar', 'coverage', 'build', ...args]);
+    assert.equal(first.status, 0, first.stderr || first.stdout);
+    assert.match(first.stdout, /Evidence requirements not satisfied/);
+    assert.match(first.stdout, /Evidence requirements satisfied/);
+    const verified = run(['kar', 'coverage', 'verify', out]);
+    assert.equal(verified.status, 0, verified.stderr || verified.stdout);
+    assert.equal(verified.stdout.trim(), 'VERIFIED');
+    const domainOut = path.join(dir, 'domain');
+    const domainBuild = run(['kar', 'coverage', 'build',
+      '--image', path.join(exampleDir, 'knowledge.knolo'),
+      '--graph', path.join(exampleDir, 'knowledge.kar.json'),
+      '--domain', path.join(repo, 'domains', 'contracts-v4'),
+      '--template', 'support-only',
+      '--query', 'May this agreement terminate?',
+      '--out', domainOut,
+    ]);
+    assert.equal(domainBuild.status, 0, domainBuild.stderr || domainBuild.stdout);
+    const domainVerify = run(['kar', 'coverage', 'verify', domainOut, '--domain', path.join(repo, 'domains', 'contracts-v4')]);
+    assert.equal(domainVerify.status, 0, domainVerify.stderr || domainVerify.stdout);
+    assert.equal(domainVerify.stdout.trim(), 'VERIFIED');
+    const refused = run(['kar', 'coverage', 'build', ...args]);
+    assert.notEqual(refused.status, 0);
+    assert.match(refused.stderr, /Refusing to overwrite/);
+    const renderingPath = path.join(out, 'coverage.md');
+    const rendering = readFileSync(renderingPath, 'utf8').replace('Evidence requirements satisfied', 'Claim proven');
+    writeFileSync(renderingPath, rendering);
+    const failed = run(['kar', 'coverage', 'verify', out]);
     assert.notEqual(failed.status, 0);
     assert.match(failed.stdout, /KAR_RESULT_MISMATCH/);
   } finally {

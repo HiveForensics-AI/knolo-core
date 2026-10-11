@@ -58,5 +58,23 @@ export {
   verifyKarDossier,
 } from './dossier.js';
 export type { KarDossier, KarDossierFrontier, KarDossierManifest } from './dossier.js';
+export {
+  KAR_COVERAGE_FORMAT,
+  KAR_COVERAGE_MAX_CASES,
+  createKarCoverage,
+  karCoverageStatement,
+  renderKarCoverage,
+  verifyKarCoverage,
+} from './coverage.js';
+export type {
+  KarCoverageCase,
+  KarCoverageCaseInput,
+  KarCoverageDisposition,
+  KarCoverageDomainPack,
+  KarCoverageManifest,
+  KarCoverageReport,
+  KarCoverageSlot,
+  KarCoverageSlotState,
+} from './coverage.js';
 export { validateKarPlan, validateKarResult, validateKarSidecar } from './validate.js';
 export type { Validation } from './validate.js';

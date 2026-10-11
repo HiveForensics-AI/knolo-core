@@ -45,3 +45,19 @@ export {
   verifyKarDossier,
 } from '../experimental/kar/index.js';
 export type { KarDossier } from '../experimental/kar/index.js';
+export {
+  KAR_COVERAGE_FORMAT,
+  KAR_COVERAGE_MAX_CASES,
+  createKarCoverage,
+  karCoverageStatement,
+  renderKarCoverage,
+  verifyKarCoverage,
+} from '../experimental/kar/index.js';
+export type {
+  KarCoverageCase,
+  KarCoverageDisposition,
+  KarCoverageDomainPack,
+  KarCoverageManifest,
+  KarCoverageReport,
+  KarCoverageSlot,
+} from '../experimental/kar/index.js';

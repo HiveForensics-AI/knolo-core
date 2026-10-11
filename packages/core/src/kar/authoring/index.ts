@@ -22,12 +22,14 @@ export {
   interpretDomainPack,
   inspectDomainPack,
   testDomainFixtures,
+  coverageCasesFromDomainPack,
 } from '../../experimental/kar/authoring/index.js';
 export type {
   CegCompilation,
   CegDiagnostic,
   CegSourceV1,
   DomainPackV1,
+  KarCoveragePackExpansion,
   PolicyClass,
 } from '../../experimental/kar/authoring/index.js';
 

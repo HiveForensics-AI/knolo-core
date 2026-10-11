@@ -1,0 +1,20 @@
+format: ceg-source-1
+concepts:
+  procedure:
+    label: Procedure
+  valve:
+    label: Valve
+evidence:
+  step:
+    source: step.txt
+relations:
+  - from: procedure
+    type: requires
+    to: valve
+bindings:
+  - concept: valve
+    evidence: step
+    requirements:
+      - close-valve
+requirements:
+  - close-valve

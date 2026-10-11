@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const USAGE = `Usage: knolo kar <evaluate|verify|explain|inspect|graph|package|produce|domain|dossier|benchmark|demo|conformance> [options]
+const USAGE = `Usage: knolo kar <evaluate|verify|explain|inspect|graph|package|produce|domain|dossier|coverage|benchmark|demo|conformance> [options]
 
 Knolo Adversarial Retrieval over a Committed Evidence Graph. Semantics are kar-1-research-1.
 This command does not change V4 query, BM25, or MMR.
@@ -31,6 +31,9 @@ Domain Pack relation rules are review-required until a human gold gate says othe
   knolo kar domain test domains/contracts
   knolo kar dossier build --image knowledge.knolo --graph knowledge.kar.json --plan plan.json --query "..." --out dossier/
   knolo kar dossier verify dossier/
+  knolo kar coverage build --image knowledge.knolo --graph knowledge.kar.json --plan plan.json --query "..." --out coverage/
+  knolo kar coverage build --image knowledge.knolo --graph knowledge.kar.json --domain domains/contracts-v4 --query "..." --out coverage/
+  knolo kar coverage verify coverage/
   knolo kar benchmark annotate --packet packet.json --decisions decisions.json --out labels.json --role human --reviewer-id <id>
   knolo kar benchmark adjudicate --packet packet.json --a pass-a.json --b pass-b.json --decisions decisions.json --out gold.json --role human-adjudicator --reviewer-id <id>
   knolo kar benchmark agreement --a pass-a.json --b pass-b.json
@@ -41,7 +44,8 @@ Domain Pack relation rules are review-required until a human gold gate says othe
   --auto              Write accepted deterministic producer output as CEG Source
 
 Exit status is 0 for a completed command, including a KAR abstention.
-verify, dossier verify, and conformance return non-zero when a check fails.
+coverage build exits 0 when the report is written, including gap and blocked rows.
+verify, dossier verify, coverage verify, and conformance return non-zero when a check fails.
 `;
 
 export async function runKarCli(argv) {
@@ -66,6 +70,7 @@ export async function runKarCli(argv) {
   if (command === 'conformance') return runRepoScript(path.join('conformance', 'kar', 'v1', 'run.mjs'));
   const kar = await loadKar();
   if (command === 'dossier') return dossierCommand(kar, positionals.slice(1), flags);
+  if (command === 'coverage') return coverageCommand(kar, positionals.slice(1), flags);
   if (command === 'evaluate') return evaluateCommand(kar, flags);
   if (command === 'verify') return verifyCommand(kar, flags);
   if (command === 'explain') return explainCommand(kar, flags);
@@ -238,6 +243,203 @@ function verifyDossier(kar, directory) {
   console.log('VERIFIED');
 }
 
+async function coverageCommand(kar, args, flags) {
+  if (!kar.createKarCoverage || !kar.verifyKarCoverage || !kar.renderKarCoverage) {
+    throw new Error('Could not load the KAR coverage API. Build packages/core first.');
+  }
+  const sub = args[0];
+  if (sub === 'build') return buildCoverage(kar, flags);
+  if (sub === 'verify') return verifyCoverage(kar, args[1], flags);
+  throw new Error(`Unknown coverage command "${sub ?? ''}".\n${USAGE}`);
+}
+
+async function buildCoverage(kar, flags) {
+  const out = path.resolve(process.cwd(), required(flags, 'out'));
+  if (existsSync(path.join(out, 'manifest.json'))) {
+    throw new Error(`Refusing to overwrite ${out}`);
+  }
+  const imagePath = path.resolve(process.cwd(), required(flags, 'image'));
+  const graphPath = path.resolve(process.cwd(), required(flags, 'graph'));
+  const image = readBytes(imagePath);
+  const graph = readJson(graphPath);
+  const prepared = await coverageInputs(flags);
+  if (!prepared.ok) {
+    console.log(prepared.code);
+    console.log(prepared.message);
+    process.exitCode = 1;
+    return;
+  }
+  let report;
+  try {
+    report = kar.createKarCoverage({
+      image,
+      graph,
+      cases: prepared.cases,
+      domainPack: prepared.domainPack,
+    });
+  } catch (error) {
+    if (error && typeof error.code === 'string') {
+      console.log(error.code);
+      console.log(error.message);
+      process.exitCode = 1;
+      return;
+    }
+    throw error;
+  }
+  const ordered = [...prepared.cases].sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0));
+  mkdirSync(out, { recursive: true });
+  copyFileSync(imagePath, path.join(out, 'knowledge.knolo'));
+  copyFileSync(graphPath, path.join(out, 'knowledge.kar.json'));
+  const casesFile = { format: 'kar-coverage-cases-1', domainPack: report.domainPack, cases: ordered };
+  writeFileSync(path.join(out, 'cases.json'), `${JSON.stringify(casesFile, null, 2)}\n`);
+  writeFileSync(path.join(out, 'report.json'), `${JSON.stringify(report, null, 2)}\n`);
+  writeFileSync(path.join(out, 'coverage.md'), kar.renderKarCoverage(report));
+  writeFileSync(path.join(out, 'manifest.json'), `${JSON.stringify(report.manifest, null, 2)}\n`);
+  if (flags.json) console.log(JSON.stringify(report.manifest, null, 2));
+  else {
+    for (const row of report.cases) console.log(`${row.id} ${row.disposition} ${row.statement}`);
+    console.log(out);
+  }
+}
+
+async function verifyCoverage(kar, directory, flags) {
+  if (!directory) throw new Error('Missing coverage directory.\nknolo kar coverage verify coverage/');
+  const dir = path.resolve(process.cwd(), directory);
+  const image = readBytes(path.join(dir, 'knowledge.knolo'));
+  const graph = readJson(path.join(dir, 'knowledge.kar.json'));
+  const stored = readJson(path.join(dir, 'cases.json'));
+  const manifest = readJson(path.join(dir, 'manifest.json'));
+  const report = readJson(path.join(dir, 'report.json'));
+  const rendering = readBoundedText(path.join(dir, 'coverage.md'));
+  if (!stored || stored.format !== 'kar-coverage-cases-1' || !Array.isArray(stored.cases)) {
+    console.log('KAR_COVERAGE_INVALID');
+    console.log('cases.json is not a coverage case file.');
+    process.exitCode = 1;
+    return;
+  }
+  if (flags.domain) {
+    const authoring = await loadAuthoring();
+    const { loadDomainDirectory } = await import('./kar-produce.mjs');
+    const loaded = loadDomainDirectory(authoring, flags.domain);
+    if (!loaded.ok) {
+      console.log(loaded.diagnostics[0].code);
+      console.log(loaded.diagnostics[0].message);
+      process.exitCode = 1;
+      return;
+    }
+    const root = authoring.domainPackRoot(loaded.pack);
+    const recorded = stored.domainPack;
+    if (!recorded || recorded.root !== root || recorded.id !== loaded.pack.id || String(recorded.version) !== String(loaded.pack.version)) {
+      console.log('KAR_RESULT_MISMATCH');
+      console.log('domain pack root mismatch');
+      process.exitCode = 1;
+      return;
+    }
+  }
+  const verdict = kar.verifyKarCoverage({
+    image,
+    graph,
+    cases: stored.cases,
+    domainPack: stored.domainPack ?? null,
+    manifest,
+    report,
+    rendering,
+  });
+  if (!verdict.ok) {
+    console.log(verdict.code);
+    console.log(verdict.reason);
+    process.exitCode = 1;
+    return;
+  }
+  console.log('VERIFIED');
+}
+
+async function coverageInputs(flags) {
+  const plans = flags.planList ?? [];
+  const queries = flags.queryList ?? [];
+  const templates = flags.templateList ?? [];
+  if (plans.length > 0 && flags.domain) {
+    return { ok: false, code: 'KAR_COVERAGE_INVALID', message: 'Use either repeated --plan or --domain, not both.' };
+  }
+  if (templates.length > 0 && !flags.domain) {
+    return { ok: false, code: 'KAR_COVERAGE_INVALID', message: '--template requires --domain.' };
+  }
+  if (flags.queries && !flags.domain) {
+    return { ok: false, code: 'KAR_COVERAGE_INVALID', message: '--queries requires --domain.' };
+  }
+  if (plans.length > 0) {
+    if (flags.queries) {
+      return { ok: false, code: 'KAR_COVERAGE_INVALID', message: 'Pair each --plan with --query. --queries is for --domain.' };
+    }
+    if (queries.length !== plans.length) {
+      return { ok: false, code: 'KAR_COVERAGE_INVALID', message: 'Each --plan needs one --query in the same order.' };
+    }
+    return {
+      ok: true,
+      domainPack: null,
+      cases: plans.map((file, index) => ({
+        id: path.basename(file, path.extname(file)),
+        proposition: queries[index],
+        plan: readJson(path.resolve(process.cwd(), file)),
+      })),
+    };
+  }
+  if (!flags.domain) {
+    return { ok: false, code: 'KAR_COVERAGE_INVALID', message: 'Coverage requires repeated --plan and --query, or --domain.' };
+  }
+  if (flags.queries && queries.length > 0) {
+    return { ok: false, code: 'KAR_COVERAGE_INVALID', message: 'Use either --query or --queries.' };
+  }
+  if (!flags.queries && queries.length !== 1) {
+    return { ok: false, code: 'KAR_COVERAGE_INVALID', message: 'Domain coverage needs one --query, or a --queries file.' };
+  }
+  const authoring = await loadAuthoring();
+  const { loadDomainDirectory } = await import('./kar-produce.mjs');
+  const loaded = loadDomainDirectory(authoring, flags.domain);
+  if (!loaded.ok) {
+    const diagnostic = loaded.diagnostics[0];
+    return { ok: false, code: diagnostic?.code ?? 'CEG_DOMAIN_INVALID', message: diagnostic?.message ?? 'Domain pack did not load.' };
+  }
+  let queryMap;
+  if (flags.queries) {
+    const parsed = readJson(path.resolve(process.cwd(), flags.queries));
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return { ok: false, code: 'KAR_COVERAGE_INVALID', message: '--queries must be a JSON object.' };
+    }
+    queryMap = parsed;
+  }
+  const expanded = authoring.coverageCasesFromDomainPack({
+    pack: loaded.pack,
+    proposition: queryMap ? undefined : queries[0],
+    templates: templates.length > 0 ? templates : undefined,
+    queries: queryMap,
+  });
+  if (!expanded.ok) {
+    const diagnostic = expanded.diagnostics[0];
+    return { ok: false, code: diagnostic.code, message: diagnostic.message };
+  }
+  return { ok: true, cases: expanded.cases, domainPack: expanded.domainPack };
+}
+
+async function loadAuthoring() {
+  const candidates = [
+    '@knolo/core/kar/authoring',
+    path.resolve(__dirname, '../../core/dist/kar/authoring/index.js'),
+    path.resolve(__dirname, '../../core/dist/experimental/kar/authoring/index.js'),
+    '@knolo/core/experimental/kar/authoring',
+  ];
+  for (const candidate of candidates) {
+    try {
+      const href = candidate.startsWith('@') ? candidate : pathToFileURL(candidate).href;
+      const loaded = await import(href);
+      if (loaded.coverageCasesFromDomainPack && loaded.domainPackRoot && loaded.parseAuthoringDocument) return loaded;
+    } catch {
+      // Try the next candidate.
+    }
+  }
+  throw new Error('Could not load @knolo/core/kar/authoring. Build packages/core first.');
+}
+
 function openSession(kar, flags, requirePlan) {
   const image = readBytes(required(flags, 'image'));
   const graph = readJson(required(flags, 'graph'));
@@ -291,7 +493,7 @@ async function loadKar() {
 }
 
 function parseArgs(argv) {
-  const flags = {};
+  const flags = { planList: [], queryList: [], templateList: [] };
   const positionals = [];
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -302,6 +504,9 @@ function parseArgs(argv) {
       const key = arg.slice(2);
       const value = argv[index + 1];
       if (value === undefined || value.startsWith('--')) throw new Error(`Missing value for --${key}`);
+      if (key === 'plan') flags.planList.push(value);
+      else if (key === 'query') flags.queryList.push(value);
+      else if (key === 'template') flags.templateList.push(value);
       flags[key] = value;
       index += 1;
     } else positionals.push(arg);
