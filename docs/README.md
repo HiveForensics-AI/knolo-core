@@ -43,8 +43,9 @@ operational guides for Knolo.
   policy-aware retrieval, query records, and the native OpenClaw tool plugin.
 - [`@knolo/evidence-gate`](../packages/evidence-gate/README.md) — the current
   TypeScript vertical slice for deterministic claim-level verification.
-- [Experimental KAR](kar/README.md) — exact evidence-set retrieval over a
-  Committed Evidence Graph. It is not part of the `@knolo/core` root import.
+- [KAR](kar/README.md) — minimum evidence-set retrieval over a Committed
+  Evidence Graph. Import it from `@knolo/core/kar`. The root `@knolo/core`
+  entry does not load it.
 
 Architecture sources, future-version specifications, and internal planning
 records are kept local and are not part of the public repository. The
@@ -52,8 +53,10 @@ normative implementation contracts are the KIPs under `../spec/`.
 
 ## Current release boundary
 
-The current release is the V5 foundation: deterministic Knowledge Images,
-verification, migration, bounded runtime features, diagnostics, and a
-read-only Studio management snapshot. V4 retrieval APIs remain compatible.
-Networking, credentials, model execution, external side effects, and UI
-presentation remain host responsibilities.
+The current product line in this repository is Knolo 6.0.0. V6 adds KAR on
+the V5 Knowledge Image: deterministic images, verification, migration,
+bounded runtime features, diagnostics, and a read-only Studio management
+snapshot remain. V4 retrieval APIs remain compatible. Rust, Python, and ICP
+stay 5.5.1 and do not implement KAR. Bundled Domain Packs are
+`review-required`. Networking, credentials, model execution, external side
+effects, and UI presentation remain host responsibilities.
