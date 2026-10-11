@@ -10,6 +10,7 @@ import pytest
 from knolo import (
     InvalidPackError,
     QueryOptions,
+    __version__,
     mount_pack,
     mount_pack_from_bytes,
     query,
@@ -101,16 +102,36 @@ def test_query_options_are_merged_with_explicit_kwargs(fixture_pack):
     assert all(hit.namespace == "docs.alpha" for hit in hits)
 
 
+def _pyproject_version() -> str:
+    section = ""
+    text = (BUILD_BACKEND_PATH.parents[1] / "pyproject.toml").read_text(encoding="utf-8")
+    for raw in text.splitlines():
+        line = raw.strip()
+        if line.startswith("[") and line.endswith("]"):
+            section = line
+            continue
+        if section != "[project]" or "=" not in line:
+            continue
+        key, value = (part.strip() for part in line.split("=", 1))
+        if key == "version":
+            return value.strip("\"'")
+    raise AssertionError("pyproject.toml [project] has no version")
+
+
 def test_non_editable_wheel_uses_top_level_package_paths(tmp_path):
     build_meta = _load_build_backend()
     wheel_name = build_meta.build_wheel(tmp_path)
     wheel_path = tmp_path / wheel_name
 
     assert wheel_path.exists()
+    assert _pyproject_version() == __version__
+    assert wheel_name == f"knolo-{__version__}-py3-none-any.whl"
 
     with zipfile.ZipFile(wheel_path) as wheel:
         names = wheel.namelist()
+        metadata = wheel.read(f"knolo-{__version__}.dist-info/METADATA").decode()
 
+    assert f"Version: {__version__}\n" in metadata
     assert "knolo/__init__.py" in names
     assert "knolo/errors.py" in names
     assert "knolo/models.py" in names

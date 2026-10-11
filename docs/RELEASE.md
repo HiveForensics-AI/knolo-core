@@ -125,12 +125,20 @@ The GitHub release `v5.5.1` checked out tag `v5.5.1`
 `version = "5.5.0"`. The publish job uploaded `knolo-5.5.0` again, and PyPI
 returned `400 File already exists`. The run is
 https://github.com/HiveForensics-AI/knolo-core/actions/runs/38035566591.
-The version string `5.5.1` was committed later and was not part of that tag.
+Do not rerun it. The tag still builds `5.5.0`.
 
-`skip-existing: true` makes a later release succeed when the built version is
-already on PyPI. A release or a manual run from a commit that contains
-`version = "5.5.1"` uploads that version once. Knolo 6 does not change the
-Python package version. It stays `5.5.1`.
+Later commits set `pyproject.toml` and `knolo.__version__` to `5.5.1`. The
+wheel stayed `5.5.0` because `packages/core-python/setuptools/build_meta.py`
+is the build backend (`backend-path = ["."]`) and it hardcoded
+`VERSION = "5.5.0"`. A dispatch of main at `0af06d1` built `knolo-5.5.0`
+again and skipped those files:
+https://github.com/HiveForensics-AI/knolo-core/actions/runs/38177129600.
+That green run did not publish `5.5.1`.
+
+The backend now reads `[project].version`. Run `python-publish` from a commit
+that contains that backend. `skip-existing: true` still lets a rebuild of
+`5.5.0` succeed without uploading it. Knolo 6 does not change the Python
+package version. It stays `5.5.1`. `python-ci` on tag `v6.0.0` passed.
 
 Verify the package that is already on PyPI:
 
