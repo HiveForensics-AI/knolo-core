@@ -5,7 +5,7 @@
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["mounts"],
+    "required": ["mounts", "auditDir"],
     "properties": {
       "mounts": {
         "type": "array",
@@ -48,6 +48,16 @@
       "maxHits": { "type": "integer", "minimum": 1, "maximum": 1000 },
       "maxExcerptBytes": { "type": "integer", "minimum": 1, "maximum": 65536 },
       "maxQueryBytes": { "type": "integer", "minimum": 1, "maximum": 16384 },
+      "maxAuditRecords": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 1000000
+      },
+      "maxAuditBytes": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 1073741824
+      },
       "auditDir": { "type": "string", "minLength": 1 }
     }
   },

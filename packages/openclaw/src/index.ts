@@ -1,5 +1,13 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
+import {
+  mkdir,
+  readFile,
+  readdir,
+  rename,
+  stat,
+  unlink,
+  writeFile,
+} from 'node:fs/promises';
 import * as path from 'node:path';
 import {
   canonicalCbor,
@@ -34,6 +42,8 @@ export type KnoloPluginConfig = {
   maxHits?: number;
   maxExcerptBytes?: number;
   maxQueryBytes?: number;
+  maxAuditRecords?: number;
+  maxAuditBytes?: number;
   auditDir: string;
 };
 
@@ -154,6 +164,9 @@ const DEFAULT_MAX_IMAGE_BYTES = 250 * 1024 * 1024;
 const DEFAULT_MAX_HITS = 8;
 const DEFAULT_MAX_EXCERPT_BYTES = 1600;
 const DEFAULT_MAX_QUERY_BYTES = 4096;
+const DEFAULT_MAX_AUDIT_RECORDS = 10_000;
+const DEFAULT_MAX_AUDIT_BYTES = 256 * 1024 * 1024;
+const RECEIPT_FILE_PATTERN = /^qr_[a-f0-9]{24}\.json$/u;
 const ID_PATTERN = /^[a-zA-Z0-9_.-]+$/;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/;
 const ROOT_PATTERN = /^sha256-[a-f0-9]{64}$/;
@@ -162,6 +175,7 @@ const decoder = new TextDecoder('utf-8', { fatal: true });
 export class KnoloOpenClawService {
   #config: NormalizedConfig;
   #mounts = new Map<string, MountSnapshot>();
+  #auditWriteTail: Promise<void> = Promise.resolve();
 
   private constructor(config: NormalizedConfig) {
     this.#config = config;
@@ -190,7 +204,8 @@ export class KnoloOpenClawService {
 
   async search(
     request: KnoloSearchRequest,
-    caller: KnoloCaller
+    caller: KnoloCaller,
+    assertCurrent?: () => void
   ): Promise<KnoloSearchResult> {
     const query = normalizeQuery(request.query, this.#config.maxQueryBytes);
     const limit = normalizeLimit(request.limit, this.#config.maxHits);
@@ -239,16 +254,19 @@ export class KnoloOpenClawService {
           end: excerpt.end,
         };
       });
-      const receipt = await this.writeReceipt({
-        imageId: mount.config.id,
-        byteSha256: mount.byteSha256,
-        stateRoot: mount.image.stateRoot,
-        caller,
-        query,
-        queryResult,
-        authorization,
-        returned,
-      });
+      const receipt = await this.writeReceipt(
+        {
+          imageId: mount.config.id,
+          byteSha256: mount.byteSha256,
+          stateRoot: mount.image.stateRoot,
+          caller,
+          query,
+          queryResult,
+          authorization,
+          returned,
+        },
+        assertCurrent
+      );
       receipts.push({
         imageId: mount.config.id,
         receiptId: receipt.receiptId,
@@ -522,7 +540,25 @@ export class KnoloOpenClawService {
     input: Omit<
       KnoloQueryReceiptV1,
       'version' | 'receiptId' | 'recordDigest' | 'createdAt'
-    >
+    >,
+    assertCurrent?: () => void
+  ): Promise<KnoloQueryReceiptV1> {
+    const operation = this.#auditWriteTail.then(() =>
+      this.writeReceiptUnlocked(input, assertCurrent)
+    );
+    this.#auditWriteTail = operation.then(
+      () => undefined,
+      () => undefined
+    );
+    return operation;
+  }
+
+  private async writeReceiptUnlocked(
+    input: Omit<
+      KnoloQueryReceiptV1,
+      'version' | 'receiptId' | 'recordDigest' | 'createdAt'
+    >,
+    assertCurrent?: () => void
   ): Promise<KnoloQueryReceiptV1> {
     const createdAt = new Date().toISOString();
     const receiptId = `qr_${randomUUID().replaceAll('-', '').slice(0, 24)}`;
@@ -534,15 +570,26 @@ export class KnoloOpenClawService {
     } satisfies Omit<KnoloQueryReceiptV1, 'recordDigest'>;
     const receipt = { ...body, recordDigest: receiptDigest(body) };
     try {
+      assertCurrent?.();
       await mkdir(this.#config.auditDir, { recursive: true, mode: 0o700 });
+      const serialized = `${JSON.stringify(receipt)}\n`;
+      await makeAuditSpace(
+        this.#config.auditDir,
+        this.#config.maxAuditRecords,
+        this.#config.maxAuditBytes,
+        new TextEncoder().encode(serialized).byteLength,
+        assertCurrent
+      );
       const target = path.join(this.#config.auditDir, `${receiptId}.json`);
       const temporary = path.join(
         this.#config.auditDir,
         `.${receiptId}.${randomUUID()}.tmp`
       );
-      await writeFile(temporary, `${JSON.stringify(receipt)}\n`, {
+      assertCurrent?.();
+      await writeFile(temporary, serialized, {
         mode: 0o600,
       });
+      assertCurrent?.();
       await rename(temporary, target);
     } catch (error) {
       throw new KnoloPluginError(
@@ -631,6 +678,18 @@ function normalizeConfig(config: KnoloPluginConfig): NormalizedConfig {
       DEFAULT_MAX_QUERY_BYTES,
       16 * 1024,
       'maxQueryBytes'
+    ),
+    maxAuditRecords: positiveInteger(
+      config.maxAuditRecords,
+      DEFAULT_MAX_AUDIT_RECORDS,
+      1_000_000,
+      'maxAuditRecords'
+    ),
+    maxAuditBytes: positiveInteger(
+      config.maxAuditBytes,
+      DEFAULT_MAX_AUDIT_BYTES,
+      1024 * 1024 * 1024,
+      'maxAuditBytes'
     ),
   };
 }
@@ -742,9 +801,31 @@ function readExcerpt(
       'Evidence byte range is invalid.'
     );
   }
+  if (requested === start) {
+    throw new KnoloPluginError(
+      'QUERY_INVALID',
+      'Evidence byte range must not be empty.'
+    );
+  }
   const end = Math.min(requested, start + maximum);
-  let safeEnd = end;
-  while (safeEnd >= start) {
+  const excerpt = bytes.slice(start, end);
+  try {
+    return { text: decoder.decode(excerpt), start, end };
+  } catch {
+    if (end === requested) {
+      throw new KnoloPluginError(
+        'IMAGE_INVALID',
+        'Evidence object is not valid UTF-8.'
+      );
+    }
+    const trim = incompleteUtf8SuffixLength(excerpt);
+    if (!trim || trim >= excerpt.length) {
+      throw new KnoloPluginError(
+        'IMAGE_INVALID',
+        'Evidence object is not valid UTF-8.'
+      );
+    }
+    const safeEnd = end - trim;
     try {
       return {
         text: decoder.decode(bytes.slice(start, safeEnd)),
@@ -752,13 +833,78 @@ function readExcerpt(
         end: safeEnd,
       };
     } catch {
-      safeEnd--;
+      throw new KnoloPluginError(
+        'IMAGE_INVALID',
+        'Evidence object is not valid UTF-8.'
+      );
     }
   }
-  throw new KnoloPluginError(
-    'IMAGE_INVALID',
-    'Evidence object is not valid UTF-8.'
+}
+
+function incompleteUtf8SuffixLength(bytes: Uint8Array): number {
+  let index = bytes.length - 1;
+  let continuations = 0;
+  while (index >= 0 && (bytes[index] & 0xc0) === 0x80) {
+    continuations++;
+    index--;
+  }
+  if (index < 0) return 0;
+  const lead = bytes[index];
+  const expectedContinuations =
+    lead >= 0xc2 && lead <= 0xdf
+      ? 1
+      : lead >= 0xe0 && lead <= 0xef
+        ? 2
+        : lead >= 0xf0 && lead <= 0xf4
+          ? 3
+          : 0;
+  return continuations < expectedContinuations ? continuations + 1 : 0;
+}
+
+async function makeAuditSpace(
+  auditDir: string,
+  maxRecords: number,
+  maxBytes: number,
+  incomingBytes: number,
+  assertCurrent?: () => void
+): Promise<void> {
+  if (incomingBytes > maxBytes) {
+    throw new Error('receipt exceeds configured maxAuditBytes');
+  }
+  const entries = await readdir(auditDir, { withFileTypes: true });
+  const receipts = await Promise.all(
+    entries
+      .filter(
+        (entry) => entry.isFile() && RECEIPT_FILE_PATTERN.test(entry.name)
+      )
+      .map(async (entry) => {
+        const receiptPath = path.join(auditDir, entry.name);
+        const metadata = await stat(receiptPath);
+        return {
+          name: entry.name,
+          size: metadata.size,
+          modified: metadata.mtimeMs,
+        };
+      })
   );
+  receipts.sort(
+    (left, right) =>
+      left.modified - right.modified || left.name.localeCompare(right.name)
+  );
+  let totalBytes = receipts.reduce((total, receipt) => total + receipt.size, 0);
+  while (
+    receipts.length >= maxRecords ||
+    totalBytes + incomingBytes > maxBytes
+  ) {
+    const oldest = receipts.shift();
+    if (!oldest) break;
+    assertCurrent?.();
+    await unlink(path.join(auditDir, oldest.name));
+    totalBytes -= oldest.size;
+  }
+  if (receipts.length >= maxRecords || totalBytes + incomingBytes > maxBytes) {
+    throw new Error('configured audit retention cannot make space for receipt');
+  }
 }
 
 function positiveInteger(

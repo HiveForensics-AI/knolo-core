@@ -7,6 +7,9 @@ verified Knolo V5 Knowledge Images. It exposes `knolo_search`, `knolo_get`,
 Each mount requires a local image path, byte SHA-256 pin, V5 state-root pin,
 policy document, allowed OpenClaw agents, and Knolo policy principal. Query
 records are written locally and can be replayed against the mounted image.
+`maxAuditRecords` (default 10,000) and `maxAuditBytes` (default 256 MiB) bound
+receipt retention; the oldest Knolo receipts are removed before a new receipt
+is written.
 
 The package requires an OpenClaw host compatible with its declared plugin API
 range and Node 24.16 or newer. The plugin never downloads images during an

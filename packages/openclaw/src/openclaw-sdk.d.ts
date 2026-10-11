@@ -22,23 +22,29 @@ declare module 'openclaw/plugin-sdk/plugin-entry' {
 }
 
 declare module 'openclaw/plugin-sdk/tool-plugin' {
+  type ToolContext = {
+    memoryAudience?: { agentId?: unknown; sessionId?: unknown };
+    assertInvocationCurrent?: () => void;
+    assertMemoryAudienceCurrent?: () => void;
+  };
+
+  type ToolDefinition = {
+    name: string;
+    description: string;
+    parameters: unknown;
+    contextVersion?: number;
+    factory?: (context: {
+      api: { pluginConfig?: unknown };
+      toolContext: ToolContext;
+    }) => unknown;
+  };
+
   export function defineToolPlugin(entry: {
     id: string;
     name: string;
     description: string;
     configSchema?: unknown;
-    tools: (
-      tool: (definition: {
-        name: string;
-        description: string;
-        parameters: unknown;
-        execute: (
-          parameters: unknown,
-          config: unknown,
-          context: unknown
-        ) => Promise<unknown>;
-      }) => unknown
-    ) => unknown[];
+    tools: (tool: (definition: ToolDefinition) => unknown) => unknown[];
   }): unknown;
 }
 

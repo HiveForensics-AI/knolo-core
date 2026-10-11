@@ -1,15 +1,35 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { createKnowledgeImageV5 } from '@knolo/core';
 import { KnoloOpenClawService, KnoloPluginError } from '../dist/index.js';
+import {
+  callerFromToolContext,
+  executeWithCurrentToolContext,
+} from '../dist/tool_context.js';
 
 const encoder = new TextEncoder();
 
-async function fixture() {
+async function fixture({
+  objects = [
+    {
+      kind: 'chunk',
+      bytes: encoder.encode(
+        'Annual enterprise refunds are available within 30 days.'
+      ),
+      meta: { namespace: 'support' },
+    },
+    {
+      kind: 'chunk',
+      bytes: encoder.encode('Monthly plans are available within 14 days.'),
+      meta: { namespace: 'support' },
+    },
+  ],
+  ...config
+} = {}) {
   const root = await mkdtemp(path.join(os.tmpdir(), 'knolo-openclaw-'));
   const policy = {
     version: 1,
@@ -31,20 +51,7 @@ async function fixture() {
   };
   const image = createKnowledgeImageV5({
     policy,
-    objects: [
-      {
-        kind: 'chunk',
-        bytes: encoder.encode(
-          'Annual enterprise refunds are available within 30 days.'
-        ),
-        meta: { namespace: 'support' },
-      },
-      {
-        kind: 'chunk',
-        bytes: encoder.encode('Monthly plans are available within 14 days.'),
-        meta: { namespace: 'support' },
-      },
-    ],
+    objects,
   });
   const imagePath = path.join(root, 'support.v5');
   const policyPath = path.join(root, 'policy.json');
@@ -64,6 +71,7 @@ async function fixture() {
     ],
     auditDir: path.join(root, 'audit'),
     maxExcerptBytes: 32,
+    ...config,
   });
   return { root, image, imagePath, service };
 }
@@ -175,4 +183,131 @@ test('mount identity, agent visibility, state roots, and audit tampering fail cl
     (error) =>
       error instanceof KnoloPluginError && error.code === 'IMAGE_INVALID'
   );
+});
+
+test('audit receipt retention removes the oldest receipts before writing', async () => {
+  const { root, service } = await fixture({ maxAuditRecords: 1 });
+  const first = await service.search({ query: 'enterprise' }, caller());
+  const second = await service.search({ query: 'enterprise' }, caller());
+  const files = await readdir(path.join(root, 'audit'));
+  assert.deepEqual(files.filter((file) => file.endsWith('.json')).length, 1);
+  await assert.rejects(
+    service.verifyReceipt(first.receipts[0].receiptId),
+    (error) => error instanceof KnoloPluginError && error.code === 'NOT_FOUND'
+  );
+  await service.verifyReceipt(second.receipts[0].receiptId);
+});
+
+test('invalid UTF-8 evidence and a byte range starting inside a code point fail closed', async () => {
+  const invalid = await fixture({
+    objects: [
+      {
+        kind: 'chunk',
+        bytes: new Uint8Array([0x61, 0xff]),
+        meta: { namespace: 'support' },
+      },
+    ],
+  });
+  await assert.rejects(
+    invalid.service.get(
+      {
+        imageId: 'support-policy',
+        objectId: invalid.image.objects[0].id,
+        stateRoot: invalid.image.stateRoot,
+      },
+      caller()
+    ),
+    (error) =>
+      error instanceof KnoloPluginError && error.code === 'IMAGE_INVALID'
+  );
+
+  const multibyte = await fixture({
+    objects: [
+      {
+        kind: 'chunk',
+        bytes: encoder.encode('éé'),
+        meta: { namespace: 'support' },
+      },
+    ],
+  });
+  await assert.rejects(
+    multibyte.service.get(
+      {
+        imageId: 'support-policy',
+        objectId: multibyte.image.objects[0].id,
+        stateRoot: multibyte.image.stateRoot,
+        start: 1,
+        end: 4,
+      },
+      caller()
+    ),
+    (error) =>
+      error instanceof KnoloPluginError && error.code === 'IMAGE_INVALID'
+  );
+});
+
+test('an excerpt limit trims only a final incomplete UTF-8 code point', async () => {
+  const { image, service } = await fixture({
+    maxExcerptBytes: 3,
+    objects: [
+      {
+        kind: 'chunk',
+        bytes: encoder.encode('éé'),
+        meta: { namespace: 'support' },
+      },
+    ],
+  });
+  const result = await service.get(
+    {
+      imageId: 'support-policy',
+      objectId: image.objects[0].id,
+      stateRoot: image.stateRoot,
+    },
+    caller()
+  );
+  assert.equal(result.content, 'é');
+  assert.equal(result.start, 0);
+  assert.equal(result.end, 2);
+});
+
+test('tool factories use the host memory audience and recheck its authority', async () => {
+  const checks = [];
+  const context = {
+    memoryAudience: { agentId: 'support-agent', sessionId: 'session-1' },
+    assertInvocationCurrent: () => checks.push('invocation'),
+    assertMemoryAudienceCurrent: () => checks.push('audience'),
+  };
+  assert.deepEqual(callerFromToolContext(context), {
+    agentId: 'support-agent',
+    sessionId: 'session-1',
+  });
+  assert.equal(callerFromToolContext({}), undefined);
+  assert.equal(
+    await executeWithCurrentToolContext(
+      context,
+      async () => 'protected result'
+    ),
+    'protected result'
+  );
+  assert.deepEqual(checks, [
+    'invocation',
+    'audience',
+    'invocation',
+    'audience',
+  ]);
+  await assert.rejects(
+    executeWithCurrentToolContext(
+      { memoryAudience: { agentId: 'support-agent' } },
+      async () => 'unreachable'
+    ),
+    (error) =>
+      error instanceof KnoloPluginError && error.code === 'ACCESS_DENIED'
+  );
+});
+
+test('manifest requires auditDir to match the runtime schema', async () => {
+  const manifest = JSON.parse(
+    await readFile(new URL('../openclaw.plugin.json', import.meta.url), 'utf8')
+  );
+  assert.equal(manifest.configSchema.required.includes('auditDir'), true);
 });
