@@ -31,6 +31,9 @@
     "extensions": [
       "./dist/plugin.js"
     ],
+    "build": {
+      "openclawVersion": "2026.5.17"
+    },
     "compat": {
       "pluginApi": ">=2026.5.17 <2027.0.0",
       "minGatewayVersion": "2026.5.17"
