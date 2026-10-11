@@ -57,7 +57,7 @@ Domain directories for the bundled packs are `domains/contracts-v4`, `domains/po
 
 Workspace packages that depend on `@knolo/core` use `^6.0.0`. The release candidate used `>=6.0.0-rc.1 <7` because a caret on that prerelease does not match `6.0.0`.
 
-An experimental import and the public import evaluate the same committed inputs to the same `karRoot`:
+An experimental import and the public import evaluate the same committed inputs to the same `karRoot`. A clean install of the packed `@knolo/core@6.0.0` tarball checked this on one image, graph, plan, and proposition:
 
 ```ts
 import { createKarSession, evaluateKar } from '@knolo/core/experimental/kar';

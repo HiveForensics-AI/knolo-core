@@ -8,15 +8,15 @@ KAR retrieves inside one committed Knowledge Image and one Committed Evidence Gr
 
 ## Semantic production is not validated
 
-Initial Domain Packs are experimental and review-oriented. Human gold for automatic relation commitment is incomplete. Relation-producing rules in the bundled v4 packs are not `AUTO_ACCEPT`.
+Initial V6 Domain Packs assist semantic production but require review before committing semantics. Human gold for automatic relation commitment is incomplete. Relation-producing automatic extraction is not human-validated. An empty automatic prediction set is not 100% precision. Relation-producing rules in the bundled v4 packs are not `AUTO_ACCEPT`.
 
 `AUTO_ACCEPT` may commit a proposal that the pack marks as safe to commit, such as a heading used only as context. `NEEDS_REVIEW` waits for a person. `OBSERVATION_ONLY` stays out of the committed relation graph. A regex match is not, by itself, committed semantics.
 
-KAR does not change when a pack changes. The committed graph is the input. A hand-authored graph, a reviewed producer graph, an ontology graph, and a model-assisted graph are the same kind of input once `compileCegSource()` emits the sidecar.
+KAR itself evaluates an already committed CEG deterministically and does not depend on automatic semantic extraction. KAR does not change when a pack changes. The committed graph is the input. A hand-authored graph, a reviewed producer graph, an ontology graph, and a model-assisted graph are the same kind of input once `compileCegSource()` emits the sidecar.
 
 ## Bounds
 
-Exact cover is bounded by `maxCoverVisits`. Past that bound the status is `SEARCH_BOUND_EXCEEDED` and the selected set is empty. There is no greedy fallback. Closure is bounded the same way.
+Exact cover is bounded by `maxCoverVisits`. Past that bound the status is `SEARCH_BOUND_EXCEEDED` and the selected set is empty. Closure past `maxClosureNodes` returns `CLOSURE_BOUND_EXCEEDED`. There is no approximate fallback. Long pathological graph chains can be expensive.
 
 ## Verification
 
