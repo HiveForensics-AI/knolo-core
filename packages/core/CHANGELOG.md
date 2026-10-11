@@ -23,7 +23,7 @@ All notable changes to this project will be documented in this file.
 ### Packages
 
 - Published `@knolo/core`, `@knolo/cli`, `@knolo/langchain`, `@knolo/llamaindex`, `@knolo/semantic-ollama`, and `create-knolo-app` as `5.5.1`.
-- Rust, Python, and the ICP adapter remain `5.5.0`.
+- Rust, Python, and the ICP adapter are released as `5.5.1`.
 
 ## [5.5.0] - 2026-09-06
 

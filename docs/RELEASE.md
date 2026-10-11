@@ -6,13 +6,13 @@ npm. Do not republish them.
 
 - npm `5.5.1`: `@knolo/core`, `@knolo/cli`, `@knolo/langchain`,
   `@knolo/llamaindex`, `@knolo/semantic-ollama`, `create-knolo-app`
-- PyPI `5.5.0`: `knolo`
-- crates.io `5.5.0`: `knolo-core-rust`, `knolo-icp-canister`
+- PyPI `5.5.1`: `knolo`
+- crates.io `5.5.1`: `knolo-core-rust`, `knolo-icp-canister`
 
 Rust and Python were not version-bumped for 5.5.1. V4 retrieval behavior
 remains the compatibility path. The procedure below is the publication record
-for this release line. The npm `5.5.1`, PyPI `knolo==5.5.0`, and crates.io
-`5.5.0` uploads are already complete. Do not rerun them. Sections 4 and 5 are
+for this release line. The npm `5.5.1`, PyPI `knolo==5.5.1`, and crates.io
+`5.5.1` uploads are already complete. Do not rerun them. Sections 4 and 5 are
 historical. Section 6 is verification only.
 
 ## Release set
@@ -28,10 +28,10 @@ The V5 npm release set is `5.5.1`:
 
 The Rust release set remains:
 
-- `knolo-core-rust` `5.5.0`
-- `knolo-icp-canister` `5.5.0`
+- `knolo-core-rust` `5.5.1`
+- `knolo-icp-canister` `5.5.1`
 
-The Python distribution remains `5.5.0` and provides read-only V5 Knowledge Image
+The Python distribution remains `5.5.1` and provides read-only V5 Knowledge Image
 verification and lexical object queries while preserving its legacy V1–V3
 pack APIs. It does not provide V5 writes, Studio, authority administration,
 or synchronization.
@@ -115,19 +115,19 @@ Python and Rust are already published; do not continue into a new upload.
 
 ## 4. Python package — historical, do not rerun
 
-`knolo==5.5.0` is already on PyPI from tag `v5.5.0`. Do not publish another
+`knolo==5.5.1` is already on PyPI from tag `v5.5.1`. Do not publish another
 GitHub release to upload it again, and do not run `python -m build` or
 `twine upload` for this version. `.github/workflows/python-publish.yml` uploads
-on every published release. A second upload of `knolo==5.5.0` is rejected
+on every published release. A second upload of `knolo==5.5.1` is rejected
 because those files already exist, so the publish job cannot pass.
 
 The notes below are the record of the publication that already happened. Do
 not rerun them.
 
 - `python-ci` was green before publication.
-- The release commit was pushed, and GitHub release `v5.5.0` was published from
+- The release commit was pushed, and GitHub release `v5.5.1` was published from
   the web UI.
-- That published release started `python-publish`, which built `knolo==5.5.0`,
+- That published release started `python-publish`, which built `knolo==5.5.1`,
   ran `twine check`, and uploaded it through the `pypi` environment and Trusted
   Publishing. Local `python -m build` and `twine upload` were not the
   publication step.
@@ -139,13 +139,13 @@ python -m pip index versions knolo
 python_tmp="$(mktemp -d)"
 python -m venv "$python_tmp"
 "$python_tmp/bin/python" -m pip install --upgrade pip
-"$python_tmp/bin/python" -m pip install --no-cache-dir knolo==5.5.0
-"$python_tmp/bin/python" -c "import knolo; assert knolo.__version__ == '5.5.0'; print(knolo.__version__)"
+"$python_tmp/bin/python" -m pip install --no-cache-dir knolo==5.5.1
+"$python_tmp/bin/python" -c "import knolo; assert knolo.__version__ == '5.5.1'; print(knolo.__version__)"
 ```
 
 ## 5. Rust crates — historical, do not rerun
 
-`knolo-core-rust` `5.5.0` and `knolo-icp-canister` `5.5.0` are already on
+`knolo-core-rust` `5.5.1` and `knolo-icp-canister` `5.5.1` are already on
 crates.io. Do not run `cargo publish` for these versions again. crates.io
 rejects a second upload of the same version.
 
@@ -153,7 +153,7 @@ The publication already ran, in dependency order. Do not rerun it.
 
 - `cargo login`, then a dry run and `cargo publish` for
   `packages/core-rust/Cargo.toml`.
-- After `knolo-core-rust` `5.5.0` was indexed, a dry run and `cargo publish`
+- After `knolo-core-rust` `5.5.1` was indexed, a dry run and `cargo publish`
   for `packages/icp-canister/Cargo.toml`.
 
 The ICP crate is the V5 release-line adapter but currently exposes the legacy
@@ -168,6 +168,6 @@ PyPI distributions, or crates.
 npm view @knolo/core@5.5.1 version
 npm view @knolo/cli@5.5.1 version
 python -m pip index versions knolo
-curl -fsSL https://crates.io/api/v1/crates/knolo-core-rust/5.5.0
-curl -fsSL https://crates.io/api/v1/crates/knolo-icp-canister/5.5.0
+curl -fsSL https://crates.io/api/v1/crates/knolo-core-rust/5.5.1
+curl -fsSL https://crates.io/api/v1/crates/knolo-icp-canister/5.5.1
 ```
