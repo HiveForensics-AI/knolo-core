@@ -11,7 +11,9 @@ const karIndexPath = fileURLToPath(
 const authoringIndexPath = fileURLToPath(
   new URL('../dist/experimental/kar/authoring/index.js', import.meta.url)
 );
-const publicKarPath = fileURLToPath(new URL('../dist/kar/index.js', import.meta.url));
+const publicKarPath = fileURLToPath(
+  new URL('../dist/kar/index.js', import.meta.url)
+);
 const publicAuthoringPath = fileURLToPath(
   new URL('../dist/kar/authoring/index.js', import.meta.url)
 );
@@ -59,7 +61,11 @@ assert.equal(
   'Public KAR entry must not load the CEG authoring compiler'
 );
 for (const token of karForbidden) {
-  assert.equal(publicKarBundle.includes(token), false, `Public KAR entry must not include Node stdlib reference: ${token}`);
+  assert.equal(
+    publicKarBundle.includes(token),
+    false,
+    `Public KAR entry must not include Node stdlib reference: ${token}`
+  );
   assert.equal(
     publicAuthoringBundle.includes(token),
     false,

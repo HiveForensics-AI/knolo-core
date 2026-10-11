@@ -15,7 +15,13 @@ AI products are becoming easier to build. The hard problem is making their knowl
 This tree is Knolo 6.0.0. V6 adds [KAR](docs/kar/README.md): deterministic retrieval of a minimum evidence set from a V5 Knowledge Image and a Committed Evidence Graph. Lexical retrieval, V5 images, and V4 packs stay in place.
 
 ```ts
-import { createKarSession, evaluateKar, verifyKar, explainKarResult, createKarDossier } from '@knolo/core/kar';
+import {
+  createKarSession,
+  evaluateKar,
+  verifyKar,
+  explainKarResult,
+  createKarDossier,
+} from '@knolo/core/kar';
 ```
 
 The root `@knolo/core` entry does not load KAR. `@knolo/core/experimental/kar` remains a compatibility entry for this cycle. `SATISFIED` means the declared evidence requirements were met. It does not mean a claim is proven. `UNSATISFIED_EVIDENCE_REQUIREMENTS` means those requirements were not met. It does not mean the claim is false.
