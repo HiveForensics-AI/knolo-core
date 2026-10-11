@@ -127,6 +127,20 @@ test('review states admit only accepted proposals', () => {
   const pending = applyProducerDecisions(held, { format: 'ceg-decisions-1', decisions: [] });
   assert.equal(pending.ok, true);
   assert.equal(pending.source.relations.length, 0);
+  const tampered = {
+    ...ran.run,
+    proposals: ran.run.proposals.map((item) => item.id === proposal.id ? {
+      ...item,
+      fragment: {
+        ...item.fragment,
+        concepts: { ...(item.fragment.concepts ?? {}), injected: { label: 'Injected' } },
+      },
+    } : item),
+  };
+  const rewritten = applyProducerDecisions(tampered, { format: 'ceg-decisions-1', decisions: [{ id: proposal.id, state: 'ACCEPTED' }] });
+  assert.equal(rewritten.ok, false);
+  assert.equal(rewritten.diagnostics[0].code, 'CEG_PRODUCER_OUTPUT_INVALID');
+  assert.equal(explainCegProposal(tampered, proposal.id).ok, false);
 });
 
 test('merge keeps both sides of a conflict and ignores fragment order', () => {

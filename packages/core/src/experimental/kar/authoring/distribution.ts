@@ -204,8 +204,14 @@ function extraKeys(value: Record<string, unknown>, keys: readonly string[]): boo
 }
 
 function interpretBuild(value: unknown): { ok: true; value: CegBuildRecord } | { ok: false; diagnostics: CegDiagnostic[] } {
-  if (!value || typeof value !== 'object' || (value as { format?: string }).format !== 'ceg-build-1') {
+  if (!isPlain(value) || value.format !== 'ceg-build-1') {
     return { ok: false, diagnostics: [diagnostic('error', 'CEG_SOURCE_INVALID', 'build', 'Build record format must be ceg-build-1.')] };
+  }
+  const identity = value.identity;
+  const image = isPlain(identity) ? identity.image : undefined;
+  if (!isPlain(identity) || typeof identity.semanticRoot !== 'string' || typeof identity.sidecarDigest !== 'string'
+    || !isPlain(image) || typeof image.knowledgeRoot !== 'string' || typeof image.stateRoot !== 'string') {
+    return { ok: false, diagnostics: [diagnostic('error', 'CEG_SOURCE_INVALID', 'build.identity', 'Build record identity is missing or incomplete.')] };
   }
   return { ok: true, value: value as CegBuildRecord };
 }

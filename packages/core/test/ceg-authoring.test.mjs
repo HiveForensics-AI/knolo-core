@@ -18,6 +18,7 @@ import {
   inspectKarReadiness,
   loadKarBundle,
   parseCegSource,
+  validateCegBuild,
   produceCegSource,
   rebuildCegSource,
   reviewCegSource,
@@ -298,6 +299,13 @@ test('a producer result still goes through the deterministic compiler', async ()
   const direct = compileCegSource({ source: sourceWith(), image: image.bytes });
   assert.equal(compiled.bytes, direct.bytes);
   assert.equal(digest(compiled.sidecar), compiled.buildInfo.identity.sidecarDigest);
+  const missing = validateCegBuild({ image: image.bytes, graph: compiled.sidecar, build: { format: 'ceg-build-1' } });
+  assert.equal(missing.ok, false);
+  assert.equal(missing.diagnostics[0].code, 'CEG_SOURCE_INVALID');
+  assert.equal(missing.diagnostics[0].path, 'build.identity');
+  const matched = validateCegBuild({ image: image.bytes, graph: compiled.sidecar, build: compiled.buildInfo });
+  assert.equal(matched.ok, true);
+  assert.equal(matched.semanticRoot, compiled.semanticRoot);
 });
 
 function sourceWith(extraConcepts = {}, type = 'prohibits', authority = 80, selector = { source: 'contract.md', namespace: 'legal' }, extra = {}) {

@@ -381,7 +381,37 @@ export function interpretRun(value: unknown): CegProducerRun | null {
   if (!isRecord(value.producer) || typeof value.producer.id !== 'string' || typeof value.producer.version !== 'string') return null;
   if (!isRecord(value.fragment) || !Array.isArray(value.diagnostics) || !Array.isArray(value.observations) || !Array.isArray(value.proposals)) return null;
   if (!isRecord(value.provenance)) return null;
+  for (const proposal of value.proposals) {
+    if (!proposalIdMatches(proposal)) return null;
+  }
   return value as unknown as CegProducerRun;
+}
+
+function proposalIdMatches(value: unknown): boolean {
+  if (!isRecord(value) || typeof value.id !== 'string') return false;
+  if (typeof value.producerId !== 'string' || typeof value.producerVersion !== 'string' || !isRecord(value.fragment)) return false;
+  const ruleId = optionalText(value.ruleId);
+  const evidenceId = optionalText(value.evidenceId);
+  const observed = optionalText(value.observationId);
+  if (ruleId === false || evidenceId === false || observed === false) return false;
+  try {
+    const expected = proposalId({
+      producerId: value.producerId,
+      producerVersion: value.producerVersion,
+      ruleId,
+      evidenceId,
+      observationId: observed,
+      fragment: value.fragment as CegSourceFragment,
+    });
+    return value.id === expected;
+  } catch {
+    return false;
+  }
+}
+
+function optionalText(value: unknown): string | undefined | false {
+  if (value === undefined) return undefined;
+  return typeof value === 'string' ? value : false;
 }
 
 export function packProvenance(pack: DomainPackV1 | undefined, root: string | undefined): Pick<CegProducerProvenance, 'domainPackId' | 'domainPackVersion' | 'domainPackRoot'> {
