@@ -2,7 +2,13 @@
 
 This walkthrough uses the redistributable contracts demo. It does not use the research corpus.
 
-Build `@knolo/core`, then either run the demo or follow the calls below.
+Install the published package with:
+
+```bash
+npm install @knolo/core
+```
+
+Do not pin `6.0.0-rc.1`. A checkout of this repository can build the workspace and run the demo below.
 
 ```bash
 npm run build --workspace @knolo/core

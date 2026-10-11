@@ -1,6 +1,6 @@
 # Migration to V6
 
-Package line moves from `5.5.1` to `6.0.0-rc.1` for the TypeScript release set. KAR semantics stay `kar-1-research-1`. CEG Source stays `ceg-source-1`.
+Package line moves from `5.5.1` through the historical prerelease `6.0.0-rc.1` to `6.0.0`. KAR semantics stay `kar-1-research-1`. CEG Source stays `ceg-source-1`.
 
 Rust `knolo-core-rust` and Python `knolo` stay `5.5.0` in this candidate. They do not implement KAR.
 
@@ -55,7 +55,14 @@ Domain directories for the bundled packs are `domains/contracts-v4`, `domains/po
 
 ## Dependency ranges
 
-Workspace packages that depend on `@knolo/core` use `>=6.0.0-rc.1 <7`. A caret range such as `^6.0.0-rc.1` does not match the final `6.0.0`.
+Workspace packages that depend on `@knolo/core` use `^6.0.0`. The release candidate used `>=6.0.0-rc.1 <7` because a caret on that prerelease does not match `6.0.0`.
+
+An experimental import and the public import evaluate the same committed inputs to the same `karRoot`:
+
+```ts
+import { createKarSession, evaluateKar } from '@knolo/core/experimental/kar';
+import { createKarSession as createStableSession, evaluateKar as evaluateStable } from '@knolo/core/kar';
+```
 
 `@knolo/reflex` and `@knolo/evidence-gate` keep their own versions. Only their `@knolo/core` range moves.
 

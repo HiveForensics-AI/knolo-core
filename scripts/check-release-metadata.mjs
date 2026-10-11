@@ -4,11 +4,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const releaseVersion = '6.0.0-rc.1';
-const cliReleaseVersion = '6.0.0-rc.1';
+const releaseVersion = '6.0.0';
+const cliReleaseVersion = '6.0.0';
 const reflexReleaseVersion = '0.2.0';
 const platformVersion = '5.5.0';
-const coreRange = '>=6.0.0-rc.1 <7';
+const coreRange = '^6.0.0';
 
 function readJson(relativePath) {
   return JSON.parse(readFileSync(path.join(root, relativePath), 'utf8'));

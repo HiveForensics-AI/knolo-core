@@ -1,6 +1,6 @@
 {
   "name": "@knolo/core",
-  "version": "6.0.0-rc.1",
+  "version": "6.0.0",
   "type": "module",
   "description": "Deterministic, verifiable Knowledge Images, local-first retrieval, and KAR evidence-set retrieval over a Committed Evidence Graph.",
   "keywords": [

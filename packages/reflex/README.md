@@ -17,7 +17,7 @@ npm install @knolo/reflex @knolo/core
 ```
 
 Node.js 20 or newer is required. The package currently targets V5 and depends
-on `@knolo/core` `>=6.0.0-rc.1 <7`.
+on `@knolo/core` `^6.0.0`.
 
 ## Build and verify a pack
 
@@ -252,8 +252,8 @@ rejected from fitting.
 ## Versioning and status
 
 `@knolo/reflex` is independently versioned and currently released as `0.2.0`.
-Its V1 schemas are experimental. The V6 candidate depends on `@knolo/core`
-`>=6.0.0-rc.1 <7`. Reflex's own version stays `0.2.0`.
+Its V1 schemas are experimental. The V6 line depends on `@knolo/core`
+`^6.0.0`. Reflex's own version stays `0.2.0`.
 
 ## License
 

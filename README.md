@@ -241,7 +241,7 @@ if (selection.disposition === 'ready') {
 ```
 
 The package is independently versioned as `0.2.0`, compatible with
-`@knolo/core` `>=6.0.0-rc.1 <7`, and includes an optional adapter for a local Ollama
+`@knolo/core` `^6.0.0`, and includes an optional adapter for a local Ollama
 server. See the [Reflex package guide](packages/reflex/README.md) for the CLI,
 verification, evaluation, optimization, distillation, and security details.
 

@@ -1,17 +1,17 @@
 # V6 publish checklist
 
-Do not run `npm publish` until a person reviews this list. This candidate is `6.0.0-rc.1`.
+Do not run `npm publish` until a person authorizes it. The general-availability version is `6.0.0`. `6.0.0-rc.1` stays the historical prerelease and must not be moved to `latest`.
 
 ## Packages
 
-- `@knolo/core` `6.0.0-rc.1`
-- `@knolo/cli` `6.0.0-rc.1`
-- `@knolo/langchain` `6.0.0-rc.1`
-- `@knolo/llamaindex` `6.0.0-rc.1`
-- `@knolo/semantic-ollama` `6.0.0-rc.1`
-- `create-knolo-app` `6.0.0-rc.1`
+- `@knolo/core` `6.0.0`
+- `@knolo/cli` `6.0.0`
+- `@knolo/langchain` `6.0.0`
+- `@knolo/llamaindex` `6.0.0`
+- `@knolo/semantic-ollama` `6.0.0`
+- `create-knolo-app` `6.0.0`
 
-Leave `@knolo/reflex` at `0.2.0` and `@knolo/evidence-gate` at `0.1.0`. Their `@knolo/core` range is `>=6.0.0-rc.1 <7`.
+Leave `@knolo/reflex` at `0.2.0` and `@knolo/evidence-gate` at `0.1.0`. Their `@knolo/core` range is `^6.0.0`.
 
 Leave `knolo-core-rust`, `knolo-icp-canister`, and Python `knolo` at `5.5.0`.
 
@@ -29,4 +29,4 @@ Leave `knolo-core-rust`, `knolo-icp-canister`, and Python `knolo` at `5.5.0`.
 
 ## After publish
 
-Tag the candidate. Do not retag it as `6.0.0` until the RC smoke and a second full suite pass. Final `6.0.0` keeps Domain Packs at `review-required` if human validation is still incomplete.
+Publish `@knolo/core` first. Then publish `@knolo/cli`, `@knolo/langchain`, `@knolo/llamaindex`, `@knolo/semantic-ollama`, `@knolo/reflex`, and `@knolo/evidence-gate`. Publish `create-knolo-app` last. Use the default `latest` dist-tag for `6.0.0`. Do not overwrite `6.0.0` if a later fix is required; publish `6.0.1` instead. Domain Packs stay `review-required` if human validation is still incomplete.
