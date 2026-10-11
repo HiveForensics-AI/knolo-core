@@ -14,3 +14,9 @@ is written.
 The package requires an OpenClaw host compatible with its declared plugin API
 range and Node 24.16 or newer. The plugin never downloads images during an
 agent turn; install and pin Hub artifacts before configuring a mount.
+
+## Published package
+
+The current release is published on ClawHub as `@knolo/openclaw` version
+`0.1.0`. It was built from the Knolo Core `main` branch at commit
+`d8a175b4375c5bb8cf7d3e8b93dbcb6233a30da1`.
