@@ -150,11 +150,6 @@ async function verifyDirectory(flags, directory) {
     const loaded = loadMemberBytes(dir, bundle, member, overrides);
     if (loaded) members[member.alias] = loaded;
   }
-  for (const member of parsed.members) {
-    if (member.kind !== 'excerpt' || members[member.alias]) continue;
-    const parent = parentBytes(parsed, hostBytes, members, member.parentStateRoot);
-    if (parent) members[member.alias] = { excerptRoot: member.excerptRoot, parentBytes: parent };
-  }
   const needsDomain = Object.values(members).some((item) => item && 'files' in item);
   const domainPackRoot = needsDomain ? await domainResolver() : undefined;
   const verdict = api.verifyCompositionRecord(record, {
@@ -241,8 +236,7 @@ async function attestCreate(flags) {
   const api = await loadComposition();
   const out = resolve(required(flags, 'out'));
   if (existsSync(out)) throw new Error(`Refusing to overwrite ${out}`);
-  const record = readBoundedJson(compositionPath(required(flags, 'composition')));
-  const parsed = api.parseCompositionRecord(record);
+  const parsed = api.assertCompositionRoot(readBoundedJson(compositionPath(required(flags, 'composition'))));
   const statement = required(flags, 'statement');
   const subject = subjectFrom(parsed, flags);
   let attestation;
@@ -263,7 +257,12 @@ async function attestVerify(flags) {
   if (!file) throw new Error(`Missing attestation file.\n${ATTEST_USAGE}`);
   const attestation = readBoundedJson(file);
   if (flags.composition) {
-    const record = api.parseCompositionRecord(readBoundedJson(compositionPath(flags.composition)));
+    let record;
+    try {
+      record = api.assertCompositionRoot(readBoundedJson(compositionPath(flags.composition)));
+    } catch (error) {
+      return failClosed(error);
+    }
     if (attestation.compositionRoot !== record.compositionRoot) {
       console.log('ATTESTATION_MISMATCH');
       process.exitCode = 1;
@@ -359,9 +358,12 @@ function readMember(entry, availability) {
   }
   if (entry.kind === 'composition') {
     const directory = resolve(entry.path);
-    const nestedPath = existsSync(path.join(directory, 'composition.json')) ? path.join(directory, 'composition.json') : directory;
+    const directoryRecord = existsSync(path.join(directory, 'composition.json'));
+    const nestedPath = directoryRecord ? path.join(directory, 'composition.json') : directory;
     const nested = readBoundedJson(nestedPath);
-    return { alias: entry.alias, kind: entry.kind, record: nested, input: { ...input, record: nested } };
+    const hostFile = directoryRecord ? path.join(directory, 'host.knolo') : undefined;
+    const hostBytes = hostFile && existsSync(hostFile) ? readBounded(hostFile, KAR_CLI_MAX_IMAGE_BYTES) : undefined;
+    return { alias: entry.alias, kind: entry.kind, record: nested, hostBytes, input: { ...input, record: nested } };
   }
   const bytes = readBounded(entry.path, KAR_CLI_MAX_IMAGE_BYTES);
   const extra = {};
@@ -382,8 +384,8 @@ function materialMap(prepared) {
   for (const item of prepared) {
     if (item.bytes) members[item.alias] = { bytes: item.bytes };
     else if (item.files) members[item.alias] = { files: item.files };
-    else if (item.record) members[item.alias] = { record: item.record };
-    else if (item.kind === 'excerpt') members[item.alias] = { excerptRoot: item.input.excerptRoot, ...(item.parentBytes ? { parentBytes: item.parentBytes } : {}) };
+    else if (item.record) members[item.alias] = { record: item.record, ...(item.hostBytes ? { hostBytes: item.hostBytes } : {}) };
+    else if (item.kind === 'excerpt') members[item.alias] = { excerpt: item.excerpt, ...(item.parentBytes ? { parentBytes: item.parentBytes } : {}) };
   }
   return members;
 }
@@ -419,6 +421,7 @@ function collectMemberFiles(item, files, bundleMembers, record) {
     const bytes = Buffer.from(`${JSON.stringify(item.record, null, 2)}\n`);
     files.push({ path: relative, bytes });
     bundleMembers.push({ alias: item.alias, kind: item.kind, path: relative, sha256: digest(bytes) });
+    if (item.hostBytes) files.push({ path: `members/${item.alias}/host.knolo`, bytes: item.hostBytes });
   }
 }
 
@@ -441,12 +444,17 @@ function loadMemberBytes(dir, bundle, member, overrides) {
     return { files };
   }
   if (member.kind === 'composition') {
-    return { record: readBoundedJson(safeJoin(dir, listed.path)) };
+    const record = readBoundedJson(safeJoin(dir, listed.path));
+    const directory = listed.path.split('/').slice(0, -1).join('/');
+    const hostPath = directory ? `${directory}/host.knolo` : 'host.knolo';
+    const hostFile = (bundle.files ?? []).find((file) => file.path === hostPath);
+    return { record, ...(hostFile ? { hostBytes: readBundleFile(dir, bundle, hostPath) } : {}) };
   }
   if (member.kind === 'excerpt') {
+    const excerpt = JSON.parse(readBundleFile(dir, bundle, listed.path).toString('utf8'));
     const parentPath = `excerpts/${member.alias}.parent.knolo`;
     const parentFile = (bundle.files ?? []).find((file) => file.path === parentPath);
-    return { excerptRoot: member.excerptRoot, ...(parentFile ? { parentBytes: readBundleFile(dir, bundle, parentPath) } : {}) };
+    return { excerpt, ...(parentFile ? { parentBytes: readBundleFile(dir, bundle, parentPath) } : {}) };
   }
   return { bytes: readBundleFile(dir, bundle, listed.path) };
 }
@@ -454,15 +462,8 @@ function loadMemberBytes(dir, bundle, member, overrides) {
 function bytesForKind(member, bytes, file) {
   if (member.kind === 'domain-pack') return { files: readDomainFiles(file) };
   if (member.kind === 'composition') return { record: readBoundedJson(file) };
-  if (member.kind === 'excerpt') return { excerptRoot: member.excerptRoot };
+  if (member.kind === 'excerpt') return { excerpt: readBoundedJson(file) };
   return { bytes };
-}
-
-function parentBytes(record, hostBytes, members, stateRoot) {
-  if (record.host.kind === 'v5-image' && record.host.stateRoot === stateRoot) return hostBytes;
-  const image = record.members.find((member) => member.kind === 'v5-image' && member.stateRoot === stateRoot);
-  const material = image ? members[image.alias] : undefined;
-  return material && 'bytes' in material ? material.bytes : undefined;
 }
 
 function readBundleFile(dir, bundle, relative) {
@@ -557,6 +558,12 @@ async function signAttestation(api, attestation, flags) {
     throw new Error('Signing requires --issued-at and --expires-at as unix milliseconds. The CLI does not read the clock.');
   }
   const privateKey = decodeBase64(key.privateKey ?? key.seed);
+  let keyringRoot = typeof key.keyringRoot === 'string' ? key.keyringRoot : undefined;
+  if (flags.keyring) {
+    const computed = (await loadAuthorityRoot())(loadKeyring(flags.keyring));
+    if (keyringRoot && keyringRoot !== computed) throw new Error('Signing key keyringRoot does not match --keyring.');
+    keyringRoot = computed;
+  }
   const envelope = {
     format: 'composition-signature-1',
     version: 1,
@@ -566,7 +573,7 @@ async function signAttestation(api, attestation, flags) {
     keyId,
     issuedAt,
     expiresAt,
-    ...(flags.keyring || key.keyringRoot ? { keyringRoot: key.keyringRoot } : {}),
+    ...(keyringRoot ? { keyringRoot } : {}),
   };
   const payload = api.attestationSignaturePayload(envelope);
   const cryptoKey = privateKey.length === 32
@@ -678,6 +685,23 @@ function required(flags, name) {
 
 function resolve(file) {
   return path.resolve(process.cwd(), file);
+}
+
+async function loadAuthorityRoot() {
+  const candidates = [
+    path.resolve(__dirname, '../../core/dist/knowledge_key_rotation_v5.js'),
+    '@knolo/core',
+  ];
+  for (const candidate of candidates) {
+    try {
+      const href = candidate.startsWith('@') ? candidate : pathToFileURL(candidate).href;
+      const loaded = await import(href);
+      if (loaded.authorityKeyringRootV1) return loaded.authorityKeyringRootV1;
+    } catch {
+      // Try the next candidate.
+    }
+  }
+  throw new Error('Could not load authorityKeyringRootV1. Build packages/core first.');
 }
 
 async function loadComposition() {

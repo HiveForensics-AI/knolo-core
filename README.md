@@ -27,7 +27,7 @@ import {
 
 The root `@knolo/core` entry does not load KAR. `@knolo/core/experimental/kar` remains a compatibility entry for this cycle. `SATISFIED` means the declared evidence requirements were met. It does not mean a claim is proven. `UNSATISFIED_EVIDENCE_REQUIREMENTS` means those requirements were not met. It does not mean the claim is false.
 
-The npm packages in this repository are `6.1.0` and depend on `@knolo/core` `^6.0.0`. Publishing that version, and moving the npm `latest` dist-tag, is a separate step. `@knolo/reflex` stays `0.2.0`. `@knolo/evidence-gate` stays `0.1.0`. Rust, Python, and the ICP canister stay `5.5.1` and do not implement KAR or composition. The bundled contracts, policy, and operations Domain Packs are `review-required`. The local tag `v6.0.0` stays on the 6.0.0 commit.
+The npm packages in this repository are `6.1.0`. `@knolo/cli` depends on `@knolo/core` `^6.1.0`. The other packages that depend on `@knolo/core` stay at `^6.0.0`. Publishing that version, and moving the npm `latest` dist-tag, is a separate step. `@knolo/reflex` stays `0.2.0`. `@knolo/evidence-gate` stays `0.1.0`. Rust, Python, and the ICP canister stay `5.5.1` and do not implement KAR or composition. The bundled contracts, policy, and operations Domain Packs are `review-required`. The local tag `v6.0.0` stays on the 6.0.0 commit.
 
 Start with the [KAR guide](docs/kar/README.md), the [composition guide](docs/composition/README.md), the [6.1.0 release notes](docs/releases/v6.1.0.md), [`examples/kar-v6`](examples/kar-v6/README.md), [`examples/kar-coverage`](examples/kar-coverage/README.md), and [`examples/composition-v1`](examples/composition-v1/README.md).
 

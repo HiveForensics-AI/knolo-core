@@ -30,6 +30,7 @@ import {
   validRelativePath,
 } from './codec.js';
 import { CompositionError } from './errors.js';
+import { verifyBoundedExcerpt } from './excerpt.js';
 
 export type MemberKind = (typeof MEMBER_KINDS)[number];
 export type Availability = 'material' | 'digest';
@@ -132,8 +133,9 @@ export type KarBinding = {
 export type MemberMaterial =
   | { bytes: Uint8Array }
   | { files: { path: string; bytes: Uint8Array }[] }
-  | { record: CompositionRecord; members?: Record<string, MemberMaterial> }
-  | { excerptRoot: Digest; parentBytes?: Uint8Array };
+  | { record: CompositionRecord; members?: Record<string, MemberMaterial>; hostBytes?: Uint8Array }
+  | { excerptRoot: Digest; parentBytes?: Uint8Array }
+  | { excerpt: unknown; parentBytes?: Uint8Array };
 
 export type CompositionCreateInput = {
   host?: CompositionHostInput;
@@ -195,7 +197,7 @@ export type CompositionVerifyOptions = {
   requireMaterial?: boolean;
   domainPackRoot?: (files: { path: string; bytes: Uint8Array }[]) => DomainPackIdentity | null;
   karBinder?: (image: Uint8Array, graph: Uint8Array) => KarBinding;
-  nested?: Record<string, { record: CompositionRecord; members?: Record<string, MemberMaterial> }>;
+  nested?: Record<string, { record: CompositionRecord; members?: Record<string, MemberMaterial>; hostBytes?: Uint8Array }>;
 };
 
 export type CompositionMemberStatus = { alias: string; status: 'material' | 'digest-bound' };
@@ -246,6 +248,14 @@ export function verifyCompositionRecord(record: unknown, options: CompositionVer
     }
     return { ok: false, code: 'COMPOSITION_INVALID' };
   }
+}
+
+export function assertCompositionRoot(value: unknown): CompositionRecord {
+  const record = parseCompositionRecord(value);
+  if (compositionRootOf(record) !== record.compositionRoot) {
+    throw new CompositionError('COMPOSITION_ROOT_MISMATCH', 'compositionRoot does not match the record.', 'compositionRoot');
+  }
+  return record;
 }
 
 export function parseCompositionRecord(value: unknown): CompositionRecord {
@@ -820,7 +830,7 @@ function walk(
       throw new CompositionError('COMPOSITION_MEMBER_MISSING', `Missing material for ${member.alias}.`, member.alias);
     } else if (member.kind === 'composition' && options.nested?.[member.compositionRoot]) {
       const child = options.nested[member.compositionRoot];
-      checkNested(member, child.record, { ...options, members: child.members, hostBytes: undefined }, next, seen);
+      checkNested(member, child.record, { ...options, members: child.members, hostBytes: child.hostBytes }, next, seen);
       statuses.push({ alias: member.alias, status: 'material' });
     } else {
       statuses.push({ alias: member.alias, status: 'digest-bound' });
@@ -900,7 +910,17 @@ function checkMemberMaterial(
     return;
   }
   if ('record' in material && member.kind === 'composition') {
-    checkNested(member, material.record, { ...options, members: material.members, hostBytes: undefined, nested: options.nested }, stack, seen);
+    checkNested(member, material.record, { ...options, members: material.members, hostBytes: material.hostBytes, nested: options.nested }, stack, seen);
+    return;
+  }
+  if ('excerpt' in material && member.kind === 'excerpt') {
+    const verdict = verifyBoundedExcerpt(material.excerpt, material.parentBytes ? { imageBytes: material.parentBytes } : {});
+    if (!verdict.ok) {
+      throw new CompositionError(verdict.code, `${member.alias} excerpt did not verify.`, member.alias);
+    }
+    if (verdict.excerptRoot !== member.excerptRoot) {
+      throw new CompositionError('EXCERPT_INCLUSION_MISMATCH', `${member.alias} excerptRoot does not match.`, member.alias);
+    }
     return;
   }
   if ('excerptRoot' in material && member.kind === 'excerpt') {

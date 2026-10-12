@@ -32,7 +32,7 @@
     "test:hub": "node --test test/hub.integration.test.mjs"
   },
   "dependencies": {
-    "@knolo/core": "^6.0.0"
+    "@knolo/core": "^6.1.0"
   },
   "private": false
 }

@@ -8,7 +8,7 @@ import { canonicalCbor, type CborValue, type Digest } from '../knowledge_image_v
 import { ATTESTATION_DOMAIN, ATTESTATION_FORMAT, SIGNATURE_DOMAIN, SIGNATURE_FORMAT, STATEMENTS } from './constants.js';
 import { decodeBase64, encodeBase64, exactKeys, isDigest, isRecord, requireDigest, requireToken, rooted } from './codec.js';
 import { CompositionError } from './errors.js';
-import { parseCompositionRecord, type CompositionRecord } from './record.js';
+import { assertCompositionRoot, type CompositionRecord } from './record.js';
 
 export type AttestationStatement = (typeof STATEMENTS)[number];
 
@@ -60,7 +60,7 @@ export function createCompositionAttestation(input: {
   subject: AttestationSubject;
   statement: AttestationStatement;
 }): { attestation: CompositionAttestation; attestationRoot: Digest } {
-  const record = parseCompositionRecord(input.record);
+  const record = assertCompositionRoot(input.record);
   if (!STATEMENTS.includes(input.statement)) {
     throw new CompositionError('ATTESTATION_INVALID', 'statement must be mount, used, or cited.', 'statement');
   }
@@ -183,19 +183,23 @@ async function verifyEnvelope(
       throw new CompositionError('ATTESTATION_KEY_MISMATCH', 'keyringRoot does not match the supplied keyring.', 'signature.keyringRoot');
     }
   }
-  const publicKey = resolvePublicKey(signature, options.publicKey, options.keyring);
+  const publicKey = resolvePublicKey(signature, options.publicKey, options.keyring, now);
   const verify = options.verifySignature ?? verifyEd25519;
   const ok = await verify(payload, bytes, publicKey);
   if (!ok) throw new CompositionError('ATTESTATION_SIGNATURE_INVALID', 'Ed25519 signature did not verify.', 'signature.signature');
 }
 
-function resolvePublicKey(signature: AttestationSignature, publicKey: Uint8Array | undefined, keyring: KnowledgeAuthorityKeyringV1 | undefined): Uint8Array {
+function resolvePublicKey(signature: AttestationSignature, publicKey: Uint8Array | undefined, keyring: KnowledgeAuthorityKeyringV1 | undefined, now: number): Uint8Array {
   if (publicKey) {
     if (publicKey.length !== 32) throw new CompositionError('ATTESTATION_KEY_MISMATCH', 'Ed25519 public keys are 32 bytes.', 'publicKey');
     return publicKey;
   }
   if (!keyring) throw new CompositionError('ATTESTATION_KEY_MISMATCH', 'Signature verification needs a public key or keyring.', 'signature');
-  const matches = keyring.keys.filter((key) => key.principal === signature.principal && key.keyId === signature.keyId && key.algorithm === 'Ed25519' && key.publicKey.length === 32);
+  const identity = keyring.keys.filter((key) => key.principal === signature.principal && key.keyId === signature.keyId && key.algorithm === 'Ed25519' && key.publicKey.length === 32);
+  const matches = identity.filter((key) => (key.notBefore === undefined || key.notBefore <= now) && (key.notAfter === undefined || now < key.notAfter) && (key.revokedAt === undefined || now < key.revokedAt));
+  if (identity.length > 0 && matches.length === 0) {
+    throw new CompositionError('ATTESTATION_KEY_MISMATCH', 'Keyring key is outside its validity window.', 'signature.keyId');
+  }
   if (matches.length !== 1) throw new CompositionError('ATTESTATION_KEY_MISMATCH', 'Keyring does not contain exactly one matching Ed25519 key.', 'signature.keyId');
   return matches[0].publicKey;
 }

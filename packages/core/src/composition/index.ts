@@ -24,6 +24,7 @@ export {
 export { COMPOSITION_CODES, CompositionError } from './errors.js';
 export type { CompositionCode } from './errors.js';
 export {
+  assertCompositionRoot,
   compositionFileSetRoot,
   createCompositionRecord,
   parseCompositionRecord,

@@ -6,9 +6,14 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { buildPack, createKnowledgeImageV5 } from '../dist/index.js';
 import {
+  assertCompositionRoot,
+  createCompositionAttestation,
   createCompositionRecord,
   openComposedSession,
   queryComposedSession,
+  verifyCompositionAttestation,
+  verifyCompositionRecord,
+  withCompositionSignature,
 } from '../dist/composition/index.js';
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -74,6 +79,76 @@ test('composed query keeps each member plan and can require image policy', async
     () => queryComposedSession(session, { eql: 'FROM chunk SEARCH "billing" LIMIT 5', requirePolicy: true, principal: 'local' }),
     (error) => error.code === 'COMPOSITION_POLICY_INVALID',
   );
+});
+
+test('attestation rejects a stale composition root, an inactive key, and a nested host without its own bytes', async () => {
+  const encoder = new TextEncoder();
+  const image = createKnowledgeImageV5({
+    actor: 'composition-root',
+    sequence: 1,
+    objects: [{ kind: 'chunk', bytes: encoder.encode('root check'), meta: { source: 'root.txt' } }],
+  });
+  const other = createKnowledgeImageV5({
+    actor: 'composition-other',
+    sequence: 1,
+    objects: [{ kind: 'chunk', bytes: encoder.encode('other image'), meta: { source: 'other.txt' } }],
+  });
+  const created = createCompositionRecord({
+    availability: 'material',
+    members: [{ alias: 'image', kind: 'v5-image', bytes: image.bytes }],
+  });
+  const stale = { ...created.record, availability: 'digest' };
+  assert.throws(
+    () => createCompositionAttestation({ record: stale, statement: 'cited', subject: { kind: 'composition', compositionRoot: stale.compositionRoot } }),
+    (error) => error.code === 'COMPOSITION_ROOT_MISMATCH',
+  );
+  assert.equal(assertCompositionRoot(created.record).compositionRoot, created.compositionRoot);
+  const cited = createCompositionAttestation({
+    record: created.record,
+    statement: 'cited',
+    subject: { kind: 'composition', compositionRoot: created.compositionRoot },
+  });
+  const signed = withCompositionSignature(cited.attestation, {
+    principal: 'local',
+    keyId: 'key-1',
+    issuedAt: 10,
+    expiresAt: 50,
+    signature: new Uint8Array(64),
+  });
+  const publicKey = new Uint8Array(32);
+  const revoked = await verifyCompositionAttestation(signed, {
+    now: 20,
+    keyring: { version: 1, sequence: 0, rotations: [], keys: [{ version: 1, principal: 'local', keyId: 'key-1', algorithm: 'Ed25519', publicKey, revokedAt: 15 }] },
+    verifySignature: () => true,
+  });
+  assert.equal(revoked.ok, false);
+  assert.equal(revoked.code, 'ATTESTATION_KEY_MISMATCH');
+  const active = await verifyCompositionAttestation(signed, {
+    now: 20,
+    keyring: { version: 1, sequence: 0, rotations: [], keys: [{ version: 1, principal: 'local', keyId: 'key-1', algorithm: 'Ed25519', publicKey }] },
+    verifySignature: () => true,
+  });
+  assert.equal(active.ok, true);
+  assert.equal(active.signature, 'verified');
+  const child = createCompositionRecord({
+    availability: 'material',
+    host: { kind: 'v5-image', bytes: image.bytes },
+    members: [{ alias: 'note', kind: 'v5-image', bytes: other.bytes }],
+  });
+  const parent = createCompositionRecord({
+    availability: 'material',
+    members: [{ alias: 'inner', kind: 'composition', record: child.record }],
+  });
+  const missingHost = verifyCompositionRecord(parent.record, {
+    members: { inner: { record: child.record, members: { note: { bytes: other.bytes } } } },
+  });
+  assert.equal(missingHost.ok, false);
+  assert.equal(missingHost.code, 'COMPOSITION_MEMBER_MISSING');
+  assert.equal(missingHost.path, 'host');
+  const nested = verifyCompositionRecord(parent.record, {
+    members: { inner: { record: child.record, hostBytes: image.bytes, members: { note: { bytes: other.bytes } } } },
+  });
+  assert.equal(nested.ok, true);
 });
 
 test('composition conformance stays locked', () => {

@@ -9,6 +9,7 @@ const cliReleaseVersion = '6.1.0';
 const reflexReleaseVersion = '0.2.0';
 const platformVersion = '5.5.1';
 const coreRange = '^6.0.0';
+const cliCoreRange = '^6.1.0';
 
 function readJson(relativePath) {
   return JSON.parse(readFileSync(path.join(root, relativePath), 'utf8'));
@@ -72,9 +73,10 @@ for (const relativePath of npmPackages) {
   ]) {
     for (const [name, range] of Object.entries(pkg[dependencyGroup] ?? {})) {
       if (name.startsWith('@knolo/')) {
+        const expected = relativePath === 'packages/cli/package.json' && name === '@knolo/core' ? cliCoreRange : coreRange;
         assert.equal(
           range,
-          coreRange,
+          expected,
           `${relativePath} has stale ${name} range.`
         );
       }
