@@ -1,6 +1,6 @@
 # Composition conformance v1
 
-Sixteen offline vectors for composition records, excerpts, attestations, and one KAR byte-equality check.
+Sixteen offline vectors for composition records, excerpts, attestations, and one KAR byte-equality check on the 6.1.0 tree. A stale composition root, a missing nested host, an excerpt that is not in its parent, and a keyring key outside its validity window fail closed. Those checks do not change the locked roots in `expected.json`.
 
 ```bash
 node conformance/composition/v1/run.mjs

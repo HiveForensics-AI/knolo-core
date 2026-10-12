@@ -1,10 +1,11 @@
 # Knolo V5-compatible application template
 
-This generated app uses `@knolo/core` 5.x with the V4-compatible retrieval path
-as its default application workflow. The V5 foundation is available beside the
-unchanged retrieval path; use the CLI’s inspect/verify commands for V4
-artifacts and `knolo v5 info`, `knolo v5 health`, or `knolo v5 studio` for
-read-only V5 Knowledge Images.
+This generated app depends on `@knolo/core` `^6.0.0` and `@knolo/cli` `^6.0.0`.
+The default application workflow is the V4-compatible retrieval path. The V5
+foundation is available beside that path. Use the CLI’s inspect and verify
+commands for V4 artifacts, and `knolo v5 info`, `knolo v5 health`, or
+`knolo v5 studio` for read-only V5 Knowledge Images. Composition is available
+from `@knolo/core/composition` once `@knolo/core` resolves to `6.1.0`.
 
 ```bash
 npm install

@@ -11,9 +11,13 @@ decompress` restores ordinary required segments. VQF preserves logical roots;
 the format is still draft and compressed object/event images require a VQF-aware
 reader.
 
-`knolo compose` and `knolo attest` cite local Knowledge Images and write an
-attestation sidecar. They do not fetch Hub. `used` means a query or evaluation
-ran. Hub `attested: true` is a listing flag, not that attestation.
+`knolo compose`, `knolo attest`, and `knolo verify-attestation` cite local
+Knowledge Images and write an attestation sidecar. `@knolo/cli` `6.1.0`
+depends on `@knolo/core` `^6.1.0`. They do not fetch Hub. Verification
+recomputes `compositionRoot` and checks bundled excerpt bytes. A keyring key
+must fall inside `notBefore`, `notAfter`, and `revokedAt`. `used` means a
+query or evaluation ran. It does not mean `SATISFIED`, and it does not mean a
+claim is true or false. Hub `attested: true` is a listing flag.
 
 The official CLI for building `.knolo` knowledge packs.
 
@@ -271,8 +275,9 @@ This ensures:
 ## 🗺 Roadmap
 
 The active roadmap is maintained in [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
-The current release focuses on V5 verification, migration, diagnostics, and
-read-only Studio management while preserving the V4 CLI behavior.
+The current release is `6.1.0`. It preserves the V4 CLI, keeps V5 verification,
+migration, diagnostics, and read-only Studio management, and adds offline
+composition and attestation.
 
 ---
 

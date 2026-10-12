@@ -1,7 +1,8 @@
 # Fixture Regeneration
 
-These fixtures cover the legacy Python compatibility profile. V5 byte and root
-fixtures live under [`../../../../conformance/v5/`](../../../../conformance/v5/);
+These fixtures cover the legacy Python compatibility profile. Python stays
+`5.5.1` and does not implement KAR or composition. V5 byte and root fixtures
+live under [`../../../../conformance/v5/`](../../../../conformance/v5/);
 the implementation plan is [`../../../../docs/ROADMAP.md`](../../../../docs/ROADMAP.md).
 
 `simple.knolo` is the committed binary fixture used by the Python tests.

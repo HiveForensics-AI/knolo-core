@@ -58,8 +58,10 @@ normative implementation contracts are the KIPs under `../spec/`.
 The current product line in this repository is Knolo 6.1.0. V6 adds KAR on
 the V5 Knowledge Image: deterministic images, verification, migration,
 bounded runtime features, diagnostics, and a read-only Studio management
-snapshot remain. 6.1.0 adds offline composition and attestation. V4 retrieval
-APIs remain compatible. Rust, Python, and ICP stay 5.5.1 and do not implement
-KAR or composition. Bundled Domain Packs are `review-required`. Networking,
+snapshot remain. 6.1.0 adds offline composition and attestation.
+`@knolo/cli` depends on `@knolo/core` `^6.1.0`. The other packages that
+depend on `@knolo/core` stay at `^6.0.0`. V4 retrieval APIs remain compatible.
+Rust, Python, and ICP stay 5.5.1 and do not implement KAR or composition.
+Bundled Domain Packs are `review-required`. Networking,
 credentials, model execution, external side effects, and UI presentation
 remain host responsibilities.

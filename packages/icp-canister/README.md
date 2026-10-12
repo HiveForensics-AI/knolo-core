@@ -12,6 +12,7 @@ pack information queries, and lexical search over the mounted pack.
 The native V5 Knowledge Image verifier and migration APIs are provided by the
 [`knolo-core-rust`](https://crates.io/crates/knolo-core-rust) crate. The ICP
 canister will consume the V5 image contract in a subsequent adapter upgrade.
+This crate stays `5.5.1`. It does not implement KAR, coverage, or composition.
 
 ## Candid interface
 

@@ -73,7 +73,10 @@ for (const relativePath of npmPackages) {
   ]) {
     for (const [name, range] of Object.entries(pkg[dependencyGroup] ?? {})) {
       if (name.startsWith('@knolo/')) {
-        const expected = relativePath === 'packages/cli/package.json' && name === '@knolo/core' ? cliCoreRange : coreRange;
+        const expected =
+          relativePath === 'packages/cli/package.json' && name === '@knolo/core'
+            ? cliCoreRange
+            : coreRange;
         assert.equal(
           range,
           expected,

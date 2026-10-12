@@ -1,6 +1,6 @@
 # KAR coverage vectors
 
-Twelve hand-authored vectors for the evidence gap report. They run on V5 Knowledge Images through `@knolo/core/kar`. They do not replace [`conformance/kar/v1`](../v1/README.md), and they do not change `kar-1-research-1`.
+Twelve hand-authored vectors for the evidence gap report on the 6.1.0 tree. They run on V5 Knowledge Images through `@knolo/core/kar`. They do not replace [`conformance/kar/v1`](../v1/README.md), and they do not change `kar-1-research-1`. `CoverageRoot` is not an input to `KARRoot`. Composition does not change these vectors.
 
 ```bash
 npm run build --workspace @knolo/core

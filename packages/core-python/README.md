@@ -4,7 +4,8 @@
 lexical object queries, and read-only VQF-1 required object/event decoding,
 with the existing V1–V3 `.knolo` reader/query APIs preserved for compatibility.
 Python does not implement V5 mutation, coordination, Studio, network
-transport, or model execution.
+transport, or model execution. This package stays `5.5.1`. It does not
+implement KAR, coverage, or composition.
 
 The staged cross-runtime plan is [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
 

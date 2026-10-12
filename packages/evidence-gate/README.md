@@ -55,5 +55,6 @@ evidence-gate check --image knowledge.v5 --request request.json --out result.jso
 evidence-gate explain --image knowledge.v5 --request request.json --result result.json
 ```
 
-This package is an additive V6 workstream. It does not change `@knolo/core`
-V5 container bytes, roots, or receipt contracts.
+This package stays `0.1.0` and depends on `@knolo/core` `^6.0.0`. It does not
+implement composition, and it does not change `@knolo/core` V5 container bytes,
+roots, or receipt contracts.

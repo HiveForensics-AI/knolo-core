@@ -2,7 +2,7 @@
 
 A hand-authored procedure with two questions. One evidence requirement is met. The other is a gap because the committed graph has no permit token.
 
-This is not a completeness claim. `met` means the declared requirements were satisfied. It does not prove the proposition. `gap` means those requirements were not satisfied. It does not mean the proposition is false. Bundled Domain Packs stay `review-required` in [`domains/v6-catalog.json`](../../domains/v6-catalog.json). This example does not accept producer proposals.
+This is not a completeness claim. `met` means the declared requirements were satisfied. It does not prove the proposition. `gap` means those requirements were not satisfied. It does not mean the proposition is false. `CoverageRoot` is not an input to `KARRoot`. Composition does not change either root. Bundled Domain Packs stay `review-required` in [`domains/v6-catalog.json`](../../domains/v6-catalog.json). This example does not accept producer proposals.
 
 ```bash
 npm run build --workspace @knolo/core

@@ -1,6 +1,6 @@
 # KAR public conformance v1
 
-Compact vectors for the production TypeScript API. They cover support, opposition, qualification, temporal applicability, authority, a supplied anchor, abstention, a search bound, a closure bound, certificate tamper, and dossier-language tamper.
+Compact vectors for the production TypeScript API on the 6.1.0 tree. They cover support, opposition, qualification, temporal applicability, authority, a supplied anchor, abstention, a search bound, a closure bound, certificate tamper, and dossier-language tamper. Composition has its own vectors and does not change these results.
 
 ```bash
 npm run build --workspace @knolo/core

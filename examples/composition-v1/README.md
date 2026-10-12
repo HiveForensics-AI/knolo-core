@@ -17,4 +17,4 @@ knolo compose create --members examples/composition-v1/members.json --host examp
 knolo compose verify /tmp/composition-demo
 ```
 
-`used` means the evaluation ran. Hub `attested: true` is unrelated.
+`used` means the evaluation ran. It does not mean `SATISFIED`. Hub `attested: true` is a listing flag. `compose verify` checks member bytes. A stale `compositionRoot`, a missing nested host image, or an excerpt that is not in its parent fails closed.
