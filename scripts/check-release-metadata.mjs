@@ -4,8 +4,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const releaseVersion = '6.0.0';
-const cliReleaseVersion = '6.0.0';
+const releaseVersion = '6.1.0';
+const cliReleaseVersion = '6.1.0';
 const reflexReleaseVersion = '0.2.0';
 const platformVersion = '5.5.1';
 const coreRange = '^6.0.0';

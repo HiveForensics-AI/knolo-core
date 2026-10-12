@@ -17,11 +17,17 @@ const publicKarPath = fileURLToPath(
 const publicAuthoringPath = fileURLToPath(
   new URL('../dist/kar/authoring/index.js', import.meta.url)
 );
+const compositionIndexPath = fileURLToPath(
+  new URL('../dist/composition/index.js', import.meta.url)
+);
+const rootSourcePath = fileURLToPath(new URL('../src/index.ts', import.meta.url));
 const runtimeBundle = await readFile(distIndexPath, 'utf8');
 const karBundle = await readFile(karIndexPath, 'utf8');
 const authoringBundle = await readFile(authoringIndexPath, 'utf8');
 const publicKarBundle = await readFile(publicKarPath, 'utf8');
 const publicAuthoringBundle = await readFile(publicAuthoringPath, 'utf8');
+const compositionBundle = await readFile(compositionIndexPath, 'utf8');
+const rootSource = await readFile(rootSourcePath, 'utf8');
 
 const forbidden = ['node:fs', 'fs/promises', 'node:path'];
 for (const token of forbidden) {
@@ -79,5 +85,18 @@ for (const token of karForbidden) {
     `CEG authoring entry must not include Node stdlib reference: ${token}`
   );
 }
+
+for (const token of ['node:fs', 'fs/promises', 'node:path', 'node:crypto', '/authoring']) {
+  assert.equal(
+    compositionBundle.includes(token),
+    false,
+    `Composition entry must not include ${token}`
+  );
+}
+assert.equal(runtimeBundle.includes('createCompositionRecord'), false, 'Root runtime entry must not export composition');
+assert.equal(runtimeBundle.includes('composition-record-1'), false, 'Root runtime entry must not name composition records');
+assert.equal(rootSource.includes('createCompositionRecord'), false, 'Root source entry must not export composition');
+assert.equal(rootSource.includes('composition-record-1'), false, 'Root source entry must not name composition records');
+assert.equal(publicKarBundle.includes('composition-record-1'), false, 'Public KAR entry must not name composition records');
 
 console.log('Runtime bundle contains no Node stdlib specifiers.');

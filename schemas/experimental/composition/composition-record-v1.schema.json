@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schema/experimental/composition/composition-record-v1.schema.json",
+  "title": "Composition record v1",
+  "description": "Sidecar that cites Knowledge Images, packs, KAR graphs, Domain Packs, excerpts, and nested compositions. compositionRoot is stored beside the body and is not part of its own preimage. It is not a V5 commit view and it does not change stateRoot.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "compositionRoot", "host", "availability", "policy", "members"],
+  "properties": {
+    "format": { "const": "composition-record-1" },
+    "version": { "const": 1 },
+    "compositionRoot": { "$ref": "#/$defs/digest" },
+    "host": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": { "kind": { "const": "none" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "stateRoot", "objectRoot", "commitDigest"],
+          "properties": {
+            "kind": { "const": "v5-image" },
+            "stateRoot": { "$ref": "#/$defs/digest" },
+            "objectRoot": { "$ref": "#/$defs/digest" },
+            "commitDigest": { "$ref": "#/$defs/digest" },
+            "knowledgeRoot": { "$ref": "#/$defs/digest" }
+          }
+        }
+      ]
+    },
+    "availability": { "enum": ["material", "digest"] },
+    "policy": { "$ref": "#/$defs/policy" },
+    "members": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/member" }
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+    "token": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["default", "allow", "deny"],
+      "properties": {
+        "default": { "enum": ["allow", "deny"] },
+        "allow": { "type": "array", "items": { "$ref": "#/$defs/policyEntry" } },
+        "deny": { "type": "array", "items": { "$ref": "#/$defs/policyEntry" } }
+      }
+    },
+    "policyEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alias", "kind"],
+      "properties": {
+        "alias": { "$ref": "#/$defs/token" },
+        "kind": { "$ref": "#/$defs/kind" }
+      }
+    },
+    "kind": { "enum": ["v5-image", "v4-pack", "kar-sidecar", "domain-pack", "excerpt", "composition"] },
+    "member": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["alias", "kind", "role", "stateRoot", "objectRoot", "commitDigest", "sha256"],
+          "properties": {
+            "alias": { "$ref": "#/$defs/token" },
+            "kind": { "const": "v5-image" },
+            "role": { "const": "dependency" },
+            "stateRoot": { "$ref": "#/$defs/digest" },
+            "objectRoot": { "$ref": "#/$defs/digest" },
+            "commitDigest": { "$ref": "#/$defs/digest" },
+            "sha256": { "$ref": "#/$defs/digest" },
+            "knowledgeRoot": { "$ref": "#/$defs/digest" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["alias", "kind", "role", "packDigest", "manifestDigest", "sha256"],
+          "properties": {
+            "alias": { "$ref": "#/$defs/token" },
+            "kind": { "const": "v4-pack" },
+            "role": { "const": "dependency" },
+            "packDigest": { "$ref": "#/$defs/digest" },
+            "manifestDigest": { "$ref": "#/$defs/digest" },
+            "sha256": { "$ref": "#/$defs/digest" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["alias", "kind", "role", "bindsTo", "semanticRoot", "knowledgeRoot", "sha256"],
+          "properties": {
+            "alias": { "$ref": "#/$defs/token" },
+            "kind": { "const": "kar-sidecar" },
+            "role": { "const": "evidence" },
+            "bindsTo": { "$ref": "#/$defs/token" },
+            "semanticRoot": { "$ref": "#/$defs/digest" },
+            "knowledgeRoot": { "$ref": "#/$defs/digest" },
+            "sha256": { "$ref": "#/$defs/digest" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["alias", "kind", "role", "id", "version", "root", "filesRoot"],
+          "properties": {
+            "alias": { "$ref": "#/$defs/token" },
+            "kind": { "const": "domain-pack" },
+            "role": { "const": "vocabulary" },
+            "id": { "$ref": "#/$defs/token" },
+            "version": { "$ref": "#/$defs/token" },
+            "root": { "$ref": "#/$defs/digest" },
+            "filesRoot": { "$ref": "#/$defs/digest" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["alias", "kind", "role", "excerptRoot", "parentStateRoot", "parentObjectRoot", "parentCommitDigest", "inclusion"],
+          "properties": {
+            "alias": { "$ref": "#/$defs/token" },
+            "kind": { "const": "excerpt" },
+            "role": { "const": "excerpt" },
+            "excerptRoot": { "$ref": "#/$defs/digest" },
+            "parentStateRoot": { "$ref": "#/$defs/digest" },
+            "parentObjectRoot": { "$ref": "#/$defs/digest" },
+            "parentCommitDigest": { "$ref": "#/$defs/digest" },
+            "inclusion": { "enum": ["included", "digest-bound"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["alias", "kind", "role", "compositionRoot"],
+          "properties": {
+            "alias": { "$ref": "#/$defs/token" },
+            "kind": { "const": "composition" },
+            "role": { "const": "nested" },
+            "compositionRoot": { "$ref": "#/$defs/digest" }
+          }
+        }
+      ]
+    }
+  }
+}

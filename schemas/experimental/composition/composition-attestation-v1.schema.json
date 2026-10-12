@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schema/experimental/composition/composition-attestation-v1.schema.json",
+  "title": "Composition attestation v1",
+  "description": "Content attestation over a composition root. statement used means a query or KAR evaluation ran. It does not mean SATISFIED, and it does not mean a claim is true or false. The signature envelope is not an input to attestationRoot.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "attestationRoot", "compositionRoot", "subject", "statement"],
+  "properties": {
+    "format": { "const": "composition-attestation-1" },
+    "version": { "const": 1 },
+    "attestationRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+    "compositionRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+    "statement": { "enum": ["mount", "used", "cited"] },
+    "subject": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "compositionRoot"],
+          "properties": {
+            "kind": { "const": "composition" },
+            "compositionRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "stateRoot", "objectRoot", "commitDigest"],
+          "properties": {
+            "kind": { "const": "v5-image" },
+            "stateRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+            "objectRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+            "commitDigest": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "karRoot", "knowledgeRoot", "stateRoot"],
+          "properties": {
+            "kind": { "const": "kar-result" },
+            "karRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+            "knowledgeRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+            "stateRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "excerptRoot"],
+          "properties": {
+            "kind": { "const": "excerpt" },
+            "excerptRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" }
+          }
+        }
+      ]
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "version", "attestationRoot", "algorithm", "principal", "keyId", "issuedAt", "expiresAt", "signature", "signatureRoot"],
+      "properties": {
+        "format": { "const": "composition-signature-1" },
+        "version": { "const": 1 },
+        "attestationRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+        "algorithm": { "const": "Ed25519" },
+        "principal": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "keyId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "keyringRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+        "issuedAt": { "type": "integer", "minimum": 0 },
+        "expiresAt": { "type": "integer", "minimum": 0 },
+        "signature": { "type": "string", "minLength": 1 },
+        "signatureRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" }
+      }
+    }
+  }
+}

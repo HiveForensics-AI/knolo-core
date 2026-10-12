@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schema/experimental/composition/composition-bundle-v1.schema.json",
+  "title": "Composition bundle v1",
+  "description": "Directory index for a composition sidecar. File paths and file hashes are not inputs to compositionRoot.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "compositionRoot", "files"],
+  "properties": {
+    "format": { "const": "composition-bundle-1" },
+    "version": { "const": 1 },
+    "compositionRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+    "host": { "$ref": "#/$defs/file" },
+    "members": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["alias", "kind", "path"],
+        "properties": {
+          "alias": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "kind": { "enum": ["v5-image", "v4-pack", "kar-sidecar", "domain-pack", "excerpt", "composition"] },
+          "path": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "sha256": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" }
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "maxItems": 256,
+      "items": { "$ref": "#/$defs/file" }
+    }
+  },
+  "$defs": {
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "sha256": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" }
+      }
+    }
+  }
+}
