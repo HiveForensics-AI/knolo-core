@@ -31,6 +31,10 @@ is the canonical VQF encoder; Rust and Python consume the shared compressed
 fixtures. VQF lexical postings and the optional query-index sidecar remain
 provisional and are not the default V5 serialization path.
 
+Composition and attestation are a separate entry, `@knolo/core/composition`.
+A composition record cites images, packs, and KAR sidecars. It does not change
+`stateRoot` or `KARRoot`, and the root `@knolo/core` entry does not load it.
+
 ```ts
 import {
   migrateV4ToV5,
