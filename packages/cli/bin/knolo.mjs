@@ -73,6 +73,9 @@ const SUBCOMMANDS = new Set([
   'semantic:inspect',
   'semantic:validate',
   'kar',
+  'compose',
+  'attest',
+  'verify-attestation',
 ]);
 const ICP_SUBCOMMANDS = new Set([
   'init',
@@ -168,6 +171,8 @@ Commands:
   dev                     Watch config/sources and rebuild on change
   v5                      Inspect, compress, decompress, and health-check a V5 Knowledge Image
   kar                     KAR evidence-set retrieval over a Committed Evidence Graph
+  compose                 Compose Knowledge Images, packs, and attestations offline
+  attest                  Create or verify a composition attestation
   icp                     Scaffold and operate an ICP-native knowledge canister
 
 Global options:
@@ -204,6 +209,9 @@ function printCommandHelp(command) {
     dev: 'Usage: knolo dev',
     v5: 'Usage: knolo v5 <info|health|studio|query|compress|decompress> <image.v5> [--out <file>] [--mode fast|balanced|max] [--attach-index]\n\nFor query: knolo v5 query <image.v5> <EQL> [--json] [--receipt <file>].',
     kar: 'Usage: knolo kar <evaluate|verify|explain|inspect|graph|package|produce|domain|dossier|coverage|benchmark|demo|conformance> [options]\n\nKnolo Adversarial Retrieval. Semantics are frozen at kar-1-research-1.\n\n  knolo kar evaluate --image knowledge.knolo --graph knowledge.kar.json --plan plan.json --query "..."\n  knolo kar verify   --image knowledge.knolo --graph knowledge.kar.json --plan plan.json --query "..." --result result.json\n  knolo kar explain  --result result.json\n  knolo kar inspect  --image knowledge.knolo --graph knowledge.kar.json [--plan plan.json]\n  knolo kar graph build --image knowledge.knolo --source knowledge.ceg.yaml --out knowledge.kar.json\n  knolo kar package --image knowledge.knolo --graph knowledge.kar.json --out dist/my-knowledge-kar/\n  knolo kar produce rules --image knowledge.knolo --domain domains/contracts-v4 --out proposals.json\n  knolo kar domain validate domains/contracts-v4\n  knolo kar dossier build --image knowledge.knolo --graph knowledge.kar.json --plan plan.json --query "..." --out dossier/\n  knolo kar dossier verify dossier/\n  knolo kar coverage build --image knowledge.knolo --graph knowledge.kar.json --plan plan.json --query "..." --out coverage/\n  knolo kar coverage verify coverage/\n  knolo kar benchmark annotate --packet packet.json --decisions decisions.json --out labels.json --role human --reviewer-id <id>\n  knolo kar demo\n  knolo kar conformance\n\n--json prints the machine-readable result. verify exits non-zero when the certificate does not match. Abstention is a result and exits 0. graph and package author a Committed Evidence Graph without changing retrieval. produce proposes CEG Source and does not write committed bytes. dossier packages one evaluation and fails closed when committed fields change. coverage reports met requirements, gaps, and plans that did not decide. A gap is not a false claim. benchmark labels gold without showing producer output. demo and conformance run from a knolo-core checkout.',
+    compose: 'Usage: knolo compose <create|verify|excerpt|query> [options]\n\nOffline composition of Knowledge Images, packs, KAR sidecars, Domain Packs, and bounded excerpts.\n\n  knolo compose create --members members.json --out composition/ [--host knowledge.knolo] [--availability material|digest] [--policy policy.json]\n  knolo compose verify composition/ [--require-material] [--member alias=path]\n  knolo compose excerpt --image knowledge.knolo --object <id> --out excerpt.json\n  knolo compose query --composition composition/ --eql "FROM chunk SEARCH \\"valve\\"" [--question "..."] [--json]\n\ncompositionRoot does not change a V5 state root or a KAR root. statement used means a query or evaluation ran. It does not mean SATISFIED, and it does not mean a claim is true or false. Hub attested: true is a listing flag and is not an attestation root. The CLI does not fetch Hub.',
+    attest: 'Usage: knolo attest <create|verify> [options]\n\n  knolo attest create --composition composition/composition.json --subject composition --statement mount|used|cited --out attestation.json [--sign-key key.json --principal <id> --key-id <id> --issued-at <ms> --expires-at <ms>]\n  knolo attest verify attestation.json [--composition composition.json] [--public-key key.json] [--now <ms>] [--content-only]\n\nstatement used means a query or KAR evaluation ran. It does not mean the claim is true or false. Hub attested: true is unrelated. Signing uses the supplied times. The CLI does not read the clock.',
+    'verify-attestation': 'Usage: knolo verify-attestation <attestation.json> [--composition composition.json] [--public-key key.json] [--keyring keyring.json] [--now <ms>] [--content-only]\n\nSame check as knolo attest verify. A bad signature exits 1 even when the content root matches. --content-only checks the content root and ignores the envelope. statement used is not a truth verdict. Hub attested: true is unrelated.',
     icp: 'Usage: knolo icp <command> [options]',
     'semantic:index':
       'Usage: knolo semantic:index --pack <path> [--out <path>] [--model <id>] [--endpoint <url>]',
@@ -1852,6 +1860,10 @@ async function main() {
       if (command === 'kar') {
         const { runKarCli } = await import('./kar.mjs');
         return runKarCli(commandArgs);
+      }
+      if (command === 'compose' || command === 'attest' || command === 'verify-attestation') {
+        const { runComposeCli } = await import('./compose.mjs');
+        return runComposeCli(command, commandArgs);
       }
       if (command === 'init') return await cmdInit();
       if (command === 'add') return await cmdAdd(commandArgs);
