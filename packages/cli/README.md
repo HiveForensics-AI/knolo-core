@@ -11,6 +11,10 @@ decompress` restores ordinary required segments. VQF preserves logical roots;
 the format is still draft and compressed object/event images require a VQF-aware
 reader.
 
+`knolo compose` and `knolo attest` cite local Knowledge Images and write an
+attestation sidecar. They do not fetch Hub. `used` means a query or evaluation
+ran. Hub `attested: true` is a listing flag, not that attestation.
+
 The official CLI for building `.knolo` knowledge packs.
 
 It indexes structured content and produces a deterministic, local-first knowledge bundle for use with `@knolo/core`.
