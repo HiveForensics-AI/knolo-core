@@ -41,6 +41,10 @@ operational guides for Knolo.
   later grounding and memory modes.
 - [`@knolo/openclaw`](../packages/openclaw/README.md) — local V5 mounts,
   policy-aware retrieval, query records, and the native OpenClaw tool plugin.
+- [`@knolo/mcp`](../packages/mcp/README.md) — the same read-only V5 tools over
+  MCP stdio. Pins, policy checks, and receipts come from
+  [`@knolo/tools`](../packages/knolo-tools/README.md). Caller identity comes
+  from the server config.
 - [`@knolo/evidence-gate`](../packages/evidence-gate/README.md) — the current
   TypeScript vertical slice for deterministic claim-level verification.
 - [KAR](kar/README.md) — minimum evidence-set retrieval over a Committed

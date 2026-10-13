@@ -15,6 +15,12 @@ The package requires an OpenClaw host compatible with its declared plugin API
 range and Node 24.16 or newer. The plugin never downloads images during an
 agent turn; install and pin Hub artifacts before configuring a mount.
 
+The host-agnostic pin, policy, and receipt service lives in
+[`@knolo/tools`](../knolo-tools/README.md). This package re-exports it for the
+OpenClaw plugin. The ClawHub release `@knolo/openclaw@0.1.0` still contains
+that service directly and was not republished for this split. Its `@knolo/core`
+range remains `^5.5.1`.
+
 ## Published package
 
 The current release is published on ClawHub as `@knolo/openclaw` version
