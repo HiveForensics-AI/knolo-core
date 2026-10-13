@@ -1,0 +1,56 @@
+{
+  "name": "@knolo/mcp",
+  "version": "0.1.0",
+  "mcpName": "io.github.HiveForensics-AI/knolo",
+  "type": "module",
+  "description": "Verified, local-first Knolo Knowledge Image tools over MCP.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HiveForensics-AI/knolo-core.git",
+    "directory": "packages/mcp"
+  },
+  "homepage": "https://github.com/HiveForensics-AI/knolo-core#readme",
+  "bugs": {
+    "url": "https://github.com/HiveForensics-AI/knolo-core/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "knolo-mcp": "./bin/knolo-mcp.mjs"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "bin",
+    "server.json",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "npm run build --workspace @knolo/tools && tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "@knolo/core": "^6.0.0",
+    "@knolo/tools": "^0.1.0",
+    "@modelcontextprotocol/server": "^2.3.1",
+    "zod": "^4.2.0"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "^2.3.1",
+    "@types/node": "^20.11.0",
+    "typescript": "^5.5.0"
+  }
+}

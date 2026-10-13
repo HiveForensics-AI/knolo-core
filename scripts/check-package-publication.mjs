@@ -51,6 +51,22 @@ const npmPackages = [
       'bin/reflex.mjs',
     ],
   },
+  {
+    name: '@knolo/tools',
+    directory: 'knolo-tools',
+    expected: ['README.md', 'dist/index.js', 'dist/index.d.ts'],
+  },
+  {
+    name: '@knolo/mcp',
+    directory: 'mcp',
+    expected: [
+      'README.md',
+      'dist/index.js',
+      'dist/index.d.ts',
+      'bin/knolo-mcp.mjs',
+      'server.json',
+    ],
+  },
 ];
 
 const rustPackages = [

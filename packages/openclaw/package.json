@@ -40,12 +40,13 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "npm run build --workspace @knolo/tools && tsc -p tsconfig.json",
     "test": "npm run build && node --test test/*.test.mjs",
     "prepublishOnly": "npm run build && npm test"
   },
   "dependencies": {
     "@knolo/core": "^5.5.1",
+    "@knolo/tools": "^0.1.0",
     "typebox": "1.3.34"
   },
   "peerDependencies": {

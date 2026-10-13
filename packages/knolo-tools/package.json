@@ -1,0 +1,45 @@
+{
+  "name": "@knolo/tools",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Host-agnostic verified Knowledge Image query, policy, and receipt service.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HiveForensics-AI/knolo-core.git",
+    "directory": "packages/knolo-tools"
+  },
+  "homepage": "https://github.com/HiveForensics-AI/knolo-core#readme",
+  "bugs": {
+    "url": "https://github.com/HiveForensics-AI/knolo-core/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@knolo/core": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.5.0"
+  }
+}
