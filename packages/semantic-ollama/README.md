@@ -16,7 +16,9 @@ const embeddings = new OllamaEmbeddingProvider({
 const vector = await embeddings.embedQuery('billing policy');
 ```
 
-The provider prefers Ollama’s current `/api/embed` endpoint and sends each
+This package is `6.1.0` and depends on `@knolo/core` `^6.0.0`. It does not
+implement KAR or composition. The provider prefers Ollama’s current `/api/embed`
+endpoint and sends each
 batch as one request with an array of inputs. It validates the response count
 and keeps every vector in a consistent dimension. Set `api: 'embeddings'` to
 force the deprecated endpoint, or leave the default `api: 'auto'` to fall back

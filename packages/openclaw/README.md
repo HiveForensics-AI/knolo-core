@@ -18,5 +18,6 @@ agent turn; install and pin Hub artifacts before configuring a mount.
 ## Published package
 
 The current release is published on ClawHub as `@knolo/openclaw` version
-`0.1.0`. It was built from the Knolo Core `main` branch at commit
-`d8a175b4375c5bb8cf7d3e8b93dbcb6233a30da1`.
+`0.1.0`. It depends on `@knolo/core` `^5.5.1` and does not implement KAR,
+coverage, or composition. It was built from the Knolo Core `main` branch at
+commit `d8a175b4375c5bb8cf7d3e8b93dbcb6233a30da1`.

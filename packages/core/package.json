@@ -1,6 +1,6 @@
 {
   "name": "@knolo/core",
-  "version": "6.0.0",
+  "version": "6.1.0",
   "type": "module",
   "description": "Deterministic, verifiable Knowledge Images, local-first retrieval, and KAR evidence-set retrieval over a Committed Evidence Graph.",
   "keywords": [
@@ -67,11 +67,17 @@
       "react-native": "./dist/kar/authoring/index.js",
       "import": "./dist/kar/authoring/index.js",
       "types": "./dist/kar/authoring/index.d.ts"
+    },
+    "./composition": {
+      "browser": "./dist/composition/index.js",
+      "react-native": "./dist/composition/index.js",
+      "import": "./dist/composition/index.js",
+      "types": "./dist/composition/index.d.ts"
     }
   },
   "sideEffects": false,
   "scripts": {
-    "build": "tsc -p tsconfig.json && node scripts/copy-kar-schemas.mjs",
+    "build": "tsc -p tsconfig.json && node scripts/copy-kar-schemas.mjs && node scripts/copy-composition-schemas.mjs",
     "prepublishOnly": "npm run build",
     "smoke": "node scripts/smoke.mjs",
     "test": "npm run build && node scripts/check-runtime-no-node.mjs && npm run build --prefix ../../research/kar-1 && node --test test/*.test.mjs && node scripts/test.mjs",

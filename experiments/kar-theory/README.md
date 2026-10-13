@@ -1,6 +1,6 @@
 # KAR theory experiment
 
-Isolated falsification harness for the Knolo Adversarial Retrieval hypothesis. It does not change `@knolo/core`, pack formats, or retrieval defaults.
+Isolated falsification harness for the Knolo Adversarial Retrieval hypothesis. It does not change `@knolo/core`, pack formats, retrieval defaults, or composition.
 
 ## Reproduce
 

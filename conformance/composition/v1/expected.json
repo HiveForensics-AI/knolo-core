@@ -1,0 +1,117 @@
+{
+  "format": "composition-conformance-v1",
+  "vectors": [
+    {
+      "id": "two-image",
+      "ok": true,
+      "code": null,
+      "compositionRoot": "sha256-4f3aec1e59bb6752ed57959f07dc3cad3402864368af62d74f57ecf73e7cac1e",
+      "status": "verified"
+    },
+    {
+      "id": "reorder",
+      "ok": true,
+      "code": null,
+      "compositionRoot": "sha256-4f3aec1e59bb6752ed57959f07dc3cad3402864368af62d74f57ecf73e7cac1e",
+      "status": "same-root"
+    },
+    {
+      "id": "digest-mismatch",
+      "ok": false,
+      "code": "COMPOSITION_DIGEST_MISMATCH",
+      "compositionRoot": "sha256-4f3aec1e59bb6752ed57959f07dc3cad3402864368af62d74f57ecf73e7cac1e",
+      "status": "failed"
+    },
+    {
+      "id": "digest-bound",
+      "ok": true,
+      "code": null,
+      "compositionRoot": "sha256-db142c308eb1cbae8040b3c4695fbbab36fccf663ebed0ff90786684d44f622f",
+      "status": "digest"
+    },
+    {
+      "id": "missing-material",
+      "ok": false,
+      "code": "COMPOSITION_MEMBER_MISSING",
+      "compositionRoot": "sha256-db142c308eb1cbae8040b3c4695fbbab36fccf663ebed0ff90786684d44f622f",
+      "status": "failed"
+    },
+    {
+      "id": "cycle",
+      "ok": false,
+      "code": "COMPOSITION_CYCLE",
+      "compositionRoot": "sha256-06fbaae63897fbd087c66771b9ed87f3869ae51268eba45369320573c84e0f51",
+      "status": "failed"
+    },
+    {
+      "id": "depth",
+      "ok": true,
+      "code": "COMPOSITION_DEPTH_EXCEEDED",
+      "compositionRoot": "sha256-eba26672937430f03204c2fd063b15931ebc50bbd0906d4cea59601475efb6e0",
+      "status": "depth-8"
+    },
+    {
+      "id": "duplicate-alias",
+      "ok": false,
+      "code": "COMPOSITION_DUPLICATE",
+      "compositionRoot": null,
+      "status": "no-root"
+    },
+    {
+      "id": "policy-deny",
+      "ok": false,
+      "code": "COMPOSITION_POLICY_DENIED",
+      "compositionRoot": null,
+      "status": "no-root"
+    },
+    {
+      "id": "excerpt-included",
+      "ok": true,
+      "code": "EXCERPT_INCLUSION_MISMATCH",
+      "compositionRoot": "sha256-a4c61e5d113a0c8558e5fed4390121d9d486ad08e053dadb5e58835ca077983c",
+      "status": "included"
+    },
+    {
+      "id": "excerpt-upgrade",
+      "ok": true,
+      "code": "EXCERPT_INCLUSION_MISMATCH",
+      "compositionRoot": "sha256-71aac66bf9afa2576fedb2d3f97f126c7474251a229d58abc009679b39e978e5",
+      "status": "not-upgraded"
+    },
+    {
+      "id": "attestation-cited",
+      "ok": true,
+      "code": null,
+      "compositionRoot": "sha256-b22d89cb0f2ac3c880572d7321912a8202fa445ecaa1ea8f26ecb69c1fc755f2",
+      "status": "absent"
+    },
+    {
+      "id": "signature-bad",
+      "ok": false,
+      "code": "ATTESTATION_SIGNATURE_INVALID",
+      "compositionRoot": "sha256-b22d89cb0f2ac3c880572d7321912a8202fa445ecaa1ea8f26ecb69c1fc755f2",
+      "status": "ATTESTATION_EXPIRED"
+    },
+    {
+      "id": "kar-byte-equal",
+      "ok": true,
+      "code": null,
+      "compositionRoot": "sha256-0663f15445fc73227064802506c843ffb98ba463acf2b89efd18fbf43647b0ba",
+      "status": "distinct-roots"
+    },
+    {
+      "id": "commerce-ignored",
+      "ok": true,
+      "code": "COMPOSITION_INVALID",
+      "compositionRoot": "sha256-4f3aec1e59bb6752ed57959f07dc3cad3402864368af62d74f57ecf73e7cac1e",
+      "status": "ignored"
+    },
+    {
+      "id": "host-untouched",
+      "ok": true,
+      "code": null,
+      "compositionRoot": "sha256-f6867b57a4bb434dfbe764dde6a0ded13a2bc03af3576c8ae996588b1a665a41",
+      "status": "sha256-8df049edf0f4aa8fbef7fef8a0087c28128dfdc046180006c4f8d0e8c3b54426"
+    }
+  ]
+}

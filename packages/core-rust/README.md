@@ -4,7 +4,8 @@
 read-only Knowledge Image verifier, deterministic migration foundation, and
 VQF-1 required object/event readers. The TypeScript runtime remains the V4
 retrieval reference and canonical VQF encoder; this crate is a read-only V5
-byte-contract implementation.
+byte-contract implementation. The crate stays `5.5.1`. It does not implement
+KAR, coverage, or composition.
 
 The shared implementation roadmap is [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
 

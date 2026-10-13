@@ -64,7 +64,7 @@ The worked product examples are [`examples/kar-v6`](../../examples/kar-v6/README
 import { createKarSession, evaluateKar, verifyKar, explainKarResult, createKarDossier, createKarCoverage } from '@knolo/core/kar';
 ```
 
-`@knolo/core` does not load this module. `@knolo/core/experimental/kar` remains operational for the V6 cycle.
+`@knolo/core` does not load this module. `@knolo/core/experimental/kar` remains operational for the V6 cycle. Composition is a separate entry, `@knolo/core/composition`. Citing a KAR result does not change `KARRoot`. `used` on an attestation is not `SATISFIED`.
 
 ## Semantic production validation
 

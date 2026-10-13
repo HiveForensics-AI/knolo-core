@@ -53,6 +53,8 @@ Tamper checks fail closed. A changed root, a changed manifest, or a changed doss
 
 Public vectors: [conformance/kar/v1](../../conformance/kar/v1/README.md) and [conformance/kar/coverage-v1](../../conformance/kar/coverage-v1/README.md).
 
+A composition record can cite `KARRoot`. It is not an input to `KARRoot`, `KnowledgeRoot`, or `stateRoot`. `statement: used` on an attestation means an evaluation ran. See [Composition](../composition/README.md).
+
 Research oracle, including the Rust verifier:
 
 ```bash

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schema/experimental/composition/composition-commerce-v1.schema.json",
+  "title": "Composition commerce sidecar v1",
+  "description": "Optional license, price, and usage metadata. Verification ignores this file. These fields are not inputs to compositionRoot, attestationRoot, or any V5 or KAR root.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "compositionRoot"],
+  "properties": {
+    "format": { "const": "composition-commerce-1" },
+    "version": { "const": 1 },
+    "compositionRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+    "license": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "price": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["amount", "currency"],
+      "properties": {
+        "amount": { "type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$" },
+        "currency": { "type": "string", "minLength": 1, "maxLength": 16 }
+      }
+    },
+    "usage": { "type": "string", "minLength": 1, "maxLength": 256 }
+  }
+}

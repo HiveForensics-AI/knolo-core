@@ -1,8 +1,8 @@
 # 📦 `@knolo/core`
 
-**Version 4 contract:** v4 packs, analyzer profiles, deterministic retrieval
-plans, verifiable receipts, evidence spans, and TrustBench conformance are the
-current TypeScript runtime surface.
+**Package `6.1.0`.** The Version 4 contract remains the pack surface: v4
+packs, analyzer profiles, deterministic retrieval plans, verifiable receipts,
+evidence spans, and TrustBench conformance.
 
 `@knolo/core` is the **deterministic retrieval engine and pack runtime** behind Knolo.
 
@@ -30,6 +30,13 @@ preserving their logical bytes, identities, roots, and state root. TypeScript
 is the canonical VQF encoder; Rust and Python consume the shared compressed
 fixtures. VQF lexical postings and the optional query-index sidecar remain
 provisional and are not the default V5 serialization path.
+
+Composition and attestation are a separate entry, `@knolo/core/composition`.
+A composition record cites images, packs, KAR sidecars, Domain Packs, bounded
+excerpts, and nested records. It does not change `stateRoot` or `KARRoot`, and
+the root `@knolo/core` entry does not load it. Attestation checks recompute
+`compositionRoot`. A nested record uses its own host image. Excerpt checks use
+the excerpt bytes. `@knolo/cli` depends on this package at `^6.1.0`.
 
 ```ts
 import {

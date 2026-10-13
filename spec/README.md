@@ -1,7 +1,9 @@
 # Knolo V5 specifications
 
 See the [implementation roadmap](../docs/ROADMAP.md) for the current release
-scope and the next V5 delivery stages.
+scope and the next V5 delivery stages. The repository product line is Knolo
+6.1.0. These specifications remain the V5 byte contracts. Composition does
+not change them.
 
 The V5 foundation freezes the byte-level contracts before introducing
 transactions, EQL, authority, or durable agent execution.

@@ -1,0 +1,18 @@
+{
+  "format": "composition-members-1",
+  "version": 1,
+  "members": [
+    {
+      "alias": "statute",
+      "kind": "v5-image",
+      "path": "statute.knolo",
+      "knowledgeRoot": "sha256-b6db85d43666d3457292d980ddd849a3b489f69258b1d01c17b17512ef098d42"
+    },
+    {
+      "alias": "witness",
+      "kind": "kar-sidecar",
+      "path": "statute.kar.json",
+      "bindsTo": "statute"
+    }
+  ]
+}

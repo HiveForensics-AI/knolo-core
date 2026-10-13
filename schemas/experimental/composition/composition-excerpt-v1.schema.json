@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schema/experimental/composition/composition-excerpt-v1.schema.json",
+  "title": "Bounded excerpt v1",
+  "description": "A bounded citation of 1–64 object ids from one V5 Knowledge Image. The excerpt root commits id and kind only. It does not reveal the parent object list. Created excerpts are inclusion included. digest-bound is accepted only when verifying a foreign excerpt without its parent.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "excerptRoot", "parent", "inclusion", "objects"],
+  "properties": {
+    "format": { "const": "composition-excerpt-1" },
+    "version": { "const": 1 },
+    "excerptRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+    "parent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stateRoot", "objectRoot", "commitDigest"],
+      "properties": {
+        "stateRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+        "objectRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+        "commitDigest": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" }
+      }
+    },
+    "inclusion": { "enum": ["included", "digest-bound"] },
+    "objects": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+          "kind": { "enum": ["source", "chunk", "claims", "agents", "metadata"] }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schema/experimental/composition/composition-signature-v1.schema.json",
+  "title": "Composition attestation signature v1",
+  "description": "Optional Ed25519 envelope over an attestation root. issuedAt and expiresAt are caller-supplied unix milliseconds. Core does not read a clock and does not generate keys. signature bytes are not an input to attestationRoot.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "attestationRoot", "algorithm", "principal", "keyId", "issuedAt", "expiresAt", "signature", "signatureRoot"],
+  "properties": {
+    "format": { "const": "composition-signature-1" },
+    "version": { "const": 1 },
+    "attestationRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+    "algorithm": { "const": "Ed25519" },
+    "principal": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "keyId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "keyringRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+    "issuedAt": { "type": "integer", "minimum": 0 },
+    "expiresAt": { "type": "integer", "minimum": 0 },
+    "signature": { "type": "string", "minLength": 1 },
+    "signatureRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" }
+  }
+}

@@ -33,3 +33,4 @@ V6 engineering notes:
 - [Gap audit](../V6_GAP_AUDIT.md)
 - [Release readiness](../V6_RELEASE_READINESS.md)
 - [Release notes](../../releases/v6.0.0.md)
+- [6.1.0 notes](../../releases/v6.1.0.md)
