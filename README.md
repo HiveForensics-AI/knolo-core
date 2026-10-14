@@ -12,7 +12,7 @@ AI products are becoming easier to build. The hard problem is making their knowl
 
 ## Current release
 
-This tree is Knolo 6.1.0. V6 adds [KAR](docs/kar/README.md): deterministic retrieval of a minimum evidence set from a V5 Knowledge Image and a Committed Evidence Graph. 6.1.0 adds [verifiable composition](docs/composition/README.md): offline citations of images, packs, graphs, and bounded excerpts, plus attestations. Lexical retrieval, V5 images, and V4 packs stay in place.
+This tree is Knolo 6.2.0. V6 adds [KAR](docs/kar/README.md): deterministic retrieval of a minimum evidence set from a V5 Knowledge Image and a Committed Evidence Graph. 6.1.0 adds [verifiable composition](docs/composition/README.md). 6.2.0 adds [Knolo Cortex](docs/cortex/README.md): bounded evidence retrieval with a verifiable trace. The host owns any model. Verification does not mean an answer is true. Lexical retrieval, V5 images, and V4 packs stay in place.
 
 ```ts
 import {
@@ -27,9 +27,9 @@ import {
 
 The root `@knolo/core` entry does not load KAR. `@knolo/core/experimental/kar` remains a compatibility entry for this cycle. `SATISFIED` means the declared evidence requirements were met. It does not mean a claim is proven. `UNSATISFIED_EVIDENCE_REQUIREMENTS` means those requirements were not met. It does not mean the claim is false.
 
-The npm packages in this repository are `6.1.0`. `@knolo/cli` depends on `@knolo/core` `^6.1.0`. The other packages that depend on `@knolo/core` stay at `^6.0.0`. Publishing that version, and moving the npm `latest` dist-tag, is a separate step. `@knolo/reflex` stays `0.2.0`. `@knolo/evidence-gate` stays `0.1.0`. Rust, Python, and the ICP canister stay `5.5.1` and do not implement KAR or composition. The bundled contracts, policy, and operations Domain Packs are `review-required`. The local tag `v6.0.0` stays on the 6.0.0 commit.
+The npm packages in this repository are `6.2.0`. `@knolo/cli` depends on `@knolo/core` `^6.2.0`. The other packages that depend on `@knolo/core` stay at `^6.0.0`. Publishing that version, and moving the npm `latest` dist-tag, is a separate step. `@knolo/reflex` stays `0.2.0`. `@knolo/evidence-gate` stays `0.1.0`. Rust, Python, and the ICP canister stay `5.5.1` and do not implement KAR, composition, or Cortex. The bundled contracts, policy, and operations Domain Packs are `review-required`. The local tag `v6.0.0` stays on the 6.0.0 commit. The local tag `v6.1.0` stays on the 6.1.0 commit.
 
-Start with the [KAR guide](docs/kar/README.md), the [composition guide](docs/composition/README.md), the [6.1.0 release notes](docs/releases/v6.1.0.md), [`examples/kar-v6`](examples/kar-v6/README.md), [`examples/kar-coverage`](examples/kar-coverage/README.md), and [`examples/composition-v1`](examples/composition-v1/README.md).
+Start with the [KAR guide](docs/kar/README.md), the [composition guide](docs/composition/README.md), the [Cortex guide](docs/cortex/README.md), the [6.2.0 release notes](docs/releases/v6.2.0.md), [`examples/kar-v6`](examples/kar-v6/README.md), [`examples/kar-coverage`](examples/kar-coverage/README.md), and [`examples/composition-v1`](examples/composition-v1/README.md).
 
 ## The opportunity
 
@@ -372,7 +372,9 @@ V5 remains the portable image and verification layer. V6 adds KAR on that layer.
 - [Documentation index](docs/README.md)
 - [KAR](docs/kar/README.md)
 - [KAR quickstart](docs/kar/quickstart.md)
+- [Knolo 6.2.0 release notes](docs/releases/v6.2.0.md)
 - [Knolo 6.1.0 release notes](docs/releases/v6.1.0.md)
+- [Cortex](docs/cortex/README.md)
 - [Knolo 6.0.0 release notes](docs/releases/v6.0.0.md)
 - [Composition](docs/composition/README.md)
 - [V5 roadmap](docs/ROADMAP.md)
@@ -391,11 +393,11 @@ V5 remains the portable image and verification layer. V6 adds KAR on that layer.
 ## Repository layout
 
 ```text
-packages/core/       TypeScript runtime, including `@knolo/core/kar` and `@knolo/core/composition`
-packages/core-rust/  Native Rust V5 kernel and verifier (5.5.1, no KAR)
-packages/cli/        Knolo command-line interface, including `knolo kar` and `knolo compose`
-packages/core-python/ Python V5 verifier/query package (5.5.1, no KAR)
-packages/icp-canister/ Internet Computer compatibility package (5.5.1, no KAR)
+packages/core/       TypeScript runtime, including `@knolo/core/kar`, `@knolo/core/composition`, and `@knolo/core/cortex`
+packages/core-rust/  Native Rust V5 kernel and verifier (5.5.1, no KAR or Cortex)
+packages/cli/        Knolo command-line interface, including `knolo kar`, `knolo compose`, and `knolo cortex`
+packages/core-python/ Python V5 verifier/query package (5.5.1, no KAR or Cortex)
+packages/icp-canister/ Internet Computer compatibility package (5.5.1, no KAR or Cortex)
 domains/             Review-required Domain Packs
 examples/kar-v6/     Redistributable KAR demos
 examples/            Framework and product integration examples
@@ -403,14 +405,16 @@ spec/                KIP contracts, including KAR-1
 conformance/kar/v1/  Public KAR vectors
 conformance/kar/coverage-v1/  Evidence coverage vectors
 conformance/composition/v1/  Composition and attestation vectors
+conformance/cortex/v1/  Cortex trace vectors
 conformance/         Cross-runtime fixtures and acceptance tests
 docs/kar/            KAR, CEG, dossiers, and the V6 release notes
 docs/composition/    Offline composition and attestation
+docs/cortex/         Knolo Cortex reasoned evidence retrieval
 ```
 
 ## Status and contribution
 
-Knolo 6.1.0 is the product line in this repository. V5 Knowledge Images remain the evidence container. V4 retrieval remains the compatibility path for ordinary search. KAR semantics stay `kar-1-research-1`. Composition cites those artifacts and does not change their roots. Domain Packs stay review-required until a person validates them.
+Knolo 6.2.0 is the product line in this repository. V5 Knowledge Images remain the evidence container. V4 retrieval remains the compatibility path for ordinary search. KAR semantics stay `kar-1-research-1`. Composition cites those artifacts and does not change their roots. Cortex retrieves over them and does not change their roots. Domain Packs stay review-required until a person validates them.
 
 Before opening a change, run the relevant package tests and `npm run release:check`. Changes to byte formats, digest domains, identity rules, or required sections must include updated specification text and cross-runtime fixtures.
 

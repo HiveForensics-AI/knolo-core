@@ -1,6 +1,6 @@
 # 📦 `@knolo/core`
 
-**Package `6.1.0`.** The Version 4 contract remains the pack surface: v4
+**Package `6.2.0`.** The Version 4 contract remains the pack surface: v4
 packs, analyzer profiles, deterministic retrieval plans, verifiable receipts,
 evidence spans, and TrustBench conformance.
 
@@ -36,7 +36,9 @@ A composition record cites images, packs, KAR sidecars, Domain Packs, bounded
 excerpts, and nested records. It does not change `stateRoot` or `KARRoot`, and
 the root `@knolo/core` entry does not load it. Attestation checks recompute
 `compositionRoot`. A nested record uses its own host image. Excerpt checks use
-the excerpt bytes. `@knolo/cli` depends on this package at `^6.1.0`.
+the excerpt bytes. `@knolo/cli` depends on this package at `^6.2.0`.
+
+Knolo Cortex is a separate entry, `@knolo/core/cortex`. It runs a bounded evidence loop and returns a trace. The host injects any model. `verifyCortexAnswer` checks the trace against the image. It does not mean the answer is true. This is not the memory overlay below. That overlay remains `createCortex` on the root export.
 
 ```ts
 import {
@@ -655,9 +657,11 @@ Properties:
 
 ---
 
-# 🧠 Knolo Cortex
+# Memory overlay
 
-Knolo Cortex is a local-first overlay memory layer for `.knolo` packs.
+The memory overlay below is also named Cortex in older notes. Its API is `createCortex` on `@knolo/core`. Reasoned evidence retrieval is `createCortexSession` from `@knolo/core/cortex`.
+
+Knolo memory is a local-first overlay for `.knolo` packs.
 
 It gives you:
 

@@ -20,6 +20,9 @@ const publicAuthoringPath = fileURLToPath(
 const compositionIndexPath = fileURLToPath(
   new URL('../dist/composition/index.js', import.meta.url)
 );
+const cortexIndexPath = fileURLToPath(
+  new URL('../dist/cortex/index.js', import.meta.url)
+);
 const rootSourcePath = fileURLToPath(
   new URL('../src/index.ts', import.meta.url)
 );
@@ -29,6 +32,7 @@ const authoringBundle = await readFile(authoringIndexPath, 'utf8');
 const publicKarBundle = await readFile(publicKarPath, 'utf8');
 const publicAuthoringBundle = await readFile(publicAuthoringPath, 'utf8');
 const compositionBundle = await readFile(compositionIndexPath, 'utf8');
+const cortexBundle = await readFile(cortexIndexPath, 'utf8');
 const rootSource = await readFile(rootSourcePath, 'utf8');
 
 const forbidden = ['node:fs', 'fs/promises', 'node:path'];
@@ -125,6 +129,40 @@ assert.equal(
   publicKarBundle.includes('composition-record-1'),
   false,
   'Public KAR entry must not name composition records'
+);
+
+for (const token of [
+  'node:fs',
+  'fs/promises',
+  'node:path',
+  'node:crypto',
+  '/authoring',
+]) {
+  assert.equal(
+    cortexBundle.includes(token),
+    false,
+    `Cortex entry must not include ${token}`
+  );
+}
+assert.equal(
+  runtimeBundle.includes('createCortexSession'),
+  false,
+  'Root runtime entry must not export Knolo Cortex'
+);
+assert.equal(
+  runtimeBundle.includes('knolo-cortex-trace-1'),
+  false,
+  'Root runtime entry must not name cortex traces'
+);
+assert.equal(
+  rootSource.includes('createCortexSession'),
+  false,
+  'Root source entry must not export Knolo Cortex'
+);
+assert.equal(
+  publicKarBundle.includes('knolo-cortex-trace-1'),
+  false,
+  'Public KAR entry must not name cortex traces'
 );
 
 console.log('Runtime bundle contains no Node stdlib specifiers.');

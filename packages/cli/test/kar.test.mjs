@@ -404,8 +404,8 @@ test('kar benchmark annotation stays blind and rejects model humans', () => {
 test('version, demo, and conformance', () => {
   const version = run(['--version']);
   assert.equal(version.status, 0, version.stderr);
-  assert.match(version.stdout, /@knolo\/cli 6\.1\.0(?!-)/);
-  assert.match(version.stdout, /@knolo\/core 6\.1\.0(?!-)/);
+  assert.match(version.stdout, /@knolo\/cli 6\.2\.0(?!-)/);
+  assert.match(version.stdout, /@knolo\/core 6\.2\.0(?!-)/);
   const conformance = run(['kar', 'conformance']);
   assert.equal(conformance.status, 0, conformance.stderr || conformance.stdout);
   assert.match(conformance.stdout, /support SATISFIED/);
