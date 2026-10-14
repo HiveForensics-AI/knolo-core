@@ -16,7 +16,7 @@ const embeddings = new OllamaEmbeddingProvider({
 const vector = await embeddings.embedQuery('billing policy');
 ```
 
-This package is `6.1.0` and depends on `@knolo/core` `^6.0.0`. It does not
+This package is `6.2.0` and depends on `@knolo/core` `^6.0.0`. It does not
 implement KAR or composition. The provider prefers Ollama’s current `/api/embed`
 endpoint and sends each
 batch as one request with an array of inputs. It validates the response count

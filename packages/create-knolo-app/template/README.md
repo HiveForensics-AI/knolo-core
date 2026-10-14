@@ -5,7 +5,8 @@ The default application workflow is the V4-compatible retrieval path. The V5
 foundation is available beside that path. Use the CLI’s inspect and verify
 commands for V4 artifacts, and `knolo v5 info`, `knolo v5 health`, or
 `knolo v5 studio` for read-only V5 Knowledge Images. Composition is available
-from `@knolo/core/composition` once `@knolo/core` resolves to `6.1.0`.
+from `@knolo/core/composition` once `@knolo/core` resolves to `6.1.0` or later.
+Knolo Cortex is `@knolo/core/cortex` in `6.2.0`.
 
 ```bash
 npm install

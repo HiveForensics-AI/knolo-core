@@ -1,12 +1,12 @@
 # create-knolo-app
 
-This package is `6.1.0`. Generated applications depend on `@knolo/core`
+This package is `6.2.0`. Generated applications depend on `@knolo/core`
 `^6.0.0` and `@knolo/cli` `^6.0.0`. Those ranges can resolve the published
-`6.1.0` packages. `@knolo/cli` `6.1.0` itself requires `@knolo/core` `^6.1.0`.
+`6.2.0` packages. `@knolo/cli` `6.2.0` itself requires `@knolo/core` `^6.2.0`.
 Generated applications target the Knolo V4 TypeScript retrieval path, with the
 V5 foundation available beside it. Packs are V4 by default and can be checked
 with `knolo verify`. Python, Rust, and ICP stay `5.5.1` and do not implement
-KAR or composition.
+KAR, composition, or Cortex.
 
 V5 Knowledge Image inspection is available after generation with
 `knolo v5 info`, `knolo v5 health`, and `knolo v5 studio`. See the

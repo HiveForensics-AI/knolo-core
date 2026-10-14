@@ -1,6 +1,6 @@
 # KAR V6 examples
 
-These three examples are hand-authored and redistributable. They are product demos on the 6.1.0 tree. They are not a claim that a Domain Pack extracts every contract, policy, or procedure. Composition can cite the resulting images and graphs. It does not change `KARRoot`.
+These three examples are hand-authored and redistributable. They are product demos on the 6.2.0 tree. They are not a claim that a Domain Pack extracts every contract, policy, or procedure. Composition can cite the resulting images and graphs. Cortex can evaluate them. Neither one changes `KARRoot`.
 
 ```bash
 npm run build --workspace @knolo/core

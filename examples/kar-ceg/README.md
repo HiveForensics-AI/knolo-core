@@ -1,6 +1,6 @@
 # CEG authoring examples
 
-These examples stay offline on the 6.1.0 tree. Each one starts from authoring input and ends at a frozen `KarSidecarV1` that `kar-1-research-1` evaluates. Composition can cite that sidecar. It does not change the compiled graph.
+These examples stay offline on the 6.2.0 tree. Each one starts from authoring input and ends at a frozen `KarSidecarV1` that `kar-1-research-1` evaluates. Composition can cite that sidecar. It does not change the compiled graph.
 
 ```bash
 node examples/kar-ceg/run-all.mjs

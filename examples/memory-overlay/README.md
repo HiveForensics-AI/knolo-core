@@ -6,7 +6,7 @@ is required.
 
 The overlay remains a V4-compatible application path. V5 migration and
 read-only Studio management operate on Knowledge Images through `@knolo/core`
-`6.1.0`. Composition does not change this overlay. See the
+`6.2.0`. Composition does not change this overlay. Reasoned evidence retrieval is a different module, `@knolo/core/cortex`. See the
 [roadmap](../../docs/ROADMAP.md).
 
 ```ts

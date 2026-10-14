@@ -52,6 +52,9 @@ operational guides for Knolo.
   entry does not load it.
 - [Composition](composition/README.md) — offline citations and attestations.
   Import it from `@knolo/core/composition`. It does not change KAR or V5 roots.
+- [Cortex](cortex/README.md) — bounded evidence retrieval and a verifiable
+  trace. Import it from `@knolo/core/cortex`. This is not the root memory
+  helper `createCortex`. Verification does not mean an answer is true.
 
 Architecture sources, future-version specifications, and internal planning
 records are kept local and are not part of the public repository. The
@@ -59,13 +62,14 @@ normative implementation contracts are the KIPs under `../spec/`.
 
 ## Current release boundary
 
-The current product line in this repository is Knolo 6.1.0. V6 adds KAR on
+The current product line in this repository is Knolo 6.2.0. V6 adds KAR on
 the V5 Knowledge Image: deterministic images, verification, migration,
 bounded runtime features, diagnostics, and a read-only Studio management
-snapshot remain. 6.1.0 adds offline composition and attestation.
-`@knolo/cli` depends on `@knolo/core` `^6.1.0`. The other packages that
-depend on `@knolo/core` stay at `^6.0.0`. V4 retrieval APIs remain compatible.
-Rust, Python, and ICP stay 5.5.1 and do not implement KAR or composition.
+snapshot remain. 6.1.0 adds offline composition and attestation. 6.2.0 adds
+Knolo Cortex. `@knolo/cli` depends on `@knolo/core` `^6.2.0`. The other
+packages that depend on `@knolo/core` stay at `^6.0.0`. V4 retrieval APIs
+remain compatible. Rust, Python, and ICP stay 5.5.1 and do not implement
+KAR, composition, or Cortex.
 Bundled Domain Packs are `review-required`. Networking,
 credentials, model execution, external side effects, and UI presentation
 remain host responsibilities.

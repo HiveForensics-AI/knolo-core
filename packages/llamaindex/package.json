@@ -1,6 +1,6 @@
 {
   "name": "@knolo/llamaindex",
-  "version": "6.1.0",
+  "version": "6.2.0",
   "private": false,
   "type": "module",
   "main": "./src/index.js",

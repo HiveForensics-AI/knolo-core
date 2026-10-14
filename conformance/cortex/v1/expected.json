@@ -1,0 +1,23 @@
+{
+  "v4Find": {
+    "status": "ANSWERED",
+    "hitCount": 2,
+    "receiptKind": "v4-receipt",
+    "traceRoot": "sha256-0aed0077ac3ee0a5412e396d578358d4bdcec7a3e804683f06350297716ea352",
+    "answerRoot": "sha256-09d170e1ff1451328b8d86e19f2755ca64849f60842daae7c10991b02046fd5e",
+    "evidenceRoot": "sha256-dfc8165a9e5c4a83d00b93b233f1ca6c3977ca391f307a11e7627d6d910793fd"
+  },
+  "v4Abstain": {
+    "status": "INSUFFICIENT_EVIDENCE",
+    "gap": "model-required",
+    "traceRoot": "sha256-ce9c7567ce0e9d5bea215cc72b387d6ccd9321a1a57e5954c09bf8919db3f69d"
+  },
+  "v5Find": {
+    "status": "ANSWERED",
+    "receiptKind": "v5-result",
+    "traceRoot": "sha256-45363f1303f8fd690a5c08ff919da1b194594f7763a7997c1eca510d26e23a17",
+    "answerRoot": "sha256-09d170e1ff1451328b8d86e19f2755ca64849f60842daae7c10991b02046fd5e",
+    "evidenceRoot": "sha256-e83669332e8009d50fdfc589ab8f5bcf57c0763c0fb9ec663ee596b42ff73bba"
+  },
+  "tamperCode": "CORTEX_ROOT_MISMATCH"
+}
