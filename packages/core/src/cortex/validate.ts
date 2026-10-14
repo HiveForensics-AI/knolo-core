@@ -32,6 +32,12 @@ export function validateCortexTrace(input: unknown): CortexTraceV1 {
   const policy = readPolicy(trace.policy);
   const rounds = readRounds(trace.rounds, policy);
   const selected = readEvidence(trace.selectedEvidence, policy);
+  const selectedByRound = new Set(rounds.flatMap((round) => round.selectedIds));
+  for (const item of selected) {
+    if (!selectedByRound.has(item.id)) {
+      throw new CortexError('CORTEX_EVIDENCE_UNBOUND', `Evidence ${item.id} was not selected by a round.`, 'selectedEvidence');
+    }
+  }
   const answer = readAnswer(trace.answer, selected, policy);
   const karEvaluations = trace.karEvaluations === undefined ? undefined : readKarRefs(trace.karEvaluations);
   if (trace.receipt?.createdAt !== undefined && !isCreatedAt(trace.receipt.createdAt)) {
@@ -169,6 +175,9 @@ function readEvidence(evidence: CortexEvidenceRefV1[], policy: CortexPolicyV1): 
       throw new CortexError('CORTEX_TRACE_INVALID', 'Selected evidence is incomplete.', 'selectedEvidence');
     }
     if (ids.has(item.id)) throw new CortexError('CORTEX_TRACE_INVALID', 'Selected evidence ids must be unique.', 'selectedEvidence');
+    if (item.source !== undefined && typeof item.source !== 'string') {
+      throw new CortexError('CORTEX_TRACE_INVALID', 'Evidence source must be a string.', 'selectedEvidence');
+    }
     if (item.excerpt.length > CORTEX_LIMITS.excerptChars) {
       throw new CortexError('CORTEX_TRACE_INVALID', 'Evidence excerpt exceeds 500 characters.', 'selectedEvidence');
     }

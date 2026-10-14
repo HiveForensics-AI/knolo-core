@@ -4,7 +4,7 @@ import { CORTEX_DOSSIER_FORMAT, type CortexDossier, type CortexTraceV1 } from '.
 import { validateCortexTrace } from './validate.js';
 
 /**
- * Package a trace. `verified: true` means the dossier roots match the trace.
+ * Package a trace. `verified: true` means the dossier body matches the trace.
  * It does not mean the answer is true.
  */
 export function createCortexDossier(trace: CortexTraceV1): CortexDossier {
@@ -36,14 +36,12 @@ export function verifyCortexDossier(dossier: unknown, trace: CortexTraceV1): { o
       return { ok: false, code: 'CORTEX_TRACE_INVALID', message: 'Unsupported dossier format.' };
     }
     const { dossierRoot, ...body } = claimed;
-    if (digest(body) !== dossierRoot) {
+    if (typeof dossierRoot !== 'string' || digest(body) !== dossierRoot) {
       return { ok: false, code: 'CORTEX_ROOT_MISMATCH', message: 'Dossier root does not match the dossier body.' };
     }
-    if (body.traceRoot !== valid.receipt.traceRoot || body.answerRoot !== valid.receipt.answerRoot || body.evidenceRoot !== valid.receipt.evidenceRoot) {
-      return { ok: false, code: 'CORTEX_ROOT_MISMATCH', message: 'Dossier roots do not match the trace.' };
-    }
-    if (body.verified !== true) {
-      return { ok: false, code: 'CORTEX_TRACE_INVALID', message: 'Dossier verification flag is not set.' };
+    const expected = createCortexDossier(valid);
+    if (digest(claimed) !== digest(expected)) {
+      return { ok: false, code: 'CORTEX_ROOT_MISMATCH', message: 'Dossier body does not match the trace.' };
     }
     return { ok: true };
   } catch (error) {

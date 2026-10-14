@@ -4,7 +4,7 @@ Knolo Cortex is reasoned evidence retrieval over a mounted V4 pack or a V5 Knowl
 
 `createCortex` on the root export is a different API. That helper is the local memory overlay. Knolo Cortex is `createCortexSession`.
 
-The host owns any model. Core does not call a network, does not embed a model, and does not decide that an answer is true. `verifyCortexAnswer` recomputes `traceRoot`, `answerRoot`, and `evidenceRoot`, checks evidence identity, replays the retrieval receipt, and recomputes KAR references. A passing verification means the trace matches the declared evidence. It does not mean the claim is proven.
+The host owns any model. Core does not call a network, does not embed a model, and does not decide that an answer is true. `verifyCortexAnswer` recomputes `traceRoot`, `answerRoot`, and `evidenceRoot`, checks evidence identity, replays the retrieval receipt, and recomputes KAR references. `evidenceRoot` commits the source label. Evidence must be selected by a replayed round. A dossier must match the trace body. A passing verification means the trace matches the declared evidence. It does not mean the claim is proven.
 
 Rust, Python, and ICP do not implement Cortex. They stay on 5.5.1.
 
@@ -20,7 +20,7 @@ normalize question
   → Cortex trace
 ```
 
-The model sees the question, hit ids, and excerpts of at most 500 characters. It never receives the corpus. A selected id, citation, or claim that names an id outside that round fails closed with `CORTEX_MODEL_UNBOUND`.
+The model sees the question, hit ids, and excerpts of at most 500 characters. It never receives the corpus. A selected id, citation, or claim that names an id outside that round fails closed with `CORTEX_MODEL_UNBOUND`. A planned subquestion still runs when an earlier round adds no evidence. Refinement stops on that stalled round.
 
 Semantic rerank stays off unless `allowSemanticRerank` is true and the caller passes a query embedding for vectors that are already on the pack. There is no vector database and no embedding provider inside this entry.
 

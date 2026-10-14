@@ -35,22 +35,31 @@ export async function verifyCortexAnswer(input: {
     if ((trace.karEvaluations?.length ?? 0) > 0 && input.graph === undefined) {
       return { ok: false, code: 'CORTEX_KAR_UNBOUND', message: 'KAR references require the graph.' };
     }
-    const replayed = new Map<string, { score: number; excerpt: string; sourceDigest: string; source?: string }>();
+    const selected = new Map<string, { score: number; excerpt: string; sourceDigest: string; source?: string }>();
     for (const round of trace.rounds) {
       const retrieved = await retrieveHits(session.mounted, trace.policy, round.query, input.retriever, input.queryEmbedding);
       const ids = retrieved.hits.map((hit) => hit.id);
       if (ids.join('\u0001') !== round.lexicalHitIds.join('\u0001') || !sameReceipt(retrieved.receipt, round.queryReceipt)) {
         return { ok: false, code: 'CORTEX_RECEIPT_MISMATCH', message: `Retrieval round ${round.round} does not replay.` };
       }
-      for (const hit of retrieved.hits) replayed.set(hit.id, hit);
+      const hits = new Map(retrieved.hits.map((hit) => [hit.id, hit]));
+      for (const id of round.selectedIds) {
+        const hit = hits.get(id);
+        if (!hit) {
+          return { ok: false, code: 'CORTEX_EVIDENCE_UNBOUND', message: `Selected id ${id} was not retrieved in round ${round.round}.` };
+        }
+        if (!selected.has(id)) selected.set(id, hit);
+      }
     }
     for (const evidence of trace.selectedEvidence) {
-      const hit = replayed.get(evidence.id) ?? session.mounted.byId.get(evidence.id);
-      if (!hit || hit.sourceDigest !== evidence.sourceDigest || hit.excerpt !== evidence.excerpt) {
-        return { ok: false, code: 'CORTEX_EVIDENCE_UNBOUND', message: `Evidence ${evidence.id} does not match the image.` };
+      const hit = selected.get(evidence.id);
+      if (!hit) {
+        return { ok: false, code: 'CORTEX_EVIDENCE_UNBOUND', message: `Evidence ${evidence.id} was not selected by a replayed round.` };
       }
-      const replayHit = replayed.get(evidence.id);
-      if (replayHit && replayHit.score !== evidence.score) {
+      if (hit.sourceDigest !== evidence.sourceDigest || hit.excerpt !== evidence.excerpt || (hit.source ?? '') !== (evidence.source ?? '')) {
+        return { ok: false, code: 'CORTEX_EVIDENCE_UNBOUND', message: `Evidence ${evidence.id} does not match the replayed hit.` };
+      }
+      if (hit.score !== evidence.score) {
         return { ok: false, code: 'CORTEX_EVIDENCE_UNBOUND', message: `Evidence ${evidence.id} score does not match retrieval.` };
       }
     }

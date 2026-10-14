@@ -56,7 +56,7 @@ export async function askCortex(
   while (queue.length > 0 && rounds.length < session.policy.maxRounds) {
     const query = queue.shift() ?? '';
     const normalized = normalizeCortexQuery(query);
-    if (!normalized || seen.has(normalized)) break;
+    if (!normalized || seen.has(normalized)) continue;
     seen.add(normalized);
     const retrieved = await retrieveHits(session.mounted, session.policy, query, session.retriever, input.queryEmbedding);
     const before = known.size;
@@ -75,7 +75,8 @@ export async function askCortex(
       reason: selection.reason,
       queryReceipt: retrieved.receipt,
     });
-    if (known.size === before) break;
+    // A stalled round stops refinement only. Later planned subquestions still run.
+    if (known.size === before) continue;
     if (mode === 'find_relevant' || mode === 'coverage_review' || !session.model?.refineQuery) continue;
     if (rounds.length >= session.policy.maxRounds) break;
     const gaps = retrieved.hits.length === 0 ? [{ subquestion: query, reason: 'no-evidence' }] : [];
@@ -84,7 +85,8 @@ export async function askCortex(
       throw new CortexError('CORTEX_MODEL_UNBOUND', 'refineQuery must return a query.', 'model.refineQuery');
     }
     const next = refined.query.trim();
-    if (!next || seen.has(normalizeCortexQuery(next))) break;
+    const nextNormalized = next ? normalizeCortexQuery(next) : '';
+    if (!nextNormalized || seen.has(nextNormalized)) continue;
     queue.unshift(next);
   }
 

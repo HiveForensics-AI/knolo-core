@@ -3,10 +3,14 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
+import { digest } from '../dist/experimental/kar/canonicalize.js';
 import { buildPack, createCortex, createKnowledgeImageV5 } from '../dist/index.js';
 import {
   CortexError,
   askCortex,
+  cortexAnswerRoot,
+  cortexEvidenceRoot,
+  cortexTraceRoot,
   createCortexDossier,
   createCortexSession,
   explainCortexAnswer,
@@ -223,6 +227,51 @@ test('prove_or_abstain cites KAR and does not call a gap false', async () => {
   assert.equal(coverage.answer.text, '');
 });
 
+test('verification rejects evidence that no replayed round selected', async () => {
+  const bytes = await packBytes();
+  const session = await createCortexSession({ image: bytes });
+  const valve = await askCortex(session, { question: 'valve', mode: 'find_relevant' });
+  const pump = await askCortex(session, { question: 'pump', mode: 'find_relevant' });
+  const extra = pump.selectedEvidence.find((item) => !valve.selectedEvidence.some((kept) => kept.id === item.id));
+  assert.ok(extra);
+  const forged = resealTrace({ ...structuredClone(valve), selectedEvidence: [...valve.selectedEvidence, extra] });
+  const unbound = await verifyCortexAnswer({ image: bytes, question: forged.question, result: forged });
+  assert.equal(unbound.ok, false);
+  assert.equal(unbound.code, 'CORTEX_EVIDENCE_UNBOUND');
+
+  const relabeled = structuredClone(valve);
+  relabeled.selectedEvidence[0].source = 'forged.txt';
+  const source = await verifyCortexAnswer({ image: bytes, question: relabeled.question, result: resealTrace(relabeled) });
+  assert.equal(source.ok, false);
+  assert.equal(source.code, 'CORTEX_EVIDENCE_UNBOUND');
+});
+
+test('planned subquestions continue after a round adds no evidence', async () => {
+  const bytes = await packBytes();
+  const session = await createCortexSession({
+    image: bytes,
+    model: {
+      planQuestion() {
+        return { subquestions: ['zebra habitat', 'valve inspection', 'pump failed'] };
+      },
+      refineQuery() {
+        return { query: 'zzzz absent token' };
+      },
+    },
+  });
+  const trace = await askCortex(session, { question: 'cover the inspections', mode: 'coverage_review' });
+  assert.deepEqual(trace.rounds.map((round) => round.query), ['zebra habitat', 'valve inspection', 'pump failed']);
+  assert.equal(trace.rounds[0].lexicalHitIds.length, 0);
+  assert.equal(trace.rounds[1].lexicalHitIds.length > 0, true);
+  assert.equal(trace.rounds[2].lexicalHitIds.length > 0, true);
+  assert.equal(trace.answer.gaps.some((gap) => gap.reason === 'no-evidence'), true);
+  assert.equal(trace.answer.text, '');
+
+  const answered = await askCortex(session, { question: 'cover the inspections', mode: 'evidence_answer' });
+  assert.deepEqual(answered.rounds.map((round) => round.query), ['zebra habitat', 'valve inspection', 'zzzz absent token', 'pump failed']);
+  assert.equal(answered.rounds[3].lexicalHitIds.length > 0, true);
+});
+
 test('dossier roots fail closed when the body changes', async () => {
   const bytes = await packBytes();
   const session = await createCortexSession({ image: bytes });
@@ -233,7 +282,32 @@ test('dossier roots fail closed when the body changes', async () => {
   const tampered = structuredClone(dossier);
   tampered.answer.text = 'changed';
   assert.equal(verifyCortexDossier(tampered, trace).ok, false);
+  const forged = structuredClone(dossier);
+  forged.answer = { ...forged.answer, text: 'The claim is proven.' };
+  forged.question = 'A different question';
+  const { dossierRoot: _ignored, ...body } = forged;
+  forged.dossierRoot = digest(body);
+  const resealed = verifyCortexDossier(forged, trace);
+  assert.equal(resealed.ok, false);
+  assert.equal(resealed.code, 'CORTEX_ROOT_MISMATCH');
 });
+
+function resealTrace(trace) {
+  const answerRoot = cortexAnswerRoot(trace.answer);
+  const evidenceRoot = cortexEvidenceRoot(trace.selectedEvidence);
+  const traceRoot = cortexTraceRoot({
+    questionDigest: trace.questionDigest,
+    image: trace.image,
+    policy: trace.policy,
+    rounds: trace.rounds,
+    selectedIds: trace.selectedEvidence.map((item) => item.id),
+    karEvaluations: trace.karEvaluations,
+    karPlan: trace.karPlan,
+    answerRoot,
+    evidenceRoot,
+  });
+  return { ...trace, receipt: { ...trace.receipt, traceRoot, answerRoot, evidenceRoot } };
+}
 
 test('root export keeps memory createCortex and does not load Knolo Cortex', () => {
   assert.equal(typeof createCortex, 'function');

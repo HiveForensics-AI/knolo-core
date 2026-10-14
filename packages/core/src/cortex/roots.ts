@@ -20,6 +20,7 @@ export function cortexEvidenceRoot(evidence: readonly CortexEvidenceRefV1[]): st
       excerpt: item.excerpt,
       id: item.id,
       score: item.score,
+      source: item.source ?? '',
       sourceDigest: item.sourceDigest,
     })),
   );
