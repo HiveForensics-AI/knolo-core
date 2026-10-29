@@ -1,10 +1,9 @@
-import {
-  KnoloPluginError,
-  type KnoloCaller,
-  type KnoloOpenClawService,
-} from '@knolo/tools';
+import { type KnoloOpenClawService } from '@knolo/tools';
 import { type McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
+import type { PinnedKarGraph } from './graphs.js';
+import { registerKarTools } from './kar-tools.js';
+import { callerFrom, failure, success } from './tool-response.js';
 
 const readOnly = {
   readOnlyHint: true,
@@ -13,48 +12,16 @@ const readOnly = {
   openWorldHint: false,
 } as const;
 
-function callerFrom(server: McpServer, agentId: string): KnoloCaller {
-  const name = server.server.getClientVersion()?.name;
-  if (typeof name !== 'string' || name.length === 0) return { agentId };
-  return { agentId, sessionId: name };
-}
-
-function failure(error: unknown) {
-  if (error instanceof KnoloPluginError) {
-    return {
-      isError: true as const,
-      content: [
-        { type: 'text' as const, text: `${error.code}: ${error.message}` },
-      ],
-    };
-  }
-  return {
-    isError: true as const,
-    content: [
-      {
-        type: 'text' as const,
-        text: 'IMAGE_UNAVAILABLE: Knolo request failed.',
-      },
-    ],
-  };
-}
-
-function success(value: object) {
-  return {
-    content: [{ type: 'text' as const, text: JSON.stringify(value) }],
-    structuredContent: value as Record<string, unknown>,
-  };
-}
-
 export function registerKnoloTools(
   server: McpServer,
   options: {
     service: KnoloOpenClawService;
     agentId: string;
     maxHits: number;
+    graphs: ReadonlyMap<string, PinnedKarGraph>;
   }
 ): void {
-  const { service, agentId, maxHits } = options;
+  const { service, agentId, maxHits, graphs } = options;
 
   server.registerTool(
     'knolo_search',
@@ -156,4 +123,8 @@ export function registerKnoloTools(
       }
     }
   );
+
+  if (graphs.size > 0) {
+    registerKarTools(server, { service, agentId, graphs });
+  }
 }

@@ -5,6 +5,7 @@ import {
   knoloPluginConfig,
   loadKnoloMcpConfigFile,
 } from './config.js';
+import { pinConfiguredGraphs } from './graphs.js';
 import { createKnoloMcpServer } from './index.js';
 
 const USAGE = `knolo-mcp --config <absolute-path>
@@ -23,11 +24,13 @@ export async function startKnoloMcpCli(
   const configPath = configPathFromArgs(argv, env);
   const config = await loadKnoloMcpConfigFile(configPath);
   const service = await KnoloOpenClawService.create(knoloPluginConfig(config));
+  const graphs = await pinConfiguredGraphs(config, service);
   serveStdio(() =>
     createKnoloMcpServer({
       service,
       agentId: config.agentId,
       maxHits: config.maxHits,
+      graphs,
     })
   );
   console.error('knolo-mcp: serving stdio');
