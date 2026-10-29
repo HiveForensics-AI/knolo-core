@@ -23,4 +23,6 @@ and the host returns no result. Mount failures use `ACCESS_DENIED`,
 The package requires Node 20 or newer and `@knolo/core` `^6.0.0`. It does not
 download images, open a network connection, or import KAR, Cortex, coverage,
 or composition. `@knolo/openclaw@0.1.0` stays on `@knolo/tools` `^0.1.0`.
-`@knolo/tools@0.2.0` is the in-tree version and this change does not publish it.
+A clean install resolves that range to the published 0.1.0 package, because
+the in-tree 0.2.0 does not satisfy it. `@knolo/tools@0.2.0` is the in-tree
+version and this change does not publish it.
