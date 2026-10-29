@@ -1,0 +1,94 @@
+name: Knolo Verify
+description: Verify Knolo packs, V5 images, KAR artifacts, attestations, and Cortex traces with a pinned CLI.
+inputs:
+  cli-version:
+    description: Exact @knolo/cli version. Ranges and latest are rejected.
+    required: true
+  node-version:
+    description: Node.js version used to install the CLI.
+    required: false
+    default: '20'
+  packs:
+    description: Newline-separated V4 pack paths or globs for knolo verify.
+    required: false
+    default: ''
+  images:
+    description: Newline-separated V5 image paths or globs for knolo v5 health.
+    required: false
+    default: ''
+  kar-packages:
+    description: Newline-separated KAR package directories for knolo kar package verify.
+    required: false
+    default: ''
+  kar-graphs:
+    description: Newline-separated image=graph pairs for knolo kar graph check.
+    required: false
+    default: ''
+  kar-dossiers:
+    description: Newline-separated dossier directories for knolo kar dossier verify.
+    required: false
+    default: ''
+  kar-coverage:
+    description: Newline-separated coverage directories for knolo kar coverage verify.
+    required: false
+    default: ''
+  compositions:
+    description: Newline-separated composition directories for knolo compose verify.
+    required: false
+    default: ''
+  attestations:
+    description: Newline-separated attestation files for knolo verify-attestation.
+    required: false
+    default: ''
+  attestation-args:
+    description: Extra verify-attestation flags, for example --content-only or --public-key key.json --now 1760000000000.
+    required: false
+    default: ''
+  cortex-traces:
+    description: Newline-separated image=answer or image=answer=graph tuples for knolo cortex verify.
+    required: false
+    default: ''
+  diff-pairs:
+    description: Newline-separated left=right V4 pack pairs for knolo diff.
+    required: false
+    default: ''
+  kar-graph-diffs:
+    description: Newline-separated old=new KAR graph pairs for knolo kar graph diff.
+    required: false
+    default: ''
+  diff-base:
+    description: Git ref. When set, each pack is diffed against that ref.
+    required: false
+    default: ''
+  fail-on-diff:
+    description: Fail when a diff reports changes.
+    required: false
+    default: 'false'
+  summary:
+    description: Append the pass/fail table to the job summary.
+    required: false
+    default: 'true'
+outputs:
+  passed:
+    description: true when every selected check passed
+    value: ${{ steps.verify.outputs.passed }}
+  results:
+    description: Path to the results JSON file
+    value: ${{ steps.verify.outputs.results }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v5
+      with:
+        node-version: ${{ inputs.node-version }}
+    - name: Install pinned Knolo CLI
+      shell: bash
+      env:
+        KNOLO_CLI_VERSION: ${{ inputs.cli-version }}
+      run: node "$GITHUB_ACTION_PATH/install-cli.mjs"
+    - name: Verify Knolo artifacts
+      id: verify
+      shell: bash
+      env:
+        INPUTS_JSON: ${{ toJSON(inputs) }}
+      run: node "$GITHUB_ACTION_PATH/run.mjs"

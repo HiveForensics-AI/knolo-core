@@ -45,6 +45,10 @@ operational guides for Knolo.
   MCP stdio. Pins, policy checks, and receipts come from
   [`@knolo/tools`](../packages/knolo-tools/README.md). Caller identity comes
   from the server config.
+- [Knolo Verify action](../.github/actions/knolo-verify/README.md) — composite
+  GitHub Action that runs a pinned `@knolo/cli` over committed packs, images,
+  KAR artifacts, attestations, and Cortex traces. It does not add verification
+  rules.
 - [`@knolo/evidence-gate`](../packages/evidence-gate/README.md) — the current
   TypeScript vertical slice for deterministic claim-level verification.
 - [KAR](kar/README.md) — minimum evidence-set retrieval over a Committed
