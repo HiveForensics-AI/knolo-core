@@ -2,18 +2,18 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.HiveForensics-AI/knolo",
   "title": "Knolo",
-  "description": "Verified, local-first retrieval over pinned Knolo Knowledge Images.",
+  "description": "Pinned Knolo images with read-only search, KAR evaluation, and Cortex checks.",
   "repository": {
     "url": "https://github.com/HiveForensics-AI/knolo-core",
     "source": "github",
     "subfolder": "packages/mcp"
   },
-  "version": "0.1.0",
+  "version": "0.2.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@knolo/mcp",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "transport": {
         "type": "stdio"
       },

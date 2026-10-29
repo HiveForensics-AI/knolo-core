@@ -16,6 +16,13 @@ const ID_PATTERN = /^[a-zA-Z0-9_.-]+$/;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/;
 const ROOT_PATTERN = /^sha256-[a-f0-9]{64}$/;
 
+const karMountSchema = z
+  .object({
+    graphPath: z.string().min(1),
+    graphSha256: z.string().regex(SHA256_PATTERN),
+  })
+  .strict();
+
 const mountSchema = z
   .object({
     id: z.string().regex(ID_PATTERN),
@@ -25,6 +32,7 @@ const mountSchema = z
     policyPath: z.string().min(1),
     agents: z.array(z.string().regex(ID_PATTERN)).min(1),
     principal: z.string().min(1),
+    kar: karMountSchema.optional(),
   })
   .strict();
 
@@ -89,6 +97,13 @@ export const knoloMcpConfigSchema = z
           message: 'policyPath must be an absolute path.',
         });
       }
+      if (mount.kar && !path.isAbsolute(mount.kar.graphPath)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['mounts', index, 'kar', 'graphPath'],
+          message: 'graphPath must be an absolute path.',
+        });
+      }
     });
   });
 
@@ -113,7 +128,15 @@ export function parseKnoloMcpConfig(input: unknown): KnoloMcpConfig {
 
 export function knoloPluginConfig(config: KnoloMcpConfig): KnoloPluginConfig {
   return {
-    mounts: config.mounts,
+    mounts: config.mounts.map((mount) => ({
+      id: mount.id,
+      path: mount.path,
+      sha256: mount.sha256,
+      stateRoot: mount.stateRoot,
+      policyPath: mount.policyPath,
+      agents: mount.agents,
+      principal: mount.principal,
+    })),
     auditDir: config.auditDir,
     maxImageBytes: config.maxImageBytes,
     maxHits: config.maxHits,

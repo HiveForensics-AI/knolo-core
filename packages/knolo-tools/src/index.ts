@@ -25,6 +25,8 @@ import {
 } from '@knolo/core';
 
 export const OPENCLAW_KNOLO_RECEIPT_VERSION = 'openclaw-knolo-query-v1';
+export const KNOLO_MCP_EVIDENCE_RECEIPT_VERSION =
+  'knolo-mcp-evidence-receipt-v1';
 
 export type KnoloMountConfig = {
   id: string;
@@ -132,6 +134,39 @@ export type KnoloQueryReceiptV1 = {
   returned: Array<{ objectId: string; start: number; end: number }>;
 };
 
+export type KnoloEvidenceTool =
+  'knolo_kar_evaluate' | 'knolo_kar_verify' | 'knolo_cortex_verify';
+
+export type KnoloEvidenceOutcome = {
+  status?: string;
+  ok?: boolean;
+  code?: string;
+  roots?: Record<string, string>;
+};
+
+export type KnoloEvidenceReceiptV1 = {
+  version: typeof KNOLO_MCP_EVIDENCE_RECEIPT_VERSION;
+  receiptId: string;
+  recordDigest: string;
+  createdAt: string;
+  imageId: string;
+  byteSha256: string;
+  stateRoot: string;
+  caller: KnoloCaller;
+  tool: KnoloEvidenceTool;
+  graphSha256: string | null;
+  outcome: KnoloEvidenceOutcome;
+};
+
+export type KnoloAuthorizedMount = {
+  id: string;
+  image: KnowledgeImageV5;
+  policy: KnowledgePolicyV1;
+  byteSha256: string;
+  principal: string;
+  stateRoot: string;
+};
+
 export class KnoloPluginError extends Error {
   constructor(
     readonly code:
@@ -166,7 +201,12 @@ export const DEFAULT_MAX_EXCERPT_BYTES = 1600;
 export const DEFAULT_MAX_QUERY_BYTES = 4096;
 export const DEFAULT_MAX_AUDIT_RECORDS = 10_000;
 export const DEFAULT_MAX_AUDIT_BYTES = 256 * 1024 * 1024;
-const RECEIPT_FILE_PATTERN = /^qr_[a-f0-9]{24}\.json$/u;
+const RECEIPT_FILE_PATTERN = /^(?:qr|er)_[a-f0-9]{24}\.json$/u;
+const EVIDENCE_TOOLS = new Set<KnoloEvidenceTool>([
+  'knolo_kar_evaluate',
+  'knolo_kar_verify',
+  'knolo_cortex_verify',
+]);
 const ID_PATTERN = /^[a-zA-Z0-9_.-]+$/;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/;
 const ROOT_PATTERN = /^sha256-[a-f0-9]{64}$/;
@@ -536,6 +576,73 @@ export class KnoloOpenClawService {
     return mount;
   }
 
+  readAuthorizedMount(
+    imageId: string,
+    caller: KnoloCaller
+  ): KnoloAuthorizedMount {
+    const mount = this.requireMount(imageId, caller);
+    if (!authorizeChunkQuery(mount.policy, mount.config.principal)) {
+      throw new KnoloPluginError(
+        'ACCESS_DENIED',
+        `Knolo policy denies query access to image ${mount.config.id}.`
+      );
+    }
+    return {
+      id: mount.config.id,
+      image: mount.image,
+      policy: mount.policy,
+      byteSha256: mount.byteSha256,
+      principal: mount.config.principal,
+      stateRoot: mount.image.stateRoot,
+    };
+  }
+
+  async writeEvidenceReceipt(
+    input: {
+      imageId: string;
+      byteSha256: string;
+      stateRoot: string;
+      caller: KnoloCaller;
+      tool: KnoloEvidenceTool;
+      graphSha256: string | null;
+      outcome: KnoloEvidenceOutcome;
+    },
+    assertCurrent?: () => void
+  ): Promise<KnoloEvidenceReceiptV1> {
+    assertCaller(input.caller);
+    if (!EVIDENCE_TOOLS.has(input.tool)) {
+      throw new KnoloPluginError('QUERY_INVALID', 'Unknown evidence tool.');
+    }
+    if (
+      !ID_PATTERN.test(input.imageId) ||
+      !SHA256_PATTERN.test(input.byteSha256) ||
+      !ROOT_PATTERN.test(input.stateRoot)
+    ) {
+      throw new KnoloPluginError(
+        'QUERY_INVALID',
+        'Evidence receipt pins are invalid.'
+      );
+    }
+    if (input.graphSha256 !== null && !SHA256_PATTERN.test(input.graphSha256)) {
+      throw new KnoloPluginError(
+        'QUERY_INVALID',
+        'Evidence receipt graph hash is invalid.'
+      );
+    }
+    return this.enqueueAudit(() =>
+      this.writeEvidenceReceiptUnlocked(input, assertCurrent)
+    );
+  }
+
+  private enqueueAudit<T>(work: () => Promise<T>): Promise<T> {
+    const operation = this.#auditWriteTail.then(work);
+    this.#auditWriteTail = operation.then(
+      () => undefined,
+      () => undefined
+    );
+    return operation;
+  }
+
   private async writeReceipt(
     input: Omit<
       KnoloQueryReceiptV1,
@@ -543,14 +650,9 @@ export class KnoloOpenClawService {
     >,
     assertCurrent?: () => void
   ): Promise<KnoloQueryReceiptV1> {
-    const operation = this.#auditWriteTail.then(() =>
+    return this.enqueueAudit(() =>
       this.writeReceiptUnlocked(input, assertCurrent)
     );
-    this.#auditWriteTail = operation.then(
-      () => undefined,
-      () => undefined
-    );
-    return operation;
   }
 
   private async writeReceiptUnlocked(
@@ -595,6 +697,62 @@ export class KnoloOpenClawService {
       throw new KnoloPluginError(
         'AUDIT_UNAVAILABLE',
         `Could not persist the Knolo query record: ${safeErrorMessage(error)}`
+      );
+    }
+    return receipt;
+  }
+
+  private async writeEvidenceReceiptUnlocked(
+    input: {
+      imageId: string;
+      byteSha256: string;
+      stateRoot: string;
+      caller: KnoloCaller;
+      tool: KnoloEvidenceTool;
+      graphSha256: string | null;
+      outcome: KnoloEvidenceOutcome;
+    },
+    assertCurrent?: () => void
+  ): Promise<KnoloEvidenceReceiptV1> {
+    const createdAt = new Date().toISOString();
+    const receiptId = `er_${randomUUID().replaceAll('-', '').slice(0, 24)}`;
+    const body = {
+      version: KNOLO_MCP_EVIDENCE_RECEIPT_VERSION,
+      receiptId,
+      createdAt,
+      imageId: input.imageId,
+      byteSha256: input.byteSha256,
+      stateRoot: input.stateRoot,
+      caller: input.caller,
+      tool: input.tool,
+      graphSha256: input.graphSha256,
+      outcome: input.outcome,
+    } satisfies Omit<KnoloEvidenceReceiptV1, 'recordDigest'>;
+    const receipt = { ...body, recordDigest: evidenceReceiptDigest(body) };
+    try {
+      assertCurrent?.();
+      await mkdir(this.#config.auditDir, { recursive: true, mode: 0o700 });
+      const serialized = `${JSON.stringify(receipt)}\n`;
+      await makeAuditSpace(
+        this.#config.auditDir,
+        this.#config.maxAuditRecords,
+        this.#config.maxAuditBytes,
+        new TextEncoder().encode(serialized).byteLength,
+        assertCurrent
+      );
+      const target = path.join(this.#config.auditDir, `${receiptId}.json`);
+      const temporary = path.join(
+        this.#config.auditDir,
+        `.${receiptId}.${randomUUID()}.tmp`
+      );
+      assertCurrent?.();
+      await writeFile(temporary, serialized, { mode: 0o600 });
+      assertCurrent?.();
+      await rename(temporary, target);
+    } catch (error) {
+      throw new KnoloPluginError(
+        'AUDIT_UNAVAILABLE',
+        `Could not persist the Knolo evidence record: ${safeErrorMessage(error)}`
       );
     }
     return receipt;
@@ -947,6 +1105,45 @@ function receiptDigest(
     'openclaw-query-receipt',
     canonicalCbor(receipt as never)
   );
+}
+
+function evidenceReceiptDigest(
+  receipt: Omit<KnoloEvidenceReceiptV1, 'recordDigest'>
+): string {
+  return createHash('sha256').update(stableJson(receipt)).digest('hex');
+}
+
+function stableJson(value: unknown): string {
+  return JSON.stringify(canonicalizeJson(value));
+}
+
+function canonicalizeJson(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalizeJson);
+  if (value && typeof value === 'object') {
+    const source = value as Record<string, unknown>;
+    const sorted: Record<string, unknown> = {};
+    for (const key of Object.keys(source).sort()) {
+      if (source[key] !== undefined)
+        sorted[key] = canonicalizeJson(source[key]);
+    }
+    return sorted;
+  }
+  return value;
+}
+
+function authorizeChunkQuery(
+  policy: KnowledgePolicyV1,
+  principal: string
+): boolean {
+  const matches = (policy.rules ?? []).filter(
+    (rule) =>
+      rule.action === 'query' &&
+      (rule.principal === undefined || rule.principal === principal) &&
+      (rule.kind === undefined || rule.kind.toLowerCase() === 'chunk')
+  );
+  if (matches.some((rule) => rule.effect === 'deny')) return false;
+  if (matches.some((rule) => rule.effect === 'allow')) return true;
+  return policy.default === 'allow';
 }
 
 function safeErrorMessage(error: unknown): string {

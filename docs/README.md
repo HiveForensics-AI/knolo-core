@@ -42,9 +42,10 @@ operational guides for Knolo.
 - [`@knolo/openclaw`](../packages/openclaw/README.md) — local V5 mounts,
   policy-aware retrieval, query records, and the native OpenClaw tool plugin.
 - [`@knolo/mcp`](../packages/mcp/README.md) — the same read-only V5 tools over
-  MCP stdio. Pins, policy checks, and receipts come from
-  [`@knolo/tools`](../packages/knolo-tools/README.md). Caller identity comes
-  from the server config.
+  MCP stdio. A mount can pin a KAR graph and add read-only evaluation,
+  verification, and Cortex trace checks. Pins, policy checks, and receipts
+  come from [`@knolo/tools`](../packages/knolo-tools/README.md). Caller
+  identity comes from the server config.
 - [Knolo Verify action](../.github/actions/knolo-verify/README.md) — composite
   GitHub Action that runs a pinned `@knolo/cli` over committed packs, images,
   KAR artifacts, attestations, and Cortex traces. It does not add verification

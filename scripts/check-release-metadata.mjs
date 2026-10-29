@@ -123,10 +123,12 @@ assert.match(
   /V5 Knowledge Image verification/i
 );
 
-const adapterVersion = '0.1.0';
+const toolsVersion = '0.2.0';
+const mcpVersion = '0.2.0';
+const openclawVersion = '0.1.0';
 const toolsPackage = readJson('packages/knolo-tools/package.json');
 assert.equal(toolsPackage.name, '@knolo/tools');
-assert.equal(toolsPackage.version, adapterVersion);
+assert.equal(toolsPackage.version, toolsVersion);
 assert.equal(toolsPackage.license, 'Apache-2.0');
 assert.notEqual(toolsPackage.private, true);
 assert.equal(toolsPackage.publishConfig?.access, 'public');
@@ -135,29 +137,30 @@ assert.equal(toolsPackage.dependencies?.['@knolo/core'], coreRange);
 
 const mcpPackage = readJson('packages/mcp/package.json');
 assert.equal(mcpPackage.name, '@knolo/mcp');
-assert.equal(mcpPackage.version, adapterVersion);
+assert.equal(mcpPackage.version, mcpVersion);
 assert.equal(mcpPackage.license, 'Apache-2.0');
 assert.notEqual(mcpPackage.private, true);
 assert.equal(mcpPackage.publishConfig?.access, 'public');
 assert.equal(mcpPackage.engines?.node, '>=20');
 assert.equal(mcpPackage.mcpName, 'io.github.HiveForensics-AI/knolo');
-assert.equal(mcpPackage.dependencies?.['@knolo/core'], coreRange);
-assert.equal(mcpPackage.dependencies?.['@knolo/tools'], '^0.1.0');
+assert.equal(mcpPackage.dependencies?.['@knolo/core'], cliCoreRange);
+assert.equal(mcpPackage.dependencies?.['@knolo/tools'], '^0.2.0');
 assert.equal(mcpPackage.dependencies?.['@knolo/openclaw'], undefined);
 const mcpServer = readJson('packages/mcp/server.json');
 assert.equal(mcpServer.name, mcpPackage.mcpName);
-assert.equal(mcpServer.version, adapterVersion);
+assert.equal(mcpServer.version, mcpVersion);
 assert.ok(mcpServer.description.length <= 100);
 assert.equal(mcpServer.packages[0].identifier, '@knolo/mcp');
+assert.equal(mcpServer.packages[0].version, mcpVersion);
 assert.equal(mcpServer.packages[0].transport.type, 'stdio');
 
 const openclawPackage = readJson('packages/openclaw/package.json');
 assert.equal(openclawPackage.name, '@knolo/openclaw');
-assert.equal(openclawPackage.version, adapterVersion);
+assert.equal(openclawPackage.version, openclawVersion);
 assert.equal(openclawPackage.dependencies?.['@knolo/core'], '^5.5.1');
 assert.equal(openclawPackage.dependencies?.['@knolo/tools'], '^0.1.0');
 assert.equal(openclawPackage.engines?.node, '>=24.16.0');
 
 console.log(
-  `Release metadata passed for npm ${releaseVersion} with CLI ${cliReleaseVersion}. Rust and Python stay ${platformVersion}. @knolo/mcp and @knolo/tools stay ${adapterVersion}.`
+  `Release metadata passed for npm ${releaseVersion} with CLI ${cliReleaseVersion}. Rust and Python stay ${platformVersion}. @knolo/tools is ${toolsVersion}. @knolo/mcp is ${mcpVersion}. @knolo/openclaw stays ${openclawVersion}.`
 );
