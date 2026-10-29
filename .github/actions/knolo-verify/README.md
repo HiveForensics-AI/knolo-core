@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - uses: HiveForensics-AI/knolo-core/.github/actions/knolo-verify@<commit>
         with:
           cli-version: 6.2.0
@@ -32,9 +34,9 @@ jobs:
 
 `cli-version` is required and must be an exact version. The action installs it with `npm install --global --ignore-scripts`. Node defaults to 20.
 
-Paths are newline-separated. `*` and `**` globs are expanded in the workspace. Pair fields use `=` and do not expand globs. `diff-base` diffs each selected pack against that git ref. `fail-on-diff` defaults to `false`, so a diff that reports changes is a `changed` row and does not fail the job until you set it to `true`.
+Paths are newline-separated. `*` and `**` globs are expanded in the workspace. Pair fields use `=` and do not expand globs. `diff-base` diffs each selected pack against that git ref. The ref must already resolve to a commit in the checkout, so a shallow checkout needs `fetch-depth: 0` or an earlier fetch before `origin/main` can be used. A ref that is not a commit fails the job. A pack that is absent from a resolved ref is `changed`, or `fail` when `fail-on-diff` is true. `fail-on-diff` defaults to `false`, so a diff that reports changes is a `changed` row and does not fail the job until you set it to `true`.
 
-The job summary is a table of artifact, check, result, and root. `passed` is `true` or `false`. `results` is the path of a JSON array with those fields.
+The job summary is a table of artifact, check, result, and root. `passed` is `true` or `false`. `results` is the path of a new JSON file for that step. Two steps in one job do not share it.
 
 Checks:
 

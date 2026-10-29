@@ -336,16 +336,23 @@ function diffAgainstBase(file, ref) {
       new Error('diff-base only diffs packs inside the workspace.')
     );
   }
-  const shown = spawnSync(
-    'git',
-    ['show', `${ref}:${relative.split(path.sep).join('/')}`],
-    {
-      cwd: workspace,
-      encoding: 'buffer',
-    }
-  );
-  if (shown.status !== 0) {
+  if (!gitCommitExists(ref)) {
+    return failed(
+      file,
+      'pack diff',
+      new Error(`diff-base ${ref} is not a commit in this checkout.`)
+    );
+  }
+  const spec = `${ref}:${relative.split(path.sep).join('/')}`;
+  if (!gitObjectExists(spec)) {
     return diffChange(file, 'Pack is not present at diff-base.');
+  }
+  const shown = spawnSync('git', ['show', spec], {
+    cwd: workspace,
+    encoding: 'buffer',
+  });
+  if (shown.status !== 0) {
+    return failed(file, 'pack diff', new Error('diff-base could not be read.'));
   }
   const dir = mkdtempSync(path.join(tmpdir(), 'knolo-verify-'));
   const baseFile = path.join(dir, 'base.knolo');
@@ -449,8 +456,30 @@ function diffChange(file, detail) {
   };
 }
 
+function gitCommitExists(ref) {
+  const result = spawnSync(
+    'git',
+    ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`],
+    { cwd: workspace, encoding: 'utf8' }
+  );
+  return result.status === 0;
+}
+
+function gitObjectExists(spec) {
+  const result = spawnSync('git', ['cat-file', '-e', spec], {
+    cwd: workspace,
+    encoding: 'utf8',
+  });
+  return result.status === 0;
+}
+
 function knolo(args) {
-  const bin = process.env.KNOLO_BIN || 'knolo';
+  // The test harness opts in. A workflow KNOLO_BIN must not replace the CLI
+  // installed for cli-version.
+  const bin =
+    process.env.KNOLO_VERIFY_TEST_BIN === '1' && process.env.KNOLO_BIN
+      ? process.env.KNOLO_BIN
+      : 'knolo';
   const script = bin.endsWith('.mjs') || bin.endsWith('.js');
   return spawnSync(
     script ? process.execPath : bin,
@@ -530,10 +559,10 @@ function clip(value) {
 }
 
 function writeResults(items) {
-  const file = path.join(
-    process.env.RUNNER_TEMP || tmpdir(),
-    'knolo-verify-results.json'
+  const dir = mkdtempSync(
+    path.join(process.env.RUNNER_TEMP || tmpdir(), 'knolo-verify-')
   );
+  const file = path.join(dir, 'results.json');
   writeFileSync(file, `${JSON.stringify(items, null, 2)}\n`);
   return file;
 }

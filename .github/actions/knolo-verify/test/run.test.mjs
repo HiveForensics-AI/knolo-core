@@ -83,6 +83,7 @@ function runRunner(workspace, inputs) {
       GITHUB_STEP_SUMMARY: summary,
       GITHUB_OUTPUT: output,
       KNOLO_BIN: cli,
+      KNOLO_VERIFY_TEST_BIN: '1',
       RUNNER_TEMP: scratch,
     },
   });
@@ -527,6 +528,128 @@ test('diff-base compares a pack with the committed bytes', async () => {
   }
 });
 
+test('a missing diff-base fails instead of reporting a change', async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'knolo-verify-ref-'));
+  try {
+    const pack = await buildPack([
+      { id: 'notes', text: 'billing appears in the verified pack' },
+    ]);
+    writeFileSync(path.join(dir, 'notes.knolo'), pack);
+    git(dir, ['init']);
+    const missing = runRunner(dir, {
+      packs: 'notes.knolo',
+      'diff-base': 'refs/not-a-base',
+      'fail-on-diff': false,
+    });
+    assert.equal(missing.status, 1, JSON.stringify(missing.results));
+    const row = missing.results.find((item) => item.check === 'pack diff');
+    assert.equal(row.status, 'fail');
+    assert.match(row.detail, /not a commit/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a pack missing from a resolved diff-base is a change', async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'knolo-verify-absent-'));
+  try {
+    writeFileSync(path.join(dir, 'keep.txt'), 'keep\n');
+    git(dir, ['init']);
+    git(dir, ['add', 'keep.txt']);
+    git(dir, [
+      '-c',
+      'user.email=knolo-verify@example.com',
+      '-c',
+      'user.name=Knolo Verify',
+      'commit',
+      '-m',
+      'base',
+    ]);
+    const pack = await buildPack([
+      { id: 'notes', text: 'billing appears in the verified pack' },
+    ]);
+    writeFileSync(path.join(dir, 'notes.knolo'), pack);
+    const reported = runRunner(dir, {
+      packs: 'notes.knolo',
+      'diff-base': 'HEAD',
+      'fail-on-diff': false,
+    });
+    assert.equal(reported.status, 0, JSON.stringify(reported.results));
+    assert.equal(
+      reported.results.find((row) => row.check === 'pack diff').status,
+      'changed'
+    );
+    const denied = runRunner(dir, {
+      packs: 'notes.knolo',
+      'diff-base': 'HEAD',
+      'fail-on-diff': true,
+    });
+    assert.equal(denied.status, 1);
+    assert.equal(
+      denied.results.find((row) => row.check === 'pack diff').status,
+      'fail'
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('an ambient KNOLO_BIN does not replace the installed CLI', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'knolo-verify-bin-'));
+  const scratch = mkdtempSync(path.join(tmpdir(), 'knolo-verify-bin-out-'));
+  const marker = path.join(dir, 'used-ambient-bin');
+  const fake = path.join(dir, 'fake-knolo.mjs');
+  try {
+    writeFileSync(
+      fake,
+      `import { writeFileSync } from 'node:fs';\nwriteFileSync(${JSON.stringify(marker)}, 'used');\nprocess.exit(0);\n`
+    );
+    writeFileSync(path.join(scratch, 'summary.md'), '');
+    writeFileSync(path.join(scratch, 'github-output.txt'), '');
+    const env = {
+      ...process.env,
+      INPUTS_JSON: JSON.stringify({ packs: 'notes.knolo' }),
+      GITHUB_WORKSPACE: dir,
+      GITHUB_STEP_SUMMARY: path.join(scratch, 'summary.md'),
+      GITHUB_OUTPUT: path.join(scratch, 'github-output.txt'),
+      KNOLO_BIN: fake,
+      RUNNER_TEMP: scratch,
+    };
+    delete env.KNOLO_VERIFY_TEST_BIN;
+    const result = spawnSync(process.execPath, [runner], {
+      cwd: dir,
+      encoding: 'utf8',
+      env,
+    });
+    assert.equal(readOptional(marker), null);
+    assert.notEqual(result.status, 0);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+    rmSync(scratch, { recursive: true, force: true });
+  }
+});
+
+test('each invocation writes its own results file', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'knolo-verify-unique-'));
+  const temp = mkdtempSync(path.join(tmpdir(), 'knolo-verify-unique-temp-'));
+  try {
+    const first = spawnRunner(dir, temp, { packs: 'missing-a.knolo' });
+    const second = spawnRunner(dir, temp, { packs: 'missing-b.knolo' });
+    assert.notEqual(first.resultsPath, second.resultsPath);
+    assert.equal(
+      JSON.parse(readFileSync(first.resultsPath, 'utf8'))[0].artifact,
+      'missing-a.knolo'
+    );
+    assert.equal(
+      JSON.parse(readFileSync(second.resultsPath, 'utf8'))[0].artifact,
+      'missing-b.knolo'
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+    rmSync(temp, { recursive: true, force: true });
+  }
+});
+
 test('attestation args are not passed through a shell', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'knolo-verify-shell-'));
   const marker = path.join(dir, 'pwned');
@@ -553,6 +676,34 @@ test('an empty selection fails closed', () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+function spawnRunner(workspace, temp, inputs) {
+  const summary = path.join(temp, `summary-${inputs.packs}.md`);
+  const output = path.join(temp, `output-${inputs.packs}.txt`);
+  writeFileSync(summary, '');
+  writeFileSync(output, '');
+  const result = spawnSync(process.execPath, [runner], {
+    cwd: workspace,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      INPUTS_JSON: JSON.stringify(inputs),
+      GITHUB_WORKSPACE: workspace,
+      GITHUB_STEP_SUMMARY: summary,
+      GITHUB_OUTPUT: output,
+      KNOLO_BIN: cli,
+      KNOLO_VERIFY_TEST_BIN: '1',
+      RUNNER_TEMP: temp,
+    },
+  });
+  const resultsPath = readFileSync(output, 'utf8')
+    .split('\n')
+    .find((line) => line.startsWith('results='))
+    ?.slice('results='.length);
+  assert.equal(result.status ?? 1, 1, result.stderr || result.stdout);
+  assert.ok(resultsPath);
+  return { resultsPath };
+}
 
 function git(cwd, args) {
   const result = spawnSync('git', args, { cwd, encoding: 'utf8' });
