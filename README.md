@@ -83,6 +83,8 @@ A Committed Evidence Graph is compiled from editable CEG Source. `compileCegSour
 
 Contracts, policy, and operations Domain Packs can propose CEG Source. Their maturity is `review-required` in [`domains/v6-catalog.json`](domains/v6-catalog.json). Human review is still required before those proposals are treated as validated semantics. KAR evaluates an already committed graph either way.
 
+Paper: [KAR-1: Frontier-Constrained Minimum Evidence Retrieval over Committed Knowledge Images](https://www.researchgate.net/publication/415581037_KAR-1_Frontier-Constrained_Minimum_Evidence_Retrieval_over_Committed_Knowledge_Images_Deterministic_Support_Opposition_Qualification_Temporal_and_Authority_Frontiers_with_Replayable_Evidence_Certifica) (preprint).
+
 ### Deterministic contracts
 
 Rust and TypeScript share golden vectors for the core byte and root contracts:
