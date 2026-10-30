@@ -4,8 +4,10 @@
 read-only Knowledge Image verifier, deterministic migration foundation, and
 VQF-1 required object/event readers. The TypeScript runtime remains the V4
 retrieval reference and canonical VQF encoder; this crate is a read-only V5
-byte-contract implementation. The crate stays `5.5.1`. It does not implement
-KAR, coverage, or composition.
+byte-contract implementation. The crate stays `5.5.1`. It evaluates and
+verifies the public KAR V5 conformance vectors. Authoring, coverage reports,
+Cortex, composition, the Python package, and the ICP canister stay outside
+this runtime.
 
 The shared implementation roadmap is [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
 
@@ -53,6 +55,12 @@ let image = mount_knowledge_image(&v5_bytes)?;
 let result = query_knowledge_image_v5(&image, "FROM chunk SEARCH \"retention\" LIMIT 20")?;
 println!("{}", result.result_root);
 ```
+
+## KAR V5 vectors
+
+`evaluate_kar_v5` and `verify_kar_v5` run the frozen `kar-1-research-1` evaluator on a mounted V5 image and a committed evidence graph. `SATISFIED` means the evidence requirements were met. It does not mean a claim is proven. `UNSATISFIED_EVIDENCE_REQUIREMENTS` is a completed evaluation.
+
+The public vectors live in [`../../conformance/kar/v1/README.md`](../../conformance/kar/v1/README.md). `npm run test:rust` rebuilds those images with the TypeScript compiler and checks the committed fixtures, then `cargo test` runs the native evaluator. A direct `cargo test` uses the fixtures already in `tests/fixtures/kar-v1`. The crate does not compile CEG source and does not write V5 images.
 
 ## Included in this initial release
 

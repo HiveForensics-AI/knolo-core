@@ -19,7 +19,9 @@ knolo kar conformance
 
 ## Rust
 
-The Rust verifier reproduces the research oracle, not these V5 image vectors:
+`packages/core-rust` evaluates and verifies these V5 vectors. `npm run test:rust` checks the committed fixtures against the TypeScript image compiler, then runs the native evaluator. Authoring, coverage, Cortex, and composition stay in TypeScript.
+
+The research oracle is separate and does not execute these vectors:
 
 ```bash
 cd research/kar-1 && npm test
