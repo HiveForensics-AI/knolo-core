@@ -279,10 +279,7 @@ fn open_session(
     let sidecar_value = validate_sidecar(&sidecar)?;
     let mut rows = Vec::new();
     for object in &mounted.objects {
-        let text = String::from_utf8(object.bytes.clone()).map_err(|_| KarRunError {
-            code: "KAR_IMAGE_REJECTED".into(),
-            message: "V5 object bytes are not UTF-8".into(),
-        })?;
+        let text = decode_object_text(&object.bytes);
         let meta = cbor_to_json(&object.meta).map_err(|error| KarRunError {
             code: "KAR_IMAGE_REJECTED".into(),
             message: error,
@@ -1073,6 +1070,11 @@ fn evidence_reason(status: &str, necessary: Option<bool>, requirements: &[String
     }
 }
 
+fn decode_object_text(bytes: &[u8]) -> String {
+    // `TextDecoder` is non-fatal. Invalid UTF-8 becomes U+FFFD.
+    String::from_utf8_lossy(bytes).into_owned()
+}
+
 fn object_source(kind: &str, meta: &Json) -> Option<String> {
     if let Some(source) = meta.get("source").and_then(Json::as_str) {
         if !source.is_empty() {
@@ -1095,7 +1097,15 @@ fn cbor_to_json(value: &CborValue) -> Result<Json, String> {
             .map_err(|_| "KAR metadata integer is out of range".to_string()),
         CborValue::NInt(item) => Ok(Json::Int(*item)),
         CborValue::Text(item) => Ok(Json::String(item.clone())),
-        CborValue::Bytes(_) => Err("KAR object metadata is not JSON".into()),
+        // A byte string is a Uint8Array in the TypeScript projection.
+        // JSON.stringify and canonicalize both turn that into decimal index keys.
+        CborValue::Bytes(bytes) => Ok(Json::Object(
+            bytes
+                .iter()
+                .enumerate()
+                .map(|(index, byte)| (index.to_string(), Json::Int(i64::from(*byte))))
+                .collect(),
+        )),
         CborValue::Array(items) => items
             .iter()
             .map(cbor_to_json)
@@ -1108,5 +1118,39 @@ fn cbor_to_json(value: &CborValue) -> Result<Json, String> {
             }
             Ok(Json::Object(pairs))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn object_text_replaces_invalid_utf8() {
+        assert_eq!(decode_object_text(&[0xe2, 0x82, 0xac]), "€");
+        assert_eq!(decode_object_text(&[0xc2, 0x20]), "\u{FFFD} ");
+        assert_eq!(
+            decode_object_text(&[0xed, 0xa0, 0x80]),
+            "\u{FFFD}\u{FFFD}\u{FFFD}"
+        );
+    }
+
+    #[test]
+    fn metadata_bytes_project_like_uint8array() {
+        let mut bytes = vec![0; 11];
+        bytes[10] = 7;
+        let value = cbor_to_json(&CborValue::Bytes(bytes)).expect("bytes");
+        assert_eq!(
+            canonicalize(&value),
+            r#"{"0":0,"1":0,"10":7,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0}"#
+        );
+        assert_eq!(
+            stringify(&value),
+            r#"{"0":0,"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":7}"#
+        );
+        assert_eq!(
+            stringify(&cbor_to_json(&CborValue::Bytes(Vec::new())).expect("empty")),
+            "{}"
+        );
     }
 }

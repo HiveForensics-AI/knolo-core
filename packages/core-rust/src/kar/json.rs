@@ -1,6 +1,6 @@
 //! Research JSON canonical form.
 //! Object keys sort by UTF-16 code units. Arrays keep their order.
-//! Solidus is not escaped. U+2028 and U+2029 follow `JSON.stringify`.
+//! Solidus, U+2028, and U+2029 stay literal, matching `JSON.stringify`.
 
 use std::cmp::Ordering;
 
@@ -464,11 +464,23 @@ fn write_string(value: &str, out: &mut String) {
             '\n' => out.push_str("\\n"),
             '\r' => out.push_str("\\r"),
             '\t' => out.push_str("\\t"),
-            other if (other as u32) < 0x20 || other == '\u{2028}' || other == '\u{2029}' => {
+            other if (other as u32) < 0x20 => {
                 out.push_str(&format!("\\u{:04x}", other as u32));
             }
             other => out.push(other),
         }
     }
     out.push('"');
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn line_separators_stay_literal() {
+        let value = Json::String("\u{2028}\u{2029}".into());
+        assert_eq!(canonicalize(&value), "\"\u{2028}\u{2029}\"");
+        assert_eq!(stringify(&value), "\"\u{2028}\u{2029}\"");
+    }
 }

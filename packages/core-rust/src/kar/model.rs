@@ -12,6 +12,8 @@ const PROFILES: [&str; 3] = [
     "exp1-lexicographic",
 ];
 const ROOT: &str = "sha256-";
+/// `Number.MAX_SAFE_INTEGER`. `Number.isSafeInteger` rejects the next value.
+const MAX_SAFE_INTEGER: i64 = 9_007_199_254_740_991;
 
 #[derive(Debug, Clone)]
 pub struct Bounds {
@@ -568,7 +570,7 @@ pub fn validate_plan(input: &Json) -> Option<Plan> {
     }
     let min_authority = match input.get("minAuthority")? {
         Json::Null => None,
-        Json::Int(value) => Some(*value),
+        Json::Int(value) if (-MAX_SAFE_INTEGER..=MAX_SAFE_INTEGER).contains(value) => Some(*value),
         _ => return None,
     };
     let anchor = validate_anchor(input.get("anchor")?)?;
@@ -806,7 +808,7 @@ pub fn floor_micros(floor: &str) -> Option<i64> {
         Some(_) => return None,
     };
     let whole_number = whole.parse::<i64>().ok()?;
-    if whole_number > 9_007_199_254_740_991 {
+    if whole_number > MAX_SAFE_INTEGER {
         return None;
     }
     let padded = format!("{fraction:0<6}");
@@ -887,7 +889,7 @@ fn string_list(input: &Json) -> Option<Vec<String>> {
 
 fn non_negative(input: &Json) -> Option<i64> {
     match input.as_int() {
-        Some(value) if value >= 0 => Some(value),
+        Some(value) if (0..=MAX_SAFE_INTEGER).contains(&value) => Some(value),
         _ => None,
     }
 }
@@ -1020,4 +1022,47 @@ pub fn lookup_floor<'a>(plan: &'a Plan, frontier: &str) -> &'a str {
         .find(|(name, _)| name == frontier)
         .map(|(_, floor)| floor.as_str())
         .unwrap_or("0")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::kar::json::parse_json;
+
+    fn plan_with(max_cover_visits: i64, min_authority: &str) -> Json {
+        parse_json(&format!(
+            r#"{{
+              "version": 1,
+              "anchor": {{"mode": "recompute", "procedure": "member-id-v1"}},
+              "frontierMap": {{}},
+              "depth": 2,
+              "cardinalityBound": 8,
+              "coverageMode": "requirements",
+              "requirements": {{"F_S": [], "F_O": [], "F_Q": [], "F_T": [], "F_A": []}},
+              "floors": {{"F_S": "0", "F_O": "0", "F_Q": "0", "F_T": "0", "F_A": "0"}},
+              "profile": "minimum-cover",
+              "asOf": "2026-06-01",
+              "minAuthority": {min_authority},
+              "bounds": {{
+                "maxAnchorNodes": 8,
+                "maxClosureNodes": 32,
+                "maxClosureEdges": 32,
+                "maxFrontierEvidence": 8,
+                "maxRequirementsPerFrontier": 4,
+                "maxEvidenceBindings": 8,
+                "maxCoverVisits": {max_cover_visits}
+              }},
+              "lexical": null
+            }}"#
+        ))
+        .expect("plan json")
+    }
+
+    #[test]
+    fn plan_bounds_reject_unsafe_integers() {
+        assert!(validate_plan(&plan_with(MAX_SAFE_INTEGER, "null")).is_some());
+        assert!(validate_plan(&plan_with(MAX_SAFE_INTEGER + 1, "null")).is_none());
+        assert!(validate_plan(&plan_with(8, "-1")).is_some());
+        assert!(validate_plan(&plan_with(8, "-9007199254740992")).is_none());
+    }
 }
