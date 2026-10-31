@@ -28,7 +28,7 @@ A coverage report is relative to the cases or templates that were supplied. `met
 
 ## Packaging
 
-The public conformance vectors run in TypeScript on V5 images. The Rust verifier reproduces `research/kar-1` fixtures. It does not execute those V5 vectors.
+The public conformance vectors run in TypeScript and in `packages/core-rust` on the same V5 images. The research Rust tree still reproduces `research/kar-1` fixtures. Native Rust does not author graphs, report coverage, or run Cortex or composition.
 
 `@knolo/core` npm packages publish `dist` only. `conformance/kar/v1` stays in the repository. `knolo kar conformance` finds it by walking up from the checkout. An installed CLI without the repository cannot see those files.
 

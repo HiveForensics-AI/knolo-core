@@ -7,9 +7,10 @@
  *
  *   node conformance/kar/v1/run.mjs
  *
- * Rust parity for the frozen research fixtures:
+ * Native Rust executes these V5 vectors from the emitted fixtures:
+ *   npm run test:rust
+ * The research oracle does not execute these vectors:
  *   cargo test --manifest-path research/kar-1/rust/Cargo.toml --offline
- * That command does not execute these V5 vectors. See README.md.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';

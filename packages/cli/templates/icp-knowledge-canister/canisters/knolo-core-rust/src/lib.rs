@@ -2,6 +2,12 @@ use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 
+mod kar;
+pub use kar::{
+    create_kar_dossier_v5, evaluate_kar_v5, render_kar_dossier, verify_kar_dossier_v5, verify_kar_v5,
+    KarDossier, KarEvaluation, KarRunError, KarVerification,
+};
+
 #[derive(Debug, Clone)]
 pub enum KnoloError {
     InvalidPack(String),
@@ -2012,7 +2018,7 @@ fn digest_raw(digest: &str) -> Vec<u8> { let hex = digest.strip_prefix("sha256-"
 fn le_u16(bytes: &[u8], offset: usize) -> Result<u16, KnoloError> { Ok(u16::from_le_bytes(read_slice(bytes, &mut offset.clone(), 2)?.try_into().unwrap())) }
 
 // Minimal SHA-256 implementation for the dependency-free Rust kernel.
-fn sha256(input: &[u8]) -> [u8; 32] {
+pub(crate) fn sha256(input: &[u8]) -> [u8; 32] {
     const K: [u32; 64] = [
         0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
         0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,

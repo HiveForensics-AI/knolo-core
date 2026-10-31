@@ -396,7 +396,7 @@ V5 remains the portable image and verification layer. V6 adds KAR on that layer.
 
 ```text
 packages/core/       TypeScript runtime, including `@knolo/core/kar`, `@knolo/core/composition`, and `@knolo/core/cortex`
-packages/core-rust/  Native Rust V5 kernel and verifier (5.5.1, no KAR or Cortex)
+packages/core-rust/  Native Rust V5 kernel and verifier (5.5.1), including public KAR V5 evaluate/verify. No Cortex, authoring, coverage, or composition
 packages/cli/        Knolo command-line interface, including `knolo kar`, `knolo compose`, and `knolo cortex`
 packages/core-python/ Python V5 verifier/query package (5.5.1, no KAR or Cortex)
 packages/icp-canister/ Internet Computer compatibility package (5.5.1, no KAR or Cortex)
