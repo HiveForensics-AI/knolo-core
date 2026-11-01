@@ -21,6 +21,8 @@ knolo flight ingest --events events.json --log flight.ulg --out flight.knolo
 
 The extractor is optional. It requires `pyulog==1.2.4` from `scripts/flight/requirements.txt`. `npm test` does not install it. The committed demo uses `examples/flight-ops/events.json` and does not call the extractor.
 
+A failsafe event is recorded only from `vehicle_status.failsafe`. `failsafe_defer_state` is not an asserted failsafe. Link loss is recorded from `gcs_connection_lost` (older logs: `data_link_lost`), `high_latency_data_link_lost`, and `rc_signal_lost`. `telemetry_status` heartbeat fields are not link state. `python3 scripts/flight/test_extract_ulog.py` checks that selection without installing pyulog.
+
 Mission notes stay on the normal image path. `knolo compose` joins that image with the flight image. `knolo attest` and `knolo verify-attestation` check the composition. `knolo-verify` already accepts those artifacts:
 
 ```yaml

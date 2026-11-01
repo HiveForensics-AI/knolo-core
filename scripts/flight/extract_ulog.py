@@ -8,6 +8,13 @@ A battery event is emitted only when remaining charge crosses below 0.2.
 That threshold is producer policy, not an airworthiness limit.
 A scan sentence is not inferred. This script does not decide that a flight was
 safe or compliant.
+
+Failsafe events come only from vehicle_status.failsafe. failsafe_defer_state
+is a deferral enum, and failsafe_and_user_took_over is a separate takeover
+flag. Link events come from connection-loss booleans: gcs_connection_lost, or
+data_link_lost when that older name is the one present, plus
+high_latency_data_link_lost and rc_signal_lost. telemetry_status heartbeat
+fields are not link state.
 """
 
 from __future__ import annotations
@@ -41,6 +48,17 @@ NAV_NAMES = {
     18: "auto-land",
 }
 
+# vehicle_status.failsafe is the active failsafe boolean on PX4 1.13 through
+# current VehicleStatus. Do not match every field whose name contains "failsafe".
+FAILSAFE_FIELDS = ("failsafe",)
+
+# Explicit connection-loss booleans. Counters and telemetry heartbeat types are
+# not loss state. data_link_lost is the pre-1.14 name of gcs_connection_lost.
+LINK_LOSS_FIELDS = (
+    "high_latency_data_link_lost",
+    "rc_signal_lost",
+)
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Write flight-events-1 JSON from a PX4 ULog.")
@@ -63,13 +81,7 @@ def main() -> int:
         print(f"FLIGHT_LOG_PARSE: {error}", file=sys.stderr)
         return 1
     events = collect(ulog)
-    seen = {}
-    for event in events:
-        base = event["id"]
-        count = seen.get(base, 0)
-        seen[base] = count + 1
-        if count:
-            event["id"] = f"{base}-{count}"[:64]
+    assign_unique_ids(events)
     events.sort(key=lambda item: (item["timestampUs"], item["kind"], item["byteStart"], item["id"]))
     if len(events) > MAX_EVENTS:
         print(f"FLIGHT_TOO_MANY_EVENTS: event count {len(events)} exceeds {MAX_EVENTS}", file=sys.stderr)
@@ -97,18 +109,50 @@ def collect(ulog) -> list[dict]:
     for dataset in datasets(ulog, "vehicle_status"):
         events.extend(changes(dataset, "arming_state", "arming", arming_text))
         events.extend(changes(dataset, "nav_state", "nav-mode", nav_text))
-        for field in field_names(dataset):
-            if "failsafe" not in field:
-                continue
-            events.extend(flag_changes(dataset, field))
+        names = set(field_names(dataset))
+        for field in FAILSAFE_FIELDS:
+            if field in names:
+                events.extend(flag_edges(
+                    dataset,
+                    field,
+                    "failsafe-assert",
+                    "failsafe-clear",
+                    {"name": token_of(field)},
+                ))
+        for field in link_loss_fields(names):
+            events.extend(flag_edges(dataset, field, "link-loss", "link-restored", {}))
     for dataset in datasets(ulog, "battery_status"):
         events.extend(battery_changes(dataset))
-    for dataset in datasets(ulog, "telemetry_status"):
-        for field in ("heartbeat_type", "type"):
-            if field in field_names(dataset):
-                events.extend(link_changes(dataset, field))
-                break
     return events
+
+
+def link_loss_fields(names: set[str]) -> list[str]:
+    chosen = []
+    if "gcs_connection_lost" in names:
+        chosen.append("gcs_connection_lost")
+    elif "data_link_lost" in names:
+        chosen.append("data_link_lost")
+    for field in LINK_LOSS_FIELDS:
+        if field in names:
+            chosen.append(field)
+    return chosen
+
+
+def assign_unique_ids(events: list[dict]) -> None:
+    """Keep every id unique and inside the 64-character ingest token."""
+    used = set()
+    for event in events:
+        base = event["id"]
+        candidate = base[:64]
+        count = 0
+        while candidate in used:
+            count += 1
+            suffix = f"-{count}"
+            if len(suffix) >= 64:
+                raise RuntimeError("FLIGHT_EVENTS_INVALID: event id suffix does not fit")
+            candidate = base[: 64 - len(suffix)] + suffix
+        used.add(candidate)
+        event["id"] = candidate
 
 
 def datasets(ulog, name: str) -> list:
@@ -142,7 +186,8 @@ def changes(dataset, field: str, kind: str, render) -> list[dict]:
     return events
 
 
-def flag_changes(dataset, field: str) -> list[dict]:
+def flag_edges(dataset, field: str, rising: str, falling: str, fields: dict) -> list[dict]:
+    """Emit rising and falling edges. Non-zero means the condition is active."""
     if not hasattr(dataset, "list_value_changes"):
         return []
     try:
@@ -151,18 +196,17 @@ def flag_changes(dataset, field: str) -> list[dict]:
         return []
     events = []
     previous = None
-    token = token_of(field)
     for timestamp, value in pairs:
         current = int(value)
         if previous is None:
             previous = current
             if current != 0:
-                events.append(make_event("failsafe-assert", int(timestamp), {"name": token}))
+                events.append(make_event(rising, int(timestamp), dict(fields)))
             continue
         if previous == 0 and current != 0:
-            events.append(make_event("failsafe-assert", int(timestamp), {"name": token}))
+            events.append(make_event(rising, int(timestamp), dict(fields)))
         elif previous != 0 and current == 0:
-            events.append(make_event("failsafe-clear", int(timestamp), {"name": token}))
+            events.append(make_event(falling, int(timestamp), dict(fields)))
         previous = current
     return events
 
@@ -184,24 +228,6 @@ def battery_changes(dataset) -> list[dict]:
         if now and not below:
             events.append(make_event("battery-threshold", int(stamp), {"level": "low"}))
         below = now
-    return events
-
-
-def link_changes(dataset, field: str) -> list[dict]:
-    data = getattr(dataset, "data", {})
-    stamps = data.get("timestamp")
-    values = data.get(field)
-    if stamps is None or values is None:
-        return []
-    events = []
-    lost = False
-    for stamp, value in zip(stamps, values):
-        now = int(value) == 0
-        if now and not lost:
-            events.append(make_event("link-loss", int(stamp), {}))
-        elif lost and not now:
-            events.append(make_event("link-restored", int(stamp), {}))
-        lost = now
     return events
 
 

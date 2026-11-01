@@ -106,6 +106,53 @@ test('ingest is byte-identical and refuses a mismatched log', () => {
   }
 });
 
+test('flight event schema uses the ingest token and per-kind fields', () => {
+  const schemaPath = path.resolve(fixture, '../../schemas/experimental/flight/flight-events-v1.schema.json');
+  const schema = JSON.parse(readFileSync(schemaPath, 'utf8'));
+  const token = '^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$';
+  const phrase = '^[a-z0-9][a-z0-9 -]{0,160}$';
+  assert.equal(schema.$defs.token.pattern, token);
+  assert.equal(schema.$defs.phrase.pattern, phrase);
+  assert.equal(schema.properties.parser.properties.id.$ref, '#/$defs/token');
+  assert.equal(schema.properties.parser.properties.version.$ref, '#/$defs/token');
+  assert.equal(schema.$defs.event.properties.id.$ref, '#/$defs/token');
+  assert.equal(new RegExp(token).test('my parser'), false);
+  assert.equal(new RegExp(token).test('knolo-flight-fixture'), true);
+  const expected = {
+    arming: ['state'],
+    'nav-mode': ['mode'],
+    'failsafe-assert': ['name'],
+    'failsafe-clear': ['name'],
+    'geofence-breach': ['name'],
+    'geofence-clear': [],
+    'battery-threshold': ['level'],
+    'link-loss': [],
+    'link-restored': [],
+    'scan-summary': ['phrase'],
+  };
+  const branches = schema.$defs.event.oneOf;
+  assert.equal(branches.length, Object.keys(expected).length);
+  const fixtureDoc = JSON.parse(readFileSync(path.join(fixture, 'events.json'), 'utf8'));
+  for (const row of fixtureDoc.events) {
+    const branch = branches.find((item) => item.properties.kind.const === row.kind);
+    assert.ok(branch, row.kind);
+    assert.match(row.text, new RegExp(branch.properties.text.pattern));
+    assert.deepEqual(Object.keys(row.fields), branch.properties.fields.required ?? []);
+  }
+  for (const branch of branches) {
+    const kind = branch.properties.kind.const;
+    assert.deepEqual(branch.properties.fields.required ?? [], expected[kind]);
+    assert.equal(branch.properties.fields.additionalProperties, false);
+    const sample = event({
+      id: 'sample',
+      kind,
+      timestampUs: 0,
+      fields: Object.fromEntries((expected[kind] ?? []).map((name) => [name, name === 'phrase' ? 'scan phrase' : 'token'])),
+    });
+    assert.match(sample.text, new RegExp(branch.properties.text.pattern));
+  }
+});
+
 test('an oversized event file is refused', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'knolo-flight-size-'));
   try {
