@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schema/experimental/flight/flight-events-v1.schema.json",
+  "title": "Flight events v1",
+  "description": "Canonical discrete flight events for knolo flight ingest. This document is not a ULog parser and it is not a Committed Evidence Graph. log.format ulog is the phase 1 profile. DataFlash and rosbag2 use later extractors that emit this same document.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "parser", "log", "events"],
+  "properties": {
+    "format": { "const": "flight-events-1" },
+    "parser": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "version": { "type": "string", "minLength": 1, "maxLength": 64 }
+      }
+    },
+    "log": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sha256", "byteLength", "format"],
+      "properties": {
+        "sha256": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+        "byteLength": { "type": "integer", "minimum": 0 },
+        "format": { "const": "ulog" }
+      }
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": { "$ref": "#/$defs/event" }
+    }
+  },
+  "$defs": {
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "timestampUs", "byteStart", "byteEnd", "fields", "text"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "kind": {
+          "enum": [
+            "arming",
+            "nav-mode",
+            "failsafe-assert",
+            "failsafe-clear",
+            "geofence-breach",
+            "geofence-clear",
+            "battery-threshold",
+            "link-loss",
+            "link-restored",
+            "scan-summary"
+          ]
+        },
+        "timestampUs": { "type": "integer", "minimum": 0 },
+        "byteStart": { "type": "integer", "minimum": 0 },
+        "byteEnd": { "type": "integer", "minimum": 0 },
+        "fields": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "text": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

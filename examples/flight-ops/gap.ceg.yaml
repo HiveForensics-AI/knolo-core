@@ -1,0 +1,21 @@
+format: ceg-source-1
+concepts:
+  flight:
+    label: Flight
+  geofence-scan:
+    label: Geofence scan
+evidence:
+  geofence:
+    source: geofence-scan.txt
+relations:
+  - from: flight
+    type: supports
+    to: geofence-scan
+bindings:
+  - concept: geofence-scan
+    evidence: geofence
+    requirements:
+      - geofence-clear
+requirements:
+  - geofence-clear
+  - failsafe-clear

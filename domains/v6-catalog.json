@@ -25,6 +25,14 @@
       "maturity": "review-required",
       "domainPackRoot": "sha256-edde04257c55c480c95ce3db90074238a54ab05ee8c9d25135190f5da70f6da4",
       "containsCustomerEvidence": false
+    },
+    {
+      "id": "flight-ops",
+      "version": "1",
+      "path": "domains/flight-ops",
+      "maturity": "review-required",
+      "domainPackRoot": "sha256-2cd41797119709225e66356512ad5baec2fc5b460e57c640a741a72d70ada50b",
+      "containsCustomerEvidence": false
     }
   ]
 }

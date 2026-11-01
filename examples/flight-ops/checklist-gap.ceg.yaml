@@ -1,0 +1,19 @@
+format: ceg-source-1
+concepts:
+  arming:
+    label: Arming
+evidence:
+  arming:
+    source: arming.txt
+relations:
+  - from: arming
+    type: requires
+    to: arming
+bindings:
+  - concept: arming
+    evidence: arming
+    requirements:
+      - armed
+requirements:
+  - armed
+  - checklist-complete

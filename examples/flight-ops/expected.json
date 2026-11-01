@@ -1,0 +1,4 @@
+{
+  "flightStateRoot": "sha256-5fe6d60817f29d8c5ed8852a5c1338adfb0af16878b21eafa43c6d2cac99b3fd",
+  "note": "Recomputed by examples/flight-ops/run.mjs from events.json and the hand-authored graphs. A matching root means the image bytes were reproduced. It does not mean a flight was safe or compliant."
+}
