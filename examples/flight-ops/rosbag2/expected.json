@@ -1,0 +1,4 @@
+{
+  "flightStateRoot": "sha256-2513890f21686f2393519faa4f037becc7c11786daf4b2ba2703d17fdcb8fa29",
+  "note": "Synthetic rosbag2 fixture, not a flight recording. Recomputed by ingesting events.json with sample.mcap. A matching root means the image bytes were reproduced. It does not mean a flight was safe or compliant."
+}

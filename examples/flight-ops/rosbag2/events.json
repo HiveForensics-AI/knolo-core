@@ -1,0 +1,162 @@
+{
+  "events": [
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {
+        "state": "armed"
+      },
+      "id": "arming-10000-armed",
+      "kind": "arming",
+      "text": "ARMING_STATE armed at 10000 us.",
+      "timestampUs": 10000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {
+        "mode": "altctl"
+      },
+      "id": "nav-mode-10000-altctl",
+      "kind": "nav-mode",
+      "text": "NAV_STATE altctl at 10000 us.",
+      "timestampUs": 10000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {
+        "name": "failsafe"
+      },
+      "id": "failsafe-assert-20000-failsafe",
+      "kind": "failsafe-assert",
+      "text": "FAILSAFE failsafe asserted at 20000 us.",
+      "timestampUs": 20000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {},
+      "id": "link-loss-20000-event",
+      "kind": "link-loss",
+      "text": "link loss recorded at 20000 us.",
+      "timestampUs": 20000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {
+        "mode": "auto-rtl"
+      },
+      "id": "nav-mode-20000-auto-rtl",
+      "kind": "nav-mode",
+      "text": "NAV_STATE auto-rtl at 20000 us.",
+      "timestampUs": 20000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {
+        "state": "standby"
+      },
+      "id": "arming-30000-standby",
+      "kind": "arming",
+      "text": "ARMING_STATE standby at 30000 us.",
+      "timestampUs": 30000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {
+        "name": "failsafe"
+      },
+      "id": "failsafe-clear-30000-failsafe",
+      "kind": "failsafe-clear",
+      "text": "FAILSAFE failsafe cleared at 30000 us.",
+      "timestampUs": 30000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {},
+      "id": "link-restored-30000-event",
+      "kind": "link-restored",
+      "text": "LINK_RESTORED at 30000 us.",
+      "timestampUs": 30000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {
+        "level": "low"
+      },
+      "id": "battery-threshold-50000-low",
+      "kind": "battery-threshold",
+      "text": "battery threshold crossed at 50000 us. level low.",
+      "timestampUs": 50000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {
+        "state": "armed"
+      },
+      "id": "arming-60000-armed",
+      "kind": "arming",
+      "text": "ARMING_STATE armed at 60000 us.",
+      "timestampUs": 60000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {
+        "mode": "OFFBOARD"
+      },
+      "id": "nav-mode-60000-OFFBOARD",
+      "kind": "nav-mode",
+      "text": "NAV_STATE OFFBOARD at 60000 us.",
+      "timestampUs": 60000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {
+        "state": "disarmed"
+      },
+      "id": "arming-70000-disarmed",
+      "kind": "arming",
+      "text": "ARMING_STATE disarmed at 70000 us.",
+      "timestampUs": 70000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {},
+      "id": "link-loss-70000-event",
+      "kind": "link-loss",
+      "text": "link loss recorded at 70000 us.",
+      "timestampUs": 70000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {
+        "mode": "Failsafe"
+      },
+      "id": "nav-mode-70000-Failsafe",
+      "kind": "nav-mode",
+      "text": "NAV_STATE Failsafe at 70000 us.",
+      "timestampUs": 70000
+    }
+  ],
+  "format": "flight-events-1",
+  "log": {
+    "byteLength": 4071,
+    "format": "rosbag2",
+    "sha256": "sha256-31dce1d0cccaee64bea0ba9103b1cc127a10eefee61592ac6adc9a49e56fef88"
+  },
+  "parser": {
+    "id": "rosbags",
+    "version": "0.11.9"
+  }
+}

@@ -2,7 +2,7 @@
  * knolo flight ingest
  *
  * Packs a flight-events-1 document into a V5 Knowledge Image.
- * It does not decode ULog, DataFlash, or rosbag2.
+ * It does not decode the log. log.format is ulog, dataflash, or rosbag2.
  * SATISFIED is not a statement that a flight was safe or compliant.
  */
 import { createHash } from 'node:crypto';
@@ -235,10 +235,10 @@ function parseLog(value) {
   if (!nonNegativeInteger(value.byteLength)) {
     return fail('FLIGHT_EVENTS_INVALID', 'log.byteLength must be a non-negative integer.');
   }
-  if (value.format !== 'ulog') {
-    return fail('FLIGHT_EVENTS_INVALID', 'log.format must be ulog in this slice. DataFlash and rosbag2 are later extractors.');
+  if (value.format !== 'ulog' && value.format !== 'dataflash' && value.format !== 'rosbag2') {
+    return fail('FLIGHT_EVENTS_INVALID', 'log.format must be ulog, dataflash, or rosbag2.');
   }
-  return { ok: true, log: { sha256: value.sha256, byteLength: value.byteLength, format: 'ulog' } };
+  return { ok: true, log: { sha256: value.sha256, byteLength: value.byteLength, format: value.format } };
 }
 
 function parseEvent(value, index, byteLength) {

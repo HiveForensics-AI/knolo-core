@@ -1,1 +1,3 @@
 pyulog==1.2.4
+pymavlink==2.4.50
+rosbags==0.11.9

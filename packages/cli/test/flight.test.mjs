@@ -62,10 +62,15 @@ test('parser rejects unsorted events, foreign formats, and over-cap lists', () =
   assert.equal(unsorted.ok, false);
   assert.equal(unsorted.code, 'FLIGHT_EVENTS_INVALID');
   const foreign = document([event({})]);
-  foreign.log.format = 'dataflash';
+  foreign.log.format = 'dji';
   const rejected = parseFlightEvents(foreign);
   assert.equal(rejected.ok, false);
-  assert.match(rejected.message, /ulog/);
+  assert.match(rejected.message, /ulog, dataflash, or rosbag2/);
+  for (const format of ['dataflash', 'rosbag2']) {
+    const accepted = document([event({})]);
+    accepted.log.format = format;
+    assert.equal(parseFlightEvents(accepted).ok, true, format);
+  }
   const many = [];
   for (let index = 0; index < MAX_FLIGHT_EVENTS + 1; index += 1) {
     many.push(event({ id: `e${index}`, timestampUs: index, fields: { state: 'armed' } }));
@@ -106,6 +111,35 @@ test('ingest is byte-identical and refuses a mismatched log', () => {
   }
 });
 
+test('dataflash and rosbag2 documents ingest and refuse a flipped log', () => {
+  for (const format of ['dataflash', 'rosbag2']) {
+    const dir = mkdtempSync(path.join(tmpdir(), `knolo-flight-${format}-`));
+    try {
+      const log = Buffer.from(`knolo ${format} fixture\n`);
+      const digest = `sha256-${createHash('sha256').update(log).digest('hex')}`;
+      const body = document([event({ id: format, timestampUs: 1 })], log.length);
+      body.log.format = format;
+      body.log.sha256 = digest;
+      writeFileSync(path.join(dir, 'events.json'), JSON.stringify(body));
+      writeFileSync(path.join(dir, 'sample.log'), log);
+      const first = run(['flight', 'ingest', '--events', 'events.json', '--log', 'sample.log', '--out', 'a.knolo', '--json'], dir);
+      assert.equal(first.status, 0, first.stderr || first.stdout);
+      const second = run(['flight', 'ingest', '--events', 'events.json', '--log', 'sample.log', '--out', 'b.knolo'], dir);
+      assert.equal(second.status, 0, second.stderr || second.stdout);
+      assert.equal(Buffer.compare(readFileSync(path.join(dir, 'a.knolo')), readFileSync(path.join(dir, 'b.knolo'))), 0);
+      const flipped = Buffer.from(log);
+      flipped[0] ^= 1;
+      writeFileSync(path.join(dir, 'bad.log'), flipped);
+      const refused = run(['flight', 'ingest', '--events', 'events.json', '--log', 'bad.log', '--out', 'c.knolo'], dir);
+      assert.equal(refused.status, 1);
+      assert.match(refused.stderr, /FLIGHT_LOG_MISMATCH/);
+      assert.equal(existsSync(path.join(dir, 'c.knolo')), false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+});
+
 test('flight event schema uses the ingest token and per-kind fields', () => {
   const schemaPath = path.resolve(fixture, '../../schemas/experimental/flight/flight-events-v1.schema.json');
   const schema = JSON.parse(readFileSync(schemaPath, 'utf8'));
@@ -116,6 +150,7 @@ test('flight event schema uses the ingest token and per-kind fields', () => {
   assert.equal(schema.properties.parser.properties.id.$ref, '#/$defs/token');
   assert.equal(schema.properties.parser.properties.version.$ref, '#/$defs/token');
   assert.equal(schema.$defs.event.properties.id.$ref, '#/$defs/token');
+  assert.deepEqual(schema.properties.log.properties.format.enum, ['ulog', 'dataflash', 'rosbag2']);
   assert.equal(new RegExp(token).test('my parser'), false);
   assert.equal(new RegExp(token).test('knolo-flight-fixture'), true);
   const expected = {
@@ -150,6 +185,38 @@ test('flight event schema uses the ingest token and per-kind fields', () => {
       fields: Object.fromEntries((expected[kind] ?? []).map((name) => [name, name === 'phrase' ? 'scan phrase' : 'token'])),
     });
     assert.match(sample.text, new RegExp(branch.properties.text.pattern));
+  }
+});
+
+test('synthetic format fixtures lock their image roots', () => {
+  for (const spec of [
+    { dir: 'dataflash', log: 'sample.bin' },
+    { dir: 'rosbag2', log: 'sample.mcap' },
+  ]) {
+    const source = path.join(fixture, spec.dir);
+    const expected = JSON.parse(readFileSync(path.join(source, 'expected.json'), 'utf8'));
+    const logBytes = readFileSync(path.join(source, spec.log));
+    assert.ok(logBytes.length > 0 && logBytes.length < 100 * 1024, spec.dir);
+    const dir = mkdtempSync(path.join(tmpdir(), `knolo-flight-${spec.dir}-`));
+    try {
+      writeFileSync(path.join(dir, 'events.json'), readFileSync(path.join(source, 'events.json')));
+      writeFileSync(path.join(dir, spec.log), logBytes);
+      const first = run(['flight', 'ingest', '--events', 'events.json', '--log', spec.log, '--out', 'a.knolo', '--json'], dir);
+      assert.equal(first.status, 0, first.stderr || first.stdout);
+      assert.equal(JSON.parse(first.stdout).stateRoot, expected.flightStateRoot);
+      const second = run(['flight', 'ingest', '--events', 'events.json', '--log', spec.log, '--out', 'b.knolo'], dir);
+      assert.equal(second.status, 0, second.stderr || second.stdout);
+      assert.equal(Buffer.compare(readFileSync(path.join(dir, 'a.knolo')), readFileSync(path.join(dir, 'b.knolo'))), 0);
+      const flipped = Buffer.from(logBytes);
+      flipped[0] ^= 1;
+      writeFileSync(path.join(dir, 'bad.log'), flipped);
+      const refused = run(['flight', 'ingest', '--events', 'events.json', '--log', 'bad.log', '--out', 'c.knolo'], dir);
+      assert.equal(refused.status, 1);
+      assert.match(refused.stderr, /FLIGHT_LOG_MISMATCH/);
+      assert.equal(existsSync(path.join(dir, 'c.knolo')), false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   }
 });
 
