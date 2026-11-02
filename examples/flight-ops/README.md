@@ -1,8 +1,10 @@
 # Flight image demo
 
-Hand-authored phase 1 fixture for issue #89. It is not a claim that a flight was safe or compliant, and it is not a PX4 recording.
+Hand-authored fixture for issue #89. It is not a claim that a flight was safe or compliant, and it is not a PX4 recording.
 
-`sample.log` is a 95-byte stand-in. Public ULog samples were not vendored because they are large. `events.json` is the canonical `flight-events-1` document for that file. `scripts/flight/extract_ulog.py` is the optional parser for a real `.ulg`.
+`sample.log` is a 95-byte ULog stand-in. Public flight recordings were not vendored. `events.json` is the canonical `flight-events-1` document for that file. Optional parsers live in `scripts/flight/`: `extract_ulog.py`, `extract_dataflash.py`, and `extract_rosbag2.py`. `npm test` does not install them.
+
+`dataflash/` and `rosbag2/` are synthetic format fixtures, each well under 100 KiB. They are not flight recordings. `dataflash/sample.bin` is a minimal DataFlash log. `rosbag2/sample.mcap` is one MCAP file, not a bag directory. Its `sensor_msgs/msg/Imu` message is a one-field stand-in so the allowlist can ignore it; it is not a standard IMU layout. Each directory's `expected.json` locks the image state root for that file. The hand-authored KAR graph in this directory is unchanged.
 
 ```bash
 npm run build --workspace @knolo/core

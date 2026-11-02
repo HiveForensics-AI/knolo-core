@@ -1,0 +1,118 @@
+{
+  "events": [
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {
+        "state": "disarmed"
+      },
+      "id": "arming-3000-disarmed",
+      "kind": "arming",
+      "text": "ARMING_STATE disarmed at 3000 us.",
+      "timestampUs": 3000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {
+        "mode": "mode-4"
+      },
+      "id": "nav-mode-4000-mode-4",
+      "kind": "nav-mode",
+      "text": "NAV_STATE mode-4 at 4000 us.",
+      "timestampUs": 4000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {
+        "state": "armed"
+      },
+      "id": "arming-5000-armed",
+      "kind": "arming",
+      "text": "ARMING_STATE armed at 5000 us.",
+      "timestampUs": 5000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {
+        "name": "failsafe-fence"
+      },
+      "id": "failsafe-assert-6000-failsafe-fence",
+      "kind": "failsafe-assert",
+      "text": "FAILSAFE failsafe-fence asserted at 6000 us.",
+      "timestampUs": 6000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {
+        "name": "failsafe-fence"
+      },
+      "id": "failsafe-clear-7000-failsafe-fence",
+      "kind": "failsafe-clear",
+      "text": "FAILSAFE failsafe-fence cleared at 7000 us.",
+      "timestampUs": 7000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {},
+      "id": "link-loss-9000-event",
+      "kind": "link-loss",
+      "text": "link loss recorded at 9000 us.",
+      "timestampUs": 9000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {},
+      "id": "link-restored-10000-event",
+      "kind": "link-restored",
+      "text": "LINK_RESTORED at 10000 us.",
+      "timestampUs": 10000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {
+        "level": "low"
+      },
+      "id": "battery-threshold-13000-low",
+      "kind": "battery-threshold",
+      "text": "battery threshold crossed at 13000 us. level low.",
+      "timestampUs": 13000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {
+        "name": "failsafe-batt"
+      },
+      "id": "failsafe-assert-14000-failsafe-batt",
+      "kind": "failsafe-assert",
+      "text": "FAILSAFE failsafe-batt asserted at 14000 us.",
+      "timestampUs": 14000
+    },
+    {
+      "byteEnd": 0,
+      "byteStart": 0,
+      "fields": {},
+      "id": "link-loss-16000-event",
+      "kind": "link-loss",
+      "text": "link loss recorded at 16000 us.",
+      "timestampUs": 16000
+    }
+  ],
+  "format": "flight-events-1",
+  "log": {
+    "byteLength": 726,
+    "format": "dataflash",
+    "sha256": "sha256-93c31a91706ce86d5a37157fb0be1ab6756c1e5a17aa62c6e109f6d86ed59f66"
+  },
+  "parser": {
+    "id": "pymavlink",
+    "version": "2.4.50"
+  }
+}

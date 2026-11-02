@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://knolo.dev/schema/experimental/flight/flight-events-v1.schema.json",
   "title": "Flight events v1",
-  "description": "Canonical discrete flight events for knolo flight ingest. This document is not a ULog parser and it is not a Committed Evidence Graph. log.format ulog is the phase 1 profile. DataFlash and rosbag2 use later extractors that emit this same document. Tokens, per-kind field keys, and sentence shapes match packages/cli/bin/flight.mjs. Ingest also checks sort order, duplicate ids, the byte range against the log, and exact sentence equality.",
+  "description": "Canonical discrete flight events for knolo flight ingest. This document is not a log parser and it is not a Committed Evidence Graph. log.format is ulog, dataflash, or rosbag2. Tokens, per-kind field keys, and sentence shapes match packages/cli/bin/flight.mjs. Ingest also checks sort order, duplicate ids, the byte range against the log, and exact sentence equality.",
   "type": "object",
   "additionalProperties": false,
   "required": ["format", "parser", "log", "events"],
@@ -24,7 +24,7 @@
       "properties": {
         "sha256": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
         "byteLength": { "$ref": "#/$defs/safeInteger" },
-        "format": { "const": "ulog" }
+        "format": { "enum": ["ulog", "dataflash", "rosbag2"] }
       }
     },
     "events": {

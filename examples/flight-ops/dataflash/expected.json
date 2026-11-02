@@ -1,0 +1,4 @@
+{
+  "flightStateRoot": "sha256-bf04f61545602676aa6712dcff5271f3ea1dbb6404ef9eb01097bb0bcf90e2a2",
+  "note": "Synthetic DataFlash fixture, not a flight recording. Recomputed by ingesting events.json with sample.bin. A matching root means the image bytes were reproduced. It does not mean a flight was safe or compliant."
+}

@@ -25,9 +25,11 @@ model and does not take an API key. A verified trace matches the image. It
 does not mean the answer is true.
 
 `knolo flight ingest` packs a `flight-events-1` document into a V5 Knowledge
-Image and binds it to the SHA-256 of a log file. It does not decode the log.
-`SATISFIED` on a later KAR check means the evidence requirements were met. It
-does not mean a flight was safe, legal, or compliant. See `docs/flight/README.md`.
+Image and binds it to the SHA-256 of one log file. It does not decode the log.
+`log.format` is `ulog`, `dataflash`, or `rosbag2`. Optional producers live in
+`scripts/flight/` and are not part of `npm test`. `SATISFIED` on a later KAR
+check means the evidence requirements were met. It does not mean a flight was
+safe, legal, or compliant. See `docs/flight/README.md`.
 
 The official CLI for building `.knolo` knowledge packs.
 
