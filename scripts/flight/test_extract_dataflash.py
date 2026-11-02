@@ -23,6 +23,18 @@ def pairs(events):
 
 
 class DataFlashTests(unittest.TestCase):
+    def test_high_rate_messages_are_discarded_before_selection(self):
+        def source():
+            yield msg("IMU", TimeUS=1, AccX=1)
+            yield msg("ARM", TimeUS=1000, ArmState=1)
+            yield msg("ATT", TimeUS=2, Roll=1)
+            yield msg("MSG", TimeUS=3, Message="Failsafe")
+
+        kept = list(extract_dataflash.iter_relevant(source()))
+        self.assertEqual([item["type"] for item in kept], ["ARM"])
+        events = extract_dataflash.collect(extract_dataflash.iter_relevant(source()))
+        self.assertEqual(pairs(events), [("arming", 1000, {"state": "armed"})])
+
     def test_compass_flight_mode_crash_gps_and_msg_emit_nothing(self):
         events = extract_dataflash.collect([
             msg("MSG", TimeUS=1000, Message="Failsafe battery"),

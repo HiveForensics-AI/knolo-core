@@ -47,6 +47,8 @@ A failsafe event is recorded only from `vehicle_status.failsafe`. `failsafe_defe
 
 `BAT` instance 0 emits `battery-threshold` level `low` when `RemPct` crosses below 20. Instance 1 is ignored. That threshold is producer policy, not an airworthiness limit.
 
+The reader keeps `ARM`, `MODE`, `ERR`, and `BAT` only. Other DataFlash messages, including IMU and actuator samples, are discarded while the file is scanned.
+
 `python3 scripts/flight/test_extract_dataflash.py` checks that selection without installing pymavlink.
 
 ### rosbag2 fields
@@ -57,7 +59,7 @@ Message types outside this list are ignored:
 - `px4_msgs/msg/BatteryStatus` uses the same `remaining` fraction below `0.2`.
 - `mavros_msgs/msg/State` maps `armed` to `armed` or `disarmed`, maps `connected` false to link-loss and true to link-restored, and stores `mode` as a nav-mode token. A mode name is not a failsafe.
 
-A valid file with no allowlisted messages writes an empty event list and exits 0.
+A valid file with no allowlisted messages writes an empty event list and exits 0. Connections outside the allowlist are not deserialized, so a custom or high-rate message type does not have to load.
 
 `python3 scripts/flight/test_extract_rosbag2.py` checks that selection without installing rosbags.
 

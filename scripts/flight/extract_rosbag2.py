@@ -10,6 +10,7 @@ field rules. Event time is the bag timestamp in microseconds, not a timestamp
 inside the message. mavros_msgs/msg/State maps armed, inverts connected so a
 lost link is the active flag, and tokenizes mode. A mode name is not a failsafe.
 Every other message type is ignored, including IMU, image, and point cloud.
+Those connections are not deserialized and their definitions are not loaded.
 
 A bag with no allowlisted messages writes an empty event list and exits 0.
 Byte offsets are 0. The log hash is the tamper bind. The battery threshold is
@@ -33,6 +34,7 @@ PARSER_ID = "rosbags"
 STATUS_TYPE = "px4_msgs/msg/VehicleStatus"
 BATTERY_TYPE = "px4_msgs/msg/BatteryStatus"
 MAVROS_TYPE = "mavros_msgs/msg/State"
+ALLOWED_TYPES = frozenset({STATUS_TYPE, BATTERY_TYPE, MAVROS_TYPE})
 _MISSING = object()
 
 
@@ -72,20 +74,80 @@ def bag_path_error(path: Path) -> str | None:
     return None
 
 
+def allowlisted_connections(connections) -> list:
+    """Keep the three supported message types. Everything else is never deserialized."""
+    return [connection for connection in connections if getattr(connection, "msgtype", None) in ALLOWED_TYPES]
+
+
 def read_bag(path: Path) -> list[dict]:
-    """Open one storage file. AnyReader accepts a bare .mcap or .db3 path."""
-    from rosbags.highlevel import AnyReader
+    """Open one .mcap or .db3 file and deserialize only the allowlisted connections."""
+    from rosbags.rosbag2 import Reader
 
     records = []
-    with AnyReader([path]) as reader:
-        for connection, timestamp, raw in reader.messages():
-            message = reader.deserialize(raw, connection.msgtype)
+    with Reader(path) as reader:
+        chosen = allowlisted_connections(reader.connections)
+        if not chosen:
+            return records
+        typestore = typestore_for(chosen)
+        for connection, timestamp, raw in reader.messages(connections=chosen):
+            message = typestore.deserialize_cdr(raw, connection.msgtype)
             records.append({
                 "msgtype": connection.msgtype,
                 "timestamp_ns": int(timestamp),
                 "msg": message,
             })
     return records
+
+
+def typestore_for(connections):
+    """Register definitions for allowlisted connections only."""
+    from rosbags.interfaces import MessageDefinitionFormat
+    from rosbags.typesys import Stores, get_types_from_idl, get_types_from_msg, get_typestore
+
+    typestore = get_typestore(Stores.EMPTY)
+    merged = {}
+    seen = set()
+    for connection in connections:
+        if connection.msgtype in seen:
+            continue
+        seen.add(connection.msgtype)
+        merged.update(definition_map(
+            connection,
+            MessageDefinitionFormat,
+            get_types_from_msg,
+            get_types_from_idl,
+        ))
+    if merged:
+        typestore.register(merged)
+    checked = set()
+    for connection in connections:
+        digest = getattr(connection, "digest", "")
+        if not digest or connection.msgtype in checked:
+            continue
+        checked.add(connection.msgtype)
+        have = typestore.hash_rihs01(connection.msgtype)
+        if have != digest:
+            raise ValueError(f"message type {connection.msgtype} hash mismatch")
+    return typestore
+
+
+def definition_map(connection, message_format, get_types_from_msg, get_types_from_idl) -> dict:
+    msgdef = connection.msgdef
+    if msgdef.format == message_format.MSG:
+        return get_types_from_msg(msgdef.data, connection.msgtype)
+    if msgdef.format == message_format.IDL:
+        found = {}
+        separator = "=" * 80 + "\n"
+        if msgdef.data.startswith(f"{separator}IDL: "):
+            for part in msgdef.data.split(separator)[1:]:
+                header, idl = part.split("\n", 1)
+                if not header.startswith("IDL: "):
+                    raise ValueError(f"message type {connection.msgtype} has a broken IDL definition")
+                found.update(get_types_from_idl(idl))
+        else:
+            found.update(get_types_from_idl(msgdef.data))
+        return found
+    raise ValueError(f"message type {connection.msgtype} has no embedded definition")
 
 
 def collect(records) -> list[dict]:

@@ -43,7 +43,23 @@ class UlogView:
         self.data_list = datasets
 
 
+class Conn:
+    def __init__(self, msgtype):
+        self.msgtype = msgtype
+
+
 class RosbagTests(unittest.TestCase):
+    def test_allowlist_drops_imu_and_custom_types_before_decode(self):
+        chosen = extract_rosbag2.allowlisted_connections([
+            Conn("sensor_msgs/msg/Imu"),
+            Conn("sensor_msgs/msg/Image"),
+            Conn(STATUS),
+            Conn("my_robot/msg/Custom"),
+            Conn(BATTERY),
+            Conn(MAVROS),
+        ])
+        self.assertEqual([item.msgtype for item in chosen], [STATUS, BATTERY, MAVROS])
+
     def test_imu_and_empty_bag_emit_nothing(self):
         self.assertEqual(extract_rosbag2.collect([]), [])
         events = extract_rosbag2.collect([

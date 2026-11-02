@@ -50,6 +50,9 @@ FAILSAFE_NAMES = {
 # Radio and GCS failsafe-enum values are link state, not failsafe events.
 LINK_SUBSYS = {5, 8}
 
+# High-rate and text messages are dropped while scanning. They are not retained.
+RELEVANT_TYPES = frozenset({"ARM", "MODE", "ERR", "BAT"})
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Write flight-events-1 JSON from a DataFlash log.")
@@ -68,17 +71,34 @@ def main() -> int:
         return 1
     try:
         reader = DFReader.DFReader_binary(args.log)
-        messages = []
-        while True:
-            message = reader.recv_msg()
-            if message is None:
-                break
-            messages.append(message)
+        events = collect(iter_dataflash(reader))
     except Exception as error:  # DFReader raises its own parse errors
         print(f"FLIGHT_LOG_PARSE: {error}", file=sys.stderr)
         return 1
-    events = collect(messages)
     return write_document(args.log, args.out, events)
+
+
+def iter_dataflash(reader):
+    """Yield ARM, MODE, ERR, and BAT. Other decoded types are discarded immediately."""
+    while True:
+        message = reader.recv_msg()
+        if message is None:
+            return
+        if relevant_message(message):
+            yield message
+
+
+def relevant_message(message) -> bool:
+    if isinstance(message, dict):
+        return message.get("type") in RELEVANT_TYPES
+    getter = getattr(message, "get_type", None)
+    return bool(getter and getter() in RELEVANT_TYPES)
+
+
+def iter_relevant(messages):
+    for message in messages:
+        if relevant_message(message):
+            yield message
 
 
 def collect(messages) -> list[dict]:
