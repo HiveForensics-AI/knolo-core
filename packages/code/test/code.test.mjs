@@ -218,6 +218,94 @@ test('python signatures omit function bodies', async () => {
   assert.equal(structure.text.includes('def open'), true);
 });
 
+test('python class scope survives blank lines', async () => {
+  const dir = await mkdirTemp();
+  await mkdir(dir, { recursive: true });
+  await writeFile(
+    path.join(dir, 'box.py'),
+    [
+      'class Box:',
+      '',
+      '    def open(self):',
+      '        return 1',
+      '',
+      '    def close(self):',
+      '        return 2',
+      '',
+      'def outer():',
+      '    return 3',
+      '',
+    ].join('\n')
+  );
+  const chunks = await code.scanWorkspace(dir);
+  const kinds = chunks
+    .filter((chunk) => chunk.kind !== 'structure')
+    .map((chunk) => `${chunk.kind}:${chunk.name}`)
+    .sort();
+  assert.deepEqual(kinds, [
+    'class:Box',
+    'function:outer',
+    'method:close',
+    'method:open',
+  ]);
+});
+
+test('structure signatures omit class and arrow bodies', async () => {
+  const dir = await mkdirTemp();
+  await mkdir(dir, { recursive: true });
+  await writeFile(
+    path.join(dir, 'widget.ts'),
+    [
+      'export class Widget {',
+      '  run() {',
+      '    return "class-body-marker";',
+      '  }',
+      '  handler = () => {',
+      '    return "field-arrow-marker";',
+      '  };',
+      '  static {',
+      '    const hidden = "static-block-marker";',
+      '    void hidden;',
+      '  }',
+      '}',
+      'export const add = (value: number) => {',
+      '  return "statement-arrow-marker";',
+      '};',
+      '',
+    ].join('\n')
+  );
+  const chunks = await code.scanWorkspace(dir);
+  const structure = chunks.find((chunk) => chunk.kind === 'structure');
+  assert.equal(structure.text.includes('class-body-marker'), false);
+  assert.equal(structure.text.includes('field-arrow-marker'), false);
+  assert.equal(structure.text.includes('static-block-marker'), false);
+  assert.equal(structure.text.includes('statement-arrow-marker'), false);
+  assert.equal(structure.text.includes('class Widget'), true);
+  assert.equal(structure.text.includes('run()'), true);
+  assert.equal(structure.text.includes('export const add'), true);
+  const classChunk = chunks.find((chunk) => chunk.kind === 'class');
+  assert.equal(classChunk.text.includes('class-body-marker'), true);
+});
+
+test('jsx files are scanned', async () => {
+  const dir = await mkdirTemp();
+  await mkdir(dir, { recursive: true });
+  await writeFile(
+    path.join(dir, 'view.jsx'),
+    ['export function View() {', '  return "jsx-body-marker";', '}', ''].join(
+      '\n'
+    )
+  );
+  const chunks = await code.scanWorkspace(dir);
+  const kinds = chunks
+    .filter((chunk) => chunk.kind !== 'structure')
+    .map((chunk) => `${chunk.kind}:${chunk.name}`);
+  assert.deepEqual(kinds, ['function:View']);
+  const structure = chunks.find((chunk) => chunk.kind === 'structure');
+  assert.equal(structure.text.includes('jsx-body-marker'), false);
+  assert.equal(structure.text.includes('function View'), true);
+});
+
 test('expand returns one verified range', async () => {
   const dir = await tempSample();
   await mkdir(dir, { recursive: true });

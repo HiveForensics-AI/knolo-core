@@ -12,6 +12,7 @@ const SOURCE_EXTENSIONS = new Set([
   '.ts',
   '.tsx',
   '.js',
+  '.jsx',
   '.mjs',
   '.cjs',
   '.py',
@@ -244,13 +245,58 @@ function nodeChunk(
 }
 
 function signatureOf(source: ts.SourceFile, node: ts.Node): string {
-  const body = 'body' in node ? node.body : undefined;
-  if (body && typeof body === 'object' && ts.isBlock(body as ts.Node)) {
-    return source.text
-      .slice(node.getStart(source), (body as ts.Node).getStart(source))
-      .replace(/\s+$/u, '');
+  const ranges = bodyRanges(source, node);
+  const start = node.getStart(source);
+  const end = node.getEnd();
+  if (ranges.length === 0) return trimTrailing(source.text.slice(start, end));
+  let cursor = start;
+  let text = '';
+  for (const range of ranges) {
+    if (range.start < cursor || range.end > end) continue;
+    text += source.text.slice(cursor, range.start);
+    cursor = range.end;
   }
-  return node.getText(source).replace(/\s+$/u, '');
+  text += source.text.slice(cursor, end);
+  return trimTrailing(text);
+}
+
+function bodyRanges(
+  source: ts.SourceFile,
+  node: ts.Node
+): Array<{ start: number; end: number }> {
+  const ranges: Array<{ start: number; end: number }> = [];
+  const visit = (current: ts.Node) => {
+    if (isFunctionLike(current) && current.body) {
+      ranges.push({
+        start: current.body.getStart(source),
+        end: current.body.getEnd(),
+      });
+      return;
+    }
+    if (ts.isClassStaticBlockDeclaration(current)) {
+      ranges.push({
+        start: current.body.getStart(source),
+        end: current.body.getEnd(),
+      });
+      return;
+    }
+    ts.forEachChild(current, visit);
+  };
+  visit(node);
+  ranges.sort((left, right) => left.start - right.start);
+  return ranges;
+}
+
+function isFunctionLike(node: ts.Node): node is ts.FunctionLikeDeclaration {
+  return (
+    ts.isFunctionDeclaration(node) ||
+    ts.isMethodDeclaration(node) ||
+    ts.isConstructorDeclaration(node) ||
+    ts.isGetAccessor(node) ||
+    ts.isSetAccessor(node) ||
+    ts.isFunctionExpression(node) ||
+    ts.isArrowFunction(node)
+  );
 }
 
 function scanPython(filePath: string, text: string): CodeChunk[] {
@@ -260,6 +306,10 @@ function scanPython(filePath: string, text: string): CodeChunk[] {
   let index = 0;
   while (index < lines.length) {
     const line = lines[index] ?? '';
+    if (line.trim() === '') {
+      index += 1;
+      continue;
+    }
     const indent = leadingSpaces(line);
     while (
       classIndents.length > 0 &&
@@ -437,6 +487,10 @@ function assertPortablePath(filePath: string): void {
 
 function leadingSpaces(line: string): number {
   return /^ */u.exec(line)?.[0].length ?? 0;
+}
+
+function trimTrailing(text: string): string {
+  return text.replace(/\s+$/u, '');
 }
 
 function compareText(left: string, right: string): number {

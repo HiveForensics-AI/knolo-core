@@ -37,8 +37,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "test": "npm run build --prefix ../core && npm run build && node --test test/code.test.mjs",
+    "build": "npm run build --workspace @knolo/core && tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/code.test.mjs",
     "prepublishOnly": "npm test"
   },
   "dependencies": {
