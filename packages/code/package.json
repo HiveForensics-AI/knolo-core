@@ -1,6 +1,6 @@
 {
   "name": "@knolo/code",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Local V4 code Knowledge Image and Grok Build tools for structure-first retrieval.",
   "license": "Apache-2.0",
