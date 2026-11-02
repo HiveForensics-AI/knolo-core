@@ -1,0 +1,25 @@
+format: ceg-source-1
+concepts:
+  arming:
+    label: Arming
+  checklist:
+    label: Pre-flight checklist
+evidence:
+  arming:
+    source: arming.txt
+  checklist:
+    source: checklist.txt
+relations:
+  - from: arming
+    type: requires
+    to: checklist
+  - from: arming
+    type: valid_before
+    to: checklist
+bindings:
+  - concept: checklist
+    evidence: checklist
+    requirements:
+      - checklist-complete
+requirements:
+  - checklist-complete

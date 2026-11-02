@@ -1,0 +1,23 @@
+{
+  "id": "geofence",
+  "documents": [
+    {
+      "source": "flight.txt",
+      "text": "Geofence\ngeofence scan completed with zero breaches\nfailsafe scan completed\nchecklist complete before arming\nbattery threshold crossed\nlink loss recorded\n",
+      "meta": {
+        "type": "flight-event"
+      }
+    }
+  ],
+  "expect": {
+    "concepts": ["flight-event", "geofence-scan"],
+    "relations": [],
+    "bindings": [],
+    "diagnosticCodes": [],
+    "kar": {
+      "template": "geofence-hold",
+      "proposition": "Which committed evidence meets the geofence-scan requirement?",
+      "status": "UNSATISFIED_EVIDENCE_REQUIREMENTS"
+    }
+  }
+}

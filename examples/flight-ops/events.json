@@ -1,0 +1,67 @@
+{
+  "format": "flight-events-1",
+  "parser": {
+    "id": "knolo-flight-fixture",
+    "version": "1"
+  },
+  "log": {
+    "sha256": "sha256-84bb8d5b247f964f56554325d5394dc4deabddecb062f334d37f637570e8d16a",
+    "byteLength": 95,
+    "format": "ulog"
+  },
+  "events": [
+    {
+      "id": "arming",
+      "kind": "arming",
+      "timestampUs": 1000,
+      "byteStart": 0,
+      "byteEnd": 0,
+      "fields": {
+        "state": "armed"
+      },
+      "text": "ARMING_STATE armed at 1000 us."
+    },
+    {
+      "id": "geofence-scan",
+      "kind": "scan-summary",
+      "timestampUs": 2000,
+      "byteStart": 0,
+      "byteEnd": 0,
+      "fields": {
+        "phrase": "geofence scan completed with zero breaches"
+      },
+      "text": "geofence scan completed with zero breaches at 2000 us."
+    },
+    {
+      "id": "failsafe-scan",
+      "kind": "scan-summary",
+      "timestampUs": 3000,
+      "byteStart": 0,
+      "byteEnd": 0,
+      "fields": {
+        "phrase": "failsafe scan completed"
+      },
+      "text": "failsafe scan completed at 3000 us."
+    },
+    {
+      "id": "battery",
+      "kind": "battery-threshold",
+      "timestampUs": 4000,
+      "byteStart": 0,
+      "byteEnd": 0,
+      "fields": {
+        "level": "low"
+      },
+      "text": "battery threshold crossed at 4000 us. level low."
+    },
+    {
+      "id": "link",
+      "kind": "link-loss",
+      "timestampUs": 5000,
+      "byteStart": 0,
+      "byteEnd": 0,
+      "fields": {},
+      "text": "link loss recorded at 5000 us."
+    }
+  ]
+}

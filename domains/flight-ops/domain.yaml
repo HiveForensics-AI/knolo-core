@@ -1,0 +1,57 @@
+format: ceg-domain-1
+id: flight-ops
+version: 1
+description: Post-flight evidence sentences for discrete log events and mission checks. Relation rules stay NEEDS_REVIEW. Meeting an evidence requirement does not mean a flight was safe or compliant.
+conceptKinds:
+  - id: flight-event
+    label: Flight event
+  - id: geofence
+    label: Geofence
+  - id: failsafe
+    label: Failsafe
+  - id: battery
+    label: Battery
+  - id: link
+    label: Link
+  - id: precondition
+    label: Precondition
+concepts:
+  - name: flight-event
+    kind: flight-event
+    label: Flight event
+    phrases:
+      - flight event
+  - name: geofence-scan
+    kind: geofence
+    label: Geofence scan
+    phrases:
+      - geofence scan completed with zero breaches
+  - name: failsafe-scan
+    kind: failsafe
+    label: Failsafe scan
+    phrases:
+      - failsafe scan completed
+  - name: battery-state
+    kind: battery
+    label: Battery state
+    phrases:
+      - battery threshold crossed
+  - name: link-state
+    kind: link
+    label: Link state
+    phrases:
+      - link loss recorded
+  - name: arming
+    kind: flight-event
+    label: Arming
+    phrases:
+      - arming
+  - name: checklist
+    kind: precondition
+    label: Pre-flight checklist
+    phrases:
+      - checklist complete before arming
+relations:
+  - requires
+  - supports
+  - valid_before

@@ -1,0 +1,115 @@
+[
+  {
+    "id": "flight-ops.metadata.flight-event.v1",
+    "autoAccept": true,
+    "kind": "metadata",
+    "metadata": {
+      "type": "flight-event"
+    },
+    "concept": "flight-event",
+    "policyClass": "AUTO_ACCEPT"
+  },
+  {
+    "id": "flight-ops.heading.geofence.v1",
+    "autoAccept": true,
+    "kind": "heading",
+    "pattern": "Geofence",
+    "concept": "geofence-scan",
+    "policyClass": "AUTO_ACCEPT"
+  },
+  {
+    "id": "flight-ops.phrase.geofence-clear.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "geofence scan completed with zero breaches",
+    "relation": {
+      "from": "flight-event",
+      "type": "supports",
+      "to": "geofence-scan"
+    },
+    "binding": {
+      "concept": "geofence-scan",
+      "requirements": [
+        "geofence-clear"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "flight-ops.phrase.failsafe-clear.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "failsafe scan completed",
+    "relation": {
+      "from": "flight-event",
+      "type": "supports",
+      "to": "failsafe-scan"
+    },
+    "binding": {
+      "concept": "failsafe-scan",
+      "requirements": [
+        "failsafe-clear"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "flight-ops.phrase.checklist.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "checklist complete before arming",
+    "relation": {
+      "from": "arming",
+      "type": "requires",
+      "to": "checklist"
+    },
+    "binding": {
+      "concept": "checklist",
+      "requirements": [
+        "checklist-complete"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "flight-ops.phrase.battery.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "battery threshold crossed",
+    "relation": {
+      "from": "flight-event",
+      "type": "supports",
+      "to": "battery-state"
+    },
+    "binding": {
+      "concept": "battery-state",
+      "requirements": [
+        "battery-threshold"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  },
+  {
+    "id": "flight-ops.phrase.link.v1",
+    "autoAccept": false,
+    "kind": "phrase",
+    "pattern": "link loss recorded",
+    "relation": {
+      "from": "flight-event",
+      "type": "supports",
+      "to": "link-state"
+    },
+    "binding": {
+      "concept": "link-state",
+      "requirements": [
+        "link-loss"
+      ]
+    },
+    "policyClass": "NEEDS_REVIEW",
+    "reason": "CONSTRAINED_PHRASE"
+  }
+]
