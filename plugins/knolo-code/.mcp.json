@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "knolo-code": {
+      "command": "npx",
+      "args": ["-y", "@knolo/code@0.1.0", "mcp"]
+    }
+  }
+}

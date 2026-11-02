@@ -1,0 +1,14 @@
+{
+  "name": "Knolo",
+  "description": "Local verifiable code retrieval for Grok Build",
+  "owner": { "name": "Hive Forensics AI" },
+  "plugins": [
+    {
+      "name": "knolo-code",
+      "description": "Structure-first code retrieval from a local Knowledge Image",
+      "version": "0.1.0",
+      "source": { "type": "local", "path": "./plugins/knolo-code" },
+      "keywords": ["code", "knolo", "retrieval"]
+    }
+  ]
+}
