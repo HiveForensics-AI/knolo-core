@@ -10,6 +10,6 @@ grok plugin install HiveForensics-AI/knolo-core#plugins/knolo-code --trust
 
 From the Plugins UI, add the marketplace `HiveForensics-AI/knolo-core`, install `knolo-code`, and trust it when asked.
 
-`@knolo/code@0.1.0` has to be on npm before that `npx` command can fetch it. Building this repository does not publish the package.
+`@knolo/code@0.1.0` is on npm. `npx -y @knolo/code@0.1.0 mcp` downloads that release. The measured check is in [the code image doc](../../docs/code/README.md).
 
 The tool behavior is in [the skill](skills/knolo-code/SKILL.md). Package details are in the [@knolo/code README](../../packages/code/README.md).

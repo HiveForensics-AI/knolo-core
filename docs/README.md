@@ -64,7 +64,8 @@ operational guides for Knolo.
   document into a V5 Knowledge Image. A pass means evidence requirements
   were met. It does not mean a flight was safe or compliant.
 - [Code image](code/README.md) — local V4 pack of a workspace and the Grok
-  Build plugin that retrieves structure before full chunks.
+  Build plugin that retrieves structure before full chunks. The published
+  `@knolo/code@0.1.0` check is recorded on that page.
 
 Architecture sources, future-version specifications, and internal planning
 records are kept local and are not part of the public repository. The
