@@ -39,6 +39,7 @@ coverage/
 
 # Local V5/Studio runtime scratch state
 .knolo-v5/
+.knolo/
 .studio/
 *.v5.tmp
 *.v5.lock

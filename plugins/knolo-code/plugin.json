@@ -1,0 +1,5 @@
+{
+  "name": "knolo-code",
+  "version": "0.1.0",
+  "description": "Structure-first code retrieval from a local V4 Knowledge Image. The host owns the model."
+}

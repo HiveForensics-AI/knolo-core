@@ -1,0 +1,54 @@
+{
+  "name": "@knolo/code",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Local V4 code Knowledge Image and Grok Build tools for structure-first retrieval.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HiveForensics-AI/knolo-core.git",
+    "directory": "packages/code"
+  },
+  "homepage": "https://github.com/HiveForensics-AI/knolo-core#readme",
+  "bugs": {
+    "url": "https://github.com/HiveForensics-AI/knolo-core/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "knolo-code": "./bin/knolo-code.mjs"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "examples/sample"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "npm run build --workspace @knolo/core && tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/code.test.mjs",
+    "prepublishOnly": "npm test"
+  },
+  "dependencies": {
+    "@knolo/core": "^6.2.0",
+    "@modelcontextprotocol/server": "^2.3.1",
+    "typescript": "^5.5.0",
+    "zod": "^4.2.0"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "^2.3.1",
+    "@types/node": "^20.11.0"
+  }
+}
