@@ -1,4 +1,4 @@
-# google-adk-python
+# google_adk_python
 
 One [Google ADK](https://github.com/google/adk-python) agent reads a pinned Knolo V5 Knowledge Image through `@knolo/mcp@0.2.0`. The server is stdio only. ADK owns the model. This example does not call one.
 
@@ -11,12 +11,12 @@ Verification checks the image pin and policy. It does not decide that a claim is
 From the repository root, with `@knolo/core` and `@knolo/mcp` already built:
 
 ```bash
-python -m pip install -r examples/google-adk-python/requirements.txt
-config="$(node examples/google-adk-python/prepare-fixture.mjs)"
+python -m pip install -r examples/google_adk_python/requirements.txt
+config="$(node examples/google_adk_python/prepare-fixture.mjs)"
 export KNOLO_MCP_CONFIG="$config"
 export KNOLO_MCP_COMMAND=node
 export KNOLO_MCP_ARGS="[\"$(pwd)/packages/mcp/bin/knolo-mcp.mjs\"]"
-python examples/google-adk-python/smoke.py
+python examples/google_adk_python/smoke.py
 ```
 
 `prepare-fixture.mjs` writes a two-chunk image, a deny-default policy, and `knolo-mcp.json` under a temporary directory. Omit `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` to start the published server instead:
@@ -29,10 +29,10 @@ The smoke lists `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`,
 
 ## Run the agent
 
-The same environment is what `adk run` reads. The model call is the host's, and this repository does not make it.
+The same environment is what `adk run` reads. ADK uses the directory name as the agent name, and that name must be letters, digits, and underscores. The model call is the host's, and this repository does not make it.
 
 ```bash
-adk run examples/google-adk-python
+adk run examples/google_adk_python
 ```
 
 The integration page is [docs/integrations/google-adk.md](../../docs/integrations/google-adk.md). Server config is in the [`@knolo/mcp` README](../../packages/mcp/README.md).

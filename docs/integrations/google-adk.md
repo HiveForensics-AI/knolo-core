@@ -1,6 +1,6 @@
 # Google ADK
 
-Google ADK can call the published Knolo MCP server as a toolset. The Python example is [`examples/google-adk-python`](../../examples/google-adk-python/README.md). It uses `McpToolset` and stdio. The command a host runs is:
+Google ADK can call the published Knolo MCP server as a toolset. The Python example is [`examples/google_adk_python`](../../examples/google_adk_python/README.md). It uses `McpToolset` and stdio. The command a host runs is:
 
 ```bash
 npx -y @knolo/mcp@0.2.0 --config /absolute/knolo-mcp.json
@@ -25,7 +25,7 @@ The server does not download images, write knowledge, or call a model. Restart t
 Python 3.11 or newer:
 
 ```bash
-python -m pip install -r examples/google-adk-python/requirements.txt
+python -m pip install -r examples/google_adk_python/requirements.txt
 ```
 
 That installs `google-adk[mcp]`. Build a fixture from this repository, or point `KNOLO_MCP_CONFIG` at an image you already pinned:
@@ -33,7 +33,7 @@ That installs `google-adk[mcp]`. Build a fixture from this repository, or point 
 ```bash
 npm run build --workspace @knolo/core
 npm run build --workspace @knolo/mcp
-config="$(node examples/google-adk-python/prepare-fixture.mjs)"
+config="$(node examples/google_adk_python/prepare-fixture.mjs)"
 export KNOLO_MCP_CONFIG="$config"
 ```
 

@@ -29,7 +29,7 @@ the four tools above. A mount with a `kar` block also exposes
 registry name in `server.json` is `io.github.HiveForensics-AI/knolo`.
 Published `@knolo/mcp@0.1.0` remains the four-tool server.
 
-The [Google ADK example](../../examples/google-adk-python/README.md) starts
+The [Google ADK example](../../examples/google_adk_python/README.md) starts
 this server over stdio and runs one search. See
 [Google ADK](../../docs/integrations/google-adk.md).
 
