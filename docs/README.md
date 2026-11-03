@@ -66,6 +66,10 @@ operational guides for Knolo.
 - [Code image](code/README.md) — local V4 pack of a workspace and the Grok
   Build plugin that retrieves structure before full chunks. The published
   `@knolo/code@0.1.0` check is recorded on that page.
+- [Google ADK](integrations/google-adk.md) — one Python agent that calls
+  published `@knolo/mcp@0.2.0` over stdio. A search returns a query receipt.
+  Verification checks the image. `SATISFIED` means evidence requirements
+  were met.
 
 Architecture sources, future-version specifications, and internal planning
 records are kept local and are not part of the public repository. The
