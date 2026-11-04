@@ -17,7 +17,7 @@ node packages/box/bin/knolo-box.mjs mcp
 
 `mcp` starts `knolo-mcp` with the primary config and inherits stdio. It does not proxy JSON-RPC.
 
-When the computer is not `~/.grok`, pass `--config` to the workspace binary. `mcp --config <file>` reads that box config and starts `knolo-mcp` with `<output>/knolo-mcp.json`. The host keeps its own connector record. Search matches exact words from the source. An empty hit list is the result. The config shape is in [the box doc](../../docs/box/README.md).
+When the computer is not `~/.grok`, pass `--config` to the workspace binary. `mcp --config <file>` reads that box config and starts `knolo-mcp` with `<output>/knolo-mcp.json`. The host keeps its own connector record. Search lowercases the query, splits it on spaces, and keeps a chunk when every term appears in the text. A term can sit inside a longer word. An empty hit list is the result. The config shape is in [the box doc](../../docs/box/README.md).
 
 From the Plugins UI, add the marketplace `HiveForensics-AI/knolo-core`, install `knolo-box`, and trust it when asked.
 
