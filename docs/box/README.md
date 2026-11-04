@@ -33,7 +33,16 @@ Transcripts keep the newest 2,000 sessions. Chat files over 8 MiB stay out, and 
 
 ## Another layout
 
-The default computer is `$GROK_HOME` or `~/.grok`. When the files live somewhere else, pass `--config` and set every scope. A scope you leave out still uses the `~/.grok` roots. `skills.roots` and `files.roots` are directories you choose. An empty `roots` list indexes nothing for that scope.
+The default computer is `$GROK_HOME` or `~/.grok`. `knolo-box build` with no config still uses that computer. When the files live somewhere else, write a config with `knolo-box init` or by hand, and pass it with `--config`. A scope you leave out of a hand-written file still uses the `~/.grok` roots. `skills.roots` and `files.roots` are directories you choose. An empty `roots` list indexes nothing for that scope.
+
+```bash
+node packages/box/bin/knolo-box.mjs init --config box.config.json
+node packages/box/bin/knolo-box.mjs build --config box.config.json
+```
+
+`init` looks under the home directory, or under each `--root`, for one workflows directory and one managed-skills directory. The candidate paths are `agent-data/workflows`, `sand-data/workflows`, `agent-data/managed-skills/skills`, and `sand-data/managed-skills/skills`. A symlink to a directory counts, and the written root is the real path. The same directory reached both ways is kept once. Each role must resolve to exactly one real directory. Zero or several stops with `BOX_CONFIG`, lists the paths it checked and found, and writes no file. A resolved path inside a denied directory, including `secrets`, a `connector-secret` name, or a `cookie-seed` name, is skipped. Discovery does not read file contents.
+
+`--skills` or `KNOLO_BOX_SKILLS` sets the workflows directory and skips detection for that role. `--managed-skills` or `KNOLO_BOX_MANAGED_SKILLS` does the same for managed skills. `init` writes `agents` as `["box"]` and leaves files, memory, and transcripts empty. It does not build an image.
 
 ```json
 {
