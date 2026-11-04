@@ -70,6 +70,10 @@ operational guides for Knolo.
   published `@knolo/mcp@0.2.0` over stdio. A search returns a query receipt.
   Verification checks the image. `SATISFIED` means evidence requirements
   were met.
+- [Box](box/README.md) — pinned V5 images of skills, opted-in notes, private
+  memory, and capped session text on a Grok Bot computer. `@knolo/box` starts
+  the existing read-only MCP server in one process. This package is not
+  published yet.
 
 Architecture sources, future-version specifications, and internal planning
 records are kept local and are not part of the public repository. The

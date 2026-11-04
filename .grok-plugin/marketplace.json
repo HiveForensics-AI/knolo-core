@@ -1,6 +1,6 @@
 {
   "name": "Knolo",
-  "description": "Local verifiable code retrieval for Grok Build",
+  "description": "Local verifiable retrieval for Grok Build",
   "owner": { "name": "Hive Forensics AI" },
   "plugins": [
     {
@@ -9,6 +9,13 @@
       "version": "0.1.0",
       "source": { "type": "local", "path": "./plugins/knolo-code" },
       "keywords": ["code", "knolo", "retrieval"]
+    },
+    {
+      "name": "knolo-box",
+      "description": "Pinned memory, skills, notes, and session text for a Grok Bot computer",
+      "version": "0.1.0",
+      "source": { "type": "local", "path": "./plugins/knolo-box" },
+      "keywords": ["memory", "knolo", "retrieval"]
     }
   ]
 }
