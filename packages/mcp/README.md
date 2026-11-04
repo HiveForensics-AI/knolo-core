@@ -23,10 +23,15 @@ Every search writes an `openclaw-knolo-query-v1` receipt before it returns
 hits. An unwritable `auditDir` returns `AUDIT_UNAVAILABLE` and no hits.
 Restart the process to change pins. There is no hot reload.
 
-`@knolo/mcp@0.2.0` is the in-tree server. This change does not publish it to
-npm or the MCP Registry. The registry name in `server.json` is
-`io.github.HiveForensics-AI/knolo`. Published `@knolo/mcp@0.1.0` remains the
-four-tool server.
+`@knolo/mcp@0.2.0` is published on npm. A mount without a `kar` block exposes
+the four tools above. A mount with a `kar` block also exposes
+`knolo_kar_evaluate`, `knolo_kar_verify`, and `knolo_cortex_verify`. The
+registry name in `server.json` is `io.github.HiveForensics-AI/knolo`.
+Published `@knolo/mcp@0.1.0` remains the four-tool server.
+
+The [Google ADK example](../../examples/google_adk_python/README.md) starts
+this server over stdio and runs one search. See
+[Google ADK](../../docs/integrations/google-adk.md).
 
 ## Config
 

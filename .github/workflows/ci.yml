@@ -37,3 +37,31 @@ jobs:
         with:
           cli-version: 6.2.0
           packs: conformance/packs/verified-v4.knolo
+
+  adk-smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - name: Build the local MCP server
+        run: |
+          npm run build --workspace @knolo/core
+          npm run build --workspace @knolo/mcp
+      - name: Install the Google ADK example
+        run: python -m pip install -r examples/google_adk_python/requirements.txt
+      - name: Search a fixture image through ADK
+        run: |
+          config="$(node examples/google_adk_python/prepare-fixture.mjs)"
+          export KNOLO_MCP_CONFIG="$config"
+          export KNOLO_MCP_COMMAND=node
+          export KNOLO_MCP_ARGS="[\"${GITHUB_WORKSPACE}/packages/mcp/bin/knolo-mcp.mjs\"]"
+          python examples/google_adk_python/smoke.py
