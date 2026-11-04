@@ -19,4 +19,4 @@ Use the box mounts for notes, skills, memory, and sessions. Use `@knolo/code` fo
 7. Call `knolo_cortex_verify` on a host-produced trace. A failed check is the answer.
 8. `SATISFIED` means the evidence requirements were met. It does not mean the claim is true.
 
-Memory and transcripts are mounted for agent `box`. The shared config omits those two images. After `knolo-box build` in the current session, the new pin loads on the next server start. An unchanged pin needs no restart.
+Memory and transcripts are mounted for agent `box`. The shared config omits those two images. After `knolo-box build`, the next tool call loads the new image when the file matches the pin in `knolo-mcp.json`. `knolo_verify` is then valid, and the `knolo_status` `stateRoot` matches `knolo-box status`. A pin mismatch returns `IMAGE_INVALID` and no hits. Reconnecting the host without a new process is not required after a successful rebuild, and it does not replace a failed pin check.

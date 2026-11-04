@@ -3,6 +3,7 @@ import { type McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
 import type { PinnedKarGraph } from './graphs.js';
 import { registerKarTools } from './kar-tools.js';
+import type { ImageRefresh } from './refresh.js';
 import { callerFrom, failure, success } from './tool-response.js';
 
 const readOnly = {
@@ -19,9 +20,10 @@ export function registerKnoloTools(
     agentId: string;
     maxHits: number;
     graphs: ReadonlyMap<string, PinnedKarGraph>;
+    refresh?: ImageRefresh;
   }
 ): void {
-  const { service, agentId, maxHits, graphs } = options;
+  const { service, agentId, maxHits, graphs, refresh } = options;
 
   server.registerTool(
     'knolo_search',
@@ -36,6 +38,7 @@ export function registerKnoloTools(
     },
     async ({ query, imageIds, limit }) => {
       try {
+        await refresh?.();
         const result = await service.search(
           {
             query,
@@ -67,6 +70,7 @@ export function registerKnoloTools(
     },
     async ({ imageId, objectId, stateRoot, start, end }) => {
       try {
+        await refresh?.();
         const result = await service.get(
           {
             imageId,
@@ -96,6 +100,7 @@ export function registerKnoloTools(
     },
     async ({ imageId }) => {
       try {
+        await refresh?.();
         const results = await service.verify(
           imageId,
           callerFrom(server, agentId)
@@ -117,6 +122,7 @@ export function registerKnoloTools(
     },
     async () => {
       try {
+        await refresh?.();
         return success({ mounts: service.status(callerFrom(server, agentId)) });
       } catch (error) {
         return failure(error);
@@ -125,6 +131,6 @@ export function registerKnoloTools(
   );
 
   if (graphs.size > 0) {
-    registerKarTools(server, { service, agentId, graphs });
+    registerKarTools(server, { service, agentId, graphs, refresh });
   }
 }

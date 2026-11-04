@@ -2,10 +2,12 @@ import { KnoloOpenClawService } from '@knolo/tools';
 import { McpServer } from '@modelcontextprotocol/server';
 import {
   knoloPluginConfig,
+  loadKnoloMcpConfigFile,
   type KnoloMcpConfig,
   parseKnoloMcpConfig,
 } from './config.js';
 import { pinConfiguredGraphs, type PinnedKarGraph } from './graphs.js';
+import { createImageRefresh, type ImageRefresh } from './refresh.js';
 import { registerKnoloTools } from './tools.js';
 
 export function createKnoloMcpServer(options: {
@@ -13,6 +15,7 @@ export function createKnoloMcpServer(options: {
   agentId: string;
   maxHits: number;
   graphs: ReadonlyMap<string, PinnedKarGraph>;
+  refresh?: ImageRefresh;
 }): McpServer {
   const server = new McpServer({ name: 'knolo', version: '0.2.0' });
   registerKnoloTools(server, options);
@@ -37,6 +40,41 @@ export async function createKnoloMcp(input: unknown): Promise<{
       agentId: config.agentId,
       maxHits: config.maxHits,
       graphs,
+    }),
+  };
+}
+
+export async function openKnoloMcp(configPath: string): Promise<{
+  config: KnoloMcpConfig;
+  service: KnoloOpenClawService;
+  graphs: Map<string, PinnedKarGraph>;
+  refresh: ImageRefresh;
+  server: McpServer;
+}> {
+  const config = await loadKnoloMcpConfigFile(configPath);
+  const pluginConfig = knoloPluginConfig(config);
+  const service = await KnoloOpenClawService.create(pluginConfig);
+  const graphs = await pinConfiguredGraphs(config, service);
+  const refresh = await createImageRefresh({
+    loadConfig: () => loadKnoloMcpConfigFile(configPath),
+    service,
+    graphs,
+    pluginConfig,
+    graphPaths: config.mounts.flatMap((mount) =>
+      mount.kar ? [mount.kar.graphPath] : []
+    ),
+  });
+  return {
+    config,
+    service,
+    graphs,
+    refresh,
+    server: createKnoloMcpServer({
+      service,
+      agentId: config.agentId,
+      maxHits: config.maxHits,
+      graphs,
+      refresh,
     }),
   };
 }

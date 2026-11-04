@@ -189,6 +189,8 @@ type MountSnapshot = {
   image: KnowledgeImageV5;
   policy: KnowledgePolicyV1;
   byteSha256: string;
+  size: bigint;
+  mtimeNs: bigint;
 };
 
 type NormalizedConfig = Required<Omit<KnoloPluginConfig, 'mounts'>> & {
@@ -441,6 +443,14 @@ export class KnoloOpenClawService {
       stateRoot: mount.image.stateRoot,
       source: 'local',
       status: 'ready',
+    }));
+  }
+
+  mountedFiles(): Array<{ path: string; size: bigint; mtimeNs: bigint }> {
+    return [...this.#mounts.values()].map((mount) => ({
+      path: mount.config.path,
+      size: mount.size,
+      mtimeNs: mount.mtimeNs,
     }));
   }
 
@@ -856,15 +866,18 @@ async function loadMount(
   config: KnoloMountConfig,
   maxImageBytes: number
 ): Promise<MountSnapshot> {
-  let metadata;
+  let size: bigint;
+  let mtimeNs: bigint;
   let bytes: Uint8Array;
   try {
-    metadata = await stat(config.path);
-    if (!metadata.isFile() || metadata.size > maxImageBytes) {
+    const metadata = await stat(config.path, { bigint: true });
+    if (!metadata.isFile() || metadata.size > BigInt(maxImageBytes)) {
       throw new Error(
         `image must be a file no larger than ${maxImageBytes} bytes`
       );
     }
+    size = metadata.size;
+    mtimeNs = metadata.mtimeNs;
     bytes = new Uint8Array(await readFile(config.path));
   } catch (error) {
     throw new KnoloPluginError(
@@ -909,7 +922,7 @@ async function loadMount(
       `Policy for image ${config.id} is invalid: ${safeErrorMessage(error)}`
     );
   }
-  return { config, image, policy, byteSha256 };
+  return { config, image, policy, byteSha256, size, mtimeNs };
 }
 
 function normalizeQuery(query: string, maxBytes: number): string {

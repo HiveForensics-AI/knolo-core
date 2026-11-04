@@ -3,7 +3,13 @@ import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import http from 'node:http';
 import https from 'node:https';
-import { mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
+import {
+  mkdtemp,
+  readFile,
+  readdir,
+  utimes,
+  writeFile,
+} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -40,7 +46,7 @@ const [{ Client }, { InMemoryTransport }, mcp] = await Promise.all([
   import('../dist/index.js'),
 ]);
 
-const { createKnoloMcp } = mcp;
+const { createKnoloMcp, openKnoloMcp } = mcp;
 const binPath = fileURLToPath(new URL('../bin/knolo-mcp.mjs', import.meta.url));
 const encoder = new TextEncoder();
 const toolNames = ['knolo_search', 'knolo_get', 'knolo_verify', 'knolo_status'];
@@ -144,6 +150,36 @@ async function connected(config) {
     opened.server.connect(serverTransport),
   ]);
   return { ...opened, client };
+}
+
+async function serveFile(config, root) {
+  const configPath = path.join(root, 'knolo-mcp.json');
+  await writeFile(configPath, `${JSON.stringify(config)}\n`);
+  const opened = await openKnoloMcp(configPath);
+  const client = new Client({ name: 'knolo-mcp-test', version: '0.0.0' });
+  const [clientTransport, serverTransport] =
+    InMemoryTransport.createLinkedPair();
+  await Promise.all([
+    client.connect(clientTransport),
+    opened.server.connect(serverTransport),
+  ]);
+  return { ...opened, client, configPath };
+}
+
+function imageWith(texts) {
+  return createKnowledgeImageV5({
+    policy: allowPolicy(),
+    objects: texts.map((text) => ({
+      kind: 'chunk',
+      bytes: encoder.encode(text),
+      meta: { namespace: 'support' },
+    })),
+  });
+}
+
+async function stampFile(filePath, offsetMs) {
+  const when = new Date(Date.now() + offsetMs);
+  await utimes(filePath, when, when);
 }
 
 async function call(client, name, args = {}) {
@@ -776,6 +812,240 @@ test('oversized plans and a blocked audit directory return no result', async () 
     assert.equal(failed.structuredContent, undefined);
   } finally {
     await blocked.client.close();
+  }
+});
+
+test('a rebuilt image that matches its new pin is served on the next call', async () => {
+  const { config, root, imagePath } = await fixture({ maxHits: 1 });
+  const { client, configPath } = await serveFile(config, root);
+  try {
+    const first = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+    });
+    assert.notEqual(first.isError, true);
+    assert.match(
+      first.structuredContent.hits[0].excerpt,
+      /Annual enterprise refunds/
+    );
+
+    const rebuilt = imageWith([
+      'Quarterly hardware rebates are posted on Fridays.',
+      'Quarterly hardware rebates include a receipt.',
+    ]);
+    await writeFile(imagePath, rebuilt.bytes);
+    await stampFile(imagePath, 5_000);
+    config.mounts[0].sha256 = hash(rebuilt.bytes);
+    config.mounts[0].stateRoot = rebuilt.stateRoot;
+    config.maxHits = 8;
+    config.agentId = 'other';
+    await writeFile(configPath, `${JSON.stringify(config)}\n`);
+
+    const removed = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+    });
+    assert.notEqual(removed.isError, true);
+    assert.equal(removed.structuredContent.hits.length, 0);
+    const added = await call(client, 'knolo_search', {
+      query: 'hardware rebates',
+      limit: 8,
+    });
+    assert.notEqual(added.isError, true);
+    assert.equal(added.structuredContent.hits.length, 1);
+    assert.match(
+      added.structuredContent.hits[0].excerpt,
+      /Quarterly hardware rebates/
+    );
+    assert.equal(added.structuredContent.hits[0].stateRoot, rebuilt.stateRoot);
+    const verified = await call(client, 'knolo_verify', {});
+    assert.equal(verified.structuredContent.results[0].valid, true);
+    assert.equal(
+      verified.structuredContent.results[0].stateRoot,
+      rebuilt.stateRoot
+    );
+    const status = await call(client, 'knolo_status', {});
+    assert.equal(
+      status.structuredContent.mounts[0].stateRoot,
+      rebuilt.stateRoot
+    );
+  } finally {
+    await client.close();
+  }
+});
+
+test('a changed image is not served until its pin matches', async () => {
+  const { config, root, imagePath } = await fixture();
+  const { client, configPath } = await serveFile(config, root);
+  try {
+    const first = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+    });
+    assert.match(
+      first.structuredContent.hits[0].excerpt,
+      /Annual enterprise refunds/
+    );
+
+    const bytes = await readFile(imagePath);
+    bytes[bytes.length - 1] ^= 0xff;
+    await writeFile(imagePath, bytes);
+    await stampFile(imagePath, 5_000);
+    const tampered = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+    });
+    assert.equal(tampered.isError, true);
+    assert.match(
+      textOf(tampered),
+      /^IMAGE_INVALID: Image support-policy does not match its SHA-256 pin\./
+    );
+    assert.equal(tampered.structuredContent, undefined);
+    assert.doesNotMatch(textOf(tampered), /Annual enterprise refunds/);
+    const verified = await call(client, 'knolo_verify', {});
+    assert.equal(verified.isError, true);
+    assert.match(textOf(verified), /does not match its SHA-256 pin/);
+    assert.equal(verified.structuredContent, undefined);
+
+    const rebuilt = imageWith([
+      'Quarterly hardware rebates are posted on Fridays.',
+    ]);
+    await writeFile(imagePath, rebuilt.bytes);
+    await stampFile(imagePath, 10_000);
+    const stillPinned = await call(client, 'knolo_search', {
+      query: 'hardware rebates',
+    });
+    assert.equal(stillPinned.isError, true);
+    assert.match(textOf(stillPinned), /does not match its SHA-256 pin/);
+    assert.doesNotMatch(textOf(stillPinned), /Quarterly hardware rebates/);
+    assert.doesNotMatch(textOf(stillPinned), /Annual enterprise refunds/);
+
+    config.mounts[0].sha256 = hash(rebuilt.bytes);
+    config.mounts[0].stateRoot = rebuilt.stateRoot;
+    await writeFile(configPath, `${JSON.stringify(config)}\n`);
+    const served = await call(client, 'knolo_search', {
+      query: 'hardware rebates',
+    });
+    assert.notEqual(served.isError, true);
+    assert.equal(served.structuredContent.hits.length, 1);
+    assert.match(
+      served.structuredContent.hits[0].excerpt,
+      /Quarterly hardware rebates/
+    );
+    const verifiedOk = await call(client, 'knolo_verify', {});
+    assert.equal(verifiedOk.structuredContent.results[0].valid, true);
+    assert.equal(
+      verifiedOk.structuredContent.results[0].stateRoot,
+      rebuilt.stateRoot
+    );
+  } finally {
+    await client.close();
+  }
+});
+
+test('an invalid config fails that call and the next matching call is served', async () => {
+  const { config, root, imagePath } = await fixture();
+  const { client, configPath } = await serveFile(config, root);
+  try {
+    const first = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+    });
+    assert.match(
+      first.structuredContent.hits[0].excerpt,
+      /Annual enterprise refunds/
+    );
+    await stampFile(imagePath, 5_000);
+    await writeFile(configPath, '{');
+    const broken = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+    });
+    assert.equal(broken.isError, true);
+    assert.match(
+      textOf(broken),
+      /^IMAGE_INVALID: Knolo MCP config is not valid JSON\./
+    );
+    assert.equal(broken.structuredContent, undefined);
+    assert.doesNotMatch(textOf(broken), /Annual enterprise refunds/);
+    await writeFile(configPath, `${JSON.stringify(config)}\n`);
+    const again = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+    });
+    assert.notEqual(again.isError, true);
+    assert.match(
+      again.structuredContent.hits[0].excerpt,
+      /Annual enterprise refunds/
+    );
+  } finally {
+    await client.close();
+  }
+});
+
+test('a service created without a config path keeps the startup image', async () => {
+  const { config, imagePath } = await fixture();
+  const { client } = await connected(config);
+  try {
+    const bytes = await readFile(imagePath);
+    bytes[bytes.length - 1] ^= 0xff;
+    await writeFile(imagePath, bytes);
+    const search = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+    });
+    assert.notEqual(search.isError, true);
+    assert.match(
+      search.structuredContent.hits[0].excerpt,
+      /Annual enterprise refunds/
+    );
+  } finally {
+    await client.close();
+  }
+});
+
+test('a changed KAR graph is checked before evaluate', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'knolo-mcp-refresh-kar-'));
+  const workspace = await buildKarWorkspace(root, ['support']);
+  const support = workspace.cases[0];
+  const { client } = await serveFile(
+    {
+      agentId: 'mcp',
+      auditDir: path.join(root, 'audit'),
+      mounts: workspace.mounts,
+    },
+    root
+  );
+  try {
+    const first = await call(client, 'knolo_kar_evaluate', {
+      mountId: 'support',
+      proposition: support.proposition,
+      plan: support.plan,
+    });
+    assert.notEqual(first.isError, true, textOf(first));
+    const graphPath = path.join(root, 'support.kar.json');
+    const original = await readFile(graphPath);
+    const flipped = Buffer.from(original);
+    flipped[flipped.length - 1] ^= 0xff;
+    await writeFile(graphPath, flipped);
+    await stampFile(graphPath, 5_000);
+    const broken = await call(client, 'knolo_kar_evaluate', {
+      mountId: 'support',
+      proposition: support.proposition,
+      plan: support.plan,
+    });
+    assert.equal(broken.isError, true);
+    assert.match(
+      textOf(broken),
+      /^IMAGE_INVALID: KAR graph for support does not match its SHA-256 pin\./
+    );
+    assert.equal(broken.structuredContent, undefined);
+    await writeFile(graphPath, original);
+    await stampFile(graphPath, 10_000);
+    const again = await call(client, 'knolo_kar_evaluate', {
+      mountId: 'support',
+      proposition: support.proposition,
+      plan: support.plan,
+    });
+    assert.notEqual(again.isError, true, textOf(again));
+    assert.equal(
+      again.structuredContent.status,
+      first.structuredContent.status
+    );
+  } finally {
+    await client.close();
   }
 });
 

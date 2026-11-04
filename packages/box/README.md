@@ -10,7 +10,7 @@ node packages/box/bin/knolo-box.mjs status
 node packages/box/bin/knolo-box.mjs mcp
 ```
 
-`mcp` spawns `knolo-mcp --config <output>/knolo-mcp.json` with stdio inherited. The parent does not write to stdout. Logs stay on stderr. A changed image is visible the next time the server starts. An unchanged pin needs no restart.
+`mcp` spawns `knolo-mcp --config <output>/knolo-mcp.json` with stdio inherited. The parent does not write to stdout. Logs stay on stderr. A changed image is checked on the next tool call. When the file matches the pin in `knolo-mcp.json`, that call serves the new image, `knolo_verify` is valid, and the `knolo_status` `stateRoot` matches `knolo-box status`. A file that does not match the pin returns `IMAGE_INVALID` and no hits. An unchanged file stays loaded.
 
 ## What gets indexed
 

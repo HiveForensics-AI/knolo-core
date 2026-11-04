@@ -9,6 +9,7 @@ import { KnoloPluginError, type KnoloOpenClawService } from '@knolo/tools';
 import { type McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
 import type { PinnedKarGraph } from './graphs.js';
+import type { ImageRefresh } from './refresh.js';
 import { callerFrom, failure, success } from './tool-response.js';
 
 const readOnly = {
@@ -99,9 +100,10 @@ export function registerKarTools(
     service: KnoloOpenClawService;
     agentId: string;
     graphs: ReadonlyMap<string, PinnedKarGraph>;
+    refresh?: ImageRefresh;
   }
 ): void {
-  const { service, agentId, graphs } = options;
+  const { service, agentId, graphs, refresh } = options;
 
   server.registerTool(
     'knolo_kar_evaluate',
@@ -116,6 +118,7 @@ export function registerKarTools(
     },
     async ({ mountId, proposition, plan }) => {
       try {
+        await refresh?.();
         assertPlanSize(plan);
         const caller = callerFrom(server, agentId);
         const mount = service.readAuthorizedMount(mountId, caller);
@@ -183,6 +186,7 @@ export function registerKarTools(
     },
     async ({ mountId, proposition, plan, result, dossier }) => {
       try {
+        await refresh?.();
         assertPlanSize(plan);
         if ((result === undefined) === (dossier === undefined)) {
           throw new KnoloPluginError(
@@ -253,6 +257,7 @@ export function registerKarTools(
     },
     async ({ mountId, question, answer }) => {
       try {
+        await refresh?.();
         const caller = callerFrom(server, agentId);
         const mount = service.readAuthorizedMount(mountId, caller);
         const pinned = graphs.get(mountId);
