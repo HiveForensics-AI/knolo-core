@@ -3,10 +3,13 @@ import { spawn } from 'node:child_process';
 import http from 'node:http';
 import https from 'node:https';
 import {
+  access,
+  chmod,
   mkdir,
   mkdtemp,
   readFile,
   readdir,
+  realpath,
   rm,
   stat,
   symlink,
@@ -41,6 +44,7 @@ const {
   buildBox,
   chatFileTooLarge,
   defaultBoxConfig,
+  initBox,
   loadBoxConfig,
   mcpBinPath,
   selectNewestSessions,
@@ -929,7 +933,7 @@ test('the launcher finds knolo-mcp and the CLI stays off stdout for help', async
   const help = await run([binPath, '--help']);
   assert.equal(help.code, 0);
   assert.equal(help.stdout, '');
-  assert.match(help.stderr, /knolo-box build\|status\|mcp/);
+  assert.match(help.stderr, /knolo-box build\|status\|mcp\|init/);
   const missing = await run([binPath]);
   assert.equal(missing.code, 1);
   const unknown = await run([binPath, 'query']);
@@ -973,6 +977,260 @@ test('the launcher finds knolo-mcp and the CLI stays off stdout for help', async
     assert.equal(again.code, 0);
     assert.equal(JSON.parse(again.stdout)[0].stateRoot, status[0].stateRoot);
     assert.equal(await main(['build', '--config']), 1);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+const SKILL_BYTES = '# Skill\n\nINIT_SKILL_PHRASE lives here.\n';
+const MANAGED_BYTES = '# Managed\n\nINIT_MANAGED_PHRASE lives here.\n';
+
+async function writeSkillTree(root) {
+  const workflows = path.join(root, 'workflows', 'hive');
+  const managed = path.join(root, 'managed-skills', 'skills', 'sales');
+  await mkdir(workflows, { recursive: true });
+  await mkdir(managed, { recursive: true });
+  await writeFile(path.join(workflows, 'SKILL.md'), SKILL_BYTES);
+  await writeFile(path.join(managed, 'SKILL.md'), MANAGED_BYTES);
+}
+
+async function linkSkillTree(home, name, target) {
+  const parent = path.join(home, name);
+  await mkdir(parent, { recursive: true });
+  await symlink(path.join(target, 'workflows'), path.join(parent, 'workflows'));
+  await symlink(
+    path.join(target, 'managed-skills'),
+    path.join(parent, 'managed-skills')
+  );
+}
+
+test('init follows a real directory and a symlink to the same skills pin', async () => {
+  const home = await tempHome();
+  const linked = await tempHome();
+  try {
+    await writeSkillTree(path.join(home, 'agent-data'));
+    const store = path.join(linked, 'store');
+    await writeSkillTree(store);
+    await linkSkillTree(linked, 'sand-data', store);
+    const realConfig = path.join(home, 'box.json');
+    const linkConfig = path.join(linked, 'box.json');
+    const real = await initBox({
+      configPath: realConfig,
+      roots: [home],
+      home,
+      env: {},
+    });
+    const viaLink = await initBox({
+      configPath: linkConfig,
+      roots: [linked],
+      home: linked,
+      env: {},
+    });
+    assert.equal(
+      real.scopes.skills.roots[0],
+      await realpath(path.join(home, 'agent-data', 'workflows'))
+    );
+    assert.equal(
+      viaLink.scopes.skills.roots[0],
+      await realpath(path.join(store, 'workflows'))
+    );
+    assert.equal(
+      viaLink.scopes.skills.roots.includes(
+        path.join(linked, 'sand-data', 'workflows')
+      ),
+      false
+    );
+    const now = new Date('2026-11-04T12:00:00.000Z');
+    const realPins = await buildBox(
+      await loadBoxConfig(realConfig, {}, home),
+      now
+    );
+    const linkPins = await buildBox(
+      await loadBoxConfig(linkConfig, {}, linked),
+      now
+    );
+    assert.equal(
+      realPins.scopes.skills.stateRoot,
+      linkPins.scopes.skills.stateRoot
+    );
+    assert.equal(realPins.scopes.skills.sha256, linkPins.scopes.skills.sha256);
+    assert.equal(
+      realPins.scopes.skills.builtAt,
+      linkPins.scopes.skills.builtAt
+    );
+    assert.deepEqual(real.scopes.files.roots, []);
+    assert.deepEqual(real.scopes.memory.roots, []);
+    assert.deepEqual(real.scopes.transcripts.roots, []);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+    await rm(linked, { recursive: true, force: true });
+  }
+});
+
+test('init records one directory reached through a link and a real path once', async () => {
+  const home = await tempHome();
+  try {
+    await writeSkillTree(path.join(home, 'agent-data'));
+    await linkSkillTree(home, 'sand-data', path.join(home, 'agent-data'));
+    const config = await initBox({
+      configPath: path.join(home, 'box.json'),
+      roots: [home],
+      home,
+      env: {},
+    });
+    assert.deepEqual(config.scopes.skills.roots, [
+      await realpath(path.join(home, 'agent-data', 'workflows')),
+      await realpath(path.join(home, 'agent-data', 'managed-skills', 'skills')),
+    ]);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('init refuses two different skill parents and writes no config', async () => {
+  const home = await tempHome();
+  const configPath = path.join(home, 'box.json');
+  try {
+    await writeSkillTree(path.join(home, 'agent-data'));
+    await writeSkillTree(path.join(home, 'sand-data'));
+    await writeFile(
+      path.join(home, 'sand-data', 'workflows', 'hive', 'SKILL.md'),
+      'OTHER_SKILL_PHRASE\n'
+    );
+    await assert.rejects(
+      () => initBox({ configPath, roots: [home], home, env: {} }),
+      (error) => {
+        assert.equal(error.code, 'BOX_CONFIG');
+        assert.match(error.message, /workflows must resolve to one directory/);
+        assert.match(
+          error.message,
+          new RegExp(path.join(home, 'agent-data', 'workflows'))
+        );
+        assert.match(
+          error.message,
+          new RegExp(path.join(home, 'sand-data', 'workflows'))
+        );
+        return true;
+      }
+    );
+    await assert.rejects(() => access(configPath));
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('an override skips detection for that role', async () => {
+  const home = await tempHome();
+  try {
+    const custom = path.join(home, 'custom');
+    await writeSkillTree(custom);
+    await writeSkillTree(path.join(home, 'agent-data'));
+    const configPath = path.join(home, 'box.json');
+    const config = await initBox({
+      configPath,
+      roots: [home],
+      skills: path.join(custom, 'workflows'),
+      home,
+      env: {},
+    });
+    assert.equal(
+      config.scopes.skills.roots[0],
+      await realpath(path.join(custom, 'workflows'))
+    );
+    assert.equal(await main(['init', '--config']), 1);
+    const flagged = await main(
+      [
+        'init',
+        '--config',
+        path.join(home, 'flagged.json'),
+        '--root',
+        home,
+        '--skills',
+        path.join(custom, 'workflows'),
+      ],
+      {},
+      home
+    );
+    assert.equal(flagged, 0);
+    const written = JSON.parse(
+      await readFile(path.join(home, 'flagged.json'), 'utf8')
+    );
+    assert.equal(written.scopes.skills.roots[0], config.scopes.skills.roots[0]);
+    assert.equal(JSON.stringify(written).includes(os.homedir()), false);
+    const fromEnv = await main(
+      ['init', '--config', path.join(home, 'env.json'), '--root', home],
+      { KNOLO_BOX_SKILLS: path.join(custom, 'workflows') },
+      home
+    );
+    assert.equal(fromEnv, 0);
+    const envWritten = JSON.parse(
+      await readFile(path.join(home, 'env.json'), 'utf8')
+    );
+    assert.equal(
+      envWritten.scopes.skills.roots[0],
+      config.scopes.skills.roots[0]
+    );
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('init does not read a secret file beside a candidate', async () => {
+  const home = await tempHome();
+  const locked = [];
+  try {
+    await writeSkillTree(path.join(home, 'agent-data'));
+    const secret = path.join(home, 'agent-data', 'cookie-seeds.json');
+    const sibling = path.join(
+      home,
+      'agent-data',
+      'workflows',
+      'box-secrets.json'
+    );
+    await writeFile(secret, 'COOKIE_SEED_SECRET\n', { mode: 0o600 });
+    await writeFile(sibling, 'BOX_SECRET_VALUE\n', { mode: 0o600 });
+    await chmod(secret, 0o000);
+    await chmod(sibling, 0o000);
+    locked.push(secret, sibling);
+    const config = await initBox({
+      configPath: path.join(home, 'box.json'),
+      roots: [home],
+      home,
+      env: {},
+    });
+    assert.equal(JSON.stringify(config).includes('COOKIE_SEED_SECRET'), false);
+    assert.equal(JSON.stringify(config).includes('BOX_SECRET_VALUE'), false);
+  } finally {
+    await Promise.all(
+      locked.map((filePath) => chmod(filePath, 0o600).catch(() => undefined))
+    );
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('init skips a symlink whose target is denied', async () => {
+  const home = await tempHome();
+  try {
+    const hidden = path.join(home, 'secrets');
+    await writeSkillTree(hidden);
+    await linkSkillTree(home, 'agent-data', hidden);
+    await writeSkillTree(path.join(home, 'sand-data'));
+    const config = await initBox({
+      configPath: path.join(home, 'box.json'),
+      roots: [home],
+      home,
+      env: {},
+    });
+    assert.deepEqual(config.scopes.skills.roots, [
+      await realpath(path.join(home, 'sand-data', 'workflows')),
+      await realpath(path.join(home, 'sand-data', 'managed-skills', 'skills')),
+    ]);
+    assert.equal(
+      config.scopes.skills.roots.some((root) =>
+        root.includes(`${path.sep}secrets${path.sep}`)
+      ),
+      false
+    );
   } finally {
     await rm(home, { recursive: true, force: true });
   }

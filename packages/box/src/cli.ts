@@ -1,18 +1,45 @@
 import { readFile } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { loadBoxConfig } from './config.js';
 import { BoxError } from './errors.js';
 import { boxStatus, buildBox } from './build.js';
+import { initBox } from './init.js';
 import { launchMcp } from './launch.js';
 
-export async function main(argv: readonly string[]): Promise<number> {
+export async function main(
+  argv: readonly string[],
+  env: NodeJS.ProcessEnv = process.env,
+  home: string = os.homedir()
+): Promise<number> {
   const command = argv[0];
   if (!command || command === '--help' || command === '-h') {
-    console.error('knolo-box build|status|mcp [--config <file>]');
+    console.error(
+      'knolo-box build|status|mcp|init [--config <file>] [--root <dir>] [--skills <path>] [--managed-skills <path>]'
+    );
     return command ? 0 : 1;
   }
   try {
-    const config = await loadBoxConfig(flag(argv, '--config'));
+    if (command === 'init') {
+      const configPath = flag(argv, '--config');
+      if (!configPath) {
+        throw new BoxError('BOX_CONFIG', '--config needs a path.');
+      }
+      const roots = flags(argv, '--root');
+      const config = await initBox({
+        configPath,
+        roots: roots.length > 0 ? roots : [home],
+        skills: flag(argv, '--skills') ?? optionalEnv(env.KNOLO_BOX_SKILLS),
+        managedSkills:
+          flag(argv, '--managed-skills') ??
+          optionalEnv(env.KNOLO_BOX_MANAGED_SKILLS),
+        home,
+        env,
+      });
+      console.log(JSON.stringify(config, null, 2));
+      return 0;
+    }
+    const config = await loadBoxConfig(flag(argv, '--config'), env, home);
     if (command === 'build') {
       await buildBox(config);
       console.log(JSON.stringify(await boxStatus(config), null, 2));
@@ -63,11 +90,28 @@ async function assertMcpConfig(configPath: string): Promise<void> {
 }
 
 function flag(argv: readonly string[], name: string): string | undefined {
-  const index = argv.indexOf(name);
-  if (index < 0) return undefined;
-  const value = argv[index + 1];
-  if (!value || value.startsWith('--')) {
-    throw new BoxError('BOX_CONFIG', `${name} needs a path.`);
+  const values = flags(argv, name);
+  if (values.length > 1) {
+    throw new BoxError('BOX_CONFIG', `${name} accepts one path.`);
   }
-  return value;
+  return values[0];
+}
+
+function flags(argv: readonly string[], name: string): string[] {
+  const values: string[] = [];
+  for (let index = 0; index < argv.length; index += 1) {
+    if (argv[index] !== name) continue;
+    const value = argv[index + 1];
+    if (!value || value.startsWith('--')) {
+      throw new BoxError('BOX_CONFIG', `${name} needs a path.`);
+    }
+    values.push(value);
+    index += 1;
+  }
+  return values;
+}
+
+function optionalEnv(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
 }

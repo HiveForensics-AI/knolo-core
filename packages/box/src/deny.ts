@@ -26,6 +26,19 @@ const DENY_BASENAMES = new Set([
   'updates.jsonl',
 ]);
 
+export function isDeniedInitPath(filePath: string): boolean {
+  if (isDeniedPath(filePath)) return true;
+  const parts = filePath.split(/[\\/]+/u).filter((part) => part.length > 0);
+  for (const part of parts) {
+    const lower = part.toLowerCase();
+    if (lower === 'secrets' || lower.includes('connector-secret')) return true;
+    if (lower.startsWith('cookie-seed') || lower.startsWith('cookie_seed')) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function isDeniedPath(filePath: string): boolean {
   const parts = filePath.split(/[\\/]+/u).filter((part) => part.length > 0);
   for (const part of parts) {
