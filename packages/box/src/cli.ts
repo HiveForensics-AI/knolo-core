@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { loadBoxConfig } from './config.js';
 import { BoxError } from './errors.js';
@@ -23,6 +24,7 @@ export async function main(argv: readonly string[]): Promise<number> {
     }
     if (command === 'mcp') {
       const configPath = path.join(config.output, 'knolo-mcp.json');
+      await assertMcpConfig(configPath);
       return await launchMcp(configPath);
     }
     throw new BoxError('BOX_CONFIG', `Unknown command ${command}.`);
@@ -35,6 +37,28 @@ export async function main(argv: readonly string[]): Promise<number> {
           : 'unknown error';
     console.error(`knolo-box: ${message}`);
     return 1;
+  }
+}
+
+async function assertMcpConfig(configPath: string): Promise<void> {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(await readFile(configPath, 'utf8'));
+  } catch {
+    throw new BoxError(
+      'BOX_CONFIG',
+      'No images were built. Add a scope with text, then run knolo-box build.'
+    );
+  }
+  const mounts =
+    parsed && typeof parsed === 'object'
+      ? (parsed as { mounts?: unknown }).mounts
+      : undefined;
+  if (!Array.isArray(mounts) || mounts.length === 0) {
+    throw new BoxError(
+      'BOX_CONFIG',
+      'No images were built. Add a scope with text, then run knolo-box build.'
+    );
   }
 }
 

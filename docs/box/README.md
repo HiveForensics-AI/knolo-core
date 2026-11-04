@@ -25,7 +25,7 @@ The plugin MCP entry is `npx -y @knolo/box@0.1.0 mcp`. Point a local server at `
 | `memory.v5`      | `memory-v2` topic notes and inbox observations                   | `box`                            |
 | `transcripts.v5` | Session summaries and user or assistant text                     | `box`                            |
 
-`knolo-mcp.json` mounts every image that was built. `knolo-mcp-shared.json` is written only when a shared image exists, and it leaves out memory and transcripts. Both files set `agentId` to `box`. Mount paths are absolute. Pins are checked before the server serves a query.
+`knolo-mcp.json` mounts every image that was built. `knolo-mcp-shared.json` is written only when a shared image exists, and it leaves out memory and transcripts. A later build deletes either file when it would have no mounts. Both files set `agentId` to `box`. Mount paths are absolute. Pins are checked before the server serves a query. `knolo-box mcp` stops before starting the server when the primary config is missing or empty.
 
 Denied names are never read. That includes `.env` and `.env.*`, `auth.json`, `config.toml`, private keys, `.ssh`, `.gnupg`, `.aws`, `credentials`, `node_modules`, `.git`, `dist`, sqlite, `MEMORY.md`, system prompts, and tool definitions. A private-key header or a GitHub token in text that would be indexed fails the build and leaves the previous images in place.
 

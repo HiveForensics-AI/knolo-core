@@ -353,7 +353,13 @@ async function walk(
   const seen = new Set<string>();
   async function descend(directory: string): Promise<void> {
     const realDirectory = await realpath(directory);
-    if (!isInsideRoot(root, realDirectory) || seen.has(realDirectory)) return;
+    if (
+      !isInsideRoot(root, realDirectory) ||
+      seen.has(realDirectory) ||
+      deniedResolvedPath(root, realDirectory)
+    ) {
+      return;
+    }
     seen.add(realDirectory);
     const entries = await readdir(realDirectory, { withFileTypes: true });
     for (const entry of entries) {
@@ -366,7 +372,9 @@ async function walk(
         } catch {
           continue;
         }
-        if (!isInsideRoot(root, target)) continue;
+        if (!isInsideRoot(root, target) || deniedResolvedPath(root, target)) {
+          continue;
+        }
         const info = await stat(target);
         if (info.isDirectory()) await descend(target);
         else if (info.isFile()) await visit(target);
@@ -380,6 +388,11 @@ async function walk(
     }
   }
   await descend(root);
+}
+
+function deniedResolvedPath(root: string, target: string): boolean {
+  const relative = path.relative(root, target);
+  return relative !== '' && isDeniedPath(relative);
 }
 
 function displayPath(

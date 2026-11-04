@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createKnowledgeImageV5, type KnowledgePolicyV1 } from '@knolo/core';
 import { SCOPE_NAMES, type BoxConfig, type BoxScopeName } from './config.js';
@@ -170,18 +170,28 @@ async function writeMcpConfigs(
   auditDir: string
 ): Promise<void> {
   const primary = mcpConfig(config, pins, policyPath, auditDir, false);
-  await writeFile(
+  await writeConfigOrRemove(
     path.join(config.output, 'knolo-mcp.json'),
-    `${JSON.stringify(primary, null, 2)}\n`,
-    { mode: 0o600 }
+    primary
   );
   const shared = mcpConfig(config, pins, policyPath, auditDir, true);
-  if (shared.mounts.length === 0) return;
-  await writeFile(
+  await writeConfigOrRemove(
     path.join(config.output, 'knolo-mcp-shared.json'),
-    `${JSON.stringify(shared, null, 2)}\n`,
-    { mode: 0o600 }
+    shared
   );
+}
+
+async function writeConfigOrRemove(
+  filePath: string,
+  value: { mounts: unknown[] }
+): Promise<void> {
+  if (value.mounts.length === 0) {
+    await rm(filePath, { force: true });
+    return;
+  }
+  await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, {
+    mode: 0o600,
+  });
 }
 
 async function readPins(output: string): Promise<BoxPins> {

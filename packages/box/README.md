@@ -36,8 +36,11 @@ Each chunk starts with `source` and `locator`, plus `when` and `agent` when the 
 - `skills.v5`, `files.v5`, `memory.v5`, `transcripts.v5` for scopes that had text
 - `policy.json` with default deny, and query plus read for principal `box:reader`
 - `pins.json` with the file SHA-256, `stateRoot`, `builtAt`, and the source digest
-- `knolo-mcp.json` for agent `box`, including private mounts
+- `knolo-mcp.json` for agent `box`, including private mounts, when at least one image was built
 - `knolo-mcp-shared.json` when at least one shared mount remains, without memory and transcripts
+
+A later build removes a config that would have no mounts. `knolo-box mcp` stops before starting the server when `knolo-mcp.json` is missing or has no mounts.
+
 - `audit/` beside the images, capped at 10,000 records and 256 MiB
 
 The same source digest keeps the same image bytes, `stateRoot`, and `builtAt`. `knolo-box status` prints `stateRoot`, `builtAt`, and whether the pin matches the file. `knolo_status` does not include `builtAt`.

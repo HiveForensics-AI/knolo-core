@@ -9,6 +9,7 @@ import {
   readdir,
   rm,
   stat,
+  symlink,
   writeFile,
 } from 'node:fs/promises';
 import os from 'node:os';
@@ -562,6 +563,9 @@ test('a private-key or token match writes no new image', async () => {
     '-----BEGIN PRIVATE KEY-----',
     '-----BEGIN RSA PRIVATE KEY-----',
     '-----BEGIN OPENSSH PRIVATE KEY-----',
+    '-----BEGIN EC PRIVATE KEY-----',
+    '-----BEGIN DSA PRIVATE KEY-----',
+    '-----BEGIN ENCRYPTED PRIVATE KEY-----',
     `ghp_${'a'.repeat(20)}`,
     'github_pat_example_token_value',
   ];
@@ -664,6 +668,15 @@ test('an empty computer does not walk the home directory', async () => {
       home
     );
     assert.deepEqual(config.scopes.files.roots, []);
+    await mkdir(config.output, { recursive: true });
+    await writeFile(
+      path.join(config.output, 'knolo-mcp.json'),
+      '{"mounts":[{"id":"old"}]}\n'
+    );
+    await writeFile(
+      path.join(config.output, 'knolo-mcp-shared.json'),
+      '{"mounts":[{"id":"old"}]}\n'
+    );
     const pins = await buildBox(config, new Date('2026-11-04T00:00:00.000Z'));
     assert.deepEqual(pins.scopes, {});
     assert.equal(
@@ -671,16 +684,103 @@ test('an empty computer does not walk the home directory', async () => {
       true
     );
     const names = await readdir(config.output);
-    assert.equal(names.includes('knolo-mcp.json'), true);
+    assert.equal(names.includes('knolo-mcp.json'), false);
     assert.equal(names.includes('knolo-mcp-shared.json'), false);
     assert.equal(
       names.some((name) => name.endsWith('.v5')),
       false
     );
+    const configPath = path.join(home, 'box.json');
+    await writeFile(
+      configPath,
+      `${JSON.stringify({
+        output: config.output,
+        grokHome: config.grokHome,
+        scopes: {
+          files: { roots: [] },
+          skills: { roots: [] },
+          memory: { roots: [] },
+          transcripts: { roots: [] },
+        },
+      })}\n`
+    );
+    assert.equal(await main(['mcp', '--config', configPath]), 1);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('a symlink into a denied directory is not indexed', async () => {
+  const home = await tempHome();
+  try {
+    const grok = path.join(home, 'grok');
+    const notes = path.join(grok, 'notes');
+    const logs = path.join(notes, 'logs');
+    await mkdir(logs, { recursive: true });
+    await writeFile(path.join(logs, 'secret.md'), 'SYMLINK_LOG_SECRET\n');
+    await symlink('logs', path.join(notes, 'archive'));
+    await symlink(path.join(logs, 'secret.md'), path.join(notes, 'alias.md'));
+    await writeFile(path.join(notes, 'ok.md'), 'SYMLINK_OK_PHRASE\n');
+    const config = {
+      output: path.join(home, 'out'),
+      grokHome: grok,
+      agents: ['box'],
+      scopes: {
+        files: { roots: [notes] },
+        skills: { roots: [] },
+        memory: { roots: [] },
+        transcripts: { roots: [] },
+      },
+    };
+    await buildBox(config);
+    const text = await indexedText(config.output);
+    assert.equal(text.includes('SYMLINK_LOG_SECRET'), false);
+    assert.equal(text.includes('SYMLINK_OK_PHRASE'), true);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('a later build removes a shared config with no mounts', async () => {
+  const home = await tempHome();
+  try {
+    const grok = path.join(home, 'grok');
+    const skillDir = path.join(grok, 'skills', 'release-notes');
+    await mkdir(path.join(grok, 'memory-v2', 'topics'), { recursive: true });
+    await mkdir(skillDir, { recursive: true });
+    await writeFile(path.join(skillDir, 'SKILL.md'), 'BOX_SKILL_STAYS\n');
+    await writeFile(
+      path.join(grok, 'memory-v2', 'topics', 'only.md'),
+      'BOX_PRIVATE_STAYS\n'
+    );
+    const config = {
+      output: path.join(home, 'out'),
+      grokHome: grok,
+      agents: ['box', 'publisher'],
+      scopes: {
+        files: { roots: [] },
+        skills: { roots: [path.join(grok, 'skills')] },
+        memory: { roots: [path.join(grok, 'memory-v2')] },
+        transcripts: { roots: [] },
+      },
+    };
+    await buildBox(config);
+    assert.equal(
+      (await readdir(config.output)).includes('knolo-mcp-shared.json'),
+      true
+    );
+    config.scopes.skills.roots = [];
+    await buildBox(config);
+    const names = await readdir(config.output);
+    assert.equal(names.includes('knolo-mcp-shared.json'), false);
+    assert.equal(names.includes('skills.v5'), true);
     const raw = JSON.parse(
       await readFile(path.join(config.output, 'knolo-mcp.json'), 'utf8')
     );
-    assert.deepEqual(raw.mounts, []);
+    assert.deepEqual(
+      raw.mounts.map((mount) => mount.id),
+      ['memory']
+    );
   } finally {
     await rm(home, { recursive: true, force: true });
   }

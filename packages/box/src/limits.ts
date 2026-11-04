@@ -6,7 +6,7 @@ export const SESSION_COUNT_CAP = 2000;
 export const WINDOW_LINES = 80;
 
 export const SECRET_PATTERN =
-  /-----BEGIN (?:RSA |OPENSSH )?PRIVATE KEY-----|\bghp_[A-Za-z0-9]{20,}|\bgithub_pat_[A-Za-z0-9_]+/u;
+  /-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY-----|\bghp_[A-Za-z0-9]{20,}|\bgithub_pat_[A-Za-z0-9_]+/u;
 
 export function chatFileTooLarge(size: number): boolean {
   return size > CHAT_FILE_BYTE_CAP;
