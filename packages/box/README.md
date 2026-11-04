@@ -51,6 +51,8 @@ There is no daemon. A user crontab can refresh the images:
 0 3 * * * knolo-box build
 ```
 
+When the computer is not `~/.grok`, pass `--config` and set every scope. A scope left out still uses the default roots. An empty `roots` list indexes nothing for that scope. The config shape is in [the box doc](../../docs/box/README.md).
+
 ## Plugin
 
 Grok Build can install the skill and the MCP server with `--trust`:
