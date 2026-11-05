@@ -21,13 +21,15 @@ evaluation sees.
 
 Every search writes an `openclaw-knolo-query-v1` receipt before it returns
 hits. An unwritable `auditDir` returns `AUDIT_UNAVAILABLE` and no hits.
-Before each tool call, a server started from a config file stats every
-mounted image and any pinned KAR graph. An unchanged size and modification
-time keeps the loaded image. A changed file is checked against the pin in
-that config. A match replaces the loaded image. A mismatch returns
-`IMAGE_INVALID` and does not serve the previous image. A config file that
-cannot be read fails that call. `agentId` and `maxHits` stay at the values
-from process start.
+Before each tool call, a server started from a config file stats that config,
+every mounted image, and any pinned KAR graph. An unchanged size and
+modification time keeps the loaded image. A changed file is checked against
+the pin in that config. A match replaces the loaded image. A mount removed
+from the config is no longer served, even when its image file is still on
+disk. A mismatch returns `IMAGE_INVALID` and does not serve the previous
+image. A config file that cannot be read fails that call. `agentId` and
+`maxHits` stay at the values from process start. KAR graphs are authorized
+with that same startup `agentId`.
 
 `@knolo/mcp@0.2.0` is published on npm. A mount without a `kar` block exposes
 the four tools above. A mount with a `kar` block also exposes

@@ -56,6 +56,8 @@ export async function openKnoloMcp(configPath: string): Promise<{
   const service = await KnoloOpenClawService.create(pluginConfig);
   const graphs = await pinConfiguredGraphs(config, service);
   const refresh = await createImageRefresh({
+    configPath,
+    agentId: config.agentId,
     loadConfig: () => loadKnoloMcpConfigFile(configPath),
     service,
     graphs,

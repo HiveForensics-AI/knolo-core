@@ -1049,6 +1049,98 @@ test('a changed KAR graph is checked before evaluate', async () => {
   }
 });
 
+test('a mount removed from the config is no longer served', async () => {
+  const { config, root, imagePath } = await fixture();
+  const other = imageWith([
+    'Quarterly hardware rebates are posted on Fridays.',
+  ]);
+  const otherPath = path.join(root, 'other.v5');
+  await writeFile(otherPath, other.bytes);
+  config.mounts.push({
+    id: 'other',
+    path: otherPath,
+    sha256: hash(other.bytes),
+    stateRoot: other.stateRoot,
+    policyPath: config.mounts[0].policyPath,
+    agents: ['mcp'],
+    principal: 'mcp:reader',
+  });
+  const { client, configPath } = await serveFile(config, root);
+  try {
+    const first = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+    });
+    assert.match(
+      first.structuredContent.hits[0].excerpt,
+      /Annual enterprise refunds/
+    );
+    const keptOnly = {
+      ...config,
+      mounts: config.mounts.filter((mount) => mount.id === 'other'),
+    };
+    await writeFile(configPath, `${JSON.stringify(keptOnly)}\n`);
+    await stampFile(configPath, 5_000);
+    const removed = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+    });
+    assert.notEqual(removed.isError, true);
+    assert.equal(removed.structuredContent.hits.length, 0);
+    assert.doesNotMatch(textOf(removed), /Annual enterprise refunds/);
+    const kept = await call(client, 'knolo_search', {
+      query: 'hardware rebates',
+    });
+    assert.equal(kept.structuredContent.hits.length, 1);
+    assert.match(
+      kept.structuredContent.hits[0].excerpt,
+      /Quarterly hardware rebates/
+    );
+    await readFile(imagePath);
+  } finally {
+    await client.close();
+  }
+});
+
+test('a refreshed graph keeps the startup agent id', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'knolo-mcp-agent-'));
+  const workspace = await buildKarWorkspace(root, ['support']);
+  const support = workspace.cases[0];
+  const config = {
+    agentId: 'mcp',
+    auditDir: path.join(root, 'audit'),
+    mounts: workspace.mounts,
+  };
+  const { client, configPath } = await serveFile(config, root);
+  try {
+    const first = await call(client, 'knolo_kar_evaluate', {
+      mountId: 'support',
+      proposition: support.proposition,
+      plan: support.plan,
+    });
+    assert.notEqual(first.isError, true, textOf(first));
+    await writeFile(
+      configPath,
+      `${JSON.stringify({ ...config, agentId: 'other' })}\n`
+    );
+    await stampFile(configPath, 5_000);
+    const again = await call(client, 'knolo_kar_evaluate', {
+      mountId: 'support',
+      proposition: support.proposition,
+      plan: support.plan,
+    });
+    assert.notEqual(again.isError, true, textOf(again));
+    assert.equal(
+      again.structuredContent.status,
+      first.structuredContent.status
+    );
+    const search = await call(client, 'knolo_search', {
+      query: support.proposition.split(' ')[0],
+    });
+    assert.notEqual(search.isError, true, textOf(search));
+  } finally {
+    await client.close();
+  }
+});
+
 test('runtime does not call fetch or node http', () => {
   assert.equal(networkCalls, 0);
 });

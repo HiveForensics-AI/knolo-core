@@ -16,11 +16,14 @@ type FileStamp = {
 };
 
 type LoadedFiles = {
+  config: FileStamp;
   images: readonly FileStamp[];
   graphs: readonly FileStamp[];
 };
 
 export async function createImageRefresh(options: {
+  configPath: string;
+  agentId: string;
   loadConfig: () => Promise<KnoloMcpConfig>;
   service: KnoloOpenClawService;
   graphs: Map<string, PinnedKarGraph>;
@@ -30,6 +33,7 @@ export async function createImageRefresh(options: {
   // Stamps move only after the new files match the pins in the config.
   // A rejected reload leaves the previous image loaded and unserved.
   let loaded: LoadedFiles = {
+    config: await stampFile(options.configPath),
     images: options.service.mountedFiles(),
     graphs: await stampFiles(options.graphPaths),
   };
@@ -37,6 +41,7 @@ export async function createImageRefresh(options: {
 
   const refreshOnce = async (): Promise<void> => {
     if (
+      !(await filesDrifted([loaded.config])) &&
       !(await filesDrifted(loaded.images)) &&
       !(await filesDrifted(loaded.graphs))
     ) {
@@ -47,12 +52,17 @@ export async function createImageRefresh(options: {
       ...options.pluginConfig,
       mounts: knoloPluginConfig(config).mounts,
     });
-    const pinned = await pinConfiguredGraphs(config, options.service);
+    const pinned = await pinConfiguredGraphs(
+      config,
+      options.service,
+      options.agentId
+    );
     const images = options.service.mountedFiles();
     const graphs = await stampFiles(karPaths(config));
+    const configStamp = await stampFile(options.configPath);
     options.graphs.clear();
     for (const [id, graph] of pinned) options.graphs.set(id, graph);
-    loaded = { images, graphs };
+    loaded = { config: configStamp, images, graphs };
   };
 
   return () => {
@@ -87,6 +97,11 @@ async function filesDrifted(files: readonly FileStamp[]): Promise<boolean> {
     }
   }
   return false;
+}
+
+async function stampFile(filePath: string): Promise<FileStamp> {
+  const [stamp] = await stampFiles([filePath]);
+  return stamp;
 }
 
 async function stampFiles(paths: readonly string[]): Promise<FileStamp[]> {
