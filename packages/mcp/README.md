@@ -37,9 +37,10 @@ the four tools above. A mount with a `kar` block also exposes
 registry name in `server.json` is `io.github.HiveForensics-AI/knolo`.
 Published `@knolo/mcp@0.1.0` remains the four-tool server.
 
-The [Google ADK example](../../examples/google_adk_python/README.md) starts
-this server over stdio and runs one search. See
-[Google ADK](../../docs/integrations/google-adk.md).
+The [Google ADK examples](../../docs/integrations/google-adk.md) start this
+server over stdio and run one search.
+[Python](../../examples/google_adk_python/README.md) and
+[TypeScript](../../examples/google_adk_js/README.md) both use MCP.
 
 ## Config
 

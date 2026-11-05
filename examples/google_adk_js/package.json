@@ -1,0 +1,15 @@
+{
+  "name": "google-adk-js-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "smoke": "node --experimental-strip-types smoke.ts"
+  },
+  "dependencies": {
+    "@google/adk": "2.4.0",
+    "@modelcontextprotocol/sdk": "1.26.0"
+  },
+  "devDependencies": {
+    "@google/adk-devtools": "2.4.0"
+  }
+}

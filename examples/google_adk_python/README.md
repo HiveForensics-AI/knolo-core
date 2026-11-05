@@ -35,7 +35,7 @@ The same environment is what `adk run` reads. ADK uses the directory name as the
 adk run examples/google_adk_python
 ```
 
-The integration page is [docs/integrations/google-adk.md](../../docs/integrations/google-adk.md). Server config is in the [`@knolo/mcp` README](../../packages/mcp/README.md).
+The TypeScript example is [examples/google_adk_js](../google_adk_js/README.md). The integration page is [docs/integrations/google-adk.md](../../docs/integrations/google-adk.md). Server config is in the [`@knolo/mcp` README](../../packages/mcp/README.md).
 
 ---
 
