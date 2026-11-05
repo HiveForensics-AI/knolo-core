@@ -31,11 +31,11 @@ The smoke lists `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`,
 
 ## Run the agent
 
-The same environment is what `npx adk run` reads. The model call is the host's, and this repository does not make it. `@google/adk-devtools` supplies the `adk` command:
+The same environment is what the ADK CLI reads. The model call is the host's, and this repository does not make it. Name the package. When `@google/adk-devtools` is not installed, bare `npx adk` downloads a different package from the registry:
 
 ```bash
 cd examples/google_adk_js
-npx adk run agent.ts
+npx @google/adk-devtools run agent.ts
 ```
 
 The integration page is [docs/integrations/google-adk.md](../../docs/integrations/google-adk.md). Server config is in the [`@knolo/mcp` README](../../packages/mcp/README.md).
