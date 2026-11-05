@@ -13,14 +13,13 @@ export type PinnedKarGraph = {
 
 export async function pinConfiguredGraphs(
   config: KnoloMcpConfig,
-  service: KnoloOpenClawService
+  service: KnoloOpenClawService,
+  agentId = config.agentId
 ): Promise<Map<string, PinnedKarGraph>> {
   const pinned = new Map<string, PinnedKarGraph>();
   for (const mount of config.mounts) {
     if (!mount.kar) continue;
-    const authorized = service.readAuthorizedMount(mount.id, {
-      agentId: config.agentId,
-    });
+    const authorized = service.readAuthorizedMount(mount.id, { agentId });
     let bytes: Uint8Array;
     try {
       bytes = new Uint8Array(await readFile(mount.kar.graphPath));
