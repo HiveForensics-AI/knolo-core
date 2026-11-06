@@ -135,13 +135,16 @@ Successful installs are cached by SHA-256 and recorded in
 ## Skill packs
 
 `knolo skill` is separate from the Hub commands above. `knolo publish` still
-uploads a `.knolo` knowledge pack to `https://hub.knolo.dev`. A skill pack
-uses a directory you pass with `--hub`.
+uploads a `.knolo` knowledge pack to `https://hub.knolo.dev`. `knolo skill
+publish` sends a skill pack to that same hub. `--hub <dir>` remains a local
+directory for an offline catalog.
 
 ```bash
 knolo skill init refund-policy
 knolo skill check refund-policy
 knolo skill pack refund-policy --out dist/refund-policy.knolo-skill
+knolo skill publish dist/refund-policy.knolo-skill
+knolo skill install acme/refund-policy --dir ./skills
 knolo skill publish dist/refund-policy.knolo-skill --hub ./catalog
 knolo skill install refund-policy --hub ./catalog --dir ./skills
 ```
@@ -156,15 +159,17 @@ does not mean a claim is proven.
 the image state root. It does not store a home directory or a computer
 layout. The same files produce the same pins.
 
-`publish` copies the pack into `--hub/<name>`. The same pin can be published
-again. A different pin is refused, and the catalog copy stays as it was.
-`install` checks the pin before it writes. A mismatch writes nothing. The
-catalog directory name must match the manifest. `SKILL.md` must match that
-name and description, and `policy.json` must match the image policy root.
-The files land only in `--dir/<name>`.
+`publish` without `--hub` uses the stored `kno_…` token. The same pin can be
+published again. A different pin is refused, and the catalog copy stays as
+it was. `--hub <dir>` copies the pack into `<dir>/<name>` instead.
+`install <publisher>/<name>` downloads one pack from the hub. `install` with
+`--hub` or `--pack` reads a local directory. Either install checks the pin
+before it writes. A mismatch writes nothing. The catalog id must match the
+manifest. `SKILL.md` must match that name and description, and `policy.json`
+must match the image policy root. The files land only in `--dir/<name>`.
 
-The directory catalog stores packs. It does not run a model, and it does not
-answer questions. It is not `https://hub.knolo.dev`.
+The hub stores packs. It does not run a model, and it does not answer
+questions. `--hub` and `--registry` cannot be combined.
 
 ---
 

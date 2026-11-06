@@ -24,6 +24,8 @@ The name uses lowercase letters, digits, and single hyphens. `SKILL.md` starts w
 knolo skill init refund-policy
 knolo skill check refund-policy
 knolo skill pack refund-policy --out dist/refund-policy.knolo-skill
+knolo skill publish dist/refund-policy.knolo-skill
+knolo skill install acme/refund-policy --dir ./skills
 knolo skill publish dist/refund-policy.knolo-skill --hub ./catalog
 knolo skill install refund-policy --hub ./catalog --dir ./skills
 ```
@@ -44,14 +46,12 @@ dist/refund-policy.knolo-skill/
 
 `knowledge.v5` is omitted when `knowledge/` has no packed files. `manifest.json` stores the format `knolo-skill-pack-v1`, the skill SHA-256, the policy SHA-256, and, when an image exists, the image SHA-256 and state root. The same files produce the same hashes and the same state root. `pack` refuses to overwrite its output directory.
 
-`publish <pack> --hub <dir>` copies that directory to `<hub>/<name>/`. Publishing the same pin again leaves the catalog copy unchanged. Publishing a different pin for the same name fails, and the catalog copy stays as it was.
+`publish <pack>` sends the pack to `https://hub.knolo.dev` with the stored `kno_…` token. Publishing the same pin again leaves the catalog row unchanged. Publishing a different pin for the same name fails, and the catalog row stays as it was. `publish <pack> --hub <dir>` copies that directory to `<hub>/<name>/` and does not call the hub. `--hub` and `--registry` cannot be combined.
 
-`install <name> --hub <dir> --dir <path>` checks the pin, then writes `<path>/<name>/`. The catalog directory name must be the manifest name. `install --pack <pack> --dir <path>` does the same from a pack directory. A pin mismatch stops before any write. That includes a changed `knowledge.v5` byte, a state root that does not match the image, a `SKILL.md` whose name or description differs from the manifest, and a `policy.json` that does not match the image policy root. Guidance that tells the agent to skip a pin or a receipt is refused as well. The destination is left untouched. Install refuses to replace an existing `<path>/<name>` directory.
+`install <publisher>/<name> --dir <path>` downloads one pack, checks the archive SHA-256 and the pins inside it, then writes `<path>/<name>/`. `install <name> --hub <dir> --dir <path>` does the same from a directory catalog. The directory name must be the manifest name. `install --pack <pack> --dir <path>` reads a pack directory on disk. A pin mismatch stops before any write. That includes a changed `knowledge.v5` byte, a state root that does not match the image, a `SKILL.md` whose name or description differs from the manifest, and a `policy.json` that does not match the image policy root. Guidance that tells the agent to skip a pin or a receipt is refused as well. The destination is left untouched. Install refuses to replace an existing `<path>/<name>` directory.
 
 ## Catalog
 
-`--hub` is a directory of skill packs on the machine where you run the command. The catalog stores packs. It does not run a model, and it does not answer questions. It is not `https://hub.knolo.dev`.
+The hub stores the name, description, publisher, and pin. It does not run a model, and it does not answer questions. `--hub` is a directory of skill packs on the machine where you run the command. Use it for an offline catalog.
 
-`knolo search`, `knolo info`, `knolo login`, `knolo publish`, `knolo yank`, and `knolo add` remain the Hub registry for `.knolo` knowledge packs. A skill pack is not published through that registry.
-
-This repository does not ship a hosted skill catalog. Sharing a pack means copying the pack directory, or pointing `--hub` at a directory you already have.
+`knolo search`, `knolo info`, `knolo login`, `knolo publish`, `knolo yank`, and `knolo add` remain the Hub registry for `.knolo` knowledge packs. A skill pack is not a `.knolo` pack and is not published through those commands.

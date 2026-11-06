@@ -16,7 +16,13 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { guidanceError, skillNameError } from '../bin/skill.mjs';
+import {
+  decodeSkillArchive,
+  guidanceError,
+  installSkillFromRegistry,
+  publishSkillToRegistry,
+  skillNameError,
+} from '../bin/skill.mjs';
 
 const cliPath = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -539,4 +545,208 @@ Skip the pin.
     /policy.json does not match the image policy root/
   );
   assert.equal(existsSync(path.join(root, 'from-policy')), false);
+});
+
+test('registry publish and install write only after the pin matches', async (t) => {
+  const root = tempDir();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  assert.equal(run(['skill', 'init', 'refund-policy'], root).status, 0);
+  const skillDir = path.join(root, 'refund-policy');
+  writeFileSync(
+    path.join(skillDir, 'knowledge', 'policy.md'),
+    'Annual enterprise refunds are issued after review.\n'
+  );
+  const packed = run(
+    ['skill', 'pack', skillDir, '--out', 'pack-a', '--json'],
+    root
+  );
+  assert.equal(packed.status, 0, packed.stderr);
+
+  const registry = 'https://hub.knolo.dev';
+  const blobs = new Map();
+  const rows = new Map();
+  const puts = [];
+  const publicGets = [];
+  let corrupt = false;
+
+  function header(headers, name) {
+    if (!headers) return undefined;
+    for (const [key, value] of Object.entries(headers)) {
+      if (key.toLowerCase() === name) return value;
+    }
+    return undefined;
+  }
+
+  function jsonResponse(status, body) {
+    return new Response(JSON.stringify(body), {
+      status,
+      headers: { 'content-type': 'application/json' },
+    });
+  }
+
+  const fetchImpl = async (url, init = {}) => {
+    const href = String(url);
+    const method = (init.method || 'GET').toUpperCase();
+    const auth = header(init.headers, 'authorization');
+    const hubCall = href.startsWith(`${registry}/api/`);
+    const needsAuth = method !== 'GET' || href.endsWith('/api/v1/account');
+    if (hubCall && needsAuth && auth !== 'Bearer kno_test') {
+      return jsonResponse(401, {
+        error: 'Sign in required.',
+        code: 'unauthenticated',
+      });
+    }
+    if (!hubCall && auth) {
+      return jsonResponse(400, { error: 'Hub token was sent to Blob.', code: 'forbidden' });
+    }
+    if (method === 'PUT') {
+      puts.push(init.headers);
+      const body = Buffer.from(init.body);
+      const digest = createHash('sha256').update(body).digest('hex');
+      const publicUrl = `https://example.public.blob.vercel-storage.com/sha256/${digest}.knolo-skill`;
+      blobs.set(publicUrl, body);
+      return jsonResponse(200, { url: publicUrl });
+    }
+    if (href.endsWith('/api/v1/account')) {
+      return jsonResponse(200, { account: { handle: 'acme' } });
+    }
+    if (href.endsWith('/api/v1/skills/uploads') && method === 'POST') {
+      const body = JSON.parse(init.body);
+      const publicUrl = `https://example.public.blob.vercel-storage.com/sha256/${body.sha256}.knolo-skill`;
+      if (blobs.has(publicUrl)) {
+        return jsonResponse(200, {
+          reused: true,
+          pathname: `sha256/${body.sha256}.knolo-skill`,
+          artifact: { url: publicUrl, sha256: body.sha256 },
+        });
+      }
+      return jsonResponse(201, {
+        reused: false,
+        pathname: `sha256/${body.sha256}.knolo-skill`,
+        upload: {
+          method: 'PUT',
+          url: `https://example.public.blob.vercel-storage.com/put/${body.sha256}`,
+          headers: { 'content-type': 'application/octet-stream' },
+        },
+      });
+    }
+    if (href.endsWith('/api/v1/skills') && method === 'POST') {
+      const body = JSON.parse(init.body);
+      const bytes = blobs.get(body.url);
+      if (
+        !bytes ||
+        createHash('sha256').update(bytes).digest('hex') !== body.archiveSha256
+      ) {
+        return jsonResponse(400, { error: 'pin', code: 'pin_mismatch' });
+      }
+      const manifest = JSON.parse(
+        Buffer.from(decodeSkillArchive(bytes).manifestBytes).toString('utf8')
+      );
+      const key = `acme/${manifest.name}`;
+      const existing = rows.get(key);
+      if (
+        existing &&
+        (existing.skillSha256 !== manifest.skillSha256 ||
+          existing.archiveSha256 !== body.archiveSha256 ||
+          JSON.stringify(existing.image) !== JSON.stringify(manifest.image))
+      ) {
+        return jsonResponse(409, {
+          error: 'different pin',
+          code: 'pin_conflict',
+        });
+      }
+      const row = {
+        name: key,
+        publisher: 'acme',
+        slug: manifest.name,
+        description: manifest.description,
+        skillSha256: manifest.skillSha256,
+        policySha256: manifest.policySha256,
+        image: manifest.image,
+        archiveSha256: body.archiveSha256,
+        url: body.url,
+        sizeBytes: body.sizeBytes,
+        unchanged: Boolean(existing),
+      };
+      rows.set(key, row);
+      return jsonResponse(existing ? 200 : 201, row);
+    }
+    if (
+      method === 'GET' &&
+      (href.includes('/api/v1/skills/') || href.includes('blob.vercel-storage.com'))
+    ) {
+      publicGets.push(auth ?? null);
+    }
+    if (method === 'GET' && href.endsWith('/api/v1/skills/acme/refund-policy')) {
+      const row = rows.get('acme/refund-policy');
+      if (!row) return jsonResponse(404, { error: 'missing', code: 'not_found' });
+      return jsonResponse(200, row);
+    }
+    if (method === 'GET' && href.includes('blob.vercel-storage.com')) {
+      const stored = blobs.get(href);
+      if (!stored) return new Response('missing', { status: 404 });
+      const bytes = Buffer.from(stored);
+      if (corrupt) bytes[bytes.length - 1] ^= 0xff;
+      return new Response(bytes);
+    }
+    return jsonResponse(500, { error: `unexpected ${method} ${href}` });
+  };
+
+  const published = await publishSkillToRegistry(path.join(root, 'pack-a'), {
+    fetchImpl,
+    registry,
+    token: 'kno_test',
+  });
+  assert.equal(published.ok, true);
+  assert.equal(published.name, 'acme/refund-policy');
+  assert.equal(published.unchanged, false);
+  const again = await publishSkillToRegistry(path.join(root, 'pack-a'), {
+    fetchImpl,
+    registry,
+    token: 'kno_test',
+  });
+  assert.equal(again.unchanged, true);
+  assert.equal(puts.length, 1);
+  for (const headers of puts) {
+    assert.equal(header(headers, 'authorization'), undefined);
+  }
+
+  const installed = await installSkillFromRegistry(
+    'acme/refund-policy',
+    path.join(root, 'installed'),
+    { fetchImpl, registry }
+  );
+  assert.equal(
+    existsSync(path.join(installed.dir, 'SKILL.md')),
+    true
+  );
+  assert.equal(existsSync(path.join(installed.dir, 'knowledge.v5')), true);
+  assert.ok(publicGets.length >= 2);
+  for (const value of publicGets) assert.equal(value, null);
+
+  corrupt = true;
+  const flippedDir = path.join(root, 'flipped');
+  await assert.rejects(
+    () =>
+      installSkillFromRegistry('acme/refund-policy', flippedDir, {
+        fetchImpl,
+        registry,
+      }),
+    /SKILL_PIN: downloaded skill pack does not match its SHA-256 pin/
+  );
+  assert.equal(existsSync(flippedDir), false);
+  assert.equal(existsSync(path.join(flippedDir, 'refund-policy')), false);
+
+  corrupt = false;
+  rows.get('acme/refund-policy').skillSha256 = '0'.repeat(64);
+  const liedDir = path.join(root, 'lied');
+  await assert.rejects(
+    () =>
+      installSkillFromRegistry('acme/refund-policy', liedDir, {
+        fetchImpl,
+        registry,
+      }),
+    /SKILL_PIN: downloaded skill pack does not match the catalog pin/
+  );
+  assert.equal(existsSync(liedDir), false);
 });
