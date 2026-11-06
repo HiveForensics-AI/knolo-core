@@ -78,6 +78,7 @@ const SUBCOMMANDS = new Set([
   'verify-attestation',
   'cortex',
   'flight',
+  'skill',
 ]);
 const ICP_SUBCOMMANDS = new Set([
   'init',
@@ -177,6 +178,7 @@ Commands:
   attest                  Create or verify a composition attestation
   cortex                  Bounded evidence retrieval with a verifiable trace
   flight                  Pack a flight-events-1 document into a V5 Knowledge Image
+  skill                   Create and share a Knolo skill pack
   icp                     Scaffold and operate an ICP-native knowledge canister
 
 Global options:
@@ -217,6 +219,22 @@ function printCommandHelp(command) {
     attest: 'Usage: knolo attest <create|verify> [options]\n\n  knolo attest create --composition composition/composition.json --subject composition --statement mount|used|cited --out attestation.json [--sign-key key.json --principal <id> --key-id <id> --issued-at <ms> --expires-at <ms>]\n  knolo attest verify attestation.json [--composition composition.json] [--public-key key.json] [--now <ms>] [--content-only]\n\nstatement used means a query or KAR evaluation ran. It does not mean the claim is true or false. Hub attested: true is unrelated. Signing uses the supplied times. The CLI does not read the clock.',
     cortex: 'Usage: knolo cortex <find|ask|explain|verify> [options]\n\nBounded evidence retrieval. The CLI does not call a model.\n\n  knolo cortex find <image> --question "..." [--top-k 100] --out candidates.json\n  knolo cortex ask <image> --question "..." [--graph file] [--plan plan.json] [--mode find_relevant] --out answer.cortex.json\n  knolo cortex explain answer.cortex.json\n  knolo cortex verify --image <image> --answer answer.cortex.json [--graph file]\n\nVerification recomputes the trace roots. It does not mean the answer is true. A KAR status of SATISFIED means evidence requirements were met. It does not mean a claim is proven.',
     flight: 'Usage: knolo flight ingest --events <events.json> --log <file> --out <image.knolo> [--json]\n\nPacks a flight-events-1 document into a V5 Knowledge Image. The command hashes --log and writes nothing when the hash or byte length differs. It does not decode the log. log.format is ulog, dataflash, or rosbag2. A later KAR status of SATISFIED means evidence requirements were met. It does not mean a flight was safe, legal, or compliant.',
+    skill: `Usage: knolo skill <init|check|pack|publish|install>
+
+  knolo skill init <name> [--dir <parent>]
+  knolo skill check [<dir>] [--query <text>] [--json]
+  knolo skill pack [<dir>] [--out <dir>] [--json]
+  knolo skill publish <pack> --hub <dir> [--json]
+  knolo skill install <name> --hub <dir> --dir <path> [--json]
+  knolo skill install --pack <pack> --dir <path> [--json]
+
+Creates a skill pack for the host agent. Knolo does not call a model.
+A receipt is an integrity check. It does not mean a claim is proven.
+SATISFIED means the evidence requirements were met.
+publish copies the pack into a directory catalog. install checks the pin
+and writes only into --dir. A pin mismatch writes nothing.
+The catalog stores packs and does not answer questions.
+It is not https://hub.knolo.dev.`,
     'verify-attestation': 'Usage: knolo verify-attestation <attestation.json> [--composition composition.json] [--public-key key.json] [--keyring keyring.json] [--now <ms>] [--content-only]\n\nSame check as knolo attest verify. A bad signature exits 1 even when the content root matches. --content-only checks the content root and ignores the envelope. statement used is not a truth verdict. Hub attested: true is unrelated.',
     icp: 'Usage: knolo icp <command> [options]',
     'semantic:index':
@@ -1878,6 +1896,10 @@ async function main() {
       if (command === 'flight') {
         const { runFlightCli } = await import('./flight.mjs');
         return runFlightCli(commandArgs);
+      }
+      if (command === 'skill') {
+        const { runSkillCli } = await import('./skill.mjs');
+        return runSkillCli(commandArgs);
       }
       if (command === 'init') return await cmdInit();
       if (command === 'add') return await cmdAdd(commandArgs);

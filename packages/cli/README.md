@@ -31,6 +31,11 @@ Image and binds it to the SHA-256 of one log file. It does not decode the log.
 check means the evidence requirements were met. It does not mean a flight was
 safe, legal, or compliant. See `docs/flight/README.md`.
 
+`knolo skill` creates a skill pack for the host agent. The CLI does not call
+a model. A receipt is an integrity check. It does not mean a claim is proven.
+`SATISFIED` means the evidence requirements were met. See
+[Skills](../../docs/skills/README.md).
+
 The official CLI for building `.knolo` knowledge packs.
 
 It indexes structured content and produces a deterministic, local-first knowledge bundle for use with `@knolo/core`.
@@ -126,6 +131,38 @@ knolo add acme/refund-policy@1.2.0
 Successful installs are cached by SHA-256 and recorded in
 `knolo.lock.json`. A yanked version or an existing conflicting pin requires
 `--force`; digest and artifact validation cannot be bypassed.
+
+## Skill packs
+
+`knolo skill` is separate from the Hub commands above. `knolo publish` still
+uploads a `.knolo` knowledge pack to `https://hub.knolo.dev`. A skill pack
+uses a directory you pass with `--hub`.
+
+```bash
+knolo skill init refund-policy
+knolo skill check refund-policy
+knolo skill pack refund-policy --out dist/refund-policy.knolo-skill
+knolo skill publish dist/refund-policy.knolo-skill --hub ./catalog
+knolo skill install refund-policy --hub ./catalog --dir ./skills
+```
+
+`init` writes `SKILL.md` and an empty `knowledge/` directory. `check` reads
+that directory. When `knowledge/` has files, `check` builds a V5 image, runs
+one search, and prints a receipt id. The receipt is an integrity check. It
+does not mean a claim is proven.
+
+`pack` writes `manifest.json`, `SKILL.md`, `policy.json`, and, when
+`knowledge/` has files, `knowledge.v5`. The manifest stores SHA-256 pins and
+the image state root. It does not store a home directory or a computer
+layout. The same files produce the same pins.
+
+`publish` copies the pack into `--hub/<name>`. The same pin can be published
+again. A different pin is refused, and the catalog copy stays as it was.
+`install` checks the pin before it writes. A mismatch writes nothing. The
+files land only in `--dir/<name>`.
+
+The directory catalog stores packs. It does not run a model, and it does not
+answer questions. It is not `https://hub.knolo.dev`.
 
 ---
 
