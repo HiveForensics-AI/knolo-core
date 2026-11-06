@@ -63,6 +63,11 @@ operational guides for Knolo.
 - [Flight logs](flight/README.md) — offline packing of a `flight-events-1`
   document into a V5 Knowledge Image. A pass means evidence requirements
   were met. It does not mean a flight was safe or compliant.
+- [Skills](skills/README.md) — `knolo skill` creates a skill pack for the
+  host agent. These commands are part of Knolo. A receipt is an integrity
+  check. It does not mean a claim is proven. `publish` and `install` use a
+  directory catalog that stores packs and does not answer questions. That
+  catalog is separate from `https://hub.knolo.dev` and from Box.
 - [Code image](code/README.md) — local V4 pack of a workspace and the Grok
   Build plugin that retrieves structure before full chunks. The published
   `@knolo/code@0.1.0` check is recorded on that page.
