@@ -66,10 +66,10 @@ operational guides for Knolo.
 - [Code image](code/README.md) — local V4 pack of a workspace and the Grok
   Build plugin that retrieves structure before full chunks. The published
   `@knolo/code@0.1.0` check is recorded on that page.
-- [Google ADK](integrations/google-adk.md) — one Python agent that calls
-  published `@knolo/mcp@0.2.0` over stdio. A search returns a query receipt.
-  Verification checks the image. `SATISFIED` means evidence requirements
-  were met.
+- [Google ADK](integrations/google-adk.md) — Python and TypeScript agents
+  that call published `@knolo/mcp@0.2.0` over stdio. A search returns a query
+  receipt. Verification checks the image. `SATISFIED` means evidence
+  requirements were met.
 - [Box](box/README.md) — pinned V5 images of skills, opted-in notes, private
   memory, and capped session text on a Grok Bot computer. `@knolo/box` starts
   the existing read-only MCP server in one process. This package is not

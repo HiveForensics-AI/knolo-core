@@ -1,6 +1,6 @@
 # Google ADK
 
-Google ADK can call the published Knolo MCP server as a toolset. The Python example is [`examples/google_adk_python`](../../examples/google_adk_python/README.md). It uses `McpToolset` and stdio. The command a host runs is:
+Google ADK can call the published Knolo MCP server as a toolset. The Python example is [`examples/google_adk_python`](../../examples/google_adk_python/README.md). The TypeScript example is [`examples/google_adk_js`](../../examples/google_adk_js/README.md). Both use stdio. The command a host runs is:
 
 ```bash
 npx -y @knolo/mcp@0.2.0 --config /absolute/knolo-mcp.json
@@ -10,7 +10,7 @@ npx -y @knolo/mcp@0.2.0 --config /absolute/knolo-mcp.json
 
 ## What a search returns
 
-`knolo_search` writes an `openclaw-knolo-query-v1` receipt before it returns hits. The example agent is instructed to include those receipt ids in its reply. The offline smoke in the example lists the four tools and runs one search for `enterprise refunds` against a fixture image. That smoke does not call a model.
+`knolo_search` writes an `openclaw-knolo-query-v1` receipt before it returns hits. The example agent is instructed to include those receipt ids in its reply. Each offline smoke lists the four tools and runs one search for `enterprise refunds` against a fixture image. Those smokes do not call a model.
 
 ## What a pass means
 
@@ -18,7 +18,7 @@ Verification checks the image bytes, the state root, and the policy root. A vali
 
 `SATISFIED` from `knolo_kar_evaluate` means the evidence requirements in the plan were met. It does not mean a claim is proven. `UNSATISFIED_EVIDENCE_REQUIREMENTS` is a completed evaluation.
 
-The server does not download images, write knowledge, or call a model. Restart the process to change a pin.
+The server does not download images, write knowledge, or call a model. A running server reloads on the next tool call when the config file and the image match the pin. A pin mismatch is `IMAGE_INVALID` and returns no hits. Reconnecting the host without replacing the process does not repair a failed pin check.
 
 ## Install
 
@@ -28,7 +28,15 @@ Python 3.11 or newer:
 python -m pip install -r examples/google_adk_python/requirements.txt
 ```
 
-That installs `google-adk[mcp]`. Build a fixture from this repository, or point `KNOLO_MCP_CONFIG` at an image you already pinned:
+That installs `google-adk[mcp]`.
+
+TypeScript uses Node.js 22 or newer and `@google/adk` 2.4.0:
+
+```bash
+npm ci --prefix examples/google_adk_js
+```
+
+Build a fixture from this repository, or point `KNOLO_MCP_CONFIG` at an image you already pinned:
 
 ```bash
 npm run build --workspace @knolo/core
@@ -37,6 +45,6 @@ config="$(node examples/google_adk_python/prepare-fixture.mjs)"
 export KNOLO_MCP_CONFIG="$config"
 ```
 
-Continuous integration starts `packages/mcp/bin/knolo-mcp.mjs` with Node so the job does not depend on a registry fetch. Set `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` for that path. The default command is `npx` with `@knolo/mcp@0.2.0`.
+Both examples share that fixture script. Continuous integration starts `packages/mcp/bin/knolo-mcp.mjs` with Node so the job does not depend on a registry fetch. Set `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` for that path. The default command is `npx` with `@knolo/mcp@0.2.0`. The TypeScript smoke runs on Node 22. The rest of CI stays on Node 20.
 
 Server configuration is documented in the [`@knolo/mcp` README](../../packages/mcp/README.md).
