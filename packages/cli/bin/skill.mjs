@@ -2,14 +2,18 @@
  * knolo skill
  *
  * Creates a Knolo skill pack: guidance plus an optional pinned V5 image.
- * The pack names no host and no home directory. A directory catalog stores
- * packs. It does not run a model and it does not answer questions.
+ * The pack names no host and no home directory. The Knolo hub stores packs.
+ * It does not run a model and it does not answer questions.
  * SATISFIED means evidence requirements were met.
  */
 import { createHash } from 'node:crypto';
-import { lstat, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { normalizeRegistryUrl, registryApiUrl } from './registry/config.mjs';
+import { loadCredentials } from './registry/credentials.mjs';
+import { getJson, postJson, putBytes } from './registry/http.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -24,7 +28,9 @@ const USAGE = `Usage: knolo skill <init|check|pack|publish|install> [options]
   knolo skill init <name> [--dir <parent>]
   knolo skill check [<dir>] [--query <text>] [--json]
   knolo skill pack [<dir>] [--out <dir>] [--json]
+  knolo skill publish <pack> [--registry <url>] [--json]
   knolo skill publish <pack> --hub <dir> [--json]
+  knolo skill install <publisher>/<name> --dir <path> [--registry <url>] [--json]
   knolo skill install <name> --hub <dir> --dir <path> [--json]
   knolo skill install --pack <pack> --dir <path> [--json]
 
@@ -32,10 +38,10 @@ A skill is guidance for the host agent. Knolo does not call a model.
 check searches the skill's own knowledge and returns a receipt id.
 A receipt is an integrity check. It does not mean a claim is proven.
 SATISFIED means the evidence requirements were met.
-publish copies a pack into a directory catalog. install checks the pin
-before it writes, and it writes only into --dir.
-The catalog stores packs. It does not answer questions.
-This catalog is not https://hub.knolo.dev.`;
+publish sends the pack to https://hub.knolo.dev unless --hub names a
+local directory. install checks the pin before it writes, and it writes
+only into --dir. A pin mismatch writes nothing.
+The hub stores packs. It does not answer questions.`;
 
 export async function runSkillCli(argv) {
   const { positionals, flags } = parseArgs(argv);
@@ -183,7 +189,27 @@ async function packSkill(dirArg, flags) {
 }
 
 async function publishSkill(packArg, flags) {
-  if (!flags.hub) throw new Error('Missing --hub');
+  if (!packArg) throw new Error('SKILL_HUB: pass the pack directory.');
+  if (flags.hub) {
+    if (flags.registry) {
+      throw new Error(
+        'SKILL_HUB: --hub is a local directory. Use --registry for the Knolo hub.'
+      );
+    }
+    return publishSkillDirectory(packArg, flags);
+  }
+  const credentials = await loadCredentials();
+  const registry = resolveSkillRegistry(flags.registry, credentials.registry);
+  const summary = await publishSkillToRegistry(
+    path.resolve(process.cwd(), packArg),
+    { registry, token: credentials.token }
+  );
+  if (flags.json) console.log(JSON.stringify(summary));
+  else if (summary.unchanged) console.log(`unchanged        ${summary.name}`);
+  else console.log(`published        ${summary.name}`);
+}
+
+async function publishSkillDirectory(packArg, flags) {
   const packDir = path.resolve(process.cwd(), packArg ?? '');
   if (!packArg) throw new Error('SKILL_HUB: pass the pack directory.');
   const pack = await readVerifiedPack(packDir);
@@ -226,6 +252,30 @@ async function publishSkill(packArg, flags) {
 async function installSkill(nameArg, flags) {
   if (!flags.dir) throw new Error('Missing --dir');
   const destRoot = path.resolve(process.cwd(), flags.dir);
+  if (flags.hub && flags.registry) {
+    throw new Error(
+      'SKILL_HUB: --hub is a local directory. Use --registry for the Knolo hub.'
+    );
+  }
+  if (!flags.pack && !flags.hub) {
+    if (flags.hub === undefined && nameArg && nameArg.includes('/')) {
+      const credentials = await loadCredentials();
+      const registry = resolveSkillRegistry(
+        flags.registry,
+        credentials.registry
+      );
+      const summary = await installSkillFromRegistry(nameArg, destRoot, {
+        registry,
+        fetchImpl: globalThis.fetch,
+      });
+      if (flags.json) console.log(JSON.stringify(summary));
+      else console.log(`installed        ${summary.dir}`);
+      return;
+    }
+    throw new Error(
+      'SKILL_HUB: pass publisher/name, or --hub for a directory catalog.'
+    );
+  }
   let pack;
   if (flags.pack) {
     pack = await readVerifiedPack(path.resolve(process.cwd(), flags.pack));
@@ -675,6 +725,330 @@ async function loadCore() {
     }
   }
   throw new Error('Could not load @knolo/core. Build packages/core first.');
+}
+
+const SKILL_ARCHIVE_FORMAT = 'knolo-skill-archive-v1';
+const ARCHIVE_SECTIONS = ['manifest.json', 'SKILL.md', 'policy.json', 'knowledge.v5'];
+const SHA256_HEX = /^[0-9a-f]{64}$/;
+
+function resolveSkillRegistry(requested, stored) {
+  const storedUrl = normalizeRegistryUrl(stored);
+  if (!requested) return storedUrl;
+  const requestedUrl = normalizeRegistryUrl(requested);
+  if (requestedUrl !== storedUrl) {
+    throw new Error(
+      `Stored credentials belong to ${storedUrl}; refusing to send them to ${requestedUrl}. Log in to the requested registry first.`
+    );
+  }
+  return requestedUrl;
+}
+
+export function encodeSkillArchive(pack) {
+  const sections = [
+    ['manifest.json', Buffer.from(pack.manifestBytes)],
+    ['SKILL.md', Buffer.from(pack.skillBytes)],
+    ['policy.json', Buffer.from(pack.policyBytes)],
+    ['knowledge.v5', Buffer.from(pack.imageBytes ?? Buffer.alloc(0))],
+  ];
+  const parts = [Buffer.from(`${SKILL_ARCHIVE_FORMAT}\n`)];
+  for (const [name, bytes] of sections) {
+    parts.push(Buffer.from(`${name} ${bytes.length}\n`));
+    if (bytes.length) parts.push(bytes);
+  }
+  return Buffer.concat(parts);
+}
+
+export function decodeSkillArchive(bytes) {
+  const buffer = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes);
+  let offset = 0;
+  const header = readArchiveLine(buffer, offset);
+  offset = header.next;
+  if (header.line !== SKILL_ARCHIVE_FORMAT) {
+    throw new Error('SKILL_PIN: skill archive format is not a Knolo skill pack.');
+  }
+  const files = {};
+  for (const name of ARCHIVE_SECTIONS) {
+    const section = readArchiveSection(buffer, offset, name);
+    files[name] = section.body;
+    offset = section.next;
+  }
+  if (offset !== buffer.length) {
+    throw new Error('SKILL_PIN: skill archive has trailing bytes.');
+  }
+  const image = files['knowledge.v5'];
+  return {
+    manifestBytes: files['manifest.json'],
+    skillBytes: files['SKILL.md'],
+    policyBytes: files['policy.json'],
+    imageBytes: image.length ? image : null,
+  };
+}
+
+export async function publishSkillToRegistry(
+  packDir,
+  { fetchImpl = globalThis.fetch, registry, token }
+) {
+  const pack = await readVerifiedPack(packDir);
+  const archive = encodeSkillArchive(pack);
+  const archiveSha256 = sha256(archive);
+  const auth = { Authorization: `Bearer ${token}` };
+  await getJson(registryApiUrl(registry, ['account']), {
+    fetchImpl,
+    headers: auth,
+  });
+  const grant = await postJson(
+    registryApiUrl(registry, ['skills', 'uploads']),
+    { sha256: archiveSha256, contentLength: archive.length },
+    { fetchImpl, headers: auth }
+  );
+  const expected = `sha256/${archiveSha256}.knolo-skill`;
+  if (grant?.pathname !== expected) {
+    throw new Error(`SKILL_HUB: upload pathname is not locked to ${expected}.`);
+  }
+  let blobUrl;
+  if (grant.reused && typeof grant.artifact?.url === 'string') {
+    blobUrl = assertSkillBlobUrl(grant.artifact.url, archiveSha256);
+  } else {
+    const putUrl = assertSkillPutUrl(grant.upload?.url);
+    const uploaded = await putBytes(putUrl, archive, {
+      fetchImpl,
+      headers: blobPutHeaders(grant.upload?.headers, archive.length),
+    });
+    blobUrl = assertSkillBlobUrl(uploaded.url, archiveSha256);
+  }
+  let listed;
+  try {
+    listed = await postJson(
+      registryApiUrl(registry, ['skills']),
+      { archiveSha256, url: blobUrl, sizeBytes: archive.length },
+      { fetchImpl, headers: auth }
+    );
+  } catch (error) {
+    if (error?.code === 'pin_conflict' || error?.status === 409) {
+      throw new Error(
+        `SKILL_HUB: ${pack.manifest.name} is already in the catalog with a different pin.`
+      );
+    }
+    throw error;
+  }
+  if (typeof listed?.publisher !== 'string' || !listed.publisher) {
+    throw new Error('SKILL_HUB: the catalog did not name a publisher.');
+  }
+  return {
+    ok: true,
+    name: `${listed.publisher}/${pack.manifest.name}`,
+    hub: registry,
+    unchanged: Boolean(listed.unchanged),
+    skillSha256: pack.manifest.skillSha256,
+    image: pack.manifest.image,
+  };
+}
+
+export async function installSkillFromRegistry(
+  id,
+  destRoot,
+  { fetchImpl = globalThis.fetch, registry }
+) {
+  const { publisher, name } = parseSkillId(id);
+  const listed = await getJson(
+    registryApiUrl(registry, ['skills', publisher, name]),
+    { fetchImpl }
+  );
+  if (listed?.publisher !== publisher || listed?.slug !== name) {
+    throw new Error('SKILL_HUB: catalog id does not match the manifest.');
+  }
+  const url = assertSkillBlobUrl(listed.url, listed.archiveSha256);
+  if (typeof fetchImpl !== 'function') {
+    throw new Error('This Node runtime does not provide fetch.');
+  }
+  const response = await fetchImpl(url, { method: 'GET', redirect: 'follow' });
+  if (!response?.ok) {
+    throw new Error(
+      `SKILL_HUB: skill pack download failed with HTTP ${response?.status ?? 'error'}.`
+    );
+  }
+  assertSkillBlobUrl(response.url || url, listed.archiveSha256);
+  const bytes = Buffer.from(await response.arrayBuffer());
+  if (sha256(bytes) !== listed.archiveSha256) {
+    throw new Error(
+      'SKILL_PIN: downloaded skill pack does not match its SHA-256 pin.'
+    );
+  }
+  const decoded = decodeSkillArchive(bytes);
+  const parent = await mkdtemp(path.join(tmpdir(), 'knolo-skill-'));
+  try {
+    const temp = path.join(parent, name);
+    await writePackFiles(temp, decoded);
+    const pack = await readVerifiedPack(temp);
+    if (
+      pack.manifest.name !== name ||
+      pack.manifest.skillSha256 !== listed.skillSha256 ||
+      pack.manifest.policySha256 !== listed.policySha256 ||
+      !sameImage(pack.manifest.image, listed.image ?? null)
+    ) {
+      throw new Error(
+        'SKILL_PIN: downloaded skill pack does not match the catalog pin.'
+      );
+    }
+    const dest = path.resolve(destRoot, pack.manifest.name);
+    await rejectHostPath(dest);
+    try {
+      await lstat(dest);
+      throw new Error(`SKILL_PACK: refusing to overwrite ${dest}.`);
+    } catch (error) {
+      if (error && error.code !== 'ENOENT') throw error;
+    }
+    await writePackFiles(dest, pack);
+    return { ok: true, name: `${publisher}/${name}`, dir: dest };
+  } finally {
+    await rm(parent, { recursive: true, force: true });
+  }
+}
+
+function parseSkillId(id) {
+  if (typeof id !== 'string') {
+    throw new Error('SKILL_HUB: pass publisher/name.');
+  }
+  const slash = id.indexOf('/');
+  if (slash <= 0 || slash !== id.lastIndexOf('/')) {
+    throw new Error('SKILL_HUB: pass publisher/name.');
+  }
+  const publisher = id.slice(0, slash);
+  const name = id.slice(slash + 1);
+  if (skillNameError(publisher) || skillNameError(name)) {
+    throw new Error('SKILL_HUB: pass publisher/name.');
+  }
+  return { publisher, name };
+}
+
+function assertSkillBlobUrl(value, digest) {
+  if (typeof digest !== 'string' || !SHA256_HEX.test(digest)) {
+    throw new Error('SKILL_HUB: archive pin is not a SHA-256.');
+  }
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error('SKILL_HUB: skill pack URL is invalid.');
+  }
+  if (
+    url.protocol !== 'https:' ||
+    url.username ||
+    url.password ||
+    url.search ||
+    url.hash ||
+    url.pathname.includes('..') ||
+    url.pathname.includes('\\')
+  ) {
+    throw new Error('SKILL_HUB: skill pack URL must be a public HTTPS Blob URL.');
+  }
+  const host = url.hostname.toLowerCase();
+  const blobHost =
+    host === 'blob.vercel-storage.com' || host.endsWith('.blob.vercel-storage.com');
+  const privateHost =
+    host === 'private.blob.vercel-storage.com' ||
+    host.endsWith('.private.blob.vercel-storage.com') ||
+    host.includes('.private.');
+  if (!blobHost || privateHost) {
+    throw new Error('SKILL_HUB: skill pack URL must be a public Vercel Blob URL.');
+  }
+  const pathname = `sha256/${digest}.knolo-skill`;
+  if (url.pathname !== `/${pathname}` && !url.pathname.endsWith(`/${pathname}`)) {
+    throw new Error(`SKILL_HUB: skill pack URL is not locked to ${pathname}.`);
+  }
+  return url.toString();
+}
+
+function assertSkillPutUrl(value) {
+  if (typeof value !== 'string' || !value) {
+    throw new Error('SKILL_HUB: upload URL is missing.');
+  }
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error('SKILL_HUB: upload URL is invalid.');
+  }
+  if (url.protocol !== 'https:') {
+    throw new Error('SKILL_HUB: upload URL must use HTTPS.');
+  }
+  const host = url.hostname.toLowerCase().replace(/\.$/, '');
+  if (
+    host === 'localhost' ||
+    host.endsWith('.localhost') ||
+    host.endsWith('.local') ||
+    host.includes('.private.') ||
+    host === 'private.blob.vercel-storage.com' ||
+    host.endsWith('.private.blob.vercel-storage.com') ||
+    isPrivateSkillHost(host)
+  ) {
+    throw new Error('SKILL_HUB: refusing a private upload URL.');
+  }
+  return url.toString();
+}
+
+function isPrivateSkillHost(host) {
+  if (host === '0.0.0.0' || host === '127.0.0.1' || host === '::1') return true;
+  const octets = host.split('.').map(Number);
+  if (
+    octets.length !== 4 ||
+    octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)
+  ) {
+    return false;
+  }
+  const [first, second] = octets;
+  return (
+    first === 10 ||
+    first === 127 ||
+    (first === 169 && second === 254) ||
+    (first === 172 && second >= 16 && second <= 31) ||
+    (first === 192 && second === 168)
+  );
+}
+
+function blobPutHeaders(headers, length) {
+  const next = { 'content-type': 'application/octet-stream' };
+  if (headers && typeof headers === 'object') {
+    for (const [key, value] of Object.entries(headers)) {
+      if (key.toLowerCase() === 'authorization') continue;
+      if (typeof value === 'string') next[key.toLowerCase()] = value;
+    }
+  }
+  next['content-length'] = String(length);
+  return next;
+}
+
+function readArchiveLine(bytes, offset) {
+  const newline = bytes.indexOf(0x0a, offset);
+  if (newline < 0) throw new Error('SKILL_PIN: skill archive is truncated.');
+  let line;
+  try {
+    line = new TextDecoder('utf8', { fatal: true }).decode(
+      bytes.subarray(offset, newline)
+    );
+  } catch {
+    throw new Error('SKILL_PIN: skill archive header is not text.');
+  }
+  if (line.includes('\u0000')) {
+    throw new Error('SKILL_PIN: skill archive header is not text.');
+  }
+  return { line, next: newline + 1 };
+}
+
+function readArchiveSection(bytes, offset, name) {
+  const header = readArchiveLine(bytes, offset);
+  const match = /^([A-Za-z0-9.]+) ([0-9]+)$/u.exec(header.line);
+  if (!match || match[1] !== name || String(Number(match[2])) !== match[2]) {
+    throw new Error(`SKILL_PIN: skill archive is missing ${name}.`);
+  }
+  const length = Number(match[2]);
+  if (!Number.isSafeInteger(length) || header.next + length > bytes.length) {
+    throw new Error('SKILL_PIN: skill archive is truncated.');
+  }
+  return {
+    body: bytes.subarray(header.next, header.next + length),
+    next: header.next + length,
+  };
 }
 
 function parseArgs(argv) {

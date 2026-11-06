@@ -224,17 +224,19 @@ function printCommandHelp(command) {
   knolo skill init <name> [--dir <parent>]
   knolo skill check [<dir>] [--query <text>] [--json]
   knolo skill pack [<dir>] [--out <dir>] [--json]
+  knolo skill publish <pack> [--registry <url>] [--json]
   knolo skill publish <pack> --hub <dir> [--json]
+  knolo skill install <publisher>/<name> --dir <path> [--registry <url>] [--json]
   knolo skill install <name> --hub <dir> --dir <path> [--json]
   knolo skill install --pack <pack> --dir <path> [--json]
 
 Creates a skill pack for the host agent. Knolo does not call a model.
 A receipt is an integrity check. It does not mean a claim is proven.
 SATISFIED means the evidence requirements were met.
-publish copies the pack into a directory catalog. install checks the pin
-and writes only into --dir. A pin mismatch writes nothing.
-The catalog stores packs and does not answer questions.
-It is not https://hub.knolo.dev.`,
+publish sends the pack to https://hub.knolo.dev unless --hub names a
+local directory. install checks the pin and writes only into --dir.
+A pin mismatch writes nothing.
+The hub stores packs and does not answer questions.`,
     'verify-attestation': 'Usage: knolo verify-attestation <attestation.json> [--composition composition.json] [--public-key key.json] [--keyring keyring.json] [--now <ms>] [--content-only]\n\nSame check as knolo attest verify. A bad signature exits 1 even when the content root matches. --content-only checks the content root and ignores the envelope. statement used is not a truth verdict. Hub attested: true is unrelated.',
     icp: 'Usage: knolo icp <command> [options]',
     'semantic:index':
