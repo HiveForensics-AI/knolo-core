@@ -46,7 +46,7 @@ dist/refund-policy.knolo-skill/
 
 `publish <pack> --hub <dir>` copies that directory to `<hub>/<name>/`. Publishing the same pin again leaves the catalog copy unchanged. Publishing a different pin for the same name fails, and the catalog copy stays as it was.
 
-`install <name> --hub <dir> --dir <path>` checks the pin, then writes `<path>/<name>/`. `install --pack <pack> --dir <path>` does the same from a pack directory. A pin mismatch, including a changed `knowledge.v5` byte or a state root that does not match the image, stops before any write. The destination is left untouched. Install refuses to replace an existing `<path>/<name>` directory.
+`install <name> --hub <dir> --dir <path>` checks the pin, then writes `<path>/<name>/`. The catalog directory name must be the manifest name. `install --pack <pack> --dir <path>` does the same from a pack directory. A pin mismatch stops before any write. That includes a changed `knowledge.v5` byte, a state root that does not match the image, a `SKILL.md` whose name or description differs from the manifest, and a `policy.json` that does not match the image policy root. Guidance that tells the agent to skip a pin or a receipt is refused as well. The destination is left untouched. Install refuses to replace an existing `<path>/<name>` directory.
 
 ## Catalog
 

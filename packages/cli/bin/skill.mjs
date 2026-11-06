@@ -237,6 +237,11 @@ async function installSkill(nameArg, flags) {
     pack = await readVerifiedPack(
       path.join(path.resolve(process.cwd(), flags.hub), nameArg)
     );
+    if (pack.manifest.name !== nameArg) {
+      throw new Error(
+        `SKILL_HUB: catalog entry ${nameArg} is a pack named ${pack.manifest.name}.`
+      );
+    }
   }
   const dest = path.join(destRoot, pack.manifest.name);
   await rejectHostPath(dest);
@@ -526,6 +531,16 @@ async function readVerifiedPack(packDir) {
   if (sha256(policyBytes) !== manifest.policySha256) {
     throw new Error('SKILL_PIN: policy.json does not match its SHA-256 pin.');
   }
+  const parsed = parseSkill(skillBytes.toString('utf8'));
+  if (
+    parsed.name !== manifest.name ||
+    parsed.description !== manifest.description
+  ) {
+    throw new Error(
+      'SKILL_PIN: SKILL.md does not match the manifest name and description.'
+    );
+  }
+  const policy = parsePolicy(policyBytes);
   let imageBytes = null;
   if (manifest.image) {
     try {
@@ -550,6 +565,17 @@ async function readVerifiedPack(packDir) {
     }
     if (opened.stateRoot !== manifest.image.stateRoot) {
       throw new Error('SKILL_PIN: knowledge.v5 does not match its state root.');
+    }
+    let policyRoot;
+    try {
+      policyRoot = core.knowledgePolicyRootV5(policy);
+    } catch {
+      throw new Error('SKILL_PIN: policy.json is not a V5 policy.');
+    }
+    if (opened.commit.policyRoot !== policyRoot) {
+      throw new Error(
+        'SKILL_PIN: policy.json does not match the image policy root.'
+      );
     }
   } else {
     try {
@@ -609,6 +635,18 @@ async function rejectHostPath(target) {
   }
 }
 
+function parsePolicy(policyBytes) {
+  try {
+    const policy = JSON.parse(policyBytes.toString('utf8'));
+    if (!policy || typeof policy !== 'object' || Array.isArray(policy)) {
+      throw new Error('not an object');
+    }
+    return policy;
+  } catch {
+    throw new Error('SKILL_PIN: policy.json is not valid JSON.');
+  }
+}
+
 function sha256(bytes) {
   return createHash('sha256').update(bytes).digest('hex');
 }
@@ -627,7 +665,8 @@ async function loadCore() {
       if (
         loaded.createKnowledgeImageV5 &&
         loaded.queryKnowledgeImageV5 &&
-        loaded.mountKnowledgeImageV5
+        loaded.mountKnowledgeImageV5 &&
+        loaded.knowledgePolicyRootV5
       ) {
         return loaded;
       }

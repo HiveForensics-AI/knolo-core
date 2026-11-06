@@ -159,7 +159,9 @@ layout. The same files produce the same pins.
 `publish` copies the pack into `--hub/<name>`. The same pin can be published
 again. A different pin is refused, and the catalog copy stays as it was.
 `install` checks the pin before it writes. A mismatch writes nothing. The
-files land only in `--dir/<name>`.
+catalog directory name must match the manifest. `SKILL.md` must match that
+name and description, and `policy.json` must match the image policy root.
+The files land only in `--dir/<name>`.
 
 The directory catalog stores packs. It does not run a model, and it does not
 answer questions. It is not `https://hub.knolo.dev`.
