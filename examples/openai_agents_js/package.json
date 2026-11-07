@@ -1,0 +1,12 @@
+{
+  "name": "openai-agents-js-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "smoke": "node --experimental-strip-types smoke.ts"
+  },
+  "dependencies": {
+    "@openai/agents": "0.21.0",
+    "zod": "4.6.7"
+  }
+}
