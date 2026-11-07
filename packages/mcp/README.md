@@ -40,7 +40,9 @@ Published `@knolo/mcp@0.1.0` remains the four-tool server.
 The [Google ADK examples](../../docs/integrations/google-adk.md) start this
 server over stdio and run one search.
 [Python](../../examples/google_adk_python/README.md) and
-[TypeScript](../../examples/google_adk_js/README.md) both use MCP.
+[TypeScript](../../examples/google_adk_js/README.md) both use MCP. The
+[OpenAI Agents SDK example](../../docs/integrations/openai-agents.md) uses the
+same server.
 
 ## Config
 

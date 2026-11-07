@@ -90,3 +90,28 @@ jobs:
           export KNOLO_MCP_COMMAND=node
           export KNOLO_MCP_ARGS="[\"${GITHUB_WORKSPACE}/packages/mcp/bin/knolo-mcp.mjs\"]"
           node --experimental-strip-types examples/google_adk_js/smoke.ts
+
+  openai-agents-js-smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build the local MCP server
+        run: |
+          npm run build --workspace @knolo/core
+          npm run build --workspace @knolo/mcp
+      - name: Install the OpenAI Agents SDK example
+        run: npm ci --prefix examples/openai_agents_js
+      - name: Search a fixture image through the Agents SDK
+        run: |
+          config="$(node examples/google_adk_python/prepare-fixture.mjs)"
+          export KNOLO_MCP_CONFIG="$config"
+          export KNOLO_MCP_COMMAND=node
+          export KNOLO_MCP_ARGS="[\"${GITHUB_WORKSPACE}/packages/mcp/bin/knolo-mcp.mjs\"]"
+          node --experimental-strip-types examples/openai_agents_js/smoke.ts
