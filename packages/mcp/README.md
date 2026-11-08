@@ -43,7 +43,8 @@ server over stdio and run one search.
 [TypeScript](../../examples/google_adk_js/README.md) both use MCP. The
 [OpenAI Agents SDK example](../../docs/integrations/openai-agents.md) uses the
 same server. The
-[Pydantic AI example](../../docs/integrations/pydantic-ai.md) uses the same
+[Pydantic AI example](../../docs/integrations/pydantic-ai.md) and the
+[Langflow example](../../docs/integrations/langflow.md) use the same
 server.
 
 ## Config
