@@ -80,6 +80,10 @@ operational guides for Knolo.
   that calls published `@knolo/mcp@0.2.0` over stdio. Knolo does not call a
   model. A search returns a query receipt. `SATISFIED` means evidence
   requirements were met.
+- [Pydantic AI](integrations/pydantic-ai.md) — a Python smoke that calls
+  published `@knolo/mcp@0.2.0` over stdio. Knolo does not call a model. A
+  search returns a query receipt. `SATISFIED` means evidence requirements
+  were met.
 - [Box](box/README.md) — pinned V5 images of skills, opted-in notes, private
   memory, and capped session text on a Grok Bot computer. `@knolo/box` starts
   the existing read-only MCP server in one process. This package is not
