@@ -171,3 +171,31 @@ jobs:
           export KNOLO_MCP_COMMAND=node
           export KNOLO_MCP_ARGS="[\"${GITHUB_WORKSPACE}/packages/mcp/bin/knolo-mcp.mjs\"]"
           python examples/langflow/smoke.py
+
+  dify-smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - name: Build the local MCP server
+        run: |
+          npm run build --workspace @knolo/core
+          npm run build --workspace @knolo/mcp
+      - name: Install the Dify example
+        run: python -m pip install -r examples/dify/requirements.txt
+      - name: Search a fixture image through the Dify example
+        run: |
+          config="$(node examples/google_adk_python/prepare-fixture.mjs)"
+          export KNOLO_MCP_CONFIG="$config"
+          export KNOLO_MCP_COMMAND=node
+          export KNOLO_MCP_ARGS="[\"${GITHUB_WORKSPACE}/packages/mcp/bin/knolo-mcp.mjs\"]"
+          python examples/dify/smoke.py
