@@ -16,6 +16,12 @@ export {
   type BoxScopeStatus,
 } from './build.js';
 export { chatFileTooLarge, SESSION_COUNT_CAP, turnTooLarge } from './limits.js';
-export { initBox, MANAGED_CANDIDATES, WORKFLOW_CANDIDATES } from './init.js';
+export {
+  initBox,
+  MANAGED_CANDIDATES,
+  MEMORY_CANDIDATES,
+  TRANSCRIPT_CANDIDATES,
+  WORKFLOW_CANDIDATES,
+} from './init.js';
 export { mcpBinPath } from './launch.js';
 export { digestScopeSources, selectNewestSessions } from './sources.js';

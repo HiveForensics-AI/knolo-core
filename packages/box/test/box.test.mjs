@@ -1328,6 +1328,97 @@ test('init skips a symlink whose target is denied', async () => {
   }
 });
 
+test('init mounts one memory directory and one transcript directory', async () => {
+  const home = await tempHome();
+  try {
+    await writeSkillTree(path.join(home, 'agent-data'));
+    const memory = path.join(home, 'agent-data', 'memory-v2');
+    const sessions = path.join(home, 'agent-data', 'sessions');
+    await mkdir(path.join(memory, 'topics'), { recursive: true });
+    await mkdir(sessions, { recursive: true });
+    const result = await initBox({
+      configPath: path.join(home, 'box.json'),
+      roots: [home],
+      home,
+      env: {},
+    });
+    assert.deepEqual(result.scopes.memory.roots, [await realpath(memory)]);
+    assert.deepEqual(result.scopes.transcripts.roots, [
+      await realpath(sessions),
+    ]);
+    assert.deepEqual(result.scopes.files.roots, []);
+    assert.match(result.reports.join('\n'), /files: opt-in, left empty/);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('init leaves memory empty when none or several directories match', async () => {
+  const home = await tempHome();
+  try {
+    await writeSkillTree(path.join(home, 'agent-data'));
+    const none = await initBox({
+      configPath: path.join(home, 'none.json'),
+      roots: [home],
+      home,
+      env: {},
+    });
+    assert.deepEqual(none.scopes.memory.roots, []);
+    assert.match(none.reports.join('\n'), /memory: no directory found/);
+    await mkdir(path.join(home, 'agent-data', 'memory-v2'), {
+      recursive: true,
+    });
+    await mkdir(path.join(home, 'sand-data', 'memory-v2'), {
+      recursive: true,
+    });
+    const many = await initBox({
+      configPath: path.join(home, 'many.json'),
+      roots: [home],
+      home,
+      env: {},
+    });
+    assert.deepEqual(many.scopes.memory.roots, []);
+    assert.match(
+      many.reports.join('\n'),
+      /memory: found more than one directory/
+    );
+    assert.match(
+      many.reports.join('\n'),
+      new RegExp(path.join(home, 'agent-data', 'memory-v2'))
+    );
+    assert.match(
+      many.reports.join('\n'),
+      new RegExp(path.join(home, 'sand-data', 'memory-v2'))
+    );
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('init does not mount a memory directory that resolves to a denied path', async () => {
+  const home = await tempHome();
+  try {
+    await writeSkillTree(path.join(home, 'agent-data'));
+    const hidden = path.join(home, 'secrets', 'memory-v2');
+    await mkdir(hidden, { recursive: true });
+    await symlink(hidden, path.join(home, 'agent-data', 'memory-v2'));
+    const result = await initBox({
+      configPath: path.join(home, 'box.json'),
+      roots: [home],
+      home,
+      env: {},
+    });
+    assert.deepEqual(result.scopes.memory.roots, []);
+    assert.equal(
+      JSON.stringify(result.scopes).includes(`${path.sep}secrets${path.sep}`),
+      false
+    );
+    assert.match(result.reports.join('\n'), /Denied/);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
 test('a secret in one scope leaves the other scope fresh', async () => {
   const home = await tempHome();
   try {

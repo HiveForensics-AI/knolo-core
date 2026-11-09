@@ -15,7 +15,7 @@ export async function main(
   const command = argv[0];
   if (!command || command === '--help' || command === '-h') {
     console.error(
-      'knolo-box build|status|mcp|init [--config <file>] [--root <dir>] [--skills <path>] [--managed-skills <path>]'
+      'knolo-box build|status|mcp|init [--config <file>] [--root <dir>] [--skills <path>] [--managed-skills <path>] [--memory <path>] [--transcripts <path>] [--files <path>]'
     );
     return command ? 0 : 1;
   }
@@ -26,17 +26,33 @@ export async function main(
         throw new BoxError('BOX_CONFIG', '--config needs a path.');
       }
       const roots = flags(argv, '--root');
-      const config = await initBox({
+      const result = await initBox({
         configPath,
         roots: roots.length > 0 ? roots : [home],
         skills: flag(argv, '--skills') ?? optionalEnv(env.KNOLO_BOX_SKILLS),
         managedSkills:
           flag(argv, '--managed-skills') ??
           optionalEnv(env.KNOLO_BOX_MANAGED_SKILLS),
+        memory: flag(argv, '--memory') ?? optionalEnv(env.KNOLO_BOX_MEMORY),
+        transcripts:
+          flag(argv, '--transcripts') ?? optionalEnv(env.KNOLO_BOX_TRANSCRIPTS),
+        files: flag(argv, '--files') ?? optionalEnv(env.KNOLO_BOX_FILES),
         home,
         env,
       });
-      console.log(JSON.stringify(config, null, 2));
+      for (const line of result.reports) console.error(line);
+      console.log(
+        JSON.stringify(
+          {
+            output: result.output,
+            grokHome: result.grokHome,
+            agents: result.agents,
+            scopes: result.scopes,
+          },
+          null,
+          2
+        )
+      );
       return 0;
     }
     const config = await loadBoxConfig(flag(argv, '--config'), env, home);

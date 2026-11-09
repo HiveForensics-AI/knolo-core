@@ -51,7 +51,7 @@ There is no daemon. A user crontab can refresh the images:
 0 3 * * * knolo-box build
 ```
 
-When the computer is not `~/.grok`, run `knolo-box init --config <file>`. It follows symlinks and keeps one real path for workflows and one for managed skills. `--skills` and `--managed-skills` skip detection for that role. A hand-written config remains valid. A scope left out of a hand-written file still uses the default roots. The details are in [the box doc](../../docs/box/README.md).
+When the computer is not `~/.grok`, run `knolo-box init --config <file>`. It follows symlinks and keeps one real path for workflows and one for managed skills. It also keeps one memory directory and one sessions directory when exactly one candidate exists. Zero or several candidates leave that scope empty and the reason is printed on stderr. `--skills`, `--managed-skills`, `--memory`, `--transcripts`, and `--files` skip detection for that role. `files` stays empty unless `--files` is set. A hand-written config remains valid. A scope left out of a hand-written file still uses the default roots. The details are in [the box doc](../../docs/box/README.md).
 
 ## Plugin
 
