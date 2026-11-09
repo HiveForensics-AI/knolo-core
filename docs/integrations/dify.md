@@ -5,12 +5,12 @@ Dify 1.19.0 can register an MCP server when that server has an `http` or `https`
 The [Dify tools documentation](https://docs.dify.ai/en/use-dify/build/mcp) says only MCP servers with HTTP transport are supported. In the Dify 1.19.0 API, `MCPProviderEntity` stores `server_url`, and `MCPToolManageService` accepts a URL whose scheme is `http` or `https`. This repository does not open a port and does not put Knolo behind a proxy.
 
 ```bash
-npx -y @knolo/mcp@0.2.0 --config /absolute/knolo-mcp.json
+npx -y @knolo/mcp@0.2.1 --config /absolute/knolo-mcp.json
 ```
 
-`@knolo/mcp@0.2.0` is the npm release. A mount without a `kar` block exposes `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`. A mount with a `kar` block also exposes `knolo_kar_evaluate`, `knolo_kar_verify`, and `knolo_cortex_verify`. Pins, policy, and the audit directory stay in the config file. Tool arguments cannot set the caller.
+`@knolo/mcp@0.2.1` is the npm release. A mount without a `kar` block exposes `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`. A mount with a `kar` block also exposes `knolo_kar_evaluate`, `knolo_kar_verify`, and `knolo_cortex_verify`. Pins, policy, and the audit directory stay in the config file. Tool arguments cannot set the caller.
 
-`examples/dify/mcp.json` records that stdio command for a host that can launch a process: command `npx`, arguments `-y @knolo/mcp@0.2.0 --config /absolute/knolo-mcp.json`. Dify's built-in screen asks for a URL, a name, and a server identifier. Apps and exported apps refer to the server by that identifier, so another workspace recreates the same identifier. This repository does not register a server and does not commit a Dify app export, because that export cannot store this stdio command and a live run needs a host model.
+`examples/dify/mcp.json` records that stdio command for a host that can launch a process: command `npx`, arguments `-y @knolo/mcp@0.2.1 --config /absolute/knolo-mcp.json`. Dify's built-in screen asks for a URL, a name, and a server identifier. Apps and exported apps refer to the server by that identifier, so another workspace recreates the same identifier. This repository does not register a server and does not commit a Dify app export, because that export cannot store this stdio command and a live run needs a host model.
 
 `npx` needs Node on the host. The config path stays on the argument list. It is not an environment variable. This repository does not ship a container. Third-party plugins that spawn stdio, or that publish this server on a port, are outside this example.
 
@@ -41,7 +41,7 @@ config="$(node examples/google_adk_python/prepare-fixture.mjs)"
 export KNOLO_MCP_CONFIG="$config"
 ```
 
-Continuous integration starts `packages/mcp/bin/knolo-mcp.mjs` with Node so the job does not depend on a registry fetch of Knolo. Set `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` for that path. The default command is `npx` with `@knolo/mcp@0.2.0`. The smoke runs on Python 3.12. The Node half of that job stays on Node 20.
+Continuous integration starts `packages/mcp/bin/knolo-mcp.mjs` with Node so the job does not depend on a registry fetch of Knolo. Set `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` for that path. The default command is `npx` with `@knolo/mcp@0.2.1`. The smoke runs on Python 3.12. The Node half of that job stays on Node 20.
 
 The smoke uses `Client` with `StdioServerParameters` from `mcp` 2.3.0. `list_tools` lists the tools, and `call_tool` runs `knolo_search`. The smoke does not import Dify.
 

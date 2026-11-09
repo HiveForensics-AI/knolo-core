@@ -14,7 +14,7 @@ See the [package README](../../packages/code/README.md) and the [plugin README](
 
 ## Published check
 
-`@knolo/code@0.1.0` is the npm `latest` release. The tarball is [code-0.1.0.tgz](https://registry.npmjs.org/@knolo/code/-/code-0.1.0.tgz) and its shasum is `1d567732217cc871381156f786a3755a3d63e005`.
+`@knolo/code@0.1.1` is the npm `latest` release. The check below measured `@knolo/code@0.1.0`. That tarball is [code-0.1.0.tgz](https://registry.npmjs.org/@knolo/code/-/code-0.1.0.tgz) and its shasum is `1d567732217cc871381156f786a3755a3d63e005`.
 
 On 2026-11-02 that tarball was installed in a clean directory, outside this repository's `node_modules`, and run against `packages/code/examples/sample` with the published `knolo-code` command. Node.js was v22.14.0. `code-image-tokens-v1` is `ceil(utf8Bytes / 4)` of the returned chunk text. That is the comparison unit in the table. It is separate from a model tokenizer.
 

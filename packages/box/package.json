@@ -41,12 +41,12 @@
     "prepublishOnly": "npm test"
   },
   "dependencies": {
-    "@knolo/core": "^6.2.0",
-    "@knolo/mcp": "^0.2.0",
+    "@knolo/core": "^6.2.1",
+    "@knolo/mcp": "^0.2.1",
     "typescript": "^5.5.0"
   },
   "devDependencies": {
-    "@knolo/tools": "^0.2.0",
+    "@knolo/tools": "^0.2.1",
     "@types/node": "^20.11.0"
   }
 }

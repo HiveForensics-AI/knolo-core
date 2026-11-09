@@ -3,10 +3,10 @@
 Google ADK can call the published Knolo MCP server as a toolset. The Python example is [`examples/google_adk_python`](../../examples/google_adk_python/README.md). The TypeScript example is [`examples/google_adk_js`](../../examples/google_adk_js/README.md). Both use stdio. The command a host runs is:
 
 ```bash
-npx -y @knolo/mcp@0.2.0 --config /absolute/knolo-mcp.json
+npx -y @knolo/mcp@0.2.1 --config /absolute/knolo-mcp.json
 ```
 
-`@knolo/mcp@0.2.0` is the npm release. A mount without a `kar` block exposes `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`. A mount with a `kar` block also exposes `knolo_kar_evaluate`, `knolo_kar_verify`, and `knolo_cortex_verify`. Pins, policy, and the audit directory stay in the config file. Tool arguments cannot set the caller.
+`@knolo/mcp@0.2.1` is the npm release. A mount without a `kar` block exposes `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`. A mount with a `kar` block also exposes `knolo_kar_evaluate`, `knolo_kar_verify`, and `knolo_cortex_verify`. Pins, policy, and the audit directory stay in the config file. Tool arguments cannot set the caller.
 
 ## What a search returns
 
@@ -45,6 +45,6 @@ config="$(node examples/google_adk_python/prepare-fixture.mjs)"
 export KNOLO_MCP_CONFIG="$config"
 ```
 
-Both examples share that fixture script. Continuous integration starts `packages/mcp/bin/knolo-mcp.mjs` with Node so the job does not depend on a registry fetch. Set `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` for that path. The default command is `npx` with `@knolo/mcp@0.2.0`. The TypeScript smoke runs on Node 22. The rest of CI stays on Node 20.
+Both examples share that fixture script. Continuous integration starts `packages/mcp/bin/knolo-mcp.mjs` with Node so the job does not depend on a registry fetch. Set `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` for that path. The default command is `npx` with `@knolo/mcp@0.2.1`. The TypeScript smoke runs on Node 22. The rest of CI stays on Node 20.
 
 Server configuration is documented in the [`@knolo/mcp` README](../../packages/mcp/README.md).

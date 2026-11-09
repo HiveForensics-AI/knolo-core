@@ -49,7 +49,7 @@ operational guides for Knolo.
 - [`@knolo/ai-sdk`](../packages/ai-sdk/README.md) — Vercel AI SDK tools over
   [`@knolo/tools`](../packages/knolo-tools/README.md). Knolo does not call a
   model. A search returns a query receipt. `SATISFIED` means evidence
-  requirements were met. This package is not published yet.
+  requirements were met. `@knolo/ai-sdk@0.1.0` is published.
 - [Knolo Verify action](../.github/actions/knolo-verify/README.md) — composite
   GitHub Action that runs a pinned `@knolo/cli` over committed packs, images,
   KAR artifacts, attestations, and Cortex traces. It does not add verification
@@ -75,30 +75,30 @@ operational guides for Knolo.
   separate.
 - [Code image](code/README.md) — local V4 pack of a workspace and the Grok
   Build plugin that retrieves structure before full chunks. The published
-  `@knolo/code@0.1.0` check is recorded on that page.
+  `@knolo/code` check is recorded on that page. npm `latest` is `0.1.1`.
 - [Google ADK](integrations/google-adk.md) — Python and TypeScript agents
-  that call published `@knolo/mcp@0.2.0` over stdio. A search returns a query
+  that call published `@knolo/mcp@0.2.1` over stdio. A search returns a query
   receipt. Verification checks the image. `SATISFIED` means evidence
   requirements were met.
 - [OpenAI Agents SDK](integrations/openai-agents.md) — a TypeScript smoke
-  that calls published `@knolo/mcp@0.2.0` over stdio. Knolo does not call a
+  that calls published `@knolo/mcp@0.2.1` over stdio. Knolo does not call a
   model. A search returns a query receipt. `SATISFIED` means evidence
   requirements were met.
 - [Pydantic AI](integrations/pydantic-ai.md) — a Python smoke that calls
-  published `@knolo/mcp@0.2.0` over stdio. Knolo does not call a model. A
+  published `@knolo/mcp@0.2.1` over stdio. Knolo does not call a model. A
   search returns a query receipt. `SATISFIED` means evidence requirements
   were met.
 - [Langflow](integrations/langflow.md) — a Python smoke that calls published
-  `@knolo/mcp@0.2.0` over stdio. Knolo does not call a model. A search
+  `@knolo/mcp@0.2.1` over stdio. Knolo does not call a model. A search
   returns a query receipt. `SATISFIED` means evidence requirements were met.
 - [Dify](integrations/dify.md) — Dify 1.19.0 registers an MCP server by
-  an http or https URL. A Python smoke calls published `@knolo/mcp@0.2.0`
+  an http or https URL. A Python smoke calls published `@knolo/mcp@0.2.1`
   over stdio. Knolo does not call a model. A search returns a query
   receipt. `SATISFIED` means evidence requirements were met.
 - [Vercel AI SDK](integrations/ai-sdk.md) — `@knolo/ai-sdk` tools over
   `@knolo/tools`. Knolo does not call a model. A search returns a query
-  receipt. `SATISFIED` means evidence requirements were met. This package
-  is not published yet.
+  receipt. `SATISFIED` means evidence requirements were met.
+  `@knolo/ai-sdk@0.1.0` is published.
 - [Box](box/README.md) — pinned V5 images of skills, opted-in notes, private
   memory, and capped session text on a Grok Bot computer. `@knolo/box` starts
   the existing read-only MCP server in one process. This package is not
@@ -114,10 +114,14 @@ The current product line in this repository is Knolo 6.2.0. V6 adds KAR on
 the V5 Knowledge Image: deterministic images, verification, migration,
 bounded runtime features, diagnostics, and a read-only Studio management
 snapshot remain. 6.1.0 adds offline composition and attestation. 6.2.0 adds
-Knolo Cortex. `@knolo/cli` depends on `@knolo/core` `^6.2.0`. The other
-packages that depend on `@knolo/core` stay at `^6.0.0`. V4 retrieval APIs
-remain compatible. Rust, Python, and ICP stay 5.5.1 and do not implement
-KAR, composition, or Cortex.
+Knolo Cortex. Published `@knolo/core` is `6.2.1`. `@knolo/tools` `0.2.1`
+and `@knolo/mcp` `0.2.1` depend on `@knolo/core` `^6.2.1`. This tree's
+`@knolo/cli` package file stays `6.2.0` and depends on `@knolo/core` `^6.2.0`.
+npm `latest` for the CLI is `6.2.1`. `@knolo/langchain`, `@knolo/llamaindex`,
+`@knolo/semantic-ollama`, `create-knolo-app`, and `@knolo/reflex` stay on
+`@knolo/core` `^6.0.0`. `@knolo/ai-sdk@0.1.0` stays on `@knolo/core` `^6.2.0`
+and `@knolo/tools` `^0.2.0`. V4 retrieval APIs remain compatible. Rust, Python,
+and ICP stay 5.5.1 and do not implement KAR, composition, or Cortex.
 Bundled Domain Packs are `review-required`. Networking,
 credentials, model execution, external side effects, and UI presentation
 remain host responsibilities.

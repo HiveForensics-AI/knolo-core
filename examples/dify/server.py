@@ -11,7 +11,7 @@ import json
 import os
 from pathlib import Path
 
-PUBLISHED_PACKAGE = "@knolo/mcp@0.2.0"
+PUBLISHED_PACKAGE = "@knolo/mcp@0.2.1"
 PUBLISHED_COMMAND = "npx"
 PUBLISHED_ARGS = ["-y", PUBLISHED_PACKAGE]
 PLACEHOLDER_CONFIG = "/absolute/knolo-mcp.json"
