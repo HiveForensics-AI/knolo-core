@@ -3,7 +3,7 @@ import { access, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createKnowledgeImageV5, type KnowledgePolicyV1 } from '@knolo/core';
 import { SCOPE_NAMES, type BoxConfig, type BoxScopeName } from './config.js';
-import { collectCorpora, utf8 } from './sources.js';
+import { collectCorpora, digestScopeSources, utf8 } from './sources.js';
 
 export const MAX_AUDIT_RECORDS = 10_000;
 export const MAX_AUDIT_BYTES = 256 * 1024 * 1024;
@@ -26,6 +26,7 @@ export type BoxScopeStatus = {
   stateRoot: string;
   builtAt: string;
   pinMatches: boolean;
+  stale: boolean;
 };
 
 const PRIVATE_SCOPES = new Set<BoxScopeName>(['memory', 'transcripts']);
@@ -121,11 +122,20 @@ export async function boxStatus(config: BoxConfig): Promise<BoxScopeStatus[]> {
   for (const name of SCOPE_NAMES) {
     const pin = pins.scopes[name];
     if (!pin) continue;
+    const digest = await digestScopeSources({
+      scope: name,
+      roots: config.scopes[name].roots,
+      grokHome: config.grokHome,
+    });
     scopes.push({
       id: name,
       stateRoot: pin.stateRoot,
       builtAt: pin.builtAt,
       pinMatches: await pinMatches(config.output, name, pin),
+      stale:
+        digest.sourceDigest === null ||
+        digest.missingRoot ||
+        digest.sourceDigest !== pin.sourceDigest,
     });
   }
   return scopes;
@@ -151,11 +161,17 @@ export function mcpConfig(
         policyPath,
         agents: PRIVATE_SCOPES.has(name) ? ['box'] : config.agents,
         principal: 'box:reader',
+        builtAt: pin.builtAt,
+        sourceDigest: pin.sourceDigest,
+        sourceRoots: config.scopes[name].roots.map((root) =>
+          path.resolve(root)
+        ),
       },
     ];
   });
   return {
     agentId: 'box',
+    grokHome: config.grokHome,
     auditDir,
     maxAuditRecords: MAX_AUDIT_RECORDS,
     maxAuditBytes: MAX_AUDIT_BYTES,

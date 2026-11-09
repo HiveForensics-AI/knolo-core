@@ -423,9 +423,16 @@ test('indexes Grok files and keeps secrets out of every image', async () => {
       'box',
       'publisher',
     ]);
+    assert.equal(raw.grokHome, config.grokHome);
     for (const mount of raw.mounts) {
       assert.equal(path.isAbsolute(mount.path), true);
       assert.equal(mount.principal, 'box:reader');
+      assert.equal(mount.builtAt, '2026-11-04T03:00:00.000Z');
+      assert.match(mount.sourceDigest, /^[a-f0-9]{64}$/);
+      assert.equal(mount.sourceRoots.length > 0, true);
+      for (const root of mount.sourceRoots) {
+        assert.equal(path.isAbsolute(root), true);
+      }
     }
     const shared = JSON.parse(
       await readFile(path.join(output, 'knolo-mcp-shared.json'), 'utf8')
@@ -433,6 +440,11 @@ test('indexes Grok files and keeps secrets out of every image', async () => {
     assert.deepEqual(
       shared.mounts.map((mount) => mount.id),
       ['files', 'skills']
+    );
+    assert.equal(shared.grokHome, config.grokHome);
+    assert.equal(
+      shared.mounts.some((mount) => mount.id === 'memory'),
+      false
     );
 
     const caller = { agentId: 'box', sessionId: 'knolo-box-test' };
@@ -479,10 +491,23 @@ test('indexes Grok files and keeps secrets out of every image', async () => {
     assert.match(skill.hits[0].excerpt, /locator: lines /);
     const verified = await service.verify('memory', caller);
     assert.equal(verified[0].valid, true);
+    assert.equal(verified[0].stale, false);
+    assert.equal(verified[0].builtAt, '2026-11-04T03:00:00.000Z');
     const status = service.status(caller);
     assert.equal(Object.hasOwn(status[0], 'builtAt'), false);
+    assert.equal(Object.hasOwn(status[0], 'stale'), false);
+    const freshStatus = await service.statusWithFreshness(caller);
+    assert.equal(
+      freshStatus.find((item) => item.imageId === 'memory').stale,
+      false
+    );
+    assert.equal(
+      freshStatus.find((item) => item.imageId === 'memory').builtAt,
+      '2026-11-04T03:00:00.000Z'
+    );
     const printed = await boxStatus(config);
     assert.equal(printed.find((item) => item.id === 'memory').pinMatches, true);
+    assert.equal(printed.find((item) => item.id === 'memory').stale, false);
     assert.equal(
       printed.find((item) => item.id === 'memory').builtAt,
       '2026-11-04T03:00:00.000Z'
@@ -549,6 +574,28 @@ test('indexes Grok files and keeps secrets out of every image', async () => {
       topic,
       '# Release\n\nBOX_MEMORY_PHRASE edited after the first build.\n'
     );
+    const drifted = await boxStatus(config);
+    assert.equal(drifted.find((item) => item.id === 'memory').stale, true);
+    assert.equal(drifted.find((item) => item.id === 'memory').pinMatches, true);
+    assert.equal(
+      drifted.find((item) => item.id === 'memory').builtAt,
+      rewritten.scopes.memory.builtAt
+    );
+    assert.equal(drifted.find((item) => item.id === 'skills').stale, false);
+    const current = await openService(output);
+    const driftedTool = await current.statusWithFreshness(caller);
+    assert.equal(
+      driftedTool.find((item) => item.imageId === 'memory').stale,
+      true
+    );
+    assert.equal(
+      driftedTool.find((item) => item.imageId === 'memory').builtAt,
+      rewritten.scopes.memory.builtAt
+    );
+    const driftedVerify = await current.verify('memory', caller);
+    assert.equal(driftedVerify[0].valid, true);
+    assert.equal(driftedVerify[0].stale, true);
+    assert.equal(driftedVerify[0].builtAt, rewritten.scopes.memory.builtAt);
     const edited = await buildBox(config, new Date('2026-11-06T03:00:00.000Z'));
     assert.notEqual(
       edited.scopes.memory.stateRoot,
@@ -557,6 +604,13 @@ test('indexes Grok files and keeps secrets out of every image', async () => {
     assert.equal(edited.scopes.memory.builtAt, '2026-11-06T03:00:00.000Z');
     assert.equal(edited.scopes.skills.stateRoot, pins.scopes.skills.stateRoot);
     assert.equal(edited.scopes.skills.builtAt, pins.scopes.skills.builtAt);
+    const rebuilt = await boxStatus(config);
+    assert.equal(rebuilt.find((item) => item.id === 'memory').stale, false);
+    assert.equal(rebuilt.find((item) => item.id === 'memory').pinMatches, true);
+    assert.equal(
+      rebuilt.find((item) => item.id === 'memory').builtAt,
+      '2026-11-06T03:00:00.000Z'
+    );
   } finally {
     await rm(home, { recursive: true, force: true });
   }
@@ -616,6 +670,11 @@ test('a private-key or token match writes no new image', async () => {
         pins.scopes.memory.stateRoot
       );
       assert.equal(pinsAfter.scopes.memory.sha256, pins.scopes.memory.sha256);
+      const secretStatus = await boxStatus(config);
+      assert.equal(secretStatus[0].stale, true);
+      assert.equal(secretStatus[0].pinMatches, true);
+      assert.equal(secretStatus[0].builtAt, pins.scopes.memory.builtAt);
+      assert.equal(JSON.stringify(secretStatus).includes(secretLine), false);
     } finally {
       await rm(home, { recursive: true, force: true });
     }
@@ -650,6 +709,7 @@ test('a flipped image byte fails the pin and returns no chunk text', async () =>
     await writeFile(imagePath, bytes);
     const status = await boxStatus(config);
     assert.equal(status[0].pinMatches, false);
+    assert.equal(status[0].stale, false);
     await assert.rejects(
       () => openService(config.output),
       (error) => {
@@ -659,6 +719,37 @@ test('a flipped image byte fails the pin and returns no chunk text', async () =>
         return true;
       }
     );
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('a missing source root is stale while the pin still matches', async () => {
+  const home = await tempHome();
+  try {
+    const grok = path.join(home, 'grok');
+    const topicDir = path.join(grok, 'memory-v2', 'topics');
+    await mkdir(topicDir, { recursive: true });
+    await writeFile(path.join(topicDir, 'note.md'), 'BOX_ROOT_PHRASE\n');
+    const root = path.join(grok, 'memory-v2');
+    const config = {
+      output: path.join(home, 'out'),
+      grokHome: grok,
+      agents: ['box'],
+      scopes: {
+        files: { roots: [] },
+        skills: { roots: [] },
+        memory: { roots: [root] },
+        transcripts: { roots: [] },
+      },
+    };
+    await buildBox(config, new Date('2026-11-04T00:00:00.000Z'));
+    await rm(root, { recursive: true, force: true });
+    const status = await boxStatus(config);
+    assert.equal(status[0].id, 'memory');
+    assert.equal(status[0].pinMatches, true);
+    assert.equal(status[0].stale, true);
+    assert.equal(status[0].builtAt, '2026-11-04T00:00:00.000Z');
   } finally {
     await rm(home, { recursive: true, force: true });
   }
@@ -972,6 +1063,7 @@ test('the launcher finds knolo-mcp and the CLI stays off stdout for help', async
     const status = JSON.parse(built.stdout);
     assert.equal(status[0].id, 'memory');
     assert.equal(status[0].pinMatches, true);
+    assert.equal(status[0].stale, false);
     assert.match(status[0].stateRoot, /^sha256-[a-f0-9]{64}$/);
     const again = await run([binPath, 'status', '--config', configPath]);
     assert.equal(again.code, 0);
@@ -1231,6 +1323,42 @@ test('init skips a symlink whose target is denied', async () => {
       ),
       false
     );
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('a secret in one scope leaves the other scope fresh', async () => {
+  const home = await tempHome();
+  try {
+    const grok = path.join(home, 'grok');
+    const skillDir = path.join(grok, 'skills', 'notes');
+    const topicDir = path.join(grok, 'memory-v2', 'topics');
+    await mkdir(skillDir, { recursive: true });
+    await mkdir(topicDir, { recursive: true });
+    await writeFile(path.join(skillDir, 'SKILL.md'), 'BOX_SKILL_CLEAN\n');
+    await writeFile(path.join(topicDir, 'note.md'), 'clean memory note\n');
+    const config = {
+      output: path.join(home, 'out'),
+      grokHome: grok,
+      agents: ['box'],
+      scopes: {
+        files: { roots: [] },
+        skills: { roots: [path.join(grok, 'skills')] },
+        memory: { roots: [path.join(grok, 'memory-v2')] },
+        transcripts: { roots: [] },
+      },
+    };
+    await buildBox(config, new Date('2026-11-09T00:00:00.000Z'));
+    const secretLine = `ghp_${'a'.repeat(20)}`;
+    await writeFile(
+      path.join(topicDir, 'note.md'),
+      `${secretLine}\nclean memory note\n`
+    );
+    const status = await boxStatus(config);
+    assert.equal(status.find((item) => item.id === 'memory').stale, true);
+    assert.equal(status.find((item) => item.id === 'skills').stale, false);
+    assert.equal(JSON.stringify(status).includes(secretLine), false);
   } finally {
     await rm(home, { recursive: true, force: true });
   }

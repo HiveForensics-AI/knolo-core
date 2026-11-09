@@ -36,6 +36,9 @@ export type KnoloMountConfig = {
   policyPath: string;
   agents: string[];
   principal: string;
+  builtAt?: string;
+  sourceDigest?: string;
+  sourceRoots?: string[];
 };
 
 export type KnoloPluginConfig = {
@@ -47,6 +50,7 @@ export type KnoloPluginConfig = {
   maxAuditRecords?: number;
   maxAuditBytes?: number;
   auditDir: string;
+  grokHome?: string;
 };
 
 export type KnoloCaller = {
@@ -110,6 +114,8 @@ export type KnoloVerification = {
   stateRoot: string;
   commitDigest: string;
   valid: true;
+  builtAt?: string;
+  stale?: boolean;
 };
 
 export type KnoloStatus = {
@@ -117,6 +123,8 @@ export type KnoloStatus = {
   stateRoot: string;
   source: 'local';
   status: 'ready';
+  builtAt?: string;
+  stale?: boolean;
 };
 
 export type KnoloQueryReceiptV1 = {
@@ -193,8 +201,11 @@ type MountSnapshot = {
   mtimeNs: bigint;
 };
 
-type NormalizedConfig = Required<Omit<KnoloPluginConfig, 'mounts'>> & {
+type NormalizedConfig = Required<
+  Omit<KnoloPluginConfig, 'mounts' | 'grokHome'>
+> & {
   mounts: KnoloMountConfig[];
+  grokHome?: string;
 };
 
 export const DEFAULT_MAX_IMAGE_BYTES = 250 * 1024 * 1024;
@@ -426,12 +437,17 @@ export class KnoloOpenClawService {
     const results: KnoloVerification[] = [];
     for (const mount of mounts) {
       const checked = await loadMount(mount.config, this.#config.maxImageBytes);
+      const fresh = await sourceFreshness(
+        checked.config,
+        this.#config.grokHome
+      );
       results.push({
         imageId: checked.config.id,
         byteSha256: checked.byteSha256,
         stateRoot: checked.image.stateRoot,
         commitDigest: checked.image.commitDigest,
         valid: true,
+        ...(fresh ? { builtAt: fresh.builtAt, stale: fresh.stale } : {}),
       });
     }
     return results;
@@ -444,6 +460,19 @@ export class KnoloOpenClawService {
       source: 'local',
       status: 'ready',
     }));
+  }
+
+  async statusWithFreshness(caller: KnoloCaller): Promise<KnoloStatus[]> {
+    const rows = this.status(caller);
+    const grokHome = this.#config.grokHome;
+    return Promise.all(
+      rows.map(async (row) => {
+        const mount = this.#mounts.get(row.imageId);
+        if (!mount) return row;
+        const fresh = await sourceFreshness(mount.config, grokHome);
+        return fresh ? { ...row, ...fresh } : row;
+      })
+    );
   }
 
   mountedFiles(): Array<{ path: string; size: bigint; mtimeNs: bigint }> {
@@ -818,6 +847,36 @@ function normalizeConfig(config: KnoloPluginConfig): NormalizedConfig {
         `Knolo mount ${mount.id} requires a principal.`
       );
     }
+    if (
+      mount.builtAt !== undefined &&
+      (typeof mount.builtAt !== 'string' || mount.builtAt.length === 0)
+    ) {
+      throw new KnoloPluginError(
+        'IMAGE_INVALID',
+        `Knolo mount ${mount.id} has an invalid builtAt.`
+      );
+    }
+    if (
+      mount.sourceDigest !== undefined &&
+      !SHA256_PATTERN.test(mount.sourceDigest)
+    ) {
+      throw new KnoloPluginError(
+        'IMAGE_INVALID',
+        `Knolo mount ${mount.id} has an invalid source digest.`
+      );
+    }
+    if (
+      mount.sourceRoots !== undefined &&
+      (!Array.isArray(mount.sourceRoots) ||
+        mount.sourceRoots.some(
+          (root) => typeof root !== 'string' || !path.isAbsolute(root)
+        ))
+    ) {
+      throw new KnoloPluginError(
+        'IMAGE_INVALID',
+        `Knolo mount ${mount.id} source roots must be absolute paths.`
+      );
+    }
     return { ...mount, agents: [...new Set(mount.agents)] };
   });
   if (!mounts.length)
@@ -827,6 +886,9 @@ function normalizeConfig(config: KnoloPluginConfig): NormalizedConfig {
     );
   return {
     mounts,
+    ...(typeof config.grokHome === 'string' && path.isAbsolute(config.grokHome)
+      ? { grokHome: config.grokHome }
+      : {}),
     auditDir: path.resolve(config.auditDir),
     maxImageBytes: positiveInteger(
       config.maxImageBytes,
@@ -1101,6 +1163,50 @@ function assertCaller(caller: KnoloCaller): void {
       'Knolo requires a trusted OpenClaw agent identity.'
     );
   }
+}
+
+const BOX_SOURCE_SCOPES = new Set(['files', 'skills', 'memory', 'transcripts']);
+
+async function sourceFreshness(
+  mount: KnoloMountConfig,
+  grokHome: string | undefined
+): Promise<{ builtAt: string; stale: boolean } | undefined> {
+  if (
+    !grokHome ||
+    !mount.builtAt ||
+    !mount.sourceDigest ||
+    !mount.sourceRoots?.length ||
+    !BOX_SOURCE_SCOPES.has(mount.id)
+  ) {
+    return undefined;
+  }
+  let digestScopeSources: (input: {
+    scope: 'files' | 'skills' | 'memory' | 'transcripts';
+    roots: readonly string[];
+    grokHome: string;
+  }) => Promise<{ sourceDigest: string | null; missingRoot: boolean }>;
+  try {
+    const specifier = '@knolo/box';
+    const loaded = (await import(specifier)) as {
+      digestScopeSources?: typeof digestScopeSources;
+    };
+    if (typeof loaded.digestScopeSources !== 'function') return undefined;
+    digestScopeSources = loaded.digestScopeSources;
+  } catch {
+    return undefined;
+  }
+  const digest = await digestScopeSources({
+    scope: mount.id as 'files' | 'skills' | 'memory' | 'transcripts',
+    roots: mount.sourceRoots,
+    grokHome,
+  });
+  return {
+    builtAt: mount.builtAt,
+    stale:
+      digest.sourceDigest === null ||
+      digest.missingRoot ||
+      digest.sourceDigest !== mount.sourceDigest,
+  };
 }
 
 function escapeEql(value: string): string {
