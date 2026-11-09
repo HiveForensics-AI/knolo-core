@@ -263,6 +263,30 @@ test('textQuery matches whole words and leaves EQL substring search in id order'
   assert.equal(replay.resultRoot, whole.resultRoot);
 });
 
+test('textQuery treats digits and underscores as word boundaries', () => {
+  const image = createKnowledgeImageV5({
+    objects: [
+      {
+        kind: 'chunk',
+        bytes: new TextEncoder().encode('foo2 and foo_bar and 1234'),
+        meta: {},
+      },
+      {
+        kind: 'chunk',
+        bytes: new TextEncoder().encode('foo stays a word'),
+        meta: {},
+      },
+    ],
+  });
+  const foo = queryKnowledgeImageV5(image, textPlan(['foo']));
+  assert.equal(foo.hits.length, 2);
+  const digits = queryKnowledgeImageV5(image, textPlan(['123']));
+  assert.equal(digits.hits.length, 1);
+  const bar = queryKnowledgeImageV5(image, textPlan(['bar']));
+  assert.equal(bar.hits.length, 1);
+  verifyKnowledgeQueryResultV5(image, digits);
+});
+
 test('textQuery phrases, partial mode, and empty terms do not match every chunk', () => {
   const image = createKnowledgeImageV5({
     objects: [
