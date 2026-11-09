@@ -43,7 +43,7 @@ A later build removes a config that would have no mounts. `knolo-box mcp` stops 
 
 - `audit/` beside the images, capped at 10,000 records and 256 MiB
 
-The same source digest keeps the same image bytes, `stateRoot`, and `builtAt`. `knolo-box status` prints `stateRoot`, `builtAt`, and whether the pin matches the file. `knolo_status` does not include `builtAt`.
+The same source digest keeps the same image bytes, `stateRoot`, and `builtAt`. `knolo-box status` prints `stateRoot`, `builtAt`, `pinMatches`, and `stale`. `stale: true` means the files under that scope changed after `builtAt`, or a root is missing, or indexed text now matches a secret pattern. The pin can still match. `knolo_status` and `knolo_verify` include `builtAt` and `stale` only when the mount records `sourceRoots`. A config without those fields omits them. `knolo_verify` stays `valid: true` when the pin matches and the sources are stale. Search does not walk the source tree, and nothing rebuilds the image on its own.
 
 There is no daemon. A user crontab can refresh the images:
 

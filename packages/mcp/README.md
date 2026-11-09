@@ -12,6 +12,10 @@ The server speaks stdio only. It does not download images, open a runtime
 network connection, write or compile knowledge, or expose MCP resources or
 prompts. Install and pin each image before starting it. A hash, state-root,
 or policy-root mismatch exits non-zero before the MCP connection starts.
+Optional mount fields `builtAt`, `sourceDigest`, and `sourceRoots`, plus
+`grokHome`, let `knolo_status` and `knolo_verify` report a stale source tree.
+Without those fields the status object stays `imageId`, `stateRoot`, `source`,
+and `status`. A stale source does not make a matching pin invalid.
 
 Caller identity is `agentId` in the config file, default `mcp`. That id must
 be listed in the mount's `agents` array. Tool arguments cannot set it. The

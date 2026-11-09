@@ -3,7 +3,13 @@ import { access, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createKnowledgeImageV5, type KnowledgePolicyV1 } from '@knolo/core';
 import { SCOPE_NAMES, type BoxConfig, type BoxScopeName } from './config.js';
-import { collectCorpora, utf8 } from './sources.js';
+import {
+  collectCorpora,
+  isUnreadableSource,
+  scopeMissingRoot,
+  utf8,
+  type ScopeCorpus,
+} from './sources.js';
 
 export const MAX_AUDIT_RECORDS = 10_000;
 export const MAX_AUDIT_BYTES = 256 * 1024 * 1024;
@@ -26,6 +32,7 @@ export type BoxScopeStatus = {
   stateRoot: string;
   builtAt: string;
   pinMatches: boolean;
+  stale: boolean;
 };
 
 const PRIVATE_SCOPES = new Set<BoxScopeName>(['memory', 'transcripts']);
@@ -117,15 +124,31 @@ export async function buildBox(
 
 export async function boxStatus(config: BoxConfig): Promise<BoxScopeStatus[]> {
   const pins = await readPins(config.output);
+  let corpora: ScopeCorpus[] | undefined;
+  let unreadable = false;
+  try {
+    corpora = await collectCorpora(config);
+  } catch (error) {
+    if (!isUnreadableSource(error)) throw error;
+    unreadable = true;
+  }
   const scopes: BoxScopeStatus[] = [];
   for (const name of SCOPE_NAMES) {
     const pin = pins.scopes[name];
     if (!pin) continue;
+    const corpus = corpora?.find((item) => item.scope === name);
+    const roots = config.scopes[name].roots;
+    const stale =
+      unreadable ||
+      !corpus ||
+      scopeMissingRoot(roots, corpus) ||
+      corpus.sourceDigest !== pin.sourceDigest;
     scopes.push({
       id: name,
       stateRoot: pin.stateRoot,
       builtAt: pin.builtAt,
       pinMatches: await pinMatches(config.output, name, pin),
+      stale,
     });
   }
   return scopes;
@@ -151,11 +174,17 @@ export function mcpConfig(
         policyPath,
         agents: PRIVATE_SCOPES.has(name) ? ['box'] : config.agents,
         principal: 'box:reader',
+        builtAt: pin.builtAt,
+        sourceDigest: pin.sourceDigest,
+        sourceRoots: config.scopes[name].roots.map((root) =>
+          path.resolve(root)
+        ),
       },
     ];
   });
   return {
     agentId: 'box',
+    grokHome: config.grokHome,
     auditDir,
     maxAuditRecords: MAX_AUDIT_RECORDS,
     maxAuditBytes: MAX_AUDIT_BYTES,

@@ -33,12 +33,16 @@ const mountSchema = z
     agents: z.array(z.string().regex(ID_PATTERN)).min(1),
     principal: z.string().min(1),
     kar: karMountSchema.optional(),
+    builtAt: z.string().min(1).optional(),
+    sourceDigest: z.string().regex(SHA256_PATTERN).optional(),
+    sourceRoots: z.array(z.string().min(1)).min(1).optional(),
   })
   .strict();
 
 export const knoloAiSdkConfigSchema = z
   .object({
     agentId: z.string().regex(ID_PATTERN).default('mcp'),
+    grokHome: z.string().min(1).optional(),
     auditDir: z.string().min(1),
     mounts: z.array(mountSchema).min(1),
     maxImageBytes: z
@@ -82,6 +86,13 @@ export const knoloAiSdkConfigSchema = z
         message: 'auditDir must be an absolute path.',
       });
     }
+    if (config.grokHome && !path.isAbsolute(config.grokHome)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['grokHome'],
+        message: 'grokHome must be an absolute path.',
+      });
+    }
     config.mounts.forEach((mount, index) => {
       if (!path.isAbsolute(mount.path)) {
         context.addIssue({
@@ -104,6 +115,15 @@ export const knoloAiSdkConfigSchema = z
           message: 'graphPath must be an absolute path.',
         });
       }
+      mount.sourceRoots?.forEach((root, rootIndex) => {
+        if (!path.isAbsolute(root)) {
+          context.addIssue({
+            code: 'custom',
+            path: ['mounts', index, 'sourceRoots', rootIndex],
+            message: 'source root must be an absolute path.',
+          });
+        }
+      });
     });
   });
 
@@ -128,6 +148,7 @@ export function parseKnoloAiSdkConfig(input: unknown): KnoloAiSdkConfig {
 
 export function knoloPluginConfig(config: KnoloAiSdkConfig): KnoloPluginConfig {
   return {
+    ...(config.grokHome ? { grokHome: config.grokHome } : {}),
     mounts: config.mounts.map((mount) => ({
       id: mount.id,
       path: mount.path,
@@ -136,6 +157,9 @@ export function knoloPluginConfig(config: KnoloAiSdkConfig): KnoloPluginConfig {
       policyPath: mount.policyPath,
       agents: mount.agents,
       principal: mount.principal,
+      ...(mount.builtAt ? { builtAt: mount.builtAt } : {}),
+      ...(mount.sourceDigest ? { sourceDigest: mount.sourceDigest } : {}),
+      ...(mount.sourceRoots ? { sourceRoots: mount.sourceRoots } : {}),
     })),
     auditDir: config.auditDir,
     maxImageBytes: config.maxImageBytes,

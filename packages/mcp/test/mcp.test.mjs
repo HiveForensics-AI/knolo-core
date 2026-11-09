@@ -1145,6 +1145,46 @@ test('runtime does not call fetch or node http', () => {
   assert.equal(networkCalls, 0);
 });
 
+test('source freshness fields are optional and absolute', async () => {
+  const { parseKnoloMcpConfig } = await import('../dist/config.js');
+  const root = await mkdtemp(path.join(os.tmpdir(), 'knolo-mcp-fresh-'));
+  const config = {
+    agentId: 'box',
+    grokHome: root,
+    auditDir: path.join(root, 'audit'),
+    mounts: [
+      {
+        id: 'skills',
+        path: path.join(root, 'skills.v5'),
+        sha256: 'ab'.repeat(32),
+        stateRoot: `sha256-${'cd'.repeat(32)}`,
+        policyPath: path.join(root, 'policy.json'),
+        agents: ['box'],
+        principal: 'box:reader',
+        builtAt: '2026-11-09T00:00:00.000Z',
+        sourceDigest: 'ef'.repeat(32),
+        sourceRoots: [path.join(root, 'skills')],
+      },
+    ],
+  };
+  const parsed = parseKnoloMcpConfig(config);
+  assert.equal(parsed.grokHome, root);
+  assert.equal(parsed.mounts[0].sourceRoots[0], path.join(root, 'skills'));
+  assert.throws(
+    () =>
+      parseKnoloMcpConfig({
+        ...config,
+        mounts: [
+          {
+            ...config.mounts[0],
+            sourceRoots: ['skills'],
+          },
+        ],
+      }),
+    /source root must be an absolute path/
+  );
+});
+
 function completeMessages(stdout) {
   const parts = stdout.split('\n');
   if (!stdout.endsWith('\n')) parts.pop();

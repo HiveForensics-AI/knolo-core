@@ -38,6 +38,68 @@ export type ScopeCorpus = {
 const FILE_EXTENSIONS = new Set(['.md', '.mdx', '.txt', '.markdown']);
 const encoder = new TextEncoder();
 
+export async function digestScopeSources(input: {
+  scope: BoxScopeName;
+  roots: readonly string[];
+  grokHome: string;
+}): Promise<{ sourceDigest: string | null; missingRoot: boolean }> {
+  const scopes: BoxConfig['scopes'] = {
+    files: { roots: [] },
+    skills: { roots: [] },
+    memory: { roots: [] },
+    transcripts: { roots: [] },
+  };
+  scopes[input.scope] = { roots: [...input.roots] };
+  const config: BoxConfig = {
+    output: input.grokHome,
+    grokHome: input.grokHome,
+    agents: ['box'],
+    scopes,
+  };
+  try {
+    const corpora = await collectCorpora(config);
+    const corpus = corpora.find((item) => item.scope === input.scope);
+    if (!corpus) return { sourceDigest: null, missingRoot: true };
+    return {
+      sourceDigest: corpus.sourceDigest,
+      missingRoot: scopeMissingRoot(input.roots, corpus),
+    };
+  } catch (error) {
+    if (isUnreadableSource(error)) {
+      return { sourceDigest: null, missingRoot: true };
+    }
+    throw error;
+  }
+}
+
+export function scopeMissingRoot(
+  roots: readonly string[],
+  corpus: ScopeCorpus
+): boolean {
+  return (
+    roots.length === 0 ||
+    roots.some((root) =>
+      corpus.skipped.some(
+        (item) => item.reason === 'missing-root' && item.path === root
+      )
+    )
+  );
+}
+
+export function isUnreadableSource(error: unknown): boolean {
+  if (error instanceof BoxError && error.code === 'BOX_SECRET') return true;
+  const code =
+    error && typeof error === 'object' && 'code' in error
+      ? String((error as { code: unknown }).code)
+      : '';
+  return (
+    code === 'ENOENT' ||
+    code === 'EACCES' ||
+    code === 'EPERM' ||
+    code === 'ENOTDIR'
+  );
+}
+
 export async function collectCorpora(
   config: BoxConfig
 ): Promise<ScopeCorpus[]> {

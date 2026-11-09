@@ -97,7 +97,7 @@ function knoloToolSet(
     }),
     knolo_verify: tool({
       description:
-        'Verify the local bytes and V5 roots for approved Knolo Knowledge Images.',
+        'Verify the local bytes and V5 roots for approved Knolo Knowledge Images. A matching pin stays valid when sources are stale. stale is set only when the mount records source roots.',
       inputSchema: z.object({
         imageId: z.string().min(1).optional(),
       }),
@@ -108,9 +108,12 @@ function knoloToolSet(
     }),
     knolo_status: tool({
       description:
-        'Show the caller-visible, verified Knolo Knowledge Image mounts.',
+        'Show the caller-visible, verified Knolo Knowledge Image mounts. When a mount records source roots, the result includes builtAt and whether those sources are stale.',
       inputSchema: z.object({}),
-      execute: async () => run(() => ({ mounts: service.status(caller) })),
+      execute: async () =>
+        run(async () => ({
+          mounts: await service.statusWithFreshness(caller),
+        })),
     }),
   };
 
