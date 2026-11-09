@@ -99,11 +99,12 @@ export function registerKarTools(
   options: {
     service: KnoloOpenClawService;
     agentId: string;
+    sessionId?: string;
     graphs: ReadonlyMap<string, PinnedKarGraph>;
     refresh?: ImageRefresh;
   }
 ): void {
-  const { service, agentId, graphs, refresh } = options;
+  const { service, agentId, sessionId, graphs, refresh } = options;
 
   server.registerTool(
     'knolo_kar_evaluate',
@@ -120,7 +121,7 @@ export function registerKarTools(
       try {
         await refresh?.();
         assertPlanSize(plan);
-        const caller = callerFrom(server, agentId);
+        const caller = callerFrom(server, agentId, sessionId);
         const mount = service.readAuthorizedMount(mountId, caller);
         const pinned = requireGraph(graphs, mountId);
         const evaluation = evaluateKar(pinned.session, { proposition, plan });
@@ -194,7 +195,7 @@ export function registerKarTools(
             'Provide exactly one of result or dossier.'
           );
         }
-        const caller = callerFrom(server, agentId);
+        const caller = callerFrom(server, agentId, sessionId);
         const mount = service.readAuthorizedMount(mountId, caller);
         const pinned = requireGraph(graphs, mountId);
         const verdict = dossier
@@ -258,7 +259,7 @@ export function registerKarTools(
     async ({ mountId, question, answer }) => {
       try {
         await refresh?.();
-        const caller = callerFrom(server, agentId);
+        const caller = callerFrom(server, agentId, sessionId);
         const mount = service.readAuthorizedMount(mountId, caller);
         const pinned = graphs.get(mountId);
         const usedGraph = referencesKar(answer) ? pinned : undefined;

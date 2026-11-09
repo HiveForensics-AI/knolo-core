@@ -21,12 +21,13 @@ export function registerKnoloTools(
   options: {
     service: KnoloOpenClawService;
     agentId: string;
+    sessionId?: string;
     maxHits: number;
     graphs: ReadonlyMap<string, PinnedKarGraph>;
     refresh?: ImageRefresh;
   }
 ): void {
-  const { service, agentId, maxHits, graphs, refresh } = options;
+  const { service, agentId, sessionId, maxHits, graphs, refresh } = options;
 
   server.registerTool(
     'knolo_search',
@@ -48,7 +49,7 @@ export function registerKnoloTools(
             ...(imageIds === undefined ? {} : { imageIds }),
             ...(limit === undefined ? {} : { limit: Math.min(limit, maxHits) }),
           },
-          callerFrom(server, agentId)
+          callerFrom(server, agentId, sessionId)
         );
         return success(result);
       } catch (error) {
@@ -82,7 +83,7 @@ export function registerKnoloTools(
             ...(start === undefined ? {} : { start }),
             ...(end === undefined ? {} : { end }),
           },
-          callerFrom(server, agentId)
+          callerFrom(server, agentId, sessionId)
         );
         return success(result);
       } catch (error) {
@@ -106,7 +107,7 @@ export function registerKnoloTools(
         await refresh?.();
         const results = await service.verify(
           imageId,
-          callerFrom(server, agentId)
+          callerFrom(server, agentId, sessionId)
         );
         return success({ results });
       } catch (error) {
@@ -128,7 +129,7 @@ export function registerKnoloTools(
         await refresh?.();
         return success({
           mounts: await service.statusWithFreshness(
-            callerFrom(server, agentId)
+            callerFrom(server, agentId, sessionId)
           ),
         });
       } catch (error) {
@@ -138,6 +139,12 @@ export function registerKnoloTools(
   );
 
   if (graphs.size > 0) {
-    registerKarTools(server, { service, agentId, graphs, refresh });
+    registerKarTools(server, {
+      service,
+      agentId,
+      ...(sessionId === undefined ? {} : { sessionId }),
+      graphs,
+      refresh,
+    });
   }
 }

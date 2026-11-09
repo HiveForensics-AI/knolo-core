@@ -232,6 +232,8 @@ export type KnoloQueryReceiptV1 = {
   caller: KnoloCaller;
   query: string;
   match?: KnoloSearchMatch;
+  hitCount?: number;
+  durationMs?: number;
   queryResult: KnowledgeQueryResultV1;
   authorization: KnowledgeAuthorizationResultV1;
   returned: Array<{ objectId: string; start: number; end: number }>;
@@ -362,6 +364,7 @@ export class KnoloOpenClawService {
     const receipts: KnoloSearchResult['receipts'] = [];
 
     for (const mount of mounts) {
+      const started = Date.now();
       let plan = textQueryPlan(query, limit);
       let queryResult = queryKnowledgeImageV5(mount.image, plan);
       // Store partial on the plan so a later verify replays the same hits.
@@ -393,6 +396,8 @@ export class KnoloOpenClawService {
           `Knolo policy denies query access to image ${mount.config.id}.`
         );
       }
+      const durationMs = Math.max(0, Date.now() - started);
+      const hitCount = authorization.allowedHits.length;
 
       const returned = authorization.allowedHits.map((hit) => {
         const object = mount.image.objects.find(
@@ -424,6 +429,8 @@ export class KnoloOpenClawService {
           caller,
           query,
           match,
+          hitCount,
+          durationMs,
           queryResult,
           authorization,
           returned,
@@ -652,6 +659,27 @@ export class KnoloOpenClawService {
       throw new KnoloPluginError(
         'IMAGE_INVALID',
         'Knolo receipt authorization mismatch.'
+      );
+    }
+    if (receipt.hitCount !== undefined) {
+      if (
+        !Number.isSafeInteger(receipt.hitCount) ||
+        receipt.hitCount < 0 ||
+        receipt.hitCount !== authorization.allowedHits.length
+      ) {
+        throw new KnoloPluginError(
+          'IMAGE_INVALID',
+          'Knolo receipt hit count does not match the result.'
+        );
+      }
+    }
+    if (
+      receipt.durationMs !== undefined &&
+      (!Number.isSafeInteger(receipt.durationMs) || receipt.durationMs < 0)
+    ) {
+      throw new KnoloPluginError(
+        'IMAGE_INVALID',
+        'Knolo receipt duration is invalid.'
       );
     }
     for (const entry of receipt.returned) {

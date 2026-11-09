@@ -13,6 +13,7 @@ import { registerKnoloTools } from './tools.js';
 export function createKnoloMcpServer(options: {
   service: KnoloOpenClawService;
   agentId: string;
+  sessionId?: string;
   maxHits: number;
   graphs: ReadonlyMap<string, PinnedKarGraph>;
   refresh?: ImageRefresh;
@@ -38,6 +39,9 @@ export async function createKnoloMcp(input: unknown): Promise<{
     server: createKnoloMcpServer({
       service,
       agentId: config.agentId,
+      ...(config.sessionId === undefined
+        ? {}
+        : { sessionId: config.sessionId }),
       maxHits: config.maxHits,
       graphs,
     }),
@@ -74,6 +78,9 @@ export async function openKnoloMcp(configPath: string): Promise<{
     server: createKnoloMcpServer({
       service,
       agentId: config.agentId,
+      ...(config.sessionId === undefined
+        ? {}
+        : { sessionId: config.sessionId }),
       maxHits: config.maxHits,
       graphs,
       refresh,

@@ -16,7 +16,11 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { createKnowledgeImageV5 } from '@knolo/core';
+import {
+  canonicalCbor,
+  createKnowledgeImageV5,
+  digestDomain,
+} from '@knolo/core';
 import { askCortex, createCortexSession } from '@knolo/core/cortex';
 import {
   createKarDossier,
@@ -129,6 +133,9 @@ async function fixture(overrides = {}) {
       },
     ],
   };
+  if (overrides.sessionId !== undefined) {
+    config.sessionId = overrides.sessionId;
+  }
   for (const key of [
     'maxHits',
     'maxExcerptBytes',
@@ -1330,6 +1337,76 @@ test('knolo_search uses whole words, stopwords, OR, phrases, and partial match',
     );
   } finally {
     await client.close();
+  }
+});
+
+test('receipts record hit count, duration, and the startup caller', async () => {
+  const { config, root } = await fixture();
+  const { client, service } = await connected(config);
+  const second = await fixture({
+    agentId: 'reader',
+    agents: ['reader'],
+    sessionId: 'shift-a',
+  });
+  const other = await connected(second.config);
+  try {
+    const search = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+      agentId: 'intruder',
+      sessionId: 'chat-9',
+    });
+    assert.notEqual(search.isError, true);
+    const receiptId = search.structuredContent.receipts[0].receiptId;
+    const receiptPath = path.join(root, 'audit', `${receiptId}.json`);
+    const receipt = JSON.parse(await readFile(receiptPath, 'utf8'));
+    assert.equal(receipt.caller.agentId, 'mcp');
+    assert.equal(receipt.caller.sessionId, 'knolo-mcp-test');
+    assert.equal(receipt.hitCount, 1);
+    assert.equal(receipt.hitCount, receipt.authorization.allowedHits.length);
+    assert.equal(Number.isSafeInteger(receipt.durationMs), true);
+    assert.equal(receipt.durationMs >= 0, true);
+    assert.equal(receipt.query, 'enterprise refunds');
+    await service.verifyReceipt(receiptId);
+
+    const legacy = { ...receipt };
+    delete legacy.hitCount;
+    delete legacy.durationMs;
+    delete legacy.recordDigest;
+    const recordDigest = digestDomain(
+      'openclaw-query-receipt',
+      canonicalCbor(legacy)
+    );
+    await writeFile(
+      receiptPath,
+      `${JSON.stringify({ ...legacy, recordDigest })}\n`
+    );
+    await service.verifyReceipt(receiptId);
+
+    const shifted = await call(other.client, 'knolo_search', {
+      query: 'refunds',
+    });
+    assert.notEqual(shifted.isError, true);
+    const shiftedReceipt = JSON.parse(
+      await readFile(
+        path.join(
+          second.root,
+          'audit',
+          `${shifted.structuredContent.receipts[0].receiptId}.json`
+        ),
+        'utf8'
+      )
+    );
+    assert.deepEqual(shiftedReceipt.caller, {
+      agentId: 'reader',
+      sessionId: 'shift-a',
+    });
+    assert.notEqual(shiftedReceipt.caller.sessionId, 'knolo-mcp-test');
+    await other.service.verifyReceipt(
+      shifted.structuredContent.receipts[0].receiptId
+    );
+  } finally {
+    await client.close();
+    await other.client.close();
   }
 });
 

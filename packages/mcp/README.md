@@ -18,9 +18,12 @@ Without those fields the status object stays `imageId`, `stateRoot`, `source`,
 and `status`. A stale source does not make a matching pin invalid.
 
 Caller identity is `agentId` in the config file, default `mcp`. That id must
-be listed in the mount's `agents` array. Tool arguments cannot set it. The
-MCP client's `clientInfo.name` is stored on the receipt as `sessionId` and is
-not used for authorization. One `principal` per mount is what policy
+be listed in the mount's `agents` array. Tool arguments cannot set it. An
+optional config `sessionId` is stored on the receipt instead of the MCP
+client name when it is set. Otherwise the client's `clientInfo.name` is
+stored as `sessionId`. Neither value is used for authorization. `sessionId`
+is captured when the process starts. One shared stdio process cannot see a
+different session id for each chat. One `principal` per mount is what policy
 evaluation sees.
 
 `knolo_search` lowercases the query. A quoted phrase is one contiguous whole
@@ -35,17 +38,21 @@ different matcher: every space-separated term is a substring, in object id
 order.
 
 Every search writes an `openclaw-knolo-query-v1` receipt before it returns
-hits. The receipt records `match` and the plan, so a later verify replays the
-same hits. An unwritable `auditDir` returns `AUDIT_UNAVAILABLE` and no hits.
+hits. The receipt records `match`, `hitCount`, `durationMs`, and the plan.
+`hitCount` is the number of allowed hits. `durationMs` times the query and
+the policy check, not the audit write. Verify checks `hitCount` against the
+stored result and does not replay the clock. Older receipts without those
+fields still verify. An unwritable `auditDir` returns `AUDIT_UNAVAILABLE` and
+no hits.
 Before each tool call, a server started from a config file stats that config,
 every mounted image, and any pinned KAR graph. An unchanged size and
 modification time keeps the loaded image. A changed file is checked against
 the pin in that config. A match replaces the loaded image. A mount removed
 from the config is no longer served, even when its image file is still on
 disk. A mismatch returns `IMAGE_INVALID` and does not serve the previous
-image. A config file that cannot be read fails that call. `agentId` and
-`maxHits` stay at the values from process start. KAR graphs are authorized
-with that same startup `agentId`.
+image. A config file that cannot be read fails that call. `agentId`,
+`sessionId`, and `maxHits` stay at the values from process start. KAR graphs
+are authorized with that same startup `agentId`.
 
 `@knolo/mcp@0.2.0` is published on npm. A mount without a `kar` block exposes
 the four tools above. A mount with a `kar` block also exposes
