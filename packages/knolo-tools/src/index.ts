@@ -114,6 +114,7 @@ export type KnoloVerification = {
   stateRoot: string;
   commitDigest: string;
   valid: true;
+  builtAt?: string;
   stale?: boolean;
 };
 
@@ -446,7 +447,7 @@ export class KnoloOpenClawService {
         stateRoot: checked.image.stateRoot,
         commitDigest: checked.image.commitDigest,
         valid: true,
-        ...(fresh ? { stale: fresh.stale } : {}),
+        ...(fresh ? { builtAt: fresh.builtAt, stale: fresh.stale } : {}),
       });
     }
     return results;
