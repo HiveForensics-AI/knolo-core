@@ -10,9 +10,9 @@ Node.js 20 or newer must be on `PATH`.
 grok plugin install HiveForensics-AI/knolo-core#plugins/knolo-code --trust
 ```
 
-That command installs the skill and the `knolo-code` MCP server. The server runs `npx -y @knolo/code@0.1.0 mcp`. The first start downloads this package. If the server is marked failed, set `MCP_TIMEOUT=120000` and reload MCP servers.
+That command installs the skill and the `knolo-code` MCP server. The server runs `npx -y @knolo/code@0.1.1 mcp`. The first start downloads this package. If the server is marked failed, set `MCP_TIMEOUT=120000` and reload MCP servers.
 
-`@knolo/code@0.1.0` is published on npm as `latest`. A machine without this repository loads it with `npx -y @knolo/code@0.1.0 mcp`. The registry check is in [the code image doc](../../docs/code/README.md).
+`@knolo/code@0.1.1` is published on npm as `latest`. A machine without this repository loads it with `npx -y @knolo/code@0.1.1 mcp`. The registry check is in [the code image doc](../../docs/code/README.md).
 
 In the Plugins UI, add the marketplace `HiveForensics-AI/knolo-core`, install `knolo-code`, and trust it when asked.
 

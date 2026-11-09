@@ -35,9 +35,8 @@ not replay the clock. Receipts written before those fields still verify.
 set it. EQL plans with no `textQuery` stay substring matches in object id
 order. The stopword list is `KNOLO_SEARCH_STOPWORDS`.
 
-The package requires Node 20 or newer and `@knolo/core` `^6.0.0`. It does not
+The package requires Node 20 or newer and `@knolo/core` `^6.2.1`. It does not
 download images, open a network connection, or import KAR, Cortex, coverage,
 or composition. `@knolo/openclaw@0.1.0` stays on `@knolo/tools` `^0.1.0`.
 A clean install resolves that range to the published 0.1.0 package, because
-the in-tree 0.2.0 does not satisfy it. `@knolo/tools@0.2.0` is the in-tree
-version and this change does not publish it.
+`0.2.1` does not satisfy it. `@knolo/tools@0.2.1` is published.

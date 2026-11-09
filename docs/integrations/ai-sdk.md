@@ -1,8 +1,8 @@
 # Vercel AI SDK
 
 `@knolo/ai-sdk` returns Vercel AI SDK tools for a pinned Knolo V5 Knowledge
-Image. The package is in this repository at version 0.1.0. It is not on npm
-yet. Knolo does not call a model and does not read an API key.
+Image. `@knolo/ai-sdk@0.1.0` is published. Knolo does not call a model and
+does not read an API key.
 
 The host passes the tools to its own model. The peer dependency is `ai`
 `^7.0.0`. The package asks for Node.js 22 or newer. It does not run on the
@@ -15,7 +15,7 @@ A host that already has an MCP client can launch the published server
 instead:
 
 ```bash
-npx -y @knolo/mcp@0.2.0 --config /absolute/knolo-mcp.json
+npx -y @knolo/mcp@0.2.1 --config /absolute/knolo-mcp.json
 ```
 
 That command is stdio. This package does not start it.

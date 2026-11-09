@@ -4,8 +4,8 @@
 owns the model. This smoke does not call one, and it does not read an API
 key.
 
-The package is version 0.1.0 in this repository. It is not on npm yet. It
-needs Node.js 22 or newer and does not run on the edge runtime.
+`@knolo/ai-sdk@0.1.0` is published. It needs Node.js 22 or newer and does not
+run on the edge runtime.
 
 Search keeps each remaining term as a whole word. Unquoted stopwords and terms shorter than 3 characters are dropped. A receipt is an
 integrity check. It does not mean a claim is proven. `SATISFIED` means
@@ -14,7 +14,7 @@ evidence requirements were met.
 A host that already speaks MCP can use the published server instead:
 
 ```bash
-npx -y @knolo/mcp@0.2.0 --config /absolute/knolo-mcp.json
+npx -y @knolo/mcp@0.2.1 --config /absolute/knolo-mcp.json
 ```
 
 ## Run the smoke

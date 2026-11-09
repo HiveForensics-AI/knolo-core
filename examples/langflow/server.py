@@ -13,7 +13,7 @@ from pathlib import Path
 os.environ.setdefault("LANGFLOW_DO_NOT_TRACK", "true")
 os.environ.setdefault("DO_NOT_TRACK", "true")
 
-PUBLISHED_PACKAGE = "@knolo/mcp@0.2.0"
+PUBLISHED_PACKAGE = "@knolo/mcp@0.2.1"
 PUBLISHED_COMMAND = "npx"
 PUBLISHED_ARGS = ["-y", PUBLISHED_PACKAGE]
 PLACEHOLDER_CONFIG = "/absolute/knolo-mcp.json"

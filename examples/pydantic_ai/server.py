@@ -13,7 +13,7 @@ from pathlib import Path
 from fastmcp.client.transports import StdioTransport
 from pydantic_ai.mcp import MCPToolset
 
-PUBLISHED_PACKAGE = "@knolo/mcp@0.2.0"
+PUBLISHED_PACKAGE = "@knolo/mcp@0.2.1"
 
 
 def mcp_config_path() -> Path | None:

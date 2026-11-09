@@ -18,7 +18,7 @@ export function createKnoloMcpServer(options: {
   graphs: ReadonlyMap<string, PinnedKarGraph>;
   refresh?: ImageRefresh;
 }): McpServer {
-  const server = new McpServer({ name: 'knolo', version: '0.2.0' });
+  const server = new McpServer({ name: 'knolo', version: '0.2.1' });
   registerKnoloTools(server, options);
   return server;
 }

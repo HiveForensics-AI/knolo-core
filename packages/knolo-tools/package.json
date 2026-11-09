@@ -1,6 +1,6 @@
 {
   "name": "@knolo/tools",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "description": "Host-agnostic verified Knowledge Image query, policy, and receipt service.",
   "license": "Apache-2.0",
@@ -36,7 +36,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@knolo/core": "^6.0.0"
+    "@knolo/core": "^6.2.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

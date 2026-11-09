@@ -54,7 +54,9 @@ image. A config file that cannot be read fails that call. `agentId`,
 `sessionId`, and `maxHits` stay at the values from process start. KAR graphs
 are authorized with that same startup `agentId`.
 
-`@knolo/mcp@0.2.0` is published on npm. A mount without a `kar` block exposes
+`@knolo/mcp@0.2.1` is published on npm. This tree sets `server.json` and the
+MCP server version to `0.2.1`. The published `0.2.1` tarball still reports
+`0.2.0` in those two fields. A mount without a `kar` block exposes
 the four tools above. A mount with a `kar` block also exposes
 `knolo_kar_evaluate`, `knolo_kar_verify`, and `knolo_cortex_verify`. The
 registry name in `server.json` is `io.github.HiveForensics-AI/knolo`.
@@ -71,8 +73,7 @@ same server. The
 [Dify example](../../docs/integrations/dify.md) use the same
 server. The
 [Vercel AI SDK example](../../docs/integrations/ai-sdk.md) calls the same
-service through `@knolo/ai-sdk`. That package is in this repository and is
-not on npm yet.
+service through `@knolo/ai-sdk`. `@knolo/ai-sdk@0.1.0` is published.
 
 ## Config
 
@@ -166,7 +167,7 @@ VS Code (`.vscode/mcp.json`):
 }
 ```
 
-The package requires Node 20 or newer, `@knolo/core` `^6.2.0`, and
-`@knolo/tools` `^0.2.0`. Coverage, composition, and authoring stay outside
+The package requires Node 20 or newer, `@knolo/core` `^6.2.1`, and
+`@knolo/tools` `^0.2.1`. Coverage, composition, and authoring stay outside
 this server. Verification checks integrity. It does not decide that a claim
 or an answer is true.
