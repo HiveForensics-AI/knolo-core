@@ -32,7 +32,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "npm run build --workspace @knolo/core && npm run build --workspace @knolo/tools && tsc -p tsconfig.json",
     "test": "npm run build --workspace @knolo/core && npm run build --workspace @knolo/mcp && tsc -p tsconfig.json && node --test test/*.test.mjs",
     "prepublishOnly": "npm test"
   },

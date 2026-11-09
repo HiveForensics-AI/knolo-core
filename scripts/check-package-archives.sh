@@ -13,7 +13,8 @@ for package_name in \
   'create-knolo-app' \
   '@knolo/reflex' \
   '@knolo/tools' \
-  '@knolo/mcp'; do
+  '@knolo/mcp' \
+  '@knolo/ai-sdk'; do
   npm --cache "$npm_cache_dir" pack --workspace "$package_name" --dry-run --json >/dev/null
   echo "npm archive check passed: $package_name"
 done
