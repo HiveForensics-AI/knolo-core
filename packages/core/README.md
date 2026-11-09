@@ -110,6 +110,10 @@ const result = queryKnowledgeImageV5(
 console.log(result.planRoot, result.resultRoot, result.hits);
 ```
 
+EQL `SEARCH` matches every space-separated term as a substring and orders hits
+by object id. An optional `textQuery` on the plan is a separate whole-word
+mode. Old plans omit it and keep the substring matcher.
+
 Persistent query indexes and append-only query history are available as
 state-root-bound V5 artifacts. Bounded joins and deterministic ordering remain
 available in the V5 EQL surface.

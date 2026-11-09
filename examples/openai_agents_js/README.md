@@ -6,7 +6,7 @@ One [OpenAI Agents SDK](https://github.com/openai/openai-agents-js) process read
 
 Verification checks the image pin and policy. It does not decide that a claim is true. `SATISFIED`, on the KAR tools, means evidence requirements were met. A receipt is an integrity check. It does not mean a claim is proven.
 
-Search matches every space-separated term as a substring.
+Search keeps each remaining term as a whole word. Unquoted stopwords and terms shorter than 3 characters are dropped.
 
 ## Run the offline smoke
 

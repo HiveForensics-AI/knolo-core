@@ -10,7 +10,7 @@ The fixture has no pinned graph, so the server exposes `knolo_search`, `knolo_ge
 
 Verification checks the image pin and policy. It does not decide that a claim is true. `SATISFIED`, on the KAR tools, means evidence requirements were met. A receipt is an integrity check. It does not mean a claim is proven. A policy denial returns `ACCESS_DENIED`. An unwritable audit directory returns `AUDIT_UNAVAILABLE` and no hits.
 
-Search matches every space-separated term as a substring.
+Search keeps each remaining term as a whole word. Unquoted stopwords and terms shorter than 3 characters are dropped.
 
 ## What Dify can register
 

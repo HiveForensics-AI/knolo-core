@@ -23,8 +23,20 @@ MCP client's `clientInfo.name` is stored on the receipt as `sessionId` and is
 not used for authorization. One `principal` per mount is what policy
 evaluation sees.
 
+`knolo_search` lowercases the query. A quoted phrase is one contiguous whole
+phrase. Unquoted `OR` selects any remaining term. Unquoted stopwords and terms
+shorter than 3 characters are dropped. A query that drops every term matches
+nothing. Each kept term must appear as a whole word. `match` is `all`, `any`,
+`partial`, or `none`. Hits with more matched terms come first, then matches in
+the path's final segment and the first line, then matches in the rest of the
+text, then object id. The stopword list is in the
+[box doc](../../docs/box/README.md). A direct EQL `SEARCH` string is a
+different matcher: every space-separated term is a substring, in object id
+order.
+
 Every search writes an `openclaw-knolo-query-v1` receipt before it returns
-hits. An unwritable `auditDir` returns `AUDIT_UNAVAILABLE` and no hits.
+hits. The receipt records `match` and the plan, so a later verify replays the
+same hits. An unwritable `auditDir` returns `AUDIT_UNAVAILABLE` and no hits.
 Before each tool call, a server started from a config file stats that config,
 every mounted image, and any pinned KAR graph. An unchanged size and
 modification time keeps the loaded image. A changed file is checked against

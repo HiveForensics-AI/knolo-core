@@ -362,6 +362,8 @@ test('read tools match MCP and fail closed', async () => {
     assert.notEqual(mcpSearch.isError, true);
     assertSameBody(search, mcpSearch.structuredContent);
     assert.equal(search.version, 1);
+    assert.equal(search.receipts[0].match, 'all');
+    assert.equal(search.hits[0].match, 'all');
     assert.match(search.hits[0].excerpt, /Annual enterprise refunds/);
     assert.match(search.hits[0].receiptId, /^qr_/);
     const receipt = JSON.parse(

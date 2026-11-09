@@ -20,6 +20,17 @@ and the host returns no result. Mount failures use `ACCESS_DENIED`,
 `IMAGE_INVALID`, `IMAGE_UNAVAILABLE`, `NOT_FOUND`, `QUERY_INVALID`, or
 `STATE_ROOT_MISMATCH`.
 
+`search` parses `knolo_search` text into a V5 plan with `textQuery`. A quoted
+phrase is one contiguous whole phrase. Unquoted `OR` selects any remaining
+term. Unquoted stopwords and terms shorter than 3 characters are dropped. A
+query that drops every term matches nothing. Each kept term must appear as a
+whole word. The stored plan uses `rank: relevance`. If every term misses and
+at least one term hits, the stored mode is `partial`, so verify replays that
+mode instead of choosing again. `match` on the result and the receipt is
+`all`, `any`, `partial`, or `none`. EQL plans with no `textQuery` stay
+substring matches in object id order. The stopword list is
+`KNOLO_SEARCH_STOPWORDS`.
+
 The package requires Node 20 or newer and `@knolo/core` `^6.0.0`. It does not
 download images, open a network connection, or import KAR, Cortex, coverage,
 or composition. `@knolo/openclaw@0.1.0` stays on `@knolo/tools` `^0.1.0`.
