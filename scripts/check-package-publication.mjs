@@ -67,6 +67,11 @@ const npmPackages = [
       'server.json',
     ],
   },
+  {
+    name: '@knolo/ai-sdk',
+    directory: 'ai-sdk',
+    expected: ['README.md', 'dist/index.js', 'dist/index.d.ts'],
+  },
 ];
 
 const rustPackages = [

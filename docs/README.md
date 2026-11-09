@@ -46,6 +46,10 @@ operational guides for Knolo.
   verification, and Cortex trace checks. Pins, policy checks, and receipts
   come from [`@knolo/tools`](../packages/knolo-tools/README.md). Caller
   identity comes from the server config.
+- [`@knolo/ai-sdk`](../packages/ai-sdk/README.md) — Vercel AI SDK tools over
+  [`@knolo/tools`](../packages/knolo-tools/README.md). Knolo does not call a
+  model. A search returns a query receipt. `SATISFIED` means evidence
+  requirements were met. This package is not published yet.
 - [Knolo Verify action](../.github/actions/knolo-verify/README.md) — composite
   GitHub Action that runs a pinned `@knolo/cli` over committed packs, images,
   KAR artifacts, attestations, and Cortex traces. It does not add verification
@@ -91,6 +95,10 @@ operational guides for Knolo.
   an http or https URL. A Python smoke calls published `@knolo/mcp@0.2.0`
   over stdio. Knolo does not call a model. A search returns a query
   receipt. `SATISFIED` means evidence requirements were met.
+- [Vercel AI SDK](integrations/ai-sdk.md) — `@knolo/ai-sdk` tools over
+  `@knolo/tools`. Knolo does not call a model. A search returns a query
+  receipt. `SATISFIED` means evidence requirements were met. This package
+  is not published yet.
 - [Box](box/README.md) — pinned V5 images of skills, opted-in notes, private
   memory, and capped session text on a Grok Bot computer. `@knolo/box` starts
   the existing read-only MCP server in one process. This package is not

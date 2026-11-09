@@ -154,6 +154,20 @@ assert.equal(mcpServer.packages[0].identifier, '@knolo/mcp');
 assert.equal(mcpServer.packages[0].version, mcpVersion);
 assert.equal(mcpServer.packages[0].transport.type, 'stdio');
 
+const aiSdkVersion = '0.1.0';
+const aiSdkPackage = readJson('packages/ai-sdk/package.json');
+assert.equal(aiSdkPackage.name, '@knolo/ai-sdk');
+assert.equal(aiSdkPackage.version, aiSdkVersion);
+assert.equal(aiSdkPackage.license, 'Apache-2.0');
+assert.notEqual(aiSdkPackage.private, true);
+assert.equal(aiSdkPackage.publishConfig?.access, 'public');
+assert.equal(aiSdkPackage.engines?.node, '>=22');
+assert.equal(aiSdkPackage.dependencies?.['@knolo/core'], cliCoreRange);
+assert.equal(aiSdkPackage.dependencies?.['@knolo/tools'], '^0.2.0');
+assert.equal(aiSdkPackage.peerDependencies?.ai, '^7.0.0');
+assert.equal(aiSdkPackage.dependencies?.ai, undefined);
+assert.equal(aiSdkPackage.devDependencies?.ai, '7.0.166');
+
 const openclawPackage = readJson('packages/openclaw/package.json');
 assert.equal(openclawPackage.name, '@knolo/openclaw');
 assert.equal(openclawPackage.version, openclawVersion);
@@ -162,5 +176,5 @@ assert.equal(openclawPackage.dependencies?.['@knolo/tools'], '^0.1.0');
 assert.equal(openclawPackage.engines?.node, '>=24.16.0');
 
 console.log(
-  `Release metadata passed for npm ${releaseVersion} with CLI ${cliReleaseVersion}. Rust and Python stay ${platformVersion}. @knolo/tools is ${toolsVersion}. @knolo/mcp is ${mcpVersion}. @knolo/openclaw stays ${openclawVersion}.`
+  `Release metadata passed for npm ${releaseVersion} with CLI ${cliReleaseVersion}. Rust and Python stay ${platformVersion}. @knolo/tools is ${toolsVersion}. @knolo/mcp is ${mcpVersion}. @knolo/ai-sdk is ${aiSdkVersion}. @knolo/openclaw stays ${openclawVersion}.`
 );
