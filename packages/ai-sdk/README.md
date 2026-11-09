@@ -34,9 +34,13 @@ Without a `kar` block the tools are `knolo_search`, `knolo_get`,
 Caller identity is `agentId` in the config, default `mcp`. Tool arguments
 cannot set it. This adapter does not add a session id.
 
-Search matches every space-separated term as a substring of the normalized
-text. `knolo_search` writes an `openclaw-knolo-query-v1` receipt before it
-returns hits. Receipt ids from search use the `qr_` prefix. KAR and Cortex
+`knolo_search` lowercases the query, keeps a quoted phrase as one whole
+phrase, and treats unquoted `OR` as any remaining term. Unquoted stopwords and
+terms shorter than 3 characters are dropped. Each kept term must appear as a
+whole word. `match` is `all`, `any`, `partial`, or `none`. EQL `SEARCH` is a
+different matcher: every space-separated term is a substring. `knolo_search`
+writes an `openclaw-knolo-query-v1` receipt before it returns hits. Receipt
+ids from search use the `qr_` prefix. KAR and Cortex
 receipts use `er_`. A receipt is an integrity check. It does not mean a claim
 is proven.
 

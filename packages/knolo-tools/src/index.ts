@@ -21,10 +21,102 @@ import {
   type KnowledgeAuthorizationResultV1,
   type KnowledgeImageV5,
   type KnowledgePolicyV1,
+  type KnowledgeQueryPlanV1,
   type KnowledgeQueryResultV1,
+  type KnowledgeTextQueryModeV1,
+  type KnowledgeTextQueryTermV1,
 } from '@knolo/core';
 
 export const OPENCLAW_KNOLO_RECEIPT_VERSION = 'openclaw-knolo-query-v1';
+export const KNOLO_SEARCH_DESCRIPTION =
+  'Search approved Knolo Knowledge Images. Lowercase the query. A quoted phrase is one contiguous whole phrase. Unquoted OR selects any remaining term. Unquoted stopwords and terms shorter than 3 characters are dropped. A query that drops every term matches nothing. Each kept term must appear as a whole word. match is all when every term hits, any for OR, partial when every-term misses but one term hits, and none when nothing hits. Hits with more matched terms come first, then matches in the path final segment and the first line, then matches in the rest of the text, then object id.';
+export const KNOLO_SEARCH_STOPWORDS = [
+  'a',
+  'about',
+  'after',
+  'also',
+  'an',
+  'and',
+  'are',
+  'as',
+  'at',
+  'be',
+  'been',
+  'before',
+  'being',
+  'between',
+  'but',
+  'by',
+  'can',
+  'could',
+  'do',
+  'during',
+  'for',
+  'from',
+  'had',
+  'has',
+  'have',
+  'he',
+  'her',
+  'here',
+  'how',
+  'i',
+  'if',
+  'in',
+  'into',
+  'is',
+  'it',
+  'its',
+  'just',
+  'me',
+  'my',
+  'not',
+  'of',
+  'off',
+  'on',
+  'only',
+  'our',
+  'out',
+  'over',
+  'she',
+  'should',
+  'so',
+  'than',
+  'that',
+  'the',
+  'their',
+  'them',
+  'then',
+  'there',
+  'these',
+  'they',
+  'this',
+  'those',
+  'through',
+  'to',
+  'under',
+  'up',
+  'was',
+  'we',
+  'were',
+  'what',
+  'when',
+  'where',
+  'which',
+  'who',
+  'why',
+  'will',
+  'with',
+  'within',
+  'without',
+  'would',
+  'you',
+  'your',
+] as const;
+const SEARCH_STOPWORDS = new Set<string>(KNOLO_SEARCH_STOPWORDS);
+const MIN_SEARCH_TERM_LENGTH = 3;
+
+export type KnoloSearchMatch = 'all' | 'any' | 'partial' | 'none';
 export const KNOLO_MCP_EVIDENCE_RECEIPT_VERSION =
   'knolo-mcp-evidence-receipt-v1';
 
@@ -76,6 +168,7 @@ export type KnoloSearchHit = {
   planRoot: string;
   resultRoot: string;
   receiptId: string;
+  match: KnoloSearchMatch;
 };
 
 export type KnoloSearchResult = {
@@ -87,6 +180,7 @@ export type KnoloSearchResult = {
     stateRoot: string;
     planRoot: string;
     resultRoot: string;
+    match: KnoloSearchMatch;
   }>;
 };
 
@@ -137,6 +231,7 @@ export type KnoloQueryReceiptV1 = {
   stateRoot: string;
   caller: KnoloCaller;
   query: string;
+  match?: KnoloSearchMatch;
   queryResult: KnowledgeQueryResultV1;
   authorization: KnowledgeAuthorizationResultV1;
   returned: Array<{ objectId: string; start: number; end: number }>;
@@ -267,10 +362,24 @@ export class KnoloOpenClawService {
     const receipts: KnoloSearchResult['receipts'] = [];
 
     for (const mount of mounts) {
-      const queryResult = queryKnowledgeImageV5(
-        mount.image,
-        `FROM chunk SEARCH "${escapeEql(query)}" LIMIT ${limit}`
-      );
+      let plan = textQueryPlan(query, limit);
+      let queryResult = queryKnowledgeImageV5(mount.image, plan);
+      // Store partial on the plan so a later verify replays the same hits.
+      if (
+        plan.textQuery?.mode === 'all' &&
+        plan.textQuery.terms.length > 0 &&
+        queryResult.hits.length === 0
+      ) {
+        const probe = queryKnowledgeImageV5(
+          mount.image,
+          textQueryPlan(query, limit, 'any')
+        );
+        if (probe.hits.length > 0) {
+          plan = textQueryPlan(query, limit, 'partial');
+          queryResult = queryKnowledgeImageV5(mount.image, plan);
+        }
+      }
+      const match = searchMatch(plan, queryResult.hits.length);
       const authorization = evaluateKnowledgeQueryPolicyV5(
         mount.image,
         queryResult,
@@ -314,6 +423,7 @@ export class KnoloOpenClawService {
           stateRoot: mount.image.stateRoot,
           caller,
           query,
+          match,
           queryResult,
           authorization,
           returned,
@@ -326,6 +436,7 @@ export class KnoloOpenClawService {
         stateRoot: queryResult.stateRoot,
         planRoot: queryResult.planRoot,
         resultRoot: queryResult.resultRoot,
+        match,
       });
       for (const returnedHit of returned) {
         const hit = authorization.allowedHits.find(
@@ -352,6 +463,7 @@ export class KnoloOpenClawService {
           planRoot: queryResult.planRoot,
           resultRoot: queryResult.resultRoot,
           receiptId: receipt.receiptId,
+          match,
         });
       }
     }
@@ -1211,6 +1323,123 @@ async function sourceFreshness(
 
 function escapeEql(value: string): string {
   return value.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
+}
+
+function textQueryPlan(
+  query: string,
+  limit: number,
+  mode?: KnowledgeTextQueryModeV1
+): KnowledgeQueryPlanV1 {
+  const parsed = parseKnoloSearch(query);
+  return {
+    version: 1,
+    source: 'knowledge-image-v5',
+    kind: 'chunk',
+    filters: [],
+    search: null,
+    limit,
+    textQuery: {
+      mode: mode ?? parsed.mode,
+      terms: parsed.terms,
+      rank: 'relevance',
+    },
+  };
+}
+
+function searchMatch(
+  plan: KnowledgeQueryPlanV1,
+  hitCount: number
+): KnoloSearchMatch {
+  const terms = plan.textQuery?.terms.length ?? 0;
+  if (hitCount === 0 || terms === 0 || !plan.textQuery) return 'none';
+  return plan.textQuery.mode;
+}
+
+function parseKnoloSearch(query: string): {
+  mode: 'all' | 'any';
+  terms: KnowledgeTextQueryTermV1[];
+} {
+  const tokens = tokenizeSearch(query.toLowerCase());
+  let mode: 'all' | 'any' = 'all';
+  const terms: KnowledgeTextQueryTermV1[] = [];
+  const seen = new Set<string>();
+  for (const token of tokens) {
+    if (!token.phrase && token.text === 'or') {
+      mode = 'any';
+      continue;
+    }
+    if (
+      !token.phrase &&
+      (token.text.length < MIN_SEARCH_TERM_LENGTH ||
+        SEARCH_STOPWORDS.has(token.text))
+    ) {
+      continue;
+    }
+    const key = `${token.phrase ? '1' : '0'}\0${token.text}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    terms.push(token);
+  }
+  return { mode, terms };
+}
+
+function tokenizeSearch(query: string): KnowledgeTextQueryTermV1[] {
+  const tokens: KnowledgeTextQueryTermV1[] = [];
+  let cursor = 0;
+  let word = '';
+  const pushWord = (): void => {
+    const text = word.replace(/\s+/gu, ' ').trim();
+    word = '';
+    if (text) tokens.push({ text, phrase: false });
+  };
+  while (cursor < query.length) {
+    const char = query[cursor] ?? '';
+    if (char === '"') {
+      pushWord();
+      cursor += 1;
+      let phrase = '';
+      let closed = false;
+      while (cursor < query.length) {
+        const next = query[cursor] ?? '';
+        cursor += 1;
+        if (next === '"') {
+          closed = true;
+          break;
+        }
+        if (next === '\\') {
+          const escaped = query[cursor];
+          if (escaped !== '"' && escaped !== '\\') {
+            throw new KnoloPluginError(
+              'QUERY_INVALID',
+              'Search quotes only escape quotes and backslashes.'
+            );
+          }
+          cursor += 1;
+          phrase += escaped ?? '';
+          continue;
+        }
+        phrase += next;
+      }
+      if (!closed) {
+        throw new KnoloPluginError(
+          'QUERY_INVALID',
+          'Search phrase is missing its closing quote.'
+        );
+      }
+      const text = phrase.replace(/\s+/gu, ' ').trim();
+      if (text) tokens.push({ text, phrase: true });
+      continue;
+    }
+    if (/\s/u.test(char)) {
+      pushWord();
+      cursor += 1;
+      continue;
+    }
+    word += char;
+    cursor += 1;
+  }
+  pushWord();
+  return tokens;
 }
 
 function sha256(bytes: Uint8Array): string {

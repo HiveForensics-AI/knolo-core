@@ -1,4 +1,7 @@
-import { type KnoloOpenClawService } from '@knolo/tools';
+import {
+  KNOLO_SEARCH_DESCRIPTION,
+  type KnoloOpenClawService,
+} from '@knolo/tools';
 import { type McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
 import type { PinnedKarGraph } from './graphs.js';
@@ -28,7 +31,7 @@ export function registerKnoloTools(
   server.registerTool(
     'knolo_search',
     {
-      description: 'Search approved, verified Knolo Knowledge Images.',
+      description: KNOLO_SEARCH_DESCRIPTION,
       inputSchema: z.object({
         query: z.string().min(1),
         imageIds: z.array(z.string().min(1)).optional(),

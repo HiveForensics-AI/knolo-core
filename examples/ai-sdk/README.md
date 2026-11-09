@@ -7,7 +7,7 @@ key.
 The package is version 0.1.0 in this repository. It is not on npm yet. It
 needs Node.js 22 or newer and does not run on the edge runtime.
 
-Search matches every space-separated term as a substring. A receipt is an
+Search keeps each remaining term as a whole word. Unquoted stopwords and terms shorter than 3 characters are dropped. A receipt is an
 integrity check. It does not mean a claim is proven. `SATISFIED` means
 evidence requirements were met.
 

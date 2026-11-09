@@ -1,5 +1,9 @@
 import { KarError } from '@knolo/core/kar';
-import { KnoloOpenClawService, KnoloPluginError } from '@knolo/tools';
+import {
+  KNOLO_SEARCH_DESCRIPTION,
+  KnoloOpenClawService,
+  KnoloPluginError,
+} from '@knolo/tools';
 import { tool, type ToolSet } from 'ai';
 import * as z from 'zod/v4';
 import {
@@ -51,7 +55,7 @@ function knoloToolSet(
   const caller = callerFrom(config);
   const tools: ToolSet = {
     knolo_search: tool({
-      description: 'Search approved, verified Knolo Knowledge Images.',
+      description: KNOLO_SEARCH_DESCRIPTION,
       inputSchema: z.object({
         query: z.string().min(1),
         imageIds: z.array(z.string().min(1)).optional(),

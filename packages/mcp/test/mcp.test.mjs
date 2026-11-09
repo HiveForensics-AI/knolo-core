@@ -217,6 +217,8 @@ test('lists exactly four read-only tools and keeps caller identity in config', a
     assert.equal(body.hits.length, 1);
     assert.equal(body.hits[0].stateRoot, image.stateRoot);
     assert.match(body.hits[0].excerpt, /Annual enterprise refunds/);
+    assert.equal(body.receipts[0].match, 'all');
+    assert.equal(body.hits[0].match, 'all');
     const receiptPath = path.join(
       root,
       'audit',
@@ -226,6 +228,9 @@ test('lists exactly four read-only tools and keeps caller identity in config', a
     assert.equal(receipt.version, 'openclaw-knolo-query-v1');
     assert.equal(receipt.caller.agentId, 'mcp');
     assert.equal(receipt.caller.sessionId, 'knolo-mcp-test');
+    assert.equal(receipt.match, 'all');
+    assert.equal(receipt.queryResult.plan.search, null);
+    assert.equal(receipt.queryResult.plan.textQuery.mode, 'all');
     await service.verifyReceipt(body.receipts[0].receiptId);
 
     const got = await call(client, 'knolo_get', {
@@ -1185,6 +1190,147 @@ test('source freshness fields are optional and absolute', async () => {
       }),
     /source root must be an absolute path/
   );
+});
+
+test('knolo_search uses whole words, stopwords, OR, phrases, and partial match', async () => {
+  const { config, root } = await fixture({
+    objects: [
+      {
+        kind: 'chunk',
+        bytes: encoder.encode('quote and quota stay whole'),
+        meta: { path: 'notes/quote.md' },
+      },
+      {
+        kind: 'chunk',
+        bytes: encoder.encode('a quo mark'),
+        meta: { path: 'notes/quo.md' },
+      },
+      {
+        kind: 'chunk',
+        bytes: encoder.encode('use q for the short token'),
+        meta: { path: 'notes/short.md' },
+      },
+      {
+        kind: 'chunk',
+        bytes: encoder.encode('post the ledger entry'),
+        meta: { path: 'skills/ledger.md' },
+      },
+      {
+        kind: 'chunk',
+        bytes: encoder.encode('how do I start'),
+        meta: { path: 'notes/question.md' },
+      },
+      {
+        kind: 'chunk',
+        bytes: encoder.encode('zebra crossing only'),
+        meta: { path: 'notes/zebra.md' },
+      },
+      {
+        kind: 'chunk',
+        bytes: encoder.encode('annual enterprise refunds are due'),
+        meta: { path: 'notes/refunds.md' },
+      },
+      {
+        kind: 'chunk',
+        bytes: encoder.encode('enterprise customer refunds'),
+        meta: { path: 'notes/split.md' },
+      },
+      {
+        kind: 'chunk',
+        bytes: encoder.encode('billing appears once'),
+        meta: { path: 'notes/body.md' },
+      },
+    ],
+  });
+  const { client, service } = await connected(config);
+  try {
+    const listed = await client.listTools();
+    const searchTool = listed.tools.find(
+      (tool) => tool.name === 'knolo_search'
+    );
+    assert.match(searchTool.description, /whole word/);
+    assert.equal(searchTool.description.includes('exact word'), false);
+
+    const inside = await call(client, 'knolo_search', { query: 'quo' });
+    assert.equal(inside.structuredContent.hits.length, 1);
+    assert.match(inside.structuredContent.hits[0].excerpt, /a quo mark/);
+    assert.equal(inside.structuredContent.receipts[0].match, 'all');
+
+    const letter = await call(client, 'knolo_search', { query: 'q' });
+    assert.equal(letter.structuredContent.hits.length, 0);
+    assert.equal(letter.structuredContent.receipts[0].match, 'none');
+
+    const quoted = await call(client, 'knolo_search', { query: '"q"' });
+    assert.equal(quoted.structuredContent.hits.length, 1);
+    assert.match(quoted.structuredContent.hits[0].excerpt, /use q for/);
+    assert.equal(quoted.structuredContent.receipts[0].match, 'all');
+
+    const question = await call(client, 'knolo_search', {
+      query: 'how do I post to the ledger',
+    });
+    assert.equal(question.structuredContent.hits.length, 1);
+    assert.match(question.structuredContent.hits[0].excerpt, /ledger entry/);
+    assert.equal(question.structuredContent.receipts[0].match, 'all');
+
+    const stopwords = await call(client, 'knolo_search', { query: 'how do I' });
+    assert.equal(stopwords.structuredContent.hits.length, 0);
+    assert.equal(stopwords.structuredContent.receipts[0].match, 'none');
+
+    const either = await call(client, 'knolo_search', {
+      query: 'quote OR zebra',
+    });
+    assert.equal(either.structuredContent.hits.length, 2);
+    assert.equal(either.structuredContent.receipts[0].match, 'any');
+    const eitherReceipt = JSON.parse(
+      await readFile(
+        path.join(
+          root,
+          'audit',
+          `${either.structuredContent.receipts[0].receiptId}.json`
+        ),
+        'utf8'
+      )
+    );
+    assert.equal(eitherReceipt.match, 'any');
+    assert.equal(eitherReceipt.queryResult.plan.search, null);
+    assert.equal(eitherReceipt.queryResult.plan.textQuery.mode, 'any');
+    await service.verifyReceipt(either.structuredContent.receipts[0].receiptId);
+
+    const phrase = await call(client, 'knolo_search', {
+      query: '"enterprise refunds"',
+    });
+    assert.equal(phrase.structuredContent.hits.length, 1);
+    assert.match(
+      phrase.structuredContent.hits[0].excerpt,
+      /annual enterprise refunds/
+    );
+    assert.equal(phrase.structuredContent.receipts[0].match, 'all');
+
+    const partial = await call(client, 'knolo_search', {
+      query: 'billing xylophone',
+    });
+    assert.equal(partial.structuredContent.hits.length, 1);
+    assert.match(partial.structuredContent.hits[0].excerpt, /billing appears/);
+    assert.equal(partial.structuredContent.hits[0].match, 'partial');
+    assert.equal(partial.structuredContent.receipts[0].match, 'partial');
+    const partialReceipt = JSON.parse(
+      await readFile(
+        path.join(
+          root,
+          'audit',
+          `${partial.structuredContent.receipts[0].receiptId}.json`
+        ),
+        'utf8'
+      )
+    );
+    assert.equal(partialReceipt.match, 'partial');
+    assert.equal(partialReceipt.queryResult.plan.textQuery.mode, 'partial');
+    await service.verifyReceipt(
+      partial.structuredContent.receipts[0].receiptId
+    );
+  } finally {
+    await client.close();
+  }
 });
 
 function completeMessages(stdout) {

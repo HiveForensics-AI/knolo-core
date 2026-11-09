@@ -18,8 +18,10 @@ FROM <kind|*>
 The keywords are case-insensitive. Supported fields are `id`, `kind`, and
 scalar `meta.<key>` values. Literals are quoted strings, safe integers,
 `true`, `false`, or `null`. `SEARCH` requires a non-empty quoted string and
-matches every normalized term against UTF-8 object bytes. The limit defaults to
-100 and is capped at 1000.
+matches every normalized term as a substring of the UTF-8 object bytes. The
+limit defaults to 100 and is capped at 1000. An optional `textQuery` object on
+a plan is not part of this grammar. Plans that omit it keep this substring
+match and object-id order.
 
 KIP-0018 adds bounded equality joins and one-field deterministic ordering while
 preserving the legacy plan and result roots when those clauses are absent.

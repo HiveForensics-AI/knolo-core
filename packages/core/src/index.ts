@@ -279,6 +279,10 @@ export type {
   KnowledgeQueryPlanV1,
   KnowledgeQueryResultV1,
   KnowledgeQueryScalarV1,
+  KnowledgeTextQueryModeV1,
+  KnowledgeTextQueryRankV1,
+  KnowledgeTextQueryTermV1,
+  KnowledgeTextQueryV1,
 } from './knowledge_query_v5.js';
 export type { KnowledgeQueryIndexV1 } from './knowledge_query_index_v5.js';
 export type {
