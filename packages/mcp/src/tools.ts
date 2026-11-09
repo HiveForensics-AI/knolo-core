@@ -92,7 +92,7 @@ export function registerKnoloTools(
     'knolo_verify',
     {
       description:
-        'Verify the local bytes and V5 roots for approved Knolo Knowledge Images. A matching pin stays valid when sources are stale. stale is set only when the mount records source roots.',
+        'Verify the local bytes and V5 roots for approved Knolo Knowledge Images. A matching pin stays valid when sources are stale. builtAt and stale are set only when the mount records source roots.',
       inputSchema: z.object({
         imageId: z.string().min(1).optional(),
       }),

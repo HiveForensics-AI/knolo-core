@@ -492,6 +492,7 @@ test('indexes Grok files and keeps secrets out of every image', async () => {
     const verified = await service.verify('memory', caller);
     assert.equal(verified[0].valid, true);
     assert.equal(verified[0].stale, false);
+    assert.equal(verified[0].builtAt, '2026-11-04T03:00:00.000Z');
     const status = service.status(caller);
     assert.equal(Object.hasOwn(status[0], 'builtAt'), false);
     assert.equal(Object.hasOwn(status[0], 'stale'), false);
@@ -594,6 +595,7 @@ test('indexes Grok files and keeps secrets out of every image', async () => {
     const driftedVerify = await current.verify('memory', caller);
     assert.equal(driftedVerify[0].valid, true);
     assert.equal(driftedVerify[0].stale, true);
+    assert.equal(driftedVerify[0].builtAt, rewritten.scopes.memory.builtAt);
     const edited = await buildBox(config, new Date('2026-11-06T03:00:00.000Z'));
     assert.notEqual(
       edited.scopes.memory.stateRoot,
@@ -1321,6 +1323,42 @@ test('init skips a symlink whose target is denied', async () => {
       ),
       false
     );
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('a secret in one scope leaves the other scope fresh', async () => {
+  const home = await tempHome();
+  try {
+    const grok = path.join(home, 'grok');
+    const skillDir = path.join(grok, 'skills', 'notes');
+    const topicDir = path.join(grok, 'memory-v2', 'topics');
+    await mkdir(skillDir, { recursive: true });
+    await mkdir(topicDir, { recursive: true });
+    await writeFile(path.join(skillDir, 'SKILL.md'), 'BOX_SKILL_CLEAN\n');
+    await writeFile(path.join(topicDir, 'note.md'), 'clean memory note\n');
+    const config = {
+      output: path.join(home, 'out'),
+      grokHome: grok,
+      agents: ['box'],
+      scopes: {
+        files: { roots: [] },
+        skills: { roots: [path.join(grok, 'skills')] },
+        memory: { roots: [path.join(grok, 'memory-v2')] },
+        transcripts: { roots: [] },
+      },
+    };
+    await buildBox(config, new Date('2026-11-09T00:00:00.000Z'));
+    const secretLine = `ghp_${'a'.repeat(20)}`;
+    await writeFile(
+      path.join(topicDir, 'note.md'),
+      `${secretLine}\nclean memory note\n`
+    );
+    const status = await boxStatus(config);
+    assert.equal(status.find((item) => item.id === 'memory').stale, true);
+    assert.equal(status.find((item) => item.id === 'skills').stale, false);
+    assert.equal(JSON.stringify(status).includes(secretLine), false);
   } finally {
     await rm(home, { recursive: true, force: true });
   }

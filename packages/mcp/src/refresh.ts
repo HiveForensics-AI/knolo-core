@@ -48,10 +48,17 @@ export async function createImageRefresh(options: {
       return;
     }
     const config = await options.loadConfig();
-    await options.service.reload({
+    const next = knoloPluginConfig(config);
+    const reloaded = {
       ...options.pluginConfig,
-      mounts: knoloPluginConfig(config).mounts,
-    });
+      mounts: next.mounts,
+    };
+    if (next.grokHome === undefined) {
+      delete reloaded.grokHome;
+    } else {
+      reloaded.grokHome = next.grokHome;
+    }
+    await options.service.reload(reloaded);
     const pinned = await pinConfiguredGraphs(
       config,
       options.service,

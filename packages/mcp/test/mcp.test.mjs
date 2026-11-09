@@ -4,9 +4,11 @@ import { createHash } from 'node:crypto';
 import http from 'node:http';
 import https from 'node:https';
 import {
+  mkdir,
   mkdtemp,
   readFile,
   readdir,
+  rm,
   utimes,
   writeFile,
 } from 'node:fs/promises';
@@ -1704,3 +1706,79 @@ function canonicalizeValue(value) {
   }
   return value;
 }
+
+test('a reloaded config uses the new grokHome for freshness', async () => {
+  const box = await import('../../box/dist/index.js');
+  const home = await mkdtemp(path.join(os.tmpdir(), 'knolo-mcp-home-'));
+  try {
+    const grok = path.join(home, 'grok');
+    const skillDir = path.join(grok, 'skills', 'notes');
+    await mkdir(skillDir, { recursive: true });
+    await writeFile(path.join(skillDir, 'SKILL.md'), 'fresh skill note\n');
+    const output = path.join(home, 'out');
+    const boxConfig = {
+      output,
+      grokHome: grok,
+      agents: ['box'],
+      scopes: {
+        files: { roots: [] },
+        skills: { roots: [path.join(grok, 'skills')] },
+        memory: { roots: [] },
+        transcripts: { roots: [] },
+      },
+    };
+    await box.buildBox(boxConfig, new Date('2026-11-09T00:00:00.000Z'));
+    const raw = JSON.parse(
+      await readFile(path.join(output, 'knolo-mcp.json'), 'utf8')
+    );
+    const withoutHome = { ...raw };
+    delete withoutHome.grokHome;
+    const { client, configPath } = await serveFile(withoutHome, output);
+    try {
+      const before = await call(client, 'knolo_status', {});
+      assert.notEqual(before.isError, true, textOf(before));
+      assert.equal(
+        Object.hasOwn(before.structuredContent.mounts[0], 'builtAt'),
+        false
+      );
+      assert.equal(
+        Object.hasOwn(before.structuredContent.mounts[0], 'stale'),
+        false
+      );
+      await writeFile(configPath, `${JSON.stringify(raw)}\n`);
+      await stampFile(configPath, 5_000);
+      const after = await call(client, 'knolo_status', {});
+      assert.notEqual(after.isError, true, textOf(after));
+      assert.equal(
+        after.structuredContent.mounts[0].builtAt,
+        '2026-11-09T00:00:00.000Z'
+      );
+      assert.equal(after.structuredContent.mounts[0].stale, false);
+      const verified = await call(client, 'knolo_verify', {});
+      assert.equal(verified.structuredContent.results[0].valid, true);
+      assert.equal(
+        verified.structuredContent.results[0].builtAt,
+        '2026-11-09T00:00:00.000Z'
+      );
+      assert.equal(verified.structuredContent.results[0].stale, false);
+
+      const wrongHome = path.join(grok, 'skills');
+      await writeFile(
+        configPath,
+        `${JSON.stringify({ ...raw, grokHome: wrongHome })}\n`
+      );
+      await stampFile(configPath, 10_000);
+      const drifted = await call(client, 'knolo_status', {});
+      assert.notEqual(drifted.isError, true, textOf(drifted));
+      assert.equal(drifted.structuredContent.mounts[0].stale, true);
+      assert.equal(
+        drifted.structuredContent.mounts[0].builtAt,
+        '2026-11-09T00:00:00.000Z'
+      );
+    } finally {
+      await client.close();
+    }
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
