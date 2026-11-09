@@ -27,9 +27,13 @@ query that drops every term matches nothing. Each kept term must appear as a
 whole word. The stored plan uses `rank: relevance`. If every term misses and
 at least one term hits, the stored mode is `partial`, so verify replays that
 mode instead of choosing again. `match` on the result and the receipt is
-`all`, `any`, `partial`, or `none`. EQL plans with no `textQuery` stay
-substring matches in object id order. The stopword list is
-`KNOLO_SEARCH_STOPWORDS`.
+`all`, `any`, `partial`, or `none`. A new receipt also stores `hitCount`,
+the number of allowed hits, and `durationMs`, the time spent in the query
+and the policy check. Verify checks `hitCount` against that result and does
+not replay the clock. Receipts written before those fields still verify.
+`caller.agentId` is the identity the host passed in. Tool arguments cannot
+set it. EQL plans with no `textQuery` stay substring matches in object id
+order. The stopword list is `KNOLO_SEARCH_STOPWORDS`.
 
 The package requires Node 20 or newer and `@knolo/core` `^6.0.0`. It does not
 download images, open a network connection, or import KAR, Cortex, coverage,

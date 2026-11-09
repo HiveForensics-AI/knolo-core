@@ -27,7 +27,7 @@ Empty scopes are omitted. `MEMORY.md` is a generated index and is not indexed. S
 
 The builder refuses the build before it writes a new image when kept text contains a private-key header or a `ghp_` / `github_pat_` token. The previous images stay in place.
 
-Each chunk starts with `source` and `locator`, plus `when` and `agent` when the source has them. Search excerpts include that header. `locator` is `lines N-M` or `turn N`. `knolo_search` matches whole words and can label a hit `partial`. EQL `SEARCH` still matches every term as a substring. The rules and the stopword list are in [the box doc](../../docs/box/README.md).
+Each chunk starts with `source` and `locator`, plus `when` and `agent` when the source has them. Search excerpts include that header. `locator` is `lines N-M` or `turn N`. `knolo_search` matches whole words and can label a hit `partial`. EQL `SEARCH` still matches every term as a substring. A search receipt records `caller.agentId`, `hitCount`, and `durationMs`. `sessionId` is the MCP config value when set, otherwise the MCP client name. One shared server process cannot see a different session id per chat. The rules and the stopword list are in [the box doc](../../docs/box/README.md).
 
 ## Files
 

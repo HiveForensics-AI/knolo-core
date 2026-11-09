@@ -1,7 +1,12 @@
 import { KnoloPluginError, type KnoloCaller } from '@knolo/tools';
 import { type McpServer } from '@modelcontextprotocol/server';
 
-export function callerFrom(server: McpServer, agentId: string): KnoloCaller {
+export function callerFrom(
+  server: McpServer,
+  agentId: string,
+  sessionId?: string
+): KnoloCaller {
+  if (sessionId) return { agentId, sessionId };
   const name = server.server.getClientVersion()?.name;
   if (typeof name !== 'string' || name.length === 0) return { agentId };
   return { agentId, sessionId: name };
