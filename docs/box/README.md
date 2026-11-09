@@ -40,9 +40,11 @@ node packages/box/bin/knolo-box.mjs init --config box.config.json
 node packages/box/bin/knolo-box.mjs build --config box.config.json
 ```
 
-`init` looks under the home directory, or under each `--root`, for one workflows directory and one managed-skills directory. The candidate paths are `agent-data/workflows`, `sand-data/workflows`, `agent-data/managed-skills/skills`, and `sand-data/managed-skills/skills`. A symlink to a directory counts, and the written root is the real path. The same directory reached both ways is kept once. Each role must resolve to exactly one real directory. Zero or several stops with `BOX_CONFIG`, lists the paths it checked and found, and writes no file. A resolved path inside a denied directory, including `secrets`, a `connector-secret` name, or a `cookie-seed` name, is skipped. Discovery does not read file contents.
+`init` looks under each `--root` and under grok home for one workflows directory and one managed-skills directory. The candidate paths are `agent-data/workflows`, `sand-data/workflows`, `agent-data/managed-skills/skills`, and `sand-data/managed-skills/skills`. A symlink to a directory counts, and the written root is the real path. The same directory reached both ways is kept once. Each skill role must resolve to exactly one real directory. Zero or several stops with `BOX_CONFIG`, lists the paths it checked and found, and writes no file. A resolved path inside a denied directory, including `secrets`, a `connector-secret` name, or a `cookie-seed` name, is skipped. Discovery does not read file contents.
 
-`--skills` or `KNOLO_BOX_SKILLS` sets the workflows directory and skips detection for that role. `--managed-skills` or `KNOLO_BOX_MANAGED_SKILLS` does the same for managed skills. `init` writes `agents` as `["box"]` and leaves files, memory, and transcripts empty. It does not build an image.
+Memory candidates are `memory-v2`, `agent-data/memory-v2`, and `sand-data/memory-v2`. Transcript candidates are `sessions`, `agent-data/sessions`, and `sand-data/sessions`. One real directory is written. Zero directories leaves that scope empty and prints the paths checked. Two or more leaves that scope empty and prints the paths found. A denied path is not written. `files` stays empty unless `--files` is passed. A scope with an empty root list is not indexed.
+
+`--skills` or `KNOLO_BOX_SKILLS` sets the workflows directory and skips detection for that role. `--managed-skills` or `KNOLO_BOX_MANAGED_SKILLS` does the same for managed skills. `--memory`, `--transcripts`, and `--files` skip detection for those roles. `init` writes `agents` as `["box"]`. It does not build an image.
 
 ```json
 {
