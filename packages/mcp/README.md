@@ -46,7 +46,10 @@ same server. The
 [Pydantic AI example](../../docs/integrations/pydantic-ai.md), the
 [Langflow example](../../docs/integrations/langflow.md), and the
 [Dify example](../../docs/integrations/dify.md) use the same
-server.
+server. The
+[Vercel AI SDK example](../../docs/integrations/ai-sdk.md) calls the same
+service through `@knolo/ai-sdk`. That package is in this repository and is
+not on npm yet.
 
 ## Config
 

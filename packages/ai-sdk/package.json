@@ -1,0 +1,53 @@
+{
+  "name": "@knolo/ai-sdk",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Vercel AI SDK tools for read-only Knolo search, verify, KAR, and Cortex.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HiveForensics-AI/knolo-core.git",
+    "directory": "packages/ai-sdk"
+  },
+  "homepage": "https://github.com/HiveForensics-AI/knolo-core#readme",
+  "bugs": {
+    "url": "https://github.com/HiveForensics-AI/knolo-core/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build --workspace @knolo/core && npm run build --workspace @knolo/mcp && tsc -p tsconfig.json && node --test test/*.test.mjs",
+    "prepublishOnly": "npm test"
+  },
+  "dependencies": {
+    "@knolo/core": "^6.2.0",
+    "@knolo/tools": "^0.2.0",
+    "zod": "^4.2.0"
+  },
+  "peerDependencies": {
+    "ai": "^7.0.0"
+  },
+  "devDependencies": {
+    "@knolo/mcp": "^0.2.0",
+    "@types/node": "^20.11.0",
+    "ai": "7.0.166",
+    "typescript": "^5.5.0"
+  }
+}
