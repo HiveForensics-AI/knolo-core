@@ -138,9 +138,10 @@ the V5 Knowledge Image: deterministic images, verification, migration,
 bounded runtime features, diagnostics, and a read-only Studio management
 snapshot remain. 6.1.0 adds offline composition and attestation. 6.2.0 adds
 Knolo Cortex. Published `@knolo/core` is `6.2.1`. `@knolo/tools` `0.2.1`
-and `@knolo/mcp` `0.2.1` depend on `@knolo/core` `^6.2.1`. This tree's
-`@knolo/cli` package file stays `6.2.0` and depends on `@knolo/core` `^6.2.0`.
-npm `latest` for the CLI is `6.2.1`. `@knolo/langchain`, `@knolo/llamaindex`,
+depends on `@knolo/core` `^6.2.1`. This tree's `@knolo/mcp` is `0.2.2`.
+npm `latest` for MCP is `0.2.1` until `0.2.2` is published. This tree's
+`@knolo/cli` package file is `6.2.2` and depends on `@knolo/core` `^6.2.0`.
+npm `latest` for the CLI is `6.2.1` until `6.2.2` is published. `@knolo/langchain`, `@knolo/llamaindex`,
 `@knolo/semantic-ollama`, `create-knolo-app`, and `@knolo/reflex` stay on
 `@knolo/core` `^6.0.0`. `@knolo/ai-sdk@0.1.0` stays on `@knolo/core` `^6.2.0`
 and `@knolo/tools` `^0.2.0`. `@knolo/mastra` `0.1.0` is not published yet and

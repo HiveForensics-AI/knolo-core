@@ -6,9 +6,10 @@
  * It does not run a model and it does not answer questions.
  * SATISFIED means evidence requirements were met.
  */
+import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { lstat, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { lstat, mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
@@ -18,6 +19,7 @@ import {
 } from './registry/config.mjs';
 import { loadCredentials } from './registry/credentials.mjs';
 import { getJson, postJson, putBytes } from './registry/http.mjs';
+import { findOnPath } from './setup.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -27,26 +29,31 @@ export const MAX_KNOWLEDGE_BYTES = 1024 * 1024;
 const NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const EXTENSIONS = new Set(['.md', '.txt', '.json']);
 
-const USAGE = `Usage: knolo skill <init|check|pack|publish|install|search|info> [options]
+const USAGE = `Usage: knolo skill <init|check|pack|publish|install|search|info|list> [options]
 
   knolo skill init <name> [--dir <parent>]
   knolo skill check [<dir>] [--query <text>] [--json]
   knolo skill pack [<dir>] [--out <dir>] [--json]
   knolo skill publish <pack> [--registry <url>] [--json]
   knolo skill publish <pack> --hub <dir> [--json]
-  knolo skill install <publisher>/<name> --dir <path> [--registry <url>] [--json]
-  knolo skill install <name> --hub <dir> --dir <path> [--json]
-  knolo skill install --pack <pack> --dir <path> [--json]
+  knolo skill install <publisher>/<name> [--dir <path>] [--registry <url>] [--json]
+  knolo skill install <name> --hub <dir> [--dir <path>] [--json]
+  knolo skill install --pack <pack> [--dir <path>] [--json]
   knolo skill search <query> [--registry <url>] [--json]
   knolo skill info <publisher>/<name> [--registry <url>] [--json]
+  knolo skill list [--registry <url>] [--json]
 
 A skill is guidance for the host agent. Knolo does not call a model.
 check searches the skill's own knowledge and returns a receipt id.
 A receipt is an integrity check. It does not mean a claim is proven.
 SATISFIED means the evidence requirements were met.
 publish sends the pack to https://hub.knolo.dev unless --hub names a
-local directory. install checks the pin before it writes, and it writes
-only into --dir. A pin mismatch writes nothing.
+local directory. install checks the pin before it writes. It writes into
+--dir, or into ~/.knolo/skills when --dir is omitted. A pin mismatch
+writes nothing. When that folder is a skills root and knolo-box is on
+PATH, install runs one knolo-box build.
+list prints every publisher/name from the public catalog. It does not
+send a token.
 The hub stores packs. It does not answer questions.`;
 
 export async function runSkillCli(argv) {
@@ -63,6 +70,7 @@ export async function runSkillCli(argv) {
   if (sub === 'install') return installSkill(positionals[1], flags);
   if (sub === 'search') return searchSkills(positionals.slice(1).join(' '), flags);
   if (sub === 'info') return infoSkill(positionals[1], flags);
+  if (sub === 'list') return listSkills(flags);
   throw new Error(`Unknown skill command "${sub}".\n${USAGE}`);
 }
 
@@ -258,8 +266,11 @@ async function publishSkillDirectory(packArg, flags) {
 }
 
 export async function installSkill(nameArg, flags) {
-  if (!flags.dir) throw new Error('Missing --dir');
-  const destRoot = path.resolve(process.cwd(), flags.dir);
+  const env = flags.env ?? process.env;
+  const home = flags.homeDir || env.HOME || homedir();
+  const destRoot = path.resolve(
+    flags.dir ?? path.join(home, '.knolo', 'skills')
+  );
   if (flags.hub && flags.registry) {
     throw new Error(
       'SKILL_HUB: --hub is a local directory. Use --registry for the Knolo hub.'
@@ -275,9 +286,7 @@ export async function installSkill(nameArg, flags) {
         registry,
         fetchImpl: flags.fetchImpl ?? globalThis.fetch,
       });
-      if (flags.json) console.log(JSON.stringify(summary));
-      else console.log(`installed        ${summary.dir}`);
-      return summary;
+      return reportInstall(summary, destRoot, flags);
     }
     throw new Error(
       'SKILL_HUB: pass publisher/name, or --hub for a directory catalog.'
@@ -310,8 +319,77 @@ export async function installSkill(nameArg, flags) {
   }
   await writePackFiles(dest, pack);
   const summary = { ok: true, name: pack.manifest.name, dir: dest };
-  if (flags.json) console.log(JSON.stringify(summary));
-  else console.log(`installed        ${dest}`);
+  return reportInstall(summary, destRoot, flags);
+}
+
+async function reportInstall(summary, destRoot, flags) {
+  const print = flags.print ?? console.log;
+  if (flags.json) print(JSON.stringify(summary));
+  else print(`installed        ${summary.dir}`);
+  await indexInstalledSkill(destRoot, flags);
+  return summary;
+}
+
+async function indexInstalledSkill(destRoot, flags) {
+  const printError = flags.printError ?? console.error;
+  const env = flags.env ?? process.env;
+  const home = flags.homeDir || env.HOME || homedir();
+  const configPath = path.join(home, '.knolo', 'box', 'box.config.json');
+  let config;
+  try {
+    config = JSON.parse(await readFile(configPath, 'utf8'));
+  } catch {
+    config = null;
+  }
+  const roots = Array.isArray(config?.scopes?.skills?.roots)
+    ? config.scopes.skills.roots
+    : [];
+  const dest = await canonicalDir(destRoot);
+  let indexed = false;
+  for (const root of roots) {
+    if (typeof root !== 'string' || root.length === 0) continue;
+    if ((await canonicalDir(root)) === dest) {
+      indexed = true;
+      break;
+    }
+  }
+  if (!indexed) {
+    printError(
+      'This folder is not a Knolo skills root, so the install was not indexed.'
+    );
+    return;
+  }
+  const box = await findOnPath('knolo-box', env.PATH);
+  if (!box) {
+    printError('knolo-box is not on PATH. The install was not indexed.');
+    return;
+  }
+  const status = await spawnBox(box, ['build', '--config', configPath], env);
+  if (status !== 0) {
+    throw new Error(`knolo-box build exited with status ${status}.`);
+  }
+}
+
+async function canonicalDir(candidate) {
+  try {
+    return await realpath(candidate);
+  } catch {
+    return path.resolve(candidate);
+  }
+}
+
+function spawnBox(command, args, env) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      env,
+      stdio: ['ignore', 'ignore', 'inherit'],
+    });
+    child.on('error', reject);
+    child.on('exit', (code, signal) => {
+      if (signal) reject(new Error(`knolo-box exited from ${signal}.`));
+      else resolve(code ?? 1);
+    });
+  });
 }
 
 async function loadSkillDir(dirArg) {
@@ -1056,6 +1134,27 @@ function readArchiveSection(bytes, offset, name) {
     body: bytes.subarray(header.next, header.next + length),
     next: header.next + length,
   };
+}
+
+export async function listSkills(flags = {}) {
+  const print = flags.print ?? console.log;
+  const registry = resolveRegistryUrl({
+    value: flags.registry,
+    env: flags.env ?? process.env,
+  });
+  const body = await getJson(String(registryApiUrl(registry, ['skills'])), {
+    fetchImpl: flags.fetchImpl ?? globalThis.fetch,
+  });
+  if (!body || !Array.isArray(body.skills)) {
+    throw new Error('SKILL_HUB: skill catalog response is invalid.');
+  }
+  const skills = body.skills.map(catalogSkill);
+  if (flags.json) print(JSON.stringify(skills, null, 2));
+  else if (skills.length === 0) print('no skills');
+  else {
+    for (const skill of skills) print(`${skill.publisher}/${skill.slug}`);
+  }
+  return { registry, skills };
 }
 
 export async function searchSkills(query, flags = {}) {

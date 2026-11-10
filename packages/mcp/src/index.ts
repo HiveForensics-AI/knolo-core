@@ -20,7 +20,7 @@ export function createKnoloMcpServer(options: {
   refresh?: ImageRefresh;
   beforeRead?: () => Promise<void>;
 }): McpServer {
-  const server = new McpServer({ name: 'knolo', version: '0.2.1' });
+  const server = new McpServer({ name: 'knolo', version: '0.2.2' });
   registerKnoloTools(server, options);
   return server;
 }

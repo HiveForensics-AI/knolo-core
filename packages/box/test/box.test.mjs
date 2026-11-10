@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import http from 'node:http';
 import https from 'node:https';
 import {
@@ -760,6 +760,46 @@ test('a missing source root is stale while the pin still matches', async () => {
   }
 });
 
+test('an absent sibling root stays fresh until a real root changes', async () => {
+  const home = await tempHome();
+  try {
+    const grok = path.join(home, 'grok');
+    const topicDir = path.join(grok, 'memory-v2', 'topics');
+    await mkdir(topicDir, { recursive: true });
+    const note = path.join(topicDir, 'note.md');
+    await writeFile(note, 'BOX_SIBLING_PHRASE\n');
+    const config = {
+      output: path.join(home, 'out'),
+      grokHome: grok,
+      agents: ['box'],
+      autoRebuild: false,
+      scopes: {
+        files: { roots: [] },
+        skills: { roots: [] },
+        memory: {
+          roots: [
+            path.join(grok, 'memory-v2'),
+            path.join(grok, 'missing-memory'),
+          ],
+        },
+        transcripts: { roots: [] },
+      },
+    };
+    await buildBox(config, new Date('2026-11-04T00:00:00.000Z'));
+    const built = await boxStatus(config);
+    assert.equal(built[0].id, 'memory');
+    assert.equal(built[0].pinMatches, true);
+    assert.equal(built[0].stale, false);
+    await writeFile(note, 'BOX_SIBLING_PHRASE changed.\n');
+    const changed = await boxStatus(config);
+    assert.equal(changed[0].pinMatches, true);
+    assert.equal(changed[0].stale, true);
+    assert.equal(changed[0].builtAt, '2026-11-04T00:00:00.000Z');
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
 test('an empty computer does not walk the home directory', async () => {
   const home = await tempHome();
   try {
@@ -1198,19 +1238,103 @@ test('init refuses two different skill parents and writes no config', async () =
       () => initBox({ configPath, roots: [home], home, env: {} }),
       (error) => {
         assert.equal(error.code, 'BOX_CONFIG');
-        assert.match(error.message, /workflows must resolve to one directory/);
         assert.match(
           error.message,
-          new RegExp(path.join(home, 'agent-data', 'workflows'))
+          /workflows must resolve to one directory\. Found 2\./
         );
-        assert.match(
-          error.message,
-          new RegExp(path.join(home, 'sand-data', 'workflows'))
+        assert.equal(
+          error.message.includes(path.join(home, 'agent-data', 'workflows')),
+          false
+        );
+        assert.equal(
+          error.message.includes(path.join(home, 'sand-data', 'workflows')),
+          false
         );
         return true;
       }
     );
     await assert.rejects(() => access(configPath));
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('tolerant init keeps hub skills and does not scan the home directory', async () => {
+  const home = await tempHome();
+  try {
+    await writeSkillTree(path.join(home, 'agent-data'));
+    const hubSkills = path.join(home, '.knolo', 'skills');
+    const configPath = path.join(home, 'box.json');
+    const code = await main(
+      [
+        'init',
+        '--config',
+        configPath,
+        '--tolerant',
+        '--hub-skills',
+        hubSkills,
+        '--agent',
+        'grok-bot',
+        '--auto-rebuild',
+      ],
+      { GROK_HOME: path.join(home, 'missing-grok') },
+      home
+    );
+    assert.equal(code, 0);
+    const written = JSON.parse(await readFile(configPath, 'utf8'));
+    assert.equal(written.agentId, 'grok-bot');
+    assert.equal(written.autoRebuild, true);
+    assert.deepEqual(written.scopes.skills.roots, [await realpath(hubSkills)]);
+    assert.equal(JSON.stringify(written).includes('agent-data'), false);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('tolerant init names the flag when two skill folders match', async () => {
+  const home = await tempHome();
+  try {
+    await writeSkillTree(path.join(home, 'agent-data'));
+    await writeSkillTree(path.join(home, 'sand-data'));
+    const configPath = path.join(home, 'many.json');
+    const bin = fileURLToPath(new URL('../bin/knolo-box.mjs', import.meta.url));
+    const result = spawnSync(
+      process.execPath,
+      [
+        bin,
+        'init',
+        '--config',
+        configPath,
+        '--tolerant',
+        '--root',
+        home,
+        '--hub-skills',
+        path.join(home, '.knolo', 'skills'),
+      ],
+      {
+        env: {
+          HOME: home,
+          GROK_HOME: path.join(home, 'missing-grok'),
+          PATH: process.env.PATH,
+        },
+        encoding: 'utf8',
+      }
+    );
+    assert.equal(result.status, 0, result.stderr);
+    const written = JSON.parse(await readFile(configPath, 'utf8'));
+    assert.deepEqual(written.scopes.skills.roots, [
+      await realpath(path.join(home, '.knolo', 'skills')),
+    ]);
+    assert.equal(written.agentId, undefined);
+    assert.match(
+      result.stderr,
+      /workflows: found 2 directories\. Pass --skills <path>\./
+    );
+    assert.match(
+      result.stderr,
+      /managed skills: found 2 directories\. Pass --managed-skills <path>\./
+    );
+    assert.equal(result.stderr.includes(path.join(home, 'agent-data')), false);
   } finally {
     await rm(home, { recursive: true, force: true });
   }

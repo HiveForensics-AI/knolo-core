@@ -433,9 +433,7 @@ async function readScopeDigest(
       digest.sourceDigest === emptyDigest &&
       !digest.missingRoot;
     const stale = pin
-      ? digest.sourceDigest === null ||
-        digest.missingRoot ||
-        digest.sourceDigest !== pin.sourceDigest
+      ? digest.sourceDigest === null || digest.sourceDigest !== pin.sourceDigest
       : !unchangedEmpty && digest.sourceDigest !== null && !digest.missingRoot;
     return {
       stale,

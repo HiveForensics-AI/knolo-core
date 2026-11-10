@@ -221,31 +221,37 @@ function printCommandHelp(command) {
     attest: 'Usage: knolo attest <create|verify> [options]\n\n  knolo attest create --composition composition/composition.json --subject composition --statement mount|used|cited --out attestation.json [--sign-key key.json --principal <id> --key-id <id> --issued-at <ms> --expires-at <ms>]\n  knolo attest verify attestation.json [--composition composition.json] [--public-key key.json] [--now <ms>] [--content-only]\n\nstatement used means a query or KAR evaluation ran. It does not mean the claim is true or false. Hub attested: true is unrelated. Signing uses the supplied times. The CLI does not read the clock.',
     cortex: 'Usage: knolo cortex <find|ask|explain|verify> [options]\n\nBounded evidence retrieval. The CLI does not call a model.\n\n  knolo cortex find <image> --question "..." [--top-k 100] --out candidates.json\n  knolo cortex ask <image> --question "..." [--graph file] [--plan plan.json] [--mode find_relevant] --out answer.cortex.json\n  knolo cortex explain answer.cortex.json\n  knolo cortex verify --image <image> --answer answer.cortex.json [--graph file]\n\nVerification recomputes the trace roots. It does not mean the answer is true. A KAR status of SATISFIED means evidence requirements were met. It does not mean a claim is proven.',
     flight: 'Usage: knolo flight ingest --events <events.json> --log <file> --out <image.knolo> [--json]\n\nPacks a flight-events-1 document into a V5 Knowledge Image. The command hashes --log and writes nothing when the hash or byte length differs. It does not decode the log. log.format is ulog, dataflash, or rosbag2. A later KAR status of SATISFIED means evidence requirements were met. It does not mean a flight was safe, legal, or compliant.',
-    setup: `Usage: knolo setup [--registry <url>]
+    setup: `Usage: knolo setup [--registry <url>] [--root <dir>] [--agent <id>] [--auto-rebuild] [--skills <path>] [--managed-skills <path>] [--memory <path>] [--transcripts <path>]
 
 Resolves the hub the same way as the other hub commands.
-When knolo-box is on PATH and a Grok home exists, runs knolo-box build.
-Does not run knolo-box init. Does not install a pack or call the hub.
-A missing binary or a missing Grok home is printed, and setup still exits 0.`,
-    skill: `Usage: knolo skill <init|check|pack|publish|install|search|info>
+Scans ~/.grok when that directory exists, plus every --root.
+Runs knolo-box init --tolerant, then knolo-box build --config.
+Always includes ~/.knolo/skills as a skills root.
+Pass --agent to set the caller name. Pass --auto-rebuild to rebuild on the next search.
+Does not prompt. Does not install a pack or call the hub.
+A missing knolo-box is printed, and setup still exits 0.
+When more than one skill folder matches, pass --skills or --managed-skills.`,
+    skill: `Usage: knolo skill <init|check|pack|publish|install|search|info|list>
 
   knolo skill init <name> [--dir <parent>]
   knolo skill check [<dir>] [--query <text>] [--json]
   knolo skill pack [<dir>] [--out <dir>] [--json]
   knolo skill publish <pack> [--registry <url>] [--json]
   knolo skill publish <pack> --hub <dir> [--json]
-  knolo skill install <publisher>/<name> --dir <path> [--registry <url>] [--json]
-  knolo skill install <name> --hub <dir> --dir <path> [--json]
-  knolo skill install --pack <pack> --dir <path> [--json]
+  knolo skill install <publisher>/<name> [--dir <path>] [--registry <url>] [--json]
+  knolo skill install <name> --hub <dir> [--dir <path>] [--json]
+  knolo skill install --pack <pack> [--dir <path>] [--json]
   knolo skill search <query> [--registry <url>] [--json]
   knolo skill info <publisher>/<name> [--registry <url>] [--json]
+  knolo skill list [--registry <url>] [--json]
 
 Creates a skill pack for the host agent. Knolo does not call a model.
 A receipt is an integrity check. It does not mean a claim is proven.
 SATISFIED means the evidence requirements were met.
 publish sends the pack to https://hub.knolo.dev unless --hub names a
-local directory. install checks the pin and writes only into --dir.
-A pin mismatch writes nothing.
+local directory. install checks the pin before it writes. It writes into
+--dir, or into ~/.knolo/skills when --dir is omitted. A pin mismatch
+writes nothing. list prints every publisher/name from the public catalog.
 The hub stores packs and does not answer questions.`,
     'verify-attestation': 'Usage: knolo verify-attestation <attestation.json> [--composition composition.json] [--public-key key.json] [--keyring keyring.json] [--now <ms>] [--content-only]\n\nSame check as knolo attest verify. A bad signature exits 1 even when the content root matches. --content-only checks the content root and ignores the envelope. statement used is not a truth verdict. Hub attested: true is unrelated.',
     icp: 'Usage: knolo icp <command> [options]',
