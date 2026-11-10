@@ -72,6 +72,11 @@ const npmPackages = [
     directory: 'ai-sdk',
     expected: ['README.md', 'dist/index.js', 'dist/index.d.ts'],
   },
+  {
+    name: '@knolo/mastra',
+    directory: 'mastra',
+    expected: ['README.md', 'dist/index.js', 'dist/index.d.ts'],
+  },
 ];
 
 const rustPackages = [

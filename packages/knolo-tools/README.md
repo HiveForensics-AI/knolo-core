@@ -1,7 +1,7 @@
 # @knolo/tools
 
 `@knolo/tools` is the host-agnostic service behind Knolo's read-only adapters.
-`@knolo/openclaw`, `@knolo/mcp`, and `@knolo/ai-sdk` import it. The package pins a local V5
+`@knolo/openclaw`, `@knolo/mcp`, `@knolo/ai-sdk`, and `@knolo/mastra` import it. The package pins a local V5
 Knowledge Image by file SHA-256 and state root, checks the policy root at
 load, and writes a replayable query receipt before search results are
 returned.

@@ -73,7 +73,9 @@ same server. The
 [Dify example](../../docs/integrations/dify.md) use the same
 server. The
 [Vercel AI SDK example](../../docs/integrations/ai-sdk.md) calls the same
-service through `@knolo/ai-sdk`. `@knolo/ai-sdk@0.1.0` is published.
+service through `@knolo/ai-sdk`. `@knolo/ai-sdk@0.1.0` is published. The
+[Mastra example](../../docs/integrations/mastra.md) calls the same service
+through `@knolo/mastra`. `@knolo/mastra@0.1.0` is not published yet.
 
 The stdio image is built from
 [`packages/mcp/Dockerfile`](Dockerfile) in this repository. It is not on

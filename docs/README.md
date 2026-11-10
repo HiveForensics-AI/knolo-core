@@ -103,6 +103,10 @@ operational guides for Knolo.
   `@knolo/tools`. Knolo does not call a model. A search returns a query
   receipt. `SATISFIED` means evidence requirements were met.
   `@knolo/ai-sdk@0.1.0` is published.
+- [Mastra](integrations/mastra.md) — `@knolo/mastra` tools over
+  `@knolo/tools`. Knolo does not call a model. A search returns a query
+  receipt. `SATISFIED` means evidence requirements were met.
+  `@knolo/mastra@0.1.0` is not published yet.
 - [Box](box/README.md) — pinned V5 images of skills, opted-in notes, private
   memory, and capped session text on a Grok Bot computer. `@knolo/box` starts
   the existing read-only MCP server in one process. This package is not
@@ -124,7 +128,9 @@ and `@knolo/mcp` `0.2.1` depend on `@knolo/core` `^6.2.1`. This tree's
 npm `latest` for the CLI is `6.2.1`. `@knolo/langchain`, `@knolo/llamaindex`,
 `@knolo/semantic-ollama`, `create-knolo-app`, and `@knolo/reflex` stay on
 `@knolo/core` `^6.0.0`. `@knolo/ai-sdk@0.1.0` stays on `@knolo/core` `^6.2.0`
-and `@knolo/tools` `^0.2.0`. V4 retrieval APIs remain compatible. Rust, Python,
+and `@knolo/tools` `^0.2.0`. `@knolo/mastra` `0.1.0` is not published yet and
+depends on `@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`. V4 retrieval
+APIs remain compatible. Rust, Python,
 and ICP stay 5.5.1 and do not implement KAR, composition, or Cortex.
 Bundled Domain Packs are `review-required`. Networking,
 credentials, model execution, external side effects, and UI presentation
