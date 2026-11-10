@@ -10,7 +10,7 @@ npx -y @knolo/mcp@0.2.1 --config /absolute/knolo-mcp.json
 
 ## What a search returns
 
-`knolo_search` writes an `openclaw-knolo-query-v1` receipt before it returns hits. Each hit carries an object id and the image state root. The offline smoke lists the four tools and runs one search for `enterprise refunds` against a fixture image. Each kept term is a whole word. Unquoted stopwords and terms shorter than 3 characters are dropped. The smoke does not call a model.
+`knolo_search` writes an `openclaw-knolo-query-v1` receipt before it returns hits. Each hit carries an object id and the image state root. The offline smoke lists the four tools and runs one search for `enterprise refunds` against a fixture image. Each kept term is a whole word. Unquoted stopwords and terms shorter than 3 characters are dropped. The smoke does not call a model. It also points the server at an unwritable audit directory and checks that `knolo_search` returns `AUDIT_UNAVAILABLE`.
 
 A receipt is an integrity check. It does not mean a claim is proven. Verification checks the image bytes, the state root, and the policy root.
 

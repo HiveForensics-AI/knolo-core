@@ -23,6 +23,32 @@ GRAPH_TOOLS = [
 ]
 
 
+def blocked_config(config_path: Path) -> Path:
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    blocker = config_path.parent / "not-a-directory"
+    blocker.write_text("blocked", encoding="utf-8")
+    config["auditDir"] = str(blocker / "audit")
+    blocked = config_path.parent / "knolo-mcp-blocked.json"
+    blocked.write_text(json.dumps(config), encoding="utf-8")
+    return blocked
+
+
+async def assert_audit_unavailable(config_path: Path) -> None:
+    toolset = server.knolo_toolset(blocked_config(config_path))
+    async with toolset:
+        try:
+            result = await toolset.direct_call_tool(
+                "knolo_search",
+                {"query": "refunds", "limit": 1},
+            )
+        except Exception as error:
+            text = str(error)
+        else:
+            text = json.dumps(result, default=str)
+        if "AUDIT_UNAVAILABLE" not in text:
+            raise SystemExit(f"audit error {text}")
+
+
 def search_body(result: object) -> dict:
     if not isinstance(result, dict):
         raise SystemExit(f"search returned {type(result).__name__}")
@@ -96,6 +122,7 @@ async def main() -> None:
         receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
         if receipt.get("version") != "openclaw-knolo-query-v1":
             raise SystemExit(f"receipt version {receipt.get('version')!r}")
+        await assert_audit_unavailable(config_path)
         json.dump(
             {
                 "tools": names,
