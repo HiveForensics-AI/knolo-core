@@ -30,9 +30,10 @@ function writeBox(binDir, script) {
   return file;
 }
 
-function runSetup(args, env) {
+function runSetup(args, env, cwd) {
   return spawnSync(process.execPath, [cliPath, 'setup', ...args], {
     env,
+    cwd,
     encoding: 'utf8',
   });
 }
@@ -49,6 +50,7 @@ test('setup runs knolo-box build and prints the resolved registry', () => {
     bin,
     `#!/bin/sh
 printf '%s\\n' "$1" >> "$KNOLO_BOX_LOG"
+printf '%s\\n' '{"output":"box-status"}'
 if [ "$1" != build ]; then
   exit 3
 fi
@@ -62,6 +64,7 @@ exit 0
   });
   assert.equal(result.status, 0, result.stderr);
   assert.equal(readFileSync(log, 'utf8'), 'build\n');
+  assert.doesNotMatch(result.stdout, /box-status/);
   assert.match(result.stdout, /knolo-mcp\.json/);
   assert.match(
     result.stdout,
@@ -141,6 +144,37 @@ exit 2
   assert.match(built.stderr, /exited with status 2/);
   assert.equal(readFileSync(log, 'utf8'), 'build\n');
   assert.doesNotMatch(built.stdout, /First install:/);
+});
+
+test('setup resolves a relative GROK_HOME from the current directory', () => {
+  const root = tempDir();
+  const home = path.join(root, 'home');
+  const bin = path.join(root, 'bin');
+  const work = path.join(root, 'work');
+  const log = path.join(root, 'box.log');
+  mkdirSync(home, { recursive: true });
+  mkdirSync(path.join(work, 'grok'), { recursive: true });
+  mkdirSync(bin);
+  writeBox(
+    bin,
+    `#!/bin/sh
+printf '%s\\n' "$1" >> "$KNOLO_BOX_LOG"
+exit 0
+`
+  );
+  const result = runSetup(
+    ['--registry', 'https://hub.example.test'],
+    {
+      PATH: bin,
+      HOME: home,
+      GROK_HOME: 'work/grok',
+      KNOLO_BOX_LOG: log,
+    },
+    root
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(readFileSync(log, 'utf8'), 'build\n');
+  assert.doesNotMatch(result.stderr, /No Grok home/);
 });
 
 test('setup help does not run knolo-box', () => {

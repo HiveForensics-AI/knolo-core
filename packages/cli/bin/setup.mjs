@@ -62,10 +62,10 @@ export async function runKnoloSetup(
 
 export function resolveGrokHome(env, homeDir) {
   const configured = typeof env.GROK_HOME === 'string' ? env.GROK_HOME.trim() : '';
-  if (!configured) return path.join(homeDir, '.grok');
-  if (configured === '~') return homeDir;
-  if (configured.startsWith('~/')) return path.join(homeDir, configured.slice(2));
-  return path.resolve(homeDir, configured);
+  const raw = configured || path.join(homeDir, '.grok');
+  if (raw === '~') return homeDir;
+  if (raw.startsWith('~/')) return path.resolve(path.join(homeDir, raw.slice(2)));
+  return path.resolve(raw);
 }
 
 export async function findOnPath(name, pathEnv) {
@@ -113,7 +113,7 @@ async function directoryExists(candidate) {
 
 function spawnBuild(command, args) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: 'inherit' });
+    const child = spawn(command, args, { stdio: ['ignore', 'ignore', 'inherit'] });
     child.on('error', reject);
     child.on('exit', (code, signal) => {
       if (signal) reject(new Error(`knolo-box build exited from ${signal}.`));
