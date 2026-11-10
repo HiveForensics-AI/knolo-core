@@ -1,0 +1,28 @@
+# Draft catalog entry. This image is not on Docker Hub.
+# A pull request to docker/mcp-registry is a separate step. That pull request
+# builds packages/mcp/Dockerfile from this repository and fills source.commit.
+# Knolo has no API key.
+name: knolo
+image: knolo-mcp
+type: server
+meta:
+  category: knowledge
+  tags:
+    - knowledge
+    - search
+about:
+  title: Knolo
+  description: Read-only search over a pinned local Knolo Knowledge Image. Stdio only.
+source:
+  project: https://github.com/HiveForensics-AI/knolo-core
+  dockerfile: packages/mcp/Dockerfile
+run:
+  disableNetwork: true
+  env:
+    KNOLO_MCP_CONFIG: /config/knolo-mcp.json
+  volumes:
+    - /config:ro
+    - /images:ro
+    - /audit
+config:
+  description: Mount knolo-mcp.json and the Knowledge Image read-only. Mount the audit directory writable. Paths inside the config are absolute container paths. No API key.
