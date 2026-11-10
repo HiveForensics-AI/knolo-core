@@ -25,9 +25,18 @@ export function registerKnoloTools(
     maxHits: number;
     graphs: ReadonlyMap<string, PinnedKarGraph>;
     refresh?: ImageRefresh;
+    beforeRead?: () => Promise<void>;
   }
 ): void {
-  const { service, agentId, sessionId, maxHits, graphs, refresh } = options;
+  const { service, agentId, sessionId, maxHits, graphs, refresh, beforeRead } =
+    options;
+  const prepare = async () => {
+    if (beforeRead) {
+      await beforeRead();
+      return;
+    }
+    await refresh?.();
+  };
 
   server.registerTool(
     'knolo_search',
@@ -42,7 +51,7 @@ export function registerKnoloTools(
     },
     async ({ query, imageIds, limit }) => {
       try {
-        await refresh?.();
+        await prepare();
         const result = await service.search(
           {
             query,
@@ -126,7 +135,7 @@ export function registerKnoloTools(
     },
     async () => {
       try {
-        await refresh?.();
+        await prepare();
         return success({
           mounts: await service.statusWithFreshness(
             callerFrom(server, agentId, sessionId)

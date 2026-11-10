@@ -2005,3 +2005,47 @@ test('a reloaded config uses the new grokHome for freshness', async () => {
     await rm(home, { recursive: true, force: true });
   }
 });
+
+test('search and status run a configured rebuild hook', async () => {
+  const { config, root } = await fixture();
+  const marker = path.join(root, 'ran.txt');
+  const script = path.join(root, 'hook.mjs');
+  await writeFile(
+    script,
+    `import { appendFile } from 'node:fs/promises';\nawait appendFile(${JSON.stringify(marker)}, 'ran\\n');\n`
+  );
+  config.autoRebuild = { command: process.execPath, args: [script] };
+  const { client } = await serveFile(config, root);
+  try {
+    const search = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+      limit: 4,
+    });
+    assert.notEqual(search.isError, true, textOf(search));
+    assert.match(
+      search.structuredContent.hits[0].excerpt,
+      /Annual enterprise refunds/
+    );
+    assert.equal(await readFile(marker, 'utf8'), 'ran\n');
+    const got = await call(client, 'knolo_get', {
+      imageId: 'support-policy',
+      objectId: search.structuredContent.hits[0].objectId,
+      stateRoot: search.structuredContent.hits[0].stateRoot,
+    });
+    assert.notEqual(got.isError, true, textOf(got));
+    assert.equal(await readFile(marker, 'utf8'), 'ran\n');
+    const status = await call(client, 'knolo_status', {});
+    assert.notEqual(status.isError, true, textOf(status));
+    assert.equal(await readFile(marker, 'utf8'), 'ran\nran\n');
+    await writeFile(script, 'process.exit(1);\n');
+    const again = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+      limit: 1,
+    });
+    assert.notEqual(again.isError, true, textOf(again));
+    assert.equal(await readFile(marker, 'utf8'), 'ran\nran\n');
+  } finally {
+    await client.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});

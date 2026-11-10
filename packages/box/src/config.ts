@@ -17,6 +17,10 @@ export type BoxConfig = {
   grokHome: string;
   agents: string[];
   scopes: Record<BoxScopeName, { roots: string[] }>;
+  agentId?: string;
+  sessionId?: string;
+  autoRebuild?: boolean;
+  configPath?: string;
 };
 
 const AGENT_ID = /^[a-zA-Z0-9_.-]+$/u;
@@ -28,10 +32,14 @@ export function defaultBoxConfig(
   const grokHome = path.resolve(
     expandPath(env.GROK_HOME?.trim() || path.join(home, '.grok'), home, '')
   );
+  const identity = resolveIdentity({}, env);
   return {
     output: path.join(home, '.knolo', 'box'),
     grokHome,
     agents: ['box'],
+    agentId: identity.agentId,
+    ...(identity.sessionId ? { sessionId: identity.sessionId } : {}),
+    autoRebuild: identity.autoRebuild,
     scopes: {
       files: { roots: [] },
       skills: {
@@ -70,6 +78,7 @@ export async function loadBoxConfig(
       base.grokHome
     )
   );
+  const identity = resolveIdentity(record, env);
   const agents =
     record.agents === undefined ? base.agents : agentList(record.agents);
   const scopes = { ...base.scopes };
@@ -97,8 +106,80 @@ export async function loadBoxConfig(
     ),
     grokHome,
     agents,
+    agentId: identity.agentId,
+    ...(identity.sessionId ? { sessionId: identity.sessionId } : {}),
+    autoRebuild: identity.autoRebuild,
+    configPath: path.resolve(configPath),
     scopes,
   };
+}
+
+function resolveIdentity(
+  record: Record<string, unknown>,
+  env: NodeJS.ProcessEnv
+): { agentId: string; sessionId?: string; autoRebuild: boolean } {
+  const agentId = Object.hasOwn(record, 'agentId')
+    ? checkedAgentId(record.agentId, 'agentId')
+    : envAgentId(env);
+  const sessionId = Object.hasOwn(record, 'sessionId')
+    ? checkedSessionId(record.sessionId, 'sessionId')
+    : envSessionId(env);
+  return {
+    agentId,
+    ...(sessionId ? { sessionId } : {}),
+    autoRebuild: Object.hasOwn(record, 'autoRebuild')
+      ? checkedAutoRebuild(record.autoRebuild)
+      : envAutoRebuild(env),
+  };
+}
+
+function envAgentId(env: NodeJS.ProcessEnv): string {
+  const value = env.KNOLO_BOX_AGENT_ID?.trim();
+  return value ? checkedAgentId(value, 'KNOLO_BOX_AGENT_ID') : 'box';
+}
+
+function envSessionId(env: NodeJS.ProcessEnv): string | undefined {
+  const value = env.KNOLO_BOX_SESSION_ID?.trim();
+  return value ? checkedSessionId(value, 'KNOLO_BOX_SESSION_ID') : undefined;
+}
+
+function envAutoRebuild(env: NodeJS.ProcessEnv): boolean {
+  const value = env.KNOLO_BOX_AUTO_REBUILD?.trim();
+  if (!value) return false;
+  if (value === '1' || value === 'true') return true;
+  if (value === '0' || value === 'false') return false;
+  throw new BoxError(
+    'BOX_CONFIG',
+    'KNOLO_BOX_AUTO_REBUILD must be true or false.'
+  );
+}
+
+function checkedAgentId(value: unknown, label: string): string {
+  if (typeof value !== 'string' || !AGENT_ID.test(value)) {
+    throw new BoxError(
+      'BOX_CONFIG',
+      `${label} must be letters, digits, dot, underscore, or hyphen.`
+    );
+  }
+  return value;
+}
+
+function checkedSessionId(value: unknown, label: string): string {
+  if (typeof value !== 'string') {
+    throw new BoxError('BOX_CONFIG', `${label} must be a string.`);
+  }
+  const trimmed = value.trim();
+  if (trimmed.length < 1 || trimmed.length > 256) {
+    throw new BoxError('BOX_CONFIG', `${label} must be 1 to 256 characters.`);
+  }
+  return trimmed;
+}
+
+function checkedAutoRebuild(value: unknown): boolean {
+  if (typeof value !== 'boolean') {
+    throw new BoxError('BOX_CONFIG', 'autoRebuild must be true or false.');
+  }
+  return value;
 }
 
 function agentList(value: unknown): string[] {

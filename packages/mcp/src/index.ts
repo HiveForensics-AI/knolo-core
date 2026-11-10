@@ -7,6 +7,7 @@ import {
   parseKnoloMcpConfig,
 } from './config.js';
 import { pinConfiguredGraphs, type PinnedKarGraph } from './graphs.js';
+import { runConfiguredRebuild } from './auto-rebuild.js';
 import { createImageRefresh, type ImageRefresh } from './refresh.js';
 import { registerKnoloTools } from './tools.js';
 
@@ -17,6 +18,7 @@ export function createKnoloMcpServer(options: {
   maxHits: number;
   graphs: ReadonlyMap<string, PinnedKarGraph>;
   refresh?: ImageRefresh;
+  beforeRead?: () => Promise<void>;
 }): McpServer {
   const server = new McpServer({ name: 'knolo', version: '0.2.1' });
   registerKnoloTools(server, options);
@@ -70,6 +72,17 @@ export async function openKnoloMcp(configPath: string): Promise<{
       mount.kar ? [mount.kar.graphPath] : []
     ),
   });
+  const beforeRead = async (): Promise<void> => {
+    try {
+      const current = await loadKnoloMcpConfigFile(configPath);
+      if (current.autoRebuild) {
+        await runConfiguredRebuild(current.autoRebuild);
+      }
+    } catch {
+      // A hook that cannot be read leaves the loaded image in place.
+    }
+    await refresh();
+  };
   return {
     config,
     service,
@@ -84,6 +97,7 @@ export async function openKnoloMcp(configPath: string): Promise<{
       maxHits: config.maxHits,
       graphs,
       refresh,
+      beforeRead,
     }),
   };
 }
