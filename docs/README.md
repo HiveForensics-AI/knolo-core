@@ -95,6 +95,10 @@ operational guides for Knolo.
   an http or https URL. A Python smoke calls published `@knolo/mcp@0.2.1`
   over stdio. Knolo does not call a model. A search returns a query
   receipt. `SATISFIED` means evidence requirements were met.
+- [Docker](integrations/docker.md) — a stdio image of `@knolo/mcp` built
+  from this repository. It does not listen on a port. A bad pin exits before
+  the server accepts a tool call. An unwritable audit directory returns no
+  hits. The image is not on Docker Hub. The catalog pull request is separate.
 - [Vercel AI SDK](integrations/ai-sdk.md) — `@knolo/ai-sdk` tools over
   `@knolo/tools`. Knolo does not call a model. A search returns a query
   receipt. `SATISFIED` means evidence requirements were met.

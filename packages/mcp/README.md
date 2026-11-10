@@ -77,6 +77,16 @@ service through `@knolo/ai-sdk`. `@knolo/ai-sdk@0.1.0` is published. The
 [Mastra example](../../docs/integrations/mastra.md) calls the same service
 through `@knolo/mastra`. `@knolo/mastra@0.1.0` is not published yet.
 
+The stdio image is built from
+[`packages/mcp/Dockerfile`](Dockerfile) in this repository. It is not on
+Docker Hub. The container reads `KNOLO_MCP_CONFIG`, does not listen on a
+port, and runs as a non-root user. A bad pin exits before the server accepts
+a tool call. An unwritable audit directory returns `AUDIT_UNAVAILABLE` and
+no hits. Publishing the image and opening the `docker/mcp-registry` pull
+request are separate steps. The draft catalog entry is
+[`listings/docker/server.yaml`](listings/docker/server.yaml). The integration
+note is [Docker](../../docs/integrations/docker.md).
+
 ## Config
 
 Paths are absolute. `sha256` is 64 lowercase hex characters. `stateRoot` is

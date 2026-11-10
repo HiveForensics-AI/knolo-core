@@ -199,3 +199,21 @@ jobs:
           export KNOLO_MCP_COMMAND=node
           export KNOLO_MCP_ARGS="[\"${GITHUB_WORKSPACE}/packages/mcp/bin/knolo-mcp.mjs\"]"
           python examples/dify/smoke.py
+
+  docker-smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build @knolo/core for the fixture
+        run: npm run build --workspace @knolo/core
+      - name: Build the stdio image
+        run: docker build -f packages/mcp/Dockerfile -t knolo-mcp:smoke .
+      - name: Smoke the stdio image
+        run: node packages/mcp/scripts/docker-smoke.mjs
