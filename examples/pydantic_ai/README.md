@@ -27,7 +27,7 @@ python examples/pydantic_ai/smoke.py
 npx -y @knolo/mcp@0.2.1 --config "$KNOLO_MCP_CONFIG"
 ```
 
-The smoke lists the four tools, checks that the graph tools are absent, then searches for `enterprise refunds`. It expects the refunds excerpt, an object id, a `sha256-` state root, and a `qr_` receipt id. It does not construct an `Agent` and it does not call a model.
+The smoke lists the four tools, checks that the graph tools are absent, then searches for `enterprise refunds`. It expects the refunds excerpt, an object id, a `sha256-` state root, and a `qr_` receipt id. It does not construct an `Agent` and it does not call a model. It also points the server at an unwritable audit directory and checks that `knolo_search` returns `AUDIT_UNAVAILABLE`.
 
 A host that does call a model passes the same toolset on `toolsets`. That call stays outside this repository.
 

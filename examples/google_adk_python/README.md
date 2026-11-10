@@ -25,7 +25,7 @@ python examples/google_adk_python/smoke.py
 npx -y @knolo/mcp@0.2.1 --config "$KNOLO_MCP_CONFIG"
 ```
 
-The smoke lists `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`, then searches for `enterprise refunds`. It expects the refunds excerpt and a receipt id.
+The smoke lists `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`, then searches for `enterprise refunds`. It expects the refunds excerpt and a receipt id. It also points the server at an unwritable audit directory and checks that `knolo_search` returns `AUDIT_UNAVAILABLE`.
 
 ## Run the agent
 

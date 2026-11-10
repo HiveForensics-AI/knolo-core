@@ -10,7 +10,7 @@ npx -y @knolo/mcp@0.2.1 --config /absolute/knolo-mcp.json
 
 ## What a search returns
 
-`knolo_search` writes an `openclaw-knolo-query-v1` receipt before it returns hits. The example agent is instructed to include those receipt ids in its reply. Each offline smoke lists the four tools and runs one search for `enterprise refunds` against a fixture image. Those smokes do not call a model.
+`knolo_search` writes an `openclaw-knolo-query-v1` receipt before it returns hits. The example agent is instructed to include those receipt ids in its reply. Each offline smoke lists the four tools and runs one search for `enterprise refunds` against a fixture image. Those smokes do not call a model. Each smoke also points the server at an unwritable audit directory and checks that `knolo_search` returns `AUDIT_UNAVAILABLE`.
 
 ## What a pass means
 

@@ -91,6 +91,18 @@ operational guides for Knolo.
   published `@knolo/mcp@0.2.1` over stdio. Knolo does not call a model. A
   search returns a query receipt. `SATISFIED` means evidence requirements
   were met.
+- [Agno](integrations/agno.md) — a Python smoke that calls published
+  `@knolo/mcp@0.2.1` over stdio through Agno `MCPTools`. Knolo does not call
+  a model. A search returns a query receipt. `SATISFIED` means evidence
+  requirements were met.
+- [Haystack](integrations/haystack.md) — a Python smoke that calls published
+  `@knolo/mcp@0.2.1` over stdio through Haystack `MCPToolset`. Knolo does not
+  call a model. A search returns a query receipt. `SATISFIED` means evidence
+  requirements were met.
+- [smolagents](integrations/smolagents.md) — a Python smoke that calls
+  published `@knolo/mcp@0.2.1` over stdio through `ToolCollection.from_mcp`.
+  Knolo does not call a model. A search returns a query receipt. `SATISFIED`
+  means evidence requirements were met.
 - [Langflow](integrations/langflow.md) — a Python smoke that calls published
   `@knolo/mcp@0.2.1` over stdio. Knolo does not call a model. A search
   returns a query receipt. `SATISFIED` means evidence requirements were met.

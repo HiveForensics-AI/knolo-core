@@ -2,11 +2,11 @@
  * List Knolo tools through ADK and run one search. No model call.
  */
 
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { MCPToolset } from '@google/adk';
 import type { Context } from '@google/adk';
-import { rootAgent } from './agent.ts';
+import { knoloToolset, rootAgent } from './agent.ts';
 
 const EXPECTED_TOOLS = [
   'knolo_get',
@@ -14,6 +14,44 @@ const EXPECTED_TOOLS = [
   'knolo_status',
   'knolo_verify',
 ];
+
+async function blockedConfig(configPath: string): Promise<string> {
+  const config = JSON.parse(await readFile(configPath, 'utf8')) as {
+    auditDir?: unknown;
+  };
+  const blocker = path.join(path.dirname(configPath), 'not-a-directory');
+  await writeFile(blocker, 'blocked');
+  config.auditDir = path.join(blocker, 'audit');
+  const blocked = path.join(path.dirname(configPath), 'knolo-mcp-blocked.json');
+  await writeFile(blocked, JSON.stringify(config));
+  return blocked;
+}
+
+async function assertAuditUnavailable(configPath: string): Promise<void> {
+  const toolset = knoloToolset(await blockedConfig(configPath));
+  try {
+    const tools = await toolset.getTools();
+    const search = tools.find((tool) => tool.name === 'knolo_search');
+    if (search === undefined) throw new Error('missing knolo_search');
+    let text = '';
+    try {
+      const result = await search.runAsync({
+        args: { query: 'refunds', limit: 1 },
+        toolContext: {
+          abortSignal: AbortSignal.timeout(60_000),
+        } as unknown as Context,
+      });
+      text = JSON.stringify(result);
+    } catch (error) {
+      text = error instanceof Error ? error.message : String(error);
+    }
+    if (!text.includes('AUDIT_UNAVAILABLE')) {
+      throw new Error(`audit error ${text}`);
+    }
+  } finally {
+    await toolset.close();
+  }
+}
 
 function searchBody(result: unknown): Record<string, unknown> {
   if (result === null || typeof result !== 'object') {
@@ -103,6 +141,7 @@ try {
   if (receipt.version !== 'openclaw-knolo-query-v1') {
     throw new Error(`receipt version ${JSON.stringify(receipt.version)}`);
   }
+  await assertAuditUnavailable(configPath);
   process.stdout.write(
     `${JSON.stringify({
       tools: names,
