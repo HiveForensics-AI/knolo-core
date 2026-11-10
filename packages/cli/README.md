@@ -170,7 +170,11 @@ manifest. `SKILL.md` must match that name and description, and `policy.json`
 must match the image policy root. The files land only in `--dir/<name>`.
 
 The hub stores packs. It does not run a model, and it does not answer
-questions. `--hub` and `--registry` cannot be combined.
+questions. `--hub` and `--registry` cannot be combined. The install path,
+auth, trust, and version rules are in
+[Community install](../../docs/hub/COMMUNITY.md). This page does not
+restate that contract. `knolo setup` is specified there and is not a
+command yet.
 
 ---
 
