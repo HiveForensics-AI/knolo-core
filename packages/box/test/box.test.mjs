@@ -1752,3 +1752,141 @@ test('autoRebuild is off unless the config asks, and then status rebuilds once',
     await rm(home, { recursive: true, force: true });
   }
 });
+
+test('an unchanged empty scope is rebuilt once', async () => {
+  const home = await tempHome();
+  try {
+    const grok = path.join(home, 'grok');
+    const memory = path.join(grok, 'memory-v2');
+    await mkdir(memory, { recursive: true });
+    const configPath = path.join(home, 'box.json');
+    const stored = {
+      output: path.join(home, 'out'),
+      grokHome: grok,
+      agents: ['box'],
+      autoRebuild: true,
+      scopes: {
+        files: { roots: [] },
+        skills: { roots: [] },
+        memory: { roots: [memory] },
+        transcripts: { roots: [] },
+      },
+    };
+    await writeFile(configPath, `${JSON.stringify(stored)}\n`);
+    const config = await loadBoxConfig(configPath, {}, home);
+    const first = await boxStatus(config, new Date('2026-11-04T03:00:00.000Z'));
+    assert.equal(first.length, 0);
+    const pins = JSON.parse(
+      await readFile(path.join(config.output, 'pins.json'), 'utf8')
+    );
+    assert.equal(Object.hasOwn(pins.scopes, 'memory'), false);
+    assert.match(pins.emptyDigests.memory, /^[a-f0-9]{64}$/);
+    const record = JSON.parse(
+      await readFile(path.join(config.output, 'auto-rebuild.json'), 'utf8')
+    );
+    assert.equal(record.ok, true);
+    assert.equal(record.at, '2026-11-04T03:00:00.000Z');
+
+    await boxStatus(config, new Date('2026-11-04T03:00:03.000Z'));
+    const quiet = JSON.parse(
+      await readFile(path.join(config.output, 'auto-rebuild.json'), 'utf8')
+    );
+    assert.equal(quiet.at, record.at);
+
+    const note = path.join(memory, 'topics', 'note.md');
+    await mkdir(path.dirname(note), { recursive: true });
+    await writeFile(note, 'EMPTY_SCOPE gained a line.\n');
+    const filled = await boxStatus(
+      config,
+      new Date('2026-11-04T03:00:06.000Z')
+    );
+    assert.equal(filled.length, 1);
+    assert.equal(filled[0].id, 'memory');
+    assert.equal(filled[0].stale, false);
+    const filledPins = JSON.parse(
+      await readFile(path.join(config.output, 'pins.json'), 'utf8')
+    );
+    assert.equal(Object.hasOwn(filledPins, 'emptyDigests'), false);
+
+    await rm(note);
+    const cleared = await boxStatus(
+      config,
+      new Date('2026-11-04T03:00:09.000Z')
+    );
+    assert.equal(cleared.length, 0);
+    const clearedPins = JSON.parse(
+      await readFile(path.join(config.output, 'pins.json'), 'utf8')
+    );
+    assert.equal(Object.hasOwn(clearedPins.scopes, 'memory'), false);
+    assert.match(clearedPins.emptyDigests.memory, /^[a-f0-9]{64}$/);
+    await boxStatus(config, new Date('2026-11-04T03:00:12.000Z'));
+    const held = JSON.parse(
+      await readFile(path.join(config.output, 'auto-rebuild.json'), 'utf8')
+    );
+    assert.equal(held.at, '2026-11-04T03:00:09.000Z');
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('a failed publish leaves the previous image and pin', async () => {
+  const home = await tempHome();
+  try {
+    const grok = path.join(home, 'grok');
+    const note = path.join(grok, 'memory-v2', 'topics', 'note.md');
+    await mkdir(path.dirname(note), { recursive: true });
+    await writeFile(note, 'PUBLISH_PHRASE original line.\n');
+    const configPath = path.join(home, 'box.json');
+    const stored = {
+      output: path.join(home, 'out'),
+      grokHome: grok,
+      agents: ['box'],
+      scopes: {
+        files: { roots: [] },
+        skills: { roots: [] },
+        memory: { roots: [path.join(grok, 'memory-v2')] },
+        transcripts: { roots: [] },
+      },
+    };
+    await writeFile(configPath, `${JSON.stringify(stored)}\n`);
+    const config = await loadBoxConfig(configPath, {}, home);
+    await buildBox(config, new Date('2026-11-04T04:00:00.000Z'));
+    const image = await readFile(path.join(config.output, 'memory.v5'));
+    const pins = await readFile(path.join(config.output, 'pins.json'));
+    const mcp = await readFile(path.join(config.output, 'knolo-mcp.json'));
+    const policy = await readFile(path.join(config.output, 'policy.json'));
+    await mkdir(path.join(config.output, 'pins.json.next'), {
+      recursive: true,
+    });
+    await writeFile(path.join(config.output, 'pins.json.next', 'keep'), 'x\n');
+    await writeFile(note, 'PUBLISH_PHRASE changed after the block.\n');
+    await assert.rejects(
+      () => buildBox(config, new Date('2026-11-04T04:00:05.000Z')),
+      (error) => error.code === 'EISDIR'
+    );
+    assert.deepEqual(
+      await readFile(path.join(config.output, 'memory.v5')),
+      image
+    );
+    assert.deepEqual(
+      await readFile(path.join(config.output, 'pins.json')),
+      pins
+    );
+    assert.deepEqual(
+      await readFile(path.join(config.output, 'knolo-mcp.json')),
+      mcp
+    );
+    assert.deepEqual(
+      await readFile(path.join(config.output, 'policy.json')),
+      policy
+    );
+    await assert.rejects(() =>
+      access(path.join(config.output, 'memory.v5.next'))
+    );
+    await assert.rejects(() =>
+      access(path.join(config.output, 'policy.json.next'))
+    );
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
