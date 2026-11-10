@@ -43,6 +43,20 @@ function runSetup(args, env, cwd) {
   });
 }
 
+// knolo-box.mjs imports packages/box/dist. The CLI suite only builds core,
+// so this test compiles the connector when that file is absent.
+function ensureBoxBuilt() {
+  const dist = path.resolve(path.dirname(boxBin), '../dist/cli.js');
+  if (existsSync(dist)) return;
+  const repo = path.resolve(path.dirname(boxBin), '../../..');
+  const built = spawnSync(
+    'npm',
+    ['run', 'build', '--workspace', '@knolo/box'],
+    { cwd: repo, encoding: 'utf8', env: process.env }
+  );
+  assert.equal(built.status, 0, built.stderr || built.stdout);
+}
+
 function fakeBox(bin, log) {
   writeBox(
     bin,
@@ -205,10 +219,12 @@ test('setup help names the caller and auto-rebuild flags', () => {
   assert.match(result.stdout, /--root/);
   assert.match(result.stdout, /--agent/);
   assert.match(result.stdout, /--auto-rebuild/);
+  assert.match(result.stdout, /--reset/);
   assert.doesNotMatch(result.stdout, /Does not run knolo-box init/);
 });
 
 test('setup writes agent, auto-rebuild, and hub skills from a skill folder', () => {
+  ensureBoxBuilt();
   const root = tempDir();
   const home = path.join(root, 'home');
   const bin = path.join(root, 'bin');
@@ -265,5 +281,56 @@ exec ${JSON.stringify(process.execPath)} ${JSON.stringify(boxBin)} "$@"
     new RegExp(`Connector: knolo-box mcp --config ${configPath}`)
   );
   assert.doesNotMatch(result.stderr, /No Grok skill folder was found/);
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('setup keeps an existing config and only rebuilds it', () => {
+  const root = tempDir();
+  const home = path.join(root, 'home');
+  const bin = path.join(root, 'bin');
+  const log = path.join(root, 'box.log');
+  const configPath = path.join(home, '.knolo', 'box', 'box.config.json');
+  mkdirSync(path.dirname(configPath), { recursive: true });
+  const original = `${JSON.stringify(
+    { output: '/keep-me', scopes: { skills: { roots: [] } } },
+    null,
+    2
+  )}\n`;
+  writeFileSync(configPath, original);
+  mkdirSync(bin);
+  writeBox(
+    bin,
+    `#!/bin/sh
+printf '%s\\n' "$*" >> "$KNOLO_BOX_LOG"
+exit 0
+`
+  );
+  const result = runSetup(['--registry', 'https://hub.example.test'], {
+    PATH: bin,
+    HOME: home,
+    KNOLO_BOX_LOG: log,
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const calls = readFileSync(log, 'utf8');
+  assert.match(calls, /^build --config /);
+  assert.doesNotMatch(calls, /\binit\b/);
+  assert.equal(readFileSync(configPath, 'utf8'), original);
+  assert.match(result.stderr, /Kept the existing config/);
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('setup refuses to replace a config unless --reset is passed', () => {
+  const root = tempDir();
+  const home = path.join(root, 'home');
+  const configPath = path.join(home, '.knolo', 'box', 'box.config.json');
+  mkdirSync(path.dirname(configPath), { recursive: true });
+  writeFileSync(configPath, '{}\n');
+  const result = runSetup(['--agent', 'grok-bot'], {
+    PATH: '',
+    HOME: home,
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /Pass --reset to replace it/);
+  assert.equal(readFileSync(configPath, 'utf8'), '{}\n');
   rmSync(root, { recursive: true, force: true });
 });

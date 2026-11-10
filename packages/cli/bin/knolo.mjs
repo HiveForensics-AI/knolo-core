@@ -221,11 +221,12 @@ function printCommandHelp(command) {
     attest: 'Usage: knolo attest <create|verify> [options]\n\n  knolo attest create --composition composition/composition.json --subject composition --statement mount|used|cited --out attestation.json [--sign-key key.json --principal <id> --key-id <id> --issued-at <ms> --expires-at <ms>]\n  knolo attest verify attestation.json [--composition composition.json] [--public-key key.json] [--now <ms>] [--content-only]\n\nstatement used means a query or KAR evaluation ran. It does not mean the claim is true or false. Hub attested: true is unrelated. Signing uses the supplied times. The CLI does not read the clock.',
     cortex: 'Usage: knolo cortex <find|ask|explain|verify> [options]\n\nBounded evidence retrieval. The CLI does not call a model.\n\n  knolo cortex find <image> --question "..." [--top-k 100] --out candidates.json\n  knolo cortex ask <image> --question "..." [--graph file] [--plan plan.json] [--mode find_relevant] --out answer.cortex.json\n  knolo cortex explain answer.cortex.json\n  knolo cortex verify --image <image> --answer answer.cortex.json [--graph file]\n\nVerification recomputes the trace roots. It does not mean the answer is true. A KAR status of SATISFIED means evidence requirements were met. It does not mean a claim is proven.',
     flight: 'Usage: knolo flight ingest --events <events.json> --log <file> --out <image.knolo> [--json]\n\nPacks a flight-events-1 document into a V5 Knowledge Image. The command hashes --log and writes nothing when the hash or byte length differs. It does not decode the log. log.format is ulog, dataflash, or rosbag2. A later KAR status of SATISFIED means evidence requirements were met. It does not mean a flight was safe, legal, or compliant.',
-    setup: `Usage: knolo setup [--registry <url>] [--root <dir>] [--agent <id>] [--auto-rebuild] [--skills <path>] [--managed-skills <path>] [--memory <path>] [--transcripts <path>]
+    setup: `Usage: knolo setup [--registry <url>] [--root <dir>] [--agent <id>] [--auto-rebuild] [--reset] [--skills <path>] [--managed-skills <path>] [--memory <path>] [--transcripts <path>]
 
 Resolves the hub the same way as the other hub commands.
 Scans ~/.grok when that directory exists, plus every --root.
 Runs knolo-box init --tolerant, then knolo-box build --config.
+Keeps an existing config and rebuilds it. Pass --reset to replace it.
 Always includes ~/.knolo/skills as a skills root.
 Pass --agent to set the caller name. Pass --auto-rebuild to rebuild on the next search.
 Does not prompt. Does not install a pack or call the hub.

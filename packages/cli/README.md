@@ -175,8 +175,11 @@ manifest. `SKILL.md` must match that name and description, and `policy.json`
 must match the image policy root. The files land in `--dir/<name>`, or in
 `~/.knolo/skills/<name>` when `--dir` is omitted. When that folder is a
 skills root in `~/.knolo/box/box.config.json` and `knolo-box` is on `PATH`,
-install runs one `knolo-box build`. A folder outside those roots is still
-written, and install prints that it was not indexed.
+install runs one `knolo-box build`. A root written as `~/...` or
+`$GROK_HOME/...` counts, and a skills scope left out of the file uses the
+default `~/.grok` skill folders. A folder outside those roots is still
+written, and install prints that it was not indexed. A failed build leaves
+the installed files in place and prints that the install was not indexed.
 `search`, `list`, and `info` read the public skill catalog. `list` prints
 every `publisher/name`. `check` reads a source directory that contains
 `knowledge/`. An installed pack contains `knowledge.v5` instead.
@@ -184,10 +187,12 @@ every `publisher/name`. `check` reads a source directory that contains
 `knolo setup` runs `knolo-box init --tolerant` and then `knolo-box build`
 when `knolo-box` is on `PATH`. It scans `~/.grok` when that directory
 exists, plus every `--root`. It does not require `~/.grok`. It always
-includes `~/.knolo/skills`. `--agent` sets the caller name. `--auto-rebuild`
-turns on a rebuild at the next search. Setup does not prompt, install a
-pack, or call the hub. A missing `knolo-box` is one line, and setup still
-exits 0. It prints the config path, `knolo skill install <publisher>/<name>`,
+includes `~/.knolo/skills`. An existing `~/.knolo/box/box.config.json` is
+kept and rebuilt. `--reset` replaces it. `--agent` sets the caller name.
+`--auto-rebuild` turns on a rebuild at the next search. Those flags require
+`--reset` when a config file is already there. Setup does not prompt,
+install a pack, or call the hub. A missing `knolo-box` is one line, and
+setup still exits 0. It prints the config path, `knolo skill install <publisher>/<name>`,
 and `knolo-box mcp --config <path>`. The install path, auth, trust, and
 version rules are in [Community install](../../docs/hub/COMMUNITY.md). This
 page does not restate that contract. The hub stores packs. It does not run

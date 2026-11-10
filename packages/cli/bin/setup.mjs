@@ -12,11 +12,12 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 import { resolveRegistryUrl } from './registry/config.mjs';
 
-export const SETUP_HELP = `Usage: knolo setup [--registry <url>] [--root <dir>] [--agent <id>] [--auto-rebuild] [--skills <path>] [--managed-skills <path>] [--memory <path>] [--transcripts <path>]
+export const SETUP_HELP = `Usage: knolo setup [--registry <url>] [--root <dir>] [--agent <id>] [--auto-rebuild] [--reset] [--skills <path>] [--managed-skills <path>] [--memory <path>] [--transcripts <path>]
 
 Resolves the hub the same way as the other hub commands.
 Scans ~/.grok when that directory exists, plus every --root.
 Runs knolo-box init --tolerant, then knolo-box build --config.
+Keeps an existing config and rebuilds it. Pass --reset to replace it.
 Always includes ~/.knolo/skills as a skills root.
 Pass --agent to set the caller name. Pass --auto-rebuild to rebuild on the next search.
 Does not prompt. Does not install a pack or call the hub.
@@ -49,9 +50,29 @@ export async function runKnoloSetup(
   if (await directoryExists(grokHome)) roots.push(grokHome);
   for (const root of parsed.roots) roots.push(root);
 
+  const existing = await fileExists(configPath);
+  if (existing && !parsed.reset && requestsNewConfig(parsed)) {
+    throw new Error(
+      `Config already exists: ${configPath}. Pass --reset to replace it.`
+    );
+  }
+  const replace = !existing || parsed.reset === true;
+
   let built = false;
   if (!box) {
     printError('knolo-box is not on PATH. Skipping the local index.');
+    if (existing && !parsed.reset) printError('Kept the existing config.');
+  } else if (!replace) {
+    const buildStatus = await spawnImpl(
+      box,
+      ['build', '--config', configPath],
+      { env }
+    );
+    if (buildStatus !== 0) {
+      throw new Error(`knolo-box build exited with status ${buildStatus}.`);
+    }
+    built = true;
+    printError('Kept the existing config.');
   } else {
     const initArgs = [
       'init',
@@ -117,13 +138,29 @@ export async function findOnPath(name, pathEnv) {
   return null;
 }
 
+function requestsNewConfig(parsed) {
+  return (
+    parsed.roots.length > 0 ||
+    parsed.autoRebuild === true ||
+    Boolean(parsed.agent) ||
+    Boolean(parsed.skills) ||
+    Boolean(parsed.managedSkills) ||
+    Boolean(parsed.memory) ||
+    Boolean(parsed.transcripts)
+  );
+}
+
 function parseSetupArgs(args) {
-  const parsed = { roots: [], autoRebuild: false };
+  const parsed = { roots: [], autoRebuild: false, reset: false };
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (arg === '--help' || arg === '-h') return { help: true };
     if (arg === '--auto-rebuild') {
       parsed.autoRebuild = true;
+      continue;
+    }
+    if (arg === '--reset') {
+      parsed.reset = true;
       continue;
     }
     if (arg === '--root') {
@@ -161,6 +198,15 @@ function oneValue(args, index, arg) {
     throw new Error(`Missing value for ${arg}`);
   }
   return value;
+}
+
+async function fileExists(candidate) {
+  try {
+    await access(candidate, constants.F_OK);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function directoryExists(candidate) {

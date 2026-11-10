@@ -940,7 +940,7 @@ test('skill install defaults to ~/.knolo/skills and rebuilds once', async (t) =>
   writeFileSync(
     path.join(home, '.knolo', 'box', 'box.config.json'),
     `${JSON.stringify({
-      scopes: { skills: { roots: [skills] } },
+      scopes: { skills: { roots: ['~/.knolo/skills'] } },
     })}\n`
   );
   mkdirSync(bin);
@@ -981,10 +981,50 @@ exit 0
   assert.deepEqual(outside, [
     'This folder is not a Knolo skills root, so the install was not indexed.',
   ]);
-  assert.equal(
-    readFileSync(log, 'utf8').trim().split('\n').length,
-    1
+  assert.equal(readFileSync(log, 'utf8').trim().split('\n').length, 1);
+
+  const grokSkills = path.join(home, '.grok', 'skills');
+  const configPath = path.join(home, '.knolo', 'box', 'box.config.json');
+  writeFileSync(
+    configPath,
+    `${JSON.stringify({ grokHome: path.join(home, '.grok') })}\n`
   );
+  const omitted = [];
+  await installSkill(undefined, {
+    pack: path.join(root, 'pack'),
+    dir: grokSkills,
+    env: { HOME: home, PATH: bin, KNOLO_BOX_LOG: log },
+    print() {},
+    printError: (line) => omitted.push(line),
+  });
+  assert.deepEqual(omitted, []);
+  assert.equal(readFileSync(log, 'utf8').trim().split('\n').length, 2);
+
+  writeFileSync(
+    configPath,
+    `${JSON.stringify({
+      scopes: { skills: { roots: ['~/.knolo/skills'] } },
+    })}\n`
+  );
+  writeFileSync(
+    box,
+    `#!/bin/sh
+printf '%s\\n' "$*" >> ${JSON.stringify(log)}
+exit 3
+`
+  );
+  rmSync(installed.dir, { recursive: true, force: true });
+  const failed = [];
+  const kept = await installSkill(undefined, {
+    pack: path.join(root, 'pack'),
+    env: { HOME: home, PATH: bin, KNOLO_BOX_LOG: log },
+    print() {},
+    printError: (line) => failed.push(line),
+  });
+  assert.equal(existsSync(path.join(kept.dir, 'SKILL.md')), true);
+  assert.deepEqual(failed, [
+    'knolo-box build exited with status 3. The install was not indexed.',
+  ]);
 
   rmSync(installed.dir, { recursive: true, force: true });
   const missingBox = [];

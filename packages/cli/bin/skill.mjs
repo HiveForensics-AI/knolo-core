@@ -341,9 +341,7 @@ async function indexInstalledSkill(destRoot, flags) {
   } catch {
     config = null;
   }
-  const roots = Array.isArray(config?.scopes?.skills?.roots)
-    ? config.scopes.skills.roots
-    : [];
+  const roots = skillRootsFromConfig(config, env, home);
   const dest = await canonicalDir(destRoot);
   let indexed = false;
   for (const root of roots) {
@@ -366,8 +364,55 @@ async function indexInstalledSkill(destRoot, flags) {
   }
   const status = await spawnBox(box, ['build', '--config', configPath], env);
   if (status !== 0) {
-    throw new Error(`knolo-box build exited with status ${status}.`);
+    printError(
+      `knolo-box build exited with status ${status}. The install was not indexed.`
+    );
   }
+}
+
+function skillRootsFromConfig(config, env, home) {
+  if (!config || typeof config !== 'object' || Array.isArray(config)) return [];
+  const fallbackGrok = path.resolve(
+    expandBoxPath(env.GROK_HOME?.trim() || path.join(home, '.grok'), home, '')
+  );
+  const grokHome = path.resolve(
+    expandBoxPath(
+      typeof config.grokHome === 'string' ? config.grokHome : fallbackGrok,
+      home,
+      fallbackGrok
+    )
+  );
+  const scopes = config.scopes;
+  if (scopes !== undefined) {
+    if (!scopes || typeof scopes !== 'object' || Array.isArray(scopes)) {
+      return [];
+    }
+  }
+  const skills =
+    scopes && typeof scopes === 'object' ? scopes.skills : undefined;
+  if (skills === undefined) {
+    return [
+      path.join(grokHome, 'skills'),
+      path.join(grokHome, 'bundled', 'skills'),
+    ];
+  }
+  if (!skills || typeof skills !== 'object' || Array.isArray(skills)) return [];
+  if (!Array.isArray(skills.roots)) return [];
+  const roots = [];
+  for (const item of skills.roots) {
+    if (typeof item !== 'string' || item.length === 0) continue;
+    roots.push(path.resolve(expandBoxPath(item, home, grokHome)));
+  }
+  return roots;
+}
+
+function expandBoxPath(input, home, grokHome) {
+  const withHome = input
+    .replaceAll('${GROK_HOME}', grokHome)
+    .replaceAll('$GROK_HOME', grokHome);
+  if (withHome === '~') return home;
+  if (withHome.startsWith('~/')) return path.join(home, withHome.slice(2));
+  return withHome;
 }
 
 async function canonicalDir(candidate) {
