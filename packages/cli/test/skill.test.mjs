@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
+  chmodSync,
   cpSync,
   existsSync,
   mkdirSync,
@@ -22,6 +23,7 @@ import {
   infoSkill,
   installSkill,
   installSkillFromRegistry,
+  listSkills,
   publishSkillToRegistry,
   searchSkills,
   skillNameError,
@@ -882,4 +884,158 @@ test('skill search and info read the public catalog without a token', async () =
     calls.some((call) => call.auth),
     false
   );
+
+  const listed = [];
+  const all = await listSkills({
+    registry: 'https://hub.example.test',
+    fetchImpl,
+    print: (line) => listed.push(line),
+  });
+  assert.deepEqual(listed, ['acme/refund-policy', 'acme/other']);
+  assert.equal(all.skills.length, 2);
+  assert.equal(
+    calls.some((call) => call.auth),
+    false
+  );
+
+  const jsonLines = [];
+  await listSkills({
+    registry: 'https://hub.example.test',
+    fetchImpl,
+    json: true,
+    print: (line) => jsonLines.push(line),
+  });
+  const parsed = JSON.parse(jsonLines.join('\n'));
+  assert.equal(Array.isArray(parsed), true);
+  assert.equal(parsed.length, 2);
+  assert.equal(parsed[0].publisher, 'acme');
+
+  const emptyLines = [];
+  const emptyCatalog = await listSkills({
+    registry: 'https://hub.example.test',
+    fetchImpl: async () =>
+      json(200, {
+        skills: [],
+      }),
+    print: (line) => emptyLines.push(line),
+  });
+  assert.equal(emptyCatalog.skills.length, 0);
+  assert.deepEqual(emptyLines, ['no skills']);
+});
+
+test('skill install defaults to ~/.knolo/skills and rebuilds once', async (t) => {
+  const root = tempDir();
+  const home = path.join(root, 'home');
+  const bin = path.join(root, 'bin');
+  const log = path.join(root, 'calls.log');
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  assert.equal(run(['skill', 'init', 'refund-policy'], root).status, 0);
+  const packed = run(
+    ['skill', 'pack', path.join(root, 'refund-policy'), '--out', 'pack', '--json'],
+    root
+  );
+  assert.equal(packed.status, 0, packed.stderr);
+  const skills = path.join(home, '.knolo', 'skills');
+  mkdirSync(path.join(home, '.knolo', 'box'), { recursive: true });
+  writeFileSync(
+    path.join(home, '.knolo', 'box', 'box.config.json'),
+    `${JSON.stringify({
+      scopes: { skills: { roots: ['~/.knolo/skills'] } },
+    })}\n`
+  );
+  mkdirSync(bin);
+  const box = path.join(bin, 'knolo-box');
+  writeFileSync(
+    box,
+    `#!/bin/sh
+printf '%s\\n' "$*" >> ${JSON.stringify(log)}
+exit 0
+`
+  );
+  chmodSync(box, 0o755);
+  const warnings = [];
+  const installed = await installSkill(undefined, {
+    pack: path.join(root, 'pack'),
+    env: { HOME: home, PATH: bin, KNOLO_BOX_LOG: log },
+    print() {},
+    printError: (line) => warnings.push(line),
+  });
+  assert.equal(installed.dir, path.join(skills, 'refund-policy'));
+  assert.equal(existsSync(path.join(installed.dir, 'SKILL.md')), true);
+  assert.equal(readFileSync(log, 'utf8').trim(), `build --config ${path.join(home, '.knolo', 'box', 'box.config.json')}`);
+  assert.deepEqual(warnings, []);
+
+  const outside = [];
+  const elsewhere = path.join(root, 'elsewhere');
+  await installSkill(undefined, {
+    pack: path.join(root, 'pack'),
+    dir: elsewhere,
+    env: { HOME: home, PATH: bin },
+    print() {},
+    printError: (line) => outside.push(line),
+  });
+  assert.equal(
+    existsSync(path.join(elsewhere, 'refund-policy', 'SKILL.md')),
+    true
+  );
+  assert.deepEqual(outside, [
+    'This folder is not a Knolo skills root, so the install was not indexed.',
+  ]);
+  assert.equal(readFileSync(log, 'utf8').trim().split('\n').length, 1);
+
+  const grokSkills = path.join(home, '.grok', 'skills');
+  const configPath = path.join(home, '.knolo', 'box', 'box.config.json');
+  writeFileSync(
+    configPath,
+    `${JSON.stringify({ grokHome: path.join(home, '.grok') })}\n`
+  );
+  const omitted = [];
+  await installSkill(undefined, {
+    pack: path.join(root, 'pack'),
+    dir: grokSkills,
+    env: { HOME: home, PATH: bin, KNOLO_BOX_LOG: log },
+    print() {},
+    printError: (line) => omitted.push(line),
+  });
+  assert.deepEqual(omitted, []);
+  assert.equal(readFileSync(log, 'utf8').trim().split('\n').length, 2);
+
+  writeFileSync(
+    configPath,
+    `${JSON.stringify({
+      scopes: { skills: { roots: ['~/.knolo/skills'] } },
+    })}\n`
+  );
+  writeFileSync(
+    box,
+    `#!/bin/sh
+printf '%s\\n' "$*" >> ${JSON.stringify(log)}
+exit 3
+`
+  );
+  rmSync(installed.dir, { recursive: true, force: true });
+  const failed = [];
+  const kept = await installSkill(undefined, {
+    pack: path.join(root, 'pack'),
+    env: { HOME: home, PATH: bin, KNOLO_BOX_LOG: log },
+    print() {},
+    printError: (line) => failed.push(line),
+  });
+  assert.equal(existsSync(path.join(kept.dir, 'SKILL.md')), true);
+  assert.deepEqual(failed, [
+    'knolo-box build exited with status 3. The install was not indexed.',
+  ]);
+
+  rmSync(installed.dir, { recursive: true, force: true });
+  const missingBox = [];
+  const skipped = await installSkill(undefined, {
+    pack: path.join(root, 'pack'),
+    env: { HOME: home, PATH: '' },
+    print() {},
+    printError: (line) => missingBox.push(line),
+  });
+  assert.equal(existsSync(path.join(skipped.dir, 'SKILL.md')), true);
+  assert.deepEqual(missingBox, [
+    'knolo-box is not on PATH. The install was not indexed.',
+  ]);
 });

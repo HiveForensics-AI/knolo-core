@@ -13,8 +13,8 @@ reader.
 
 `knolo compose`, `knolo attest`, and `knolo verify-attestation` cite local
 Knowledge Images and write an attestation sidecar. This tree's `@knolo/cli`
-package file stays `6.2.0` and depends on `@knolo/core` `^6.2.0`. npm
-`latest` is `6.2.1`. They do not fetch Hub. Verification
+package file is `6.2.2` and depends on `@knolo/core` `^6.2.0`. npm
+`latest` is `6.2.1` until `6.2.2` is published. They do not fetch Hub. Verification
 recomputes `compositionRoot` and checks bundled excerpt bytes. A keyring key
 must fall inside `notBefore`, `notAfter`, and `revokedAt`. `used` means a
 query or evaluation ran. It does not mean `SATISFIED`, and it does not mean a
@@ -145,12 +145,13 @@ knolo skill init refund-policy
 knolo skill check refund-policy
 knolo skill pack refund-policy --out dist/refund-policy.knolo-skill
 knolo skill publish dist/refund-policy.knolo-skill
-knolo skill install acme/refund-policy --dir ./skills
+knolo skill install acme/refund-policy
 knolo skill publish dist/refund-policy.knolo-skill --hub ./catalog
 knolo skill install refund-policy --hub ./catalog --dir ./skills
 knolo skill search refund
+knolo skill list
 knolo skill info acme/refund-policy
-knolo setup
+knolo setup --root <dir> --agent <id> --auto-rebuild
 ```
 
 `init` writes `SKILL.md` and an empty `knowledge/` directory. `check` reads
@@ -171,17 +172,32 @@ read a stored token, and the download does not send one. `install` with
 `--hub` or `--pack` reads a local directory. Either install checks the pin
 before it writes. A mismatch writes nothing. The catalog id must match the
 manifest. `SKILL.md` must match that name and description, and `policy.json`
-must match the image policy root. The files land only in `--dir/<name>`.
-`search` and `info` read the public skill catalog. `check` reads a source
-directory that contains `knowledge/`. An installed pack contains
-`knowledge.v5` instead.
+must match the image policy root. The files land in `--dir/<name>`, or in
+`~/.knolo/skills/<name>` when `--dir` is omitted. When that folder is a
+skills root in `~/.knolo/box/box.config.json` and `knolo-box` is on `PATH`,
+install runs one `knolo-box build`. A root written as `~/...` or
+`$GROK_HOME/...` counts, and a skills scope left out of the file uses the
+default `~/.grok` skill folders. A folder outside those roots is still
+written, and install prints that it was not indexed. A failed build leaves
+the installed files in place and prints that the install was not indexed.
+`search`, `list`, and `info` read the public skill catalog. `list` prints
+every `publisher/name`. `check` reads a source directory that contains
+`knowledge/`. An installed pack contains `knowledge.v5` instead.
 
-`knolo setup` runs `knolo-box build` when that binary is on `PATH` and a
-Grok home exists. It does not run `init`, install a pack, or call the hub.
-The install path, auth, trust, and version rules are in
-[Community install](../../docs/hub/COMMUNITY.md). This page does not
-restate that contract. The hub stores packs. It does not run a model, and
-it does not answer questions. `--hub` and `--registry` cannot be combined.
+`knolo setup` runs `knolo-box init --tolerant` and then `knolo-box build`
+when `knolo-box` is on `PATH`. It scans `~/.grok` when that directory
+exists, plus every `--root`. It does not require `~/.grok`. It always
+includes `~/.knolo/skills`. An existing `~/.knolo/box/box.config.json` is
+kept and rebuilt. `--reset` replaces it. `--agent` sets the caller name.
+`--auto-rebuild` turns on a rebuild at the next search. Those flags require
+`--reset` when a config file is already there. Setup does not prompt,
+install a pack, or call the hub. A missing `knolo-box` is one line, and
+setup still exits 0. It prints the config path, `knolo skill install <publisher>/<name>`,
+and `knolo-box mcp --config <path>`. The install path, auth, trust, and
+version rules are in [Community install](../../docs/hub/COMMUNITY.md). This
+page does not restate that contract. The hub stores packs. It does not run
+a model, and it does not answer questions. `--hub` and `--registry` cannot
+be combined.
 
 ---
 
@@ -343,7 +359,7 @@ This ensures:
 ## 🗺 Roadmap
 
 The active roadmap is maintained in [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
-The published npm release is `6.2.1`. This package file stays `6.2.0`. It preserves the V4 CLI, keeps V5 verification,
+The published npm release is `6.2.1`. This package file is `6.2.2`. It preserves the V4 CLI, keeps V5 verification,
 migration, diagnostics, and read-only Studio management, and adds offline
 composition, attestation, and `knolo cortex`. Cortex verification does not
 mean an answer is true.

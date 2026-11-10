@@ -15,7 +15,7 @@ export async function main(
   const command = argv[0];
   if (!command || command === '--help' || command === '-h') {
     console.error(
-      'knolo-box build|status|mcp|init|ensure-fresh [--config <file>] [--root <dir>] [--skills <path>] [--managed-skills <path>] [--memory <path>] [--transcripts <path>] [--files <path>]'
+      'knolo-box build|status|mcp|init|ensure-fresh [--config <file>] [--root <dir>] [--skills <path>] [--managed-skills <path>] [--memory <path>] [--transcripts <path>] [--files <path>] [--tolerant] [--agent <id>] [--auto-rebuild] [--hub-skills <path>]'
     );
     return command ? 0 : 1;
   }
@@ -25,10 +25,11 @@ export async function main(
       if (!configPath) {
         throw new BoxError('BOX_CONFIG', '--config needs a path.');
       }
+      const tolerant = argv.includes('--tolerant');
       const roots = flags(argv, '--root');
       const result = await initBox({
         configPath,
-        roots: roots.length > 0 ? roots : [home],
+        roots: roots.length > 0 ? roots : tolerant ? [] : [home],
         skills: flag(argv, '--skills') ?? optionalEnv(env.KNOLO_BOX_SKILLS),
         managedSkills:
           flag(argv, '--managed-skills') ??
@@ -39,6 +40,10 @@ export async function main(
         files: flag(argv, '--files') ?? optionalEnv(env.KNOLO_BOX_FILES),
         home,
         env,
+        tolerant,
+        agentId: flag(argv, '--agent'),
+        autoRebuild: argv.includes('--auto-rebuild') ? true : undefined,
+        hubSkills: flag(argv, '--hub-skills'),
       });
       for (const line of result.reports) console.error(line);
       console.log(
@@ -47,6 +52,10 @@ export async function main(
             output: result.output,
             grokHome: result.grokHome,
             agents: result.agents,
+            ...(result.agentId !== undefined
+              ? { agentId: result.agentId }
+              : {}),
+            ...(result.autoRebuild === true ? { autoRebuild: true } : {}),
             scopes: result.scopes,
           },
           null,

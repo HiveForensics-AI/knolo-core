@@ -12,7 +12,7 @@ Knolo has two catalogs. They stay separate.
 | Catalog | Identity | Artifact | Commands |
 | --- | --- | --- | --- |
 | Knowledge packs | `publisher/slug@version` | `.knolo` | `knolo search`, `info`, `add`, `publish`, `yank` |
-| Skill packs | `publisher/name` | `knolo-skill-pack-v1` | `knolo skill init`, `check`, `pack`, `publish`, `install` |
+| Skill packs | `publisher/name` | `knolo-skill-pack-v1` | `knolo skill init`, `check`, `pack`, `publish`, `install`, `search`, `info`, `list` |
 
 The hub stores packs and pins. It does not run a model, and it does not answer questions. Installing a pack is a local decision by whoever runs the agent. A search hit is data. A receipt is an integrity check. `SATISFIED` means the evidence requirements were met. It does not mean a claim is proven.
 
@@ -24,24 +24,21 @@ The hub stores packs and pins. It does not run a model, and it does not answer q
 
 Knowledge packs on the hub have a catalog, search, versions, stars, yank, reports, a secret scan, and GitHub login that mints `kno_…` publish tokens. The CLI searches that catalog, installs through the manifest plus a direct Blob download, and records the pin in `knolo.lock.json`. A pin mismatch writes nothing. Current `@knolo/cli` implements `knolo publish` and `knolo yank` against the live hub routes. `@knolo/cli@5.2.0` was the stub.
 
-Skill packs ship as [Skills](../skills/README.md). `publish` sends the pack to `https://hub.knolo.dev` unless `--hub` names a local directory. The same pin republishes as unchanged. A different pin for the same name is refused, and the catalog row stays. `install <publisher>/<name> --dir <path>` checks the archive pin and the pins inside it, then writes only `<path>/<name>/`. A mismatch writes nothing. Install refuses to replace an existing directory. The site lists skills at `/skills` and `/skills/<publisher>/<name>`.
+Skill packs ship as [Skills](../skills/README.md). `publish` sends the pack to `https://hub.knolo.dev` unless `--hub` names a local directory. The same pin republishes as unchanged. A different pin for the same name is refused, and the catalog row stays. `install <publisher>/<name>` checks the archive pin and the pins inside it, then writes `<dir>/<name>/`. `--dir` defaults to `~/.knolo/skills`. A mismatch writes nothing. Install refuses to replace an existing directory. The site lists skills at `/skills` and `/skills/<publisher>/<name>`.
 
-`@knolo/box` builds pinned images of skills, memory, and transcripts and starts read-only `knolo-mcp`. The default computer is `$GROK_HOME` or `~/.grok`. Output is `~/.knolo/box/`. The Grok plugin is `plugins/knolo-box`. Its MCP command is `npx -y @knolo/box@0.1.0 mcp`. That package is not on npm, so the plugin install fails until a later release. Until then, use the workspace binary in [the Box README](../../packages/box/README.md). `@knolo/cli` depends only on `@knolo/core`. It does not depend on Box.
+`@knolo/box` builds pinned images of skills, memory, and transcripts and starts read-only `knolo-mcp`. The default computer is `$GROK_HOME` or `~/.grok`. Output is `~/.knolo/box/`. The Grok plugin is `plugins/knolo-box`. Its MCP command is `npx -y @knolo/box@0.1.0 mcp`. `@knolo/box@0.1.0` is not on npm yet, so that command fails until the package is published. Until then, use the workspace binary in [the Box README](../../packages/box/README.md). The CLI release that includes `knolo setup` and `knolo skill` is `npx -y @knolo/cli@6.2.2`. That release is not on npm until it is published. `@knolo/cli` depends only on `@knolo/core`. It does not depend on Box. `@knolo/mcp@0.2.2` is the server this box release depends on. npm still has `@knolo/mcp@0.2.1`.
 
 ## Install
 
 The single entry point is `knolo setup`. It is one command in `@knolo/cli`, not a new package. The contract is:
 
 1. Resolve the registry the same way as the other hub commands. `--registry` wins over `KNOLO_HUB_URL`. When neither is set, development mode (`NODE_ENV=development` or `KNOLO_ENV=development`) uses `http://localhost:3000`. Otherwise the default is `https://hub.knolo.dev`.
-2. If `knolo-box` is on `PATH` and a Grok home exists, run `knolo-box build` with the default config. That config uses `$GROK_HOME` or `~/.grok`, and its skill roots are `skills/` and `bundled/skills/`. Do not run `knolo-box init`. `init` requires exactly one `agent-data/workflows` or `sand-data/workflows` directory and does not look at those default skill roots, so it fails on a normal Grok home and never reaches `build`. A computer that is not `~/.grok` keeps the existing `knolo-box init --config <file>` step in the Box README. Setup does not invent a computer layout. Writes stay under the Box output directory, `~/.knolo/box/` unless that config says otherwise.
-3. If `knolo-box` is missing, or no Grok home exists, print that and continue. Do not run `build`. Setup exits 0. Empty scopes stay empty.
-4. Print three next steps and do not write anything else. Every registry URL in those steps is the registry resolved in step 1. `knolo login`, `knolo skill publish`, `knolo publish`, and `knolo yank` include `--registry <resolved>` so they do not store or send a token for a different origin. `knolo login` without `--registry` stores the token for the process default, and a later call refuses to send that token anywhere else.
-   - First search: the Box MCP config path, or `knolo-mcp` when a mount already exists.
-   - First install: `knolo skill install <publisher>/<name> --dir <path>`. This command does not read a stored token. The download does not send one.
-   - First publish: mint a token at `<resolved>/dashboard/tokens`, then `knolo login --registry <resolved>`, then `knolo skill publish` or `knolo publish` with the same `--registry`.
+2. If `knolo-box` is on `PATH` and `~/.knolo/box/box.config.json` is absent, run `knolo-box init --tolerant` and then `knolo-box build --config ~/.knolo/box/box.config.json`. When that file already exists, keep it and run only the build. `--reset` replaces it. `--root`, `--agent`, `--auto-rebuild`, `--skills`, `--managed-skills`, `--memory`, and `--transcripts` require `--reset` when the file exists. Scan `~/.grok` when that directory exists, plus every `--root`. Do not require `~/.grok`. Do not scan the whole home directory. Always include `~/.knolo/skills` as a skills root. `--agent <id>` writes `agentId`. `--auto-rebuild` writes `autoRebuild: true`. Omitting those flags leaves the caller as `box` and leaves auto-rebuild off. Setup does not prompt. Zero detected Grok skill folders still writes the config and prints that none was found. More than one folder for a role prints one line naming `--skills` or `--managed-skills` and does not guess. A direct `knolo-box init` stays strict: zero or several skill folders stop with `BOX_CONFIG` and the count of matches, and write no file.
+3. If `knolo-box` is missing, print that and continue. Do not run `init` or `build`. Setup exits 0.
+4. Print the config path, `knolo skill install <publisher>/<name>`, and `knolo-box mcp --config <absolute box.config.json>`. Also print that publish needs a token from `<resolved>/dashboard/tokens`. `knolo login` without `--registry` stores the token for the process default, and a later call refuses to send that token anywhere else. Install does not read a stored token. The download does not send one.
 5. Do not install a community pack. Do not call a hub write API. Do not add tools to MCP.
 
-Tests for that command use a temporary `PATH` and a fake `knolo-box`. The fake accepts `build` and fails the test if setup runs `init`. They do not use the network, and they do not add a dependency on `@knolo/box`.
+Tests for that command use a temporary `PATH`. A fake `knolo-box` accepts `init` and then `build`. They do not use the network, and the CLI does not depend on `@knolo/box`.
 
 The Grok connector stays:
 
@@ -59,11 +56,11 @@ GitHub sign-in is for the hub dashboard. The dashboard mints a `kno_…` token. 
 
 ## Sharing
 
-Browse knowledge packs at `/explore` and with `knolo search` / `knolo info`. Browse skill packs at `/skills`, or with `knolo skill search` and `knolo skill info`. Skill search reads `GET /api/v1/skills` and filters on this machine. The list has no `q` parameter. Skill info reads one detail row. Neither command sends a token.
+Browse knowledge packs at `/explore` and with `knolo search` / `knolo info`. Browse skill packs at `/skills`, or with `knolo skill search`, `knolo skill list`, and `knolo skill info`. Skill search and skill list read `GET /api/v1/skills`. Search filters on this machine. List prints every `publisher/name`. The list has no `q` parameter. Skill info reads one detail row. None of these commands send a token.
 
 A skill catalog row carries the name (`publisher/name`), description, publisher, skill SHA-256, and policy SHA-256. When the pack includes an image, it also carries the image SHA-256 and state root. The detail response adds the archive SHA-256, the Blob URL, and the size. The list omits the archive URL. The hub does not search the image.
 
-Install still requires `--dir`. The destination is only `<dir>/<name>/`. Setup does not copy a skill into a Grok skills directory.
+Install writes `<dir>/<name>/`. `--dir` defaults to `~/.knolo/skills`. When that folder is a skills root in the box config and `knolo-box` is on `PATH`, install runs one build so the next search can see the skill. A root written as `~/...` or `$GROK_HOME/...` counts, and a skills scope left out of the file uses the default `~/.grok` skill folders. A folder outside those roots is still written, and install prints that it was not indexed. A failed build leaves the installed files in place and prints that the install was not indexed. Setup does not copy a skill into a Grok skills directory by itself. The hub skills root is indexed because setup adds it.
 
 Publish stays explicit. `knolo skill publish <pack>` uses the stored token. `knolo publish` remains the command for a `.knolo` knowledge pack. `--hub <dir>` is an offline directory, and it cannot be combined with `--registry`.
 
@@ -89,12 +86,12 @@ New skill images are built with `@knolo/core` `^6.2.0`, the same floor as `@knol
 
 ## First session
 
-These are the commands that exist today on the production hub. `knolo setup` runs step 2 when `knolo-box` is on `PATH` and a Grok home exists, then prints the next steps. A custom registry uses `--registry <url>` on `setup`, `login`, `publish`, and `yank`.
+These are the commands that exist in this tree. `knolo setup` runs when `knolo-box` is on `PATH`, then prints the connector command. A custom registry uses `--registry <url>` on `setup`, `login`, `publish`, and `yank`.
 
-1. Install the CLI from this checkout: `node packages/cli/bin/knolo.mjs`. The published npm CLI does not include `knolo setup` until a later release.
-2. Build a local index: `knolo setup`. When this checkout is available and you are not using `PATH`, `node packages/box/bin/knolo-box.mjs build` then `node packages/box/bin/knolo-box.mjs mcp` is the same build. Do not run `init` for the default layout. Skip the build when there is no Grok home. The host then calls `knolo_search`. For a `.knolo` file already on disk, `knolo query` or `knolo verify` is the local check.
-3. Browse skills at `https://hub.knolo.dev/skills`, or run `knolo skill search "refund"`. Knowledge packs: `knolo search "refund policy"`. Neither search requires login.
-4. Install one skill into a directory you choose: `knolo skill install <publisher>/<name> --dir ./skills`. This does not require `knolo login`.
+1. After publish, install with `npx -y @knolo/cli@6.2.2`. Until that release is on npm, use `node packages/cli/bin/knolo.mjs` from this checkout. The connector package is `npx -y @knolo/box@0.1.0`. It is not on npm yet. Until then, use `node packages/box/bin/knolo-box.mjs`.
+2. Build a local index: `knolo setup --root <dir> --agent <id> --auto-rebuild`. `--root` and `--agent` and `--auto-rebuild` are optional. Setup scans `~/.grok` when it exists and does not require it. The printed connector command is `knolo-box mcp --config <path>`. The host then calls `knolo_search`. For a `.knolo` file already on disk, `knolo query` or `knolo verify` is the local check.
+3. Browse skills at `https://hub.knolo.dev/skills`, or run `knolo skill list` or `knolo skill search "refund"`. Knowledge packs: `knolo search "refund policy"`. None of these require login.
+4. Install one skill: `knolo skill install <publisher>/<name>`. That writes `~/.knolo/skills/<name>` unless `--dir` is set, then rebuilds the local index when that folder is configured. This does not require `knolo login`.
 5. Publish: create a token at `https://hub.knolo.dev/dashboard/tokens`, run `knolo login --token kno_…`, then `knolo skill publish <pack>` or `knolo publish <pack.knolo>`.
 6. Verify a skill you are authoring with `knolo skill check <dir>`. That command reads a `knowledge/` directory. An installed pack already passed its pin check and contains `knowledge.v5`. `knolo verify <pack.knolo>` checks a knowledge pack.
 

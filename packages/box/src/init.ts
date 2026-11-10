@@ -26,6 +26,8 @@ export const TRANSCRIPT_CANDIDATES = [
   'sand-data/sessions',
 ] as const;
 
+const AGENT_ID = /^[a-zA-Z0-9_.-]+$/u;
+
 export type InitRequest = {
   configPath: string;
   roots: string[];
@@ -36,6 +38,10 @@ export type InitRequest = {
   files?: string;
   home: string;
   env?: NodeJS.ProcessEnv;
+  tolerant?: boolean;
+  agentId?: string;
+  autoRebuild?: boolean;
+  hubSkills?: string;
 };
 
 export type InitResult = BoxConfig & { reports: string[] };
@@ -52,13 +58,17 @@ export async function initBox(request: InitRequest): Promise<InitResult> {
     'workflows',
     WORKFLOW_CANDIDATES,
     scanRoots,
-    request.skills
+    request.skills,
+    request.tolerant === true,
+    '--skills'
   );
   const managed = await resolveRole(
     'managed skills',
     MANAGED_CANDIDATES,
     scanRoots,
-    request.managedSkills
+    request.managedSkills,
+    request.tolerant === true,
+    '--managed-skills'
   );
   const memory = await resolveOptional(
     'memory',
@@ -73,13 +83,29 @@ export async function initBox(request: InitRequest): Promise<InitResult> {
     request.transcripts
   );
   const files = await resolveFiles(request.files);
+  const agentId =
+    request.agentId !== undefined ? checkedAgentId(request.agentId) : undefined;
+  const skillRoots = [...workflows.roots, ...managed.roots];
+  if (request.hubSkills !== undefined) {
+    await mkdir(request.hubSkills, { recursive: true, mode: 0o700 });
+    const real = await realpath(request.hubSkills);
+    if (!hubSkillsAllowed(real)) {
+      throw new BoxError(
+        'BOX_CONFIG',
+        `hub skills path ${request.hubSkills} resolves to a denied path.`
+      );
+    }
+    skillRoots.push(real);
+  }
   const config: BoxConfig = {
     output: base.output,
     grokHome: base.grokHome,
     agents: ['box'],
+    ...(agentId !== undefined ? { agentId } : {}),
+    ...(request.autoRebuild === true ? { autoRebuild: true } : {}),
     scopes: {
       files: { roots: files.roots },
-      skills: { roots: [...new Set([...workflows, ...managed])] },
+      skills: { roots: [...new Set(skillRoots)] },
       memory: { roots: memory.roots },
       transcripts: { roots: transcripts.roots },
     },
@@ -91,10 +117,39 @@ export async function initBox(request: InitRequest): Promise<InitResult> {
   await writeFile(request.configPath, `${JSON.stringify(config, null, 2)}\n`, {
     mode: 0o600,
   });
+  const reports = [memory.report, transcripts.report, files.report];
+  if (request.tolerant === true) {
+    for (const report of [workflows.report, managed.report]) {
+      if (report) reports.push(report);
+    }
+  }
   return {
     ...config,
-    reports: [memory.report, transcripts.report, files.report],
+    reports,
   };
+}
+
+// `.knolo` is denied so a scan cannot index the box output.
+// `~/.knolo/skills` is the one directory setup always adds.
+function hubSkillsAllowed(real: string): boolean {
+  const parts = real.split(/[\\/]+/u).filter((part) => part.length > 0);
+  const base = parts.at(-1)?.toLowerCase();
+  const parent = parts.at(-2)?.toLowerCase();
+  if (parent === '.knolo' && base === 'skills') {
+    const rest = path.join(path.sep, ...parts.slice(0, -2));
+    return !isDeniedInitPath(rest);
+  }
+  return !isDeniedInitPath(real);
+}
+
+function checkedAgentId(value: string): string {
+  if (!AGENT_ID.test(value)) {
+    throw new BoxError(
+      'BOX_CONFIG',
+      'agentId must be letters, digits, dot, underscore, or hyphen.'
+    );
+  }
+  return value;
 }
 
 async function resolveOptional(
@@ -107,13 +162,11 @@ async function resolveOptional(
     const found = await resolveOne(label, override);
     return { roots: [found], report: `${label}: ${found}` };
   }
-  const checked: string[] = [];
   const found: string[] = [];
   const denied: string[] = [];
   for (const root of roots) {
     for (const relative of relatives) {
       const candidate = path.join(path.resolve(root), relative);
-      checked.push(candidate);
       const resolved = await resolveCandidate(candidate);
       if (!resolved) continue;
       if (resolved.denied) {
@@ -131,7 +184,7 @@ async function resolveOptional(
     const skipped = denied.length ? ` Denied ${denied.join(', ')}.` : '';
     return {
       roots: [],
-      report: `${label}: no directory found. Checked ${checked.join(', ') || '(none)'}.${skipped}`,
+      report: `${label}: no directory found.${skipped}`,
     };
   }
   return {
@@ -171,8 +224,10 @@ async function resolveRole(
   label: string,
   relatives: readonly string[],
   roots: readonly string[],
-  override: string | undefined
-): Promise<string[]> {
+  override: string | undefined,
+  tolerant: boolean,
+  flagName: string
+): Promise<{ roots: string[]; report?: string }> {
   if (override !== undefined) {
     const found = await resolveCandidate(override);
     if (!found) {
@@ -187,27 +242,32 @@ async function resolveRole(
         `${label} path ${override} resolves to a denied path.`
       );
     }
-    return [found.real];
+    return { roots: [found.real] };
   }
-  const checked: string[] = [];
   const found: string[] = [];
   for (const root of roots) {
     for (const relative of relatives) {
       const candidate = path.join(path.resolve(root), relative);
-      checked.push(candidate);
       const resolved = await resolveCandidate(candidate);
       if (!resolved || resolved.denied) continue;
       found.push(resolved.real);
     }
   }
   const unique = [...new Set(found)];
-  if (unique.length !== 1) {
+  if (unique.length === 1) return { roots: unique };
+  if (!tolerant) {
     throw new BoxError(
       'BOX_CONFIG',
-      `${label} must resolve to one directory. Checked ${checked.join(', ') || '(none)'}. Found ${unique.join(', ') || '(none)'}.`
+      `${label} must resolve to one directory. Found ${unique.length}.`
     );
   }
-  return unique;
+  if (unique.length === 0) {
+    return { roots: [], report: `${label}: no directory found.` };
+  }
+  return {
+    roots: [],
+    report: `${label}: found ${unique.length} directories. Pass ${flagName} <path>.`,
+  };
 }
 
 async function resolveCandidate(
