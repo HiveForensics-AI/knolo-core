@@ -219,12 +219,7 @@ export function mcpConfig(
       ? {
           autoRebuild: {
             command: process.execPath,
-            args: [
-              boxBinPath(),
-              'ensure-fresh',
-              '--config',
-              config.configPath,
-            ],
+            args: [boxBinPath(), 'ensure-fresh', '--config', config.configPath],
           },
         }
       : {}),
@@ -361,9 +356,7 @@ function autoRebuildPath(output: string): string {
   return path.join(output, 'auto-rebuild.json');
 }
 
-async function readAutoRebuild(
-  output: string
-): Promise<BoxAutoRebuild | null> {
+async function readAutoRebuild(output: string): Promise<BoxAutoRebuild | null> {
   try {
     const parsed = JSON.parse(
       await readFile(autoRebuildPath(output), 'utf8')
@@ -392,15 +385,16 @@ async function writeAutoRebuild(
   const body: StoredAutoRebuild = record.reason
     ? record
     : { version: 1, at: record.at, ok: record.ok };
-  await writeFile(autoRebuildPath(output), `${JSON.stringify(body, null, 2)}\n`, {
-    mode: 0o600,
-  });
+  await writeFile(
+    autoRebuildPath(output),
+    `${JSON.stringify(body, null, 2)}\n`,
+    {
+      mode: 0o600,
+    }
+  );
 }
 
-function withinAutoRebuildInterval(
-  record: BoxAutoRebuild,
-  now: Date
-): boolean {
+function withinAutoRebuildInterval(record: BoxAutoRebuild, now: Date): boolean {
   const at = Date.parse(record.at);
   if (!Number.isFinite(at)) return false;
   const delta = now.getTime() - at;

@@ -1471,7 +1471,10 @@ test('caller identity comes from the box config, then the environment', async ()
     const grok = path.join(home, 'grok');
     const topicDir = path.join(grok, 'memory-v2', 'topics');
     await mkdir(topicDir, { recursive: true });
-    await writeFile(topicDir + '/note.md', 'IDENTITY_PHRASE stays on one image.\n');
+    await writeFile(
+      topicDir + '/note.md',
+      'IDENTITY_PHRASE stays on one image.\n'
+    );
     const stored = {
       output: path.join(home, 'out'),
       grokHome: grok,
@@ -1564,16 +1567,8 @@ test('caller identity comes from the box config, then the environment', async ()
     assert.equal(alpha.mounts[0].sha256, beta.mounts[0].sha256);
     assert.deepEqual(alpha.mounts[0].agents, ['alpha']);
     assert.deepEqual(beta.mounts[0].agents, ['beta']);
-    const {
-      agentId: _alphaId,
-      sessionId: _alphaSession,
-      ...pluginA
-    } = alpha;
-    const {
-      agentId: _betaId,
-      sessionId: _betaSession,
-      ...pluginB
-    } = beta;
+    const { agentId: _alphaId, sessionId: _alphaSession, ...pluginA } = alpha;
+    const { agentId: _betaId, sessionId: _betaSession, ...pluginB } = beta;
     const serviceA = await KnoloOpenClawService.create(pluginA);
     const serviceB = await KnoloOpenClawService.create(pluginB);
     const hitA = await serviceA.search(
@@ -1585,10 +1580,16 @@ test('caller identity comes from the box config, then the environment', async ()
       { agentId: 'beta', sessionId: 'chat-b' }
     );
     const receiptA = JSON.parse(
-      await readFile(path.join(auditDir, `${hitA.receipts[0].receiptId}.json`), 'utf8')
+      await readFile(
+        path.join(auditDir, `${hitA.receipts[0].receiptId}.json`),
+        'utf8'
+      )
     );
     const receiptB = JSON.parse(
-      await readFile(path.join(auditDir, `${hitB.receipts[0].receiptId}.json`), 'utf8')
+      await readFile(
+        path.join(auditDir, `${hitB.receipts[0].receiptId}.json`),
+        'utf8'
+      )
     );
     assert.equal(receiptA.caller.agentId, 'alpha');
     assert.equal(receiptA.caller.sessionId, 'chat-a');
@@ -1660,7 +1661,10 @@ test('autoRebuild is off unless the config asks, and then status rebuilds once',
     stored.autoRebuild = true;
     await writeFile(configPath, `${JSON.stringify(stored)}\n`);
     const enabled = await loadBoxConfig(configPath, {}, home);
-    const first = await boxStatus(enabled, new Date('2026-11-04T02:00:00.000Z'));
+    const first = await boxStatus(
+      enabled,
+      new Date('2026-11-04T02:00:00.000Z')
+    );
     assert.equal(first[0].stale, false);
     assert.equal(first[0].pinMatches, true);
     assert.notEqual(first[0].stateRoot, stateOff);
@@ -1707,7 +1711,10 @@ test('autoRebuild is off unless the config asks, and then status rebuilds once',
     assert.match(second.hits[0].excerpt, /second edit/);
 
     const beforeFail = await readFile(path.join(enabled.output, 'memory.v5'));
-    await writeFile(topic, '-----BEGIN PRIVATE KEY-----\nREBUILD_PHRASE secret\n');
+    await writeFile(
+      topic,
+      '-----BEGIN PRIVATE KEY-----\nREBUILD_PHRASE secret\n'
+    );
     const failed = await boxStatus(
       enabled,
       new Date('2026-11-04T02:00:10.000Z')
@@ -1716,7 +1723,10 @@ test('autoRebuild is off unless the config asks, and then status rebuilds once',
     assert.equal(failed[0].stateRoot, later[0].stateRoot);
     assert.equal(failed[0].lastAutoRebuild.ok, false);
     assert.match(failed[0].lastAutoRebuild.reason, /No new image was written/);
-    assert.equal(failed[0].lastAutoRebuild.reason.includes('PRIVATE KEY'), false);
+    assert.equal(
+      failed[0].lastAutoRebuild.reason.includes('PRIVATE KEY'),
+      false
+    );
     assert.deepEqual(
       await readFile(path.join(enabled.output, 'memory.v5')),
       beforeFail
@@ -1734,7 +1744,10 @@ test('autoRebuild is off unless the config asks, and then status rebuilds once',
     assert.equal(recovered[0].stale, false);
     assert.equal(recovered[0].lastAutoRebuild.ok, true);
     assert.notEqual(recovered[0].stateRoot, later[0].stateRoot);
-    assert.equal(await main(['ensure-fresh', '--config', configPath], {}, home), 0);
+    assert.equal(
+      await main(['ensure-fresh', '--config', configPath], {}, home),
+      0
+    );
   } finally {
     await rm(home, { recursive: true, force: true });
   }

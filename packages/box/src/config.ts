@@ -170,10 +170,7 @@ function checkedSessionId(value: unknown, label: string): string {
   }
   const trimmed = value.trim();
   if (trimmed.length < 1 || trimmed.length > 256) {
-    throw new BoxError(
-      'BOX_CONFIG',
-      `${label} must be 1 to 256 characters.`
-    );
+    throw new BoxError('BOX_CONFIG', `${label} must be 1 to 256 characters.`);
   }
   return trimmed;
 }
