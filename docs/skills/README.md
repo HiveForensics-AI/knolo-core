@@ -52,6 +52,6 @@ dist/refund-policy.knolo-skill/
 
 ## Catalog
 
-The hub stores the name, description, publisher, and pin. It does not run a model, and it does not answer questions. `--hub` is a directory of skill packs on the machine where you run the command. Use it for an offline catalog.
+The hub stores the name, description, publisher, and pin. It does not run a model, and it does not answer questions. `--hub` is a directory of skill packs on the machine where you run the command. Use it for an offline catalog. How these commands fit Box, MCP, and the hub is [Community install](../hub/COMMUNITY.md). `knolo setup` is specified there and is not a command yet.
 
 `knolo search`, `knolo info`, `knolo login`, `knolo publish`, `knolo yank`, and `knolo add` remain the Hub registry for `.knolo` knowledge packs. A skill pack is not a `.knolo` pack and is not published through those commands.
