@@ -185,6 +185,21 @@ assert.equal(aiSdkPackage.peerDependencies?.ai, '^7.0.0');
 assert.equal(aiSdkPackage.dependencies?.ai, undefined);
 assert.equal(aiSdkPackage.devDependencies?.ai, '7.0.166');
 
+const mastraVersion = '0.1.0';
+const mastraPackage = readJson('packages/mastra/package.json');
+assert.equal(mastraPackage.name, '@knolo/mastra');
+assert.equal(mastraPackage.version, mastraVersion);
+assert.equal(mastraPackage.license, 'Apache-2.0');
+assert.notEqual(mastraPackage.private, true);
+assert.equal(mastraPackage.publishConfig?.access, 'public');
+assert.equal(mastraPackage.engines?.node, '>=22.13.0');
+assert.equal(mastraPackage.dependencies?.['@knolo/core'], toolsCoreRange);
+assert.equal(mastraPackage.dependencies?.['@knolo/tools'], '^0.2.1');
+assert.equal(mastraPackage.peerDependencies?.['@mastra/core'], '^1.82.0');
+assert.equal(mastraPackage.dependencies?.['@mastra/core'], undefined);
+assert.equal(mastraPackage.devDependencies?.['@mastra/core'], '1.82.0');
+assert.equal(mastraPackage.devDependencies?.['@knolo/mcp'], '^0.2.1');
+
 const openclawPackage = readJson('packages/openclaw/package.json');
 assert.equal(openclawPackage.name, '@knolo/openclaw');
 assert.equal(openclawPackage.version, openclawVersion);
@@ -193,5 +208,5 @@ assert.equal(openclawPackage.dependencies?.['@knolo/tools'], '^0.1.0');
 assert.equal(openclawPackage.engines?.node, '>=24.16.0');
 
 console.log(
-  `Release metadata passed for npm ${releaseVersion} with core ${coreReleaseVersion} and CLI ${cliReleaseVersion}. Rust and Python stay ${platformVersion}. @knolo/tools is ${toolsVersion}. @knolo/mcp is ${mcpVersion}. @knolo/ai-sdk is ${aiSdkVersion}. @knolo/openclaw stays ${openclawVersion}. @knolo/box stays 0.1.0.`
+  `Release metadata passed for npm ${releaseVersion} with core ${coreReleaseVersion} and CLI ${cliReleaseVersion}. Rust and Python stay ${platformVersion}. @knolo/tools is ${toolsVersion}. @knolo/mcp is ${mcpVersion}. @knolo/ai-sdk is ${aiSdkVersion}. @knolo/mastra is ${mastraVersion} and is not published. @knolo/openclaw stays ${openclawVersion}. @knolo/box stays 0.1.0.`
 );
