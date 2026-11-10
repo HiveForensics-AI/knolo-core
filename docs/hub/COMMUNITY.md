@@ -32,9 +32,9 @@ Skill packs ship as [Skills](../skills/README.md). `publish` sends the pack to `
 
 The single entry point is `knolo setup`. It is one command in `@knolo/cli`, not a new package. A follow-up issue implements it. The contract is:
 
-1. Resolve the registry the same way as the other hub commands: `--registry`, then `KNOLO_HUB_URL`, then `https://hub.knolo.dev`.
-2. If `knolo-box` is on `PATH`, run its existing `init` and `build` with default discovery. Writes stay under the Box output directory, `~/.knolo/box/` unless that config says otherwise. Setup does not invent a computer layout.
-3. If `knolo-box` is missing, or no Grok home exists, print that and continue. Setup exits 0. Empty scopes stay empty.
+1. Resolve the registry the same way as the other hub commands. `--registry` wins over `KNOLO_HUB_URL`. When neither is set, development mode (`NODE_ENV=development` or `KNOLO_ENV=development`) uses `http://localhost:3000`. Otherwise the default is `https://hub.knolo.dev`.
+2. If `knolo-box` is on `PATH` and a Grok home exists, run its existing `init` and `build` with default discovery. Writes stay under the Box output directory, `~/.knolo/box/` unless that config says otherwise. Setup does not invent a computer layout.
+3. If `knolo-box` is missing, or no Grok home exists, print that and continue. Do not run `init` or `build`. Setup exits 0. Empty scopes stay empty.
 4. Print three next steps and do not write anything else:
    - First search: the Box MCP config path, or `knolo-mcp` when a mount already exists.
    - First install: `knolo skill install <publisher>/<name> --dir <path>`.
