@@ -19,8 +19,11 @@ import { fileURLToPath } from 'node:url';
 import {
   decodeSkillArchive,
   guidanceError,
+  infoSkill,
+  installSkill,
   installSkillFromRegistry,
   publishSkillToRegistry,
+  searchSkills,
   skillNameError,
 } from '../bin/skill.mjs';
 
@@ -724,6 +727,26 @@ test('registry publish and install write only after the pin matches', async (t) 
   assert.ok(publicGets.length >= 2);
   for (const value of publicGets) assert.equal(value, null);
 
+  const home = tempDir();
+  const { saveCredentials } = await import('../bin/registry/credentials.mjs');
+  await saveCredentials({
+    registry: 'https://other.example',
+    token: 'kno_other_token_value_1234567890',
+    homeDir: home,
+    env: { XDG_CONFIG_HOME: path.join(home, '.config') },
+  });
+  const fromCli = await installSkill('acme/refund-policy', {
+    dir: path.join(root, 'from-cli'),
+    registry,
+    env: {
+      HOME: home,
+      XDG_CONFIG_HOME: path.join(home, '.config'),
+      KNOLO_HUB_URL: 'https://ignored.example',
+    },
+    fetchImpl,
+  });
+  assert.equal(existsSync(path.join(fromCli.dir, 'SKILL.md')), true);
+
   corrupt = true;
   const flippedDir = path.join(root, 'flipped');
   await assert.rejects(
@@ -749,4 +772,114 @@ test('registry publish and install write only after the pin matches', async (t) 
     /SKILL_PIN: downloaded skill pack does not match the catalog pin/
   );
   assert.equal(existsSync(liedDir), false);
+});
+
+test('skill search and info read the public catalog without a token', async () => {
+  const calls = [];
+  function json(status, body) {
+    return new Response(JSON.stringify(body), {
+      status,
+      headers: { 'content-type': 'application/json' },
+    });
+  }
+  const fetchImpl = async (url, init = {}) => {
+    const auth = init.headers
+      ? Object.entries(init.headers).find(
+          ([key]) => key.toLowerCase() === 'authorization'
+        )
+      : undefined;
+    calls.push({ url: String(url), auth: auth?.[1] });
+    const href = String(url);
+    if (href.endsWith('/api/v1/skills')) {
+      return json(200, {
+        skills: [
+          {
+            name: 'acme/refund-policy',
+            publisher: 'acme',
+            slug: 'refund-policy',
+            description: 'Annual enterprise refunds',
+            skillSha256: 'aa',
+            policySha256: 'bb',
+            image: null,
+            url: 'https://example.public.blob.vercel-storage.com/secret',
+            archiveSha256: 'cc',
+          },
+          {
+            name: 'acme/other',
+            publisher: 'acme',
+            slug: 'other',
+            description: 'calendar block',
+            skillSha256: 'dd',
+            policySha256: 'ee',
+            image: null,
+          },
+        ],
+      });
+    }
+    if (href.endsWith('/api/v1/skills/acme/refund-policy')) {
+      return json(200, {
+        name: 'acme/refund-policy',
+        publisher: 'acme',
+        slug: 'refund-policy',
+        description: 'Annual enterprise refunds',
+        skillSha256: 'aa',
+        policySha256: 'bb',
+        image: { sha256: 'ff', stateRoot: 'sha256-1' },
+        archiveSha256: 'cc',
+        url: 'https://example.public.blob.vercel-storage.com/sha256/cc.knolo-skill',
+        sizeBytes: 12,
+      });
+    }
+    if (href.endsWith('/api/v1/skills/acme/missing')) {
+      return json(404, { error: 'missing', code: 'not_found' });
+    }
+    throw new Error(`unexpected ${href}`);
+  };
+
+  const lines = [];
+  const found = await searchSkills('enterprise refunds', {
+    registry: 'https://hub.example.test',
+    env: { KNOLO_HUB_URL: 'https://ignored.example' },
+    fetchImpl,
+    print: (line) => lines.push(line),
+  });
+  assert.equal(found.registry, 'https://hub.example.test');
+  assert.equal(found.skills.length, 1);
+  assert.equal(found.skills[0].slug, 'refund-policy');
+  assert.equal(found.skills[0].url, undefined);
+  assert.equal(found.skills[0].archiveSha256, undefined);
+  assert.match(lines.join('\n'), /acme\/refund-policy/);
+  assert.equal(calls[0].auth, undefined);
+  assert.match(calls[0].url, /^https:\/\/hub\.example\.test\/api\/v1\/skills$/);
+
+  const none = [];
+  const empty = await searchSkills('not-in-catalog', {
+    registry: 'https://hub.example.test',
+    fetchImpl,
+    print: (line) => none.push(line),
+  });
+  assert.equal(empty.skills.length, 0);
+  assert.deepEqual(none, ['no skills']);
+
+  const info = [];
+  await infoSkill('acme/refund-policy', {
+    registry: 'https://hub.example.test',
+    fetchImpl,
+    print: (line) => info.push(line),
+  });
+  assert.match(info.join('\n'), /archive sha256 {3}cc/);
+  assert.match(info.join('\n'), /state root {7}sha256-1/);
+  await assert.rejects(
+    () =>
+      infoSkill('acme/missing', {
+        registry: 'https://hub.example.test',
+        fetchImpl,
+        print() {},
+      }),
+    /SKILL_HUB: acme\/missing was not found/
+  );
+  assert.equal(
+    calls.some((call) => call.auth),
+    false
+  );
 });

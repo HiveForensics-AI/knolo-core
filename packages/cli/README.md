@@ -148,6 +148,9 @@ knolo skill publish dist/refund-policy.knolo-skill
 knolo skill install acme/refund-policy --dir ./skills
 knolo skill publish dist/refund-policy.knolo-skill --hub ./catalog
 knolo skill install refund-policy --hub ./catalog --dir ./skills
+knolo skill search refund
+knolo skill info acme/refund-policy
+knolo setup
 ```
 
 `init` writes `SKILL.md` and an empty `knowledge/` directory. `check` reads
@@ -163,18 +166,22 @@ layout. The same files produce the same pins.
 `publish` without `--hub` uses the stored `kno_…` token. The same pin can be
 published again. A different pin is refused, and the catalog copy stays as
 it was. `--hub <dir>` copies the pack into `<dir>/<name>` instead.
-`install <publisher>/<name>` downloads one pack from the hub. `install` with
+`install <publisher>/<name>` downloads one pack from the hub. It does not
+read a stored token, and the download does not send one. `install` with
 `--hub` or `--pack` reads a local directory. Either install checks the pin
 before it writes. A mismatch writes nothing. The catalog id must match the
 manifest. `SKILL.md` must match that name and description, and `policy.json`
 must match the image policy root. The files land only in `--dir/<name>`.
+`search` and `info` read the public skill catalog. `check` reads a source
+directory that contains `knowledge/`. An installed pack contains
+`knowledge.v5` instead.
 
-The hub stores packs. It does not run a model, and it does not answer
-questions. `--hub` and `--registry` cannot be combined. The install path,
-auth, trust, and version rules are in
+`knolo setup` runs `knolo-box build` when that binary is on `PATH` and a
+Grok home exists. It does not run `init`, install a pack, or call the hub.
+The install path, auth, trust, and version rules are in
 [Community install](../../docs/hub/COMMUNITY.md). This page does not
-restate that contract. `knolo setup` is specified there and is not a
-command yet.
+restate that contract. The hub stores packs. It does not run a model, and
+it does not answer questions. `--hub` and `--registry` cannot be combined.
 
 ---
 

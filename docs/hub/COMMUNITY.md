@@ -1,6 +1,6 @@
 # Community hub and one install path
 
-**Status:** design for [knolo-core#143](https://github.com/HiveForensics-AI/knolo-core/issues/143). The commands below that already ship stay as they are. `knolo setup` is specified here and is not a command yet.
+**Status:** install path for [knolo-core#143](https://github.com/HiveForensics-AI/knolo-core/issues/143). `knolo setup`, public skill install, `knolo skill search`, and `knolo skill info` are commands. Skill versions, the skill secret scan, and skill yank stay hub work.
 **Prepared:** 2026-11-10
 
 This document is the product plan for hub.knolo.dev and for the core, CLI, Box, MCP, and SDK work that belongs in knolo-core. It does not change a package version and it does not publish to npm. Hub HTTP stays in the hub repo: `docs/cli-contract.md` and `docs/registry-api.md`. This file does not copy those tables.
@@ -30,14 +30,14 @@ Skill packs ship as [Skills](../skills/README.md). `publish` sends the pack to `
 
 ## Install
 
-The single entry point is `knolo setup`. It is one command in `@knolo/cli`, not a new package. A follow-up issue implements it. The contract is:
+The single entry point is `knolo setup`. It is one command in `@knolo/cli`, not a new package. The contract is:
 
 1. Resolve the registry the same way as the other hub commands. `--registry` wins over `KNOLO_HUB_URL`. When neither is set, development mode (`NODE_ENV=development` or `KNOLO_ENV=development`) uses `http://localhost:3000`. Otherwise the default is `https://hub.knolo.dev`.
 2. If `knolo-box` is on `PATH` and a Grok home exists, run `knolo-box build` with the default config. That config uses `$GROK_HOME` or `~/.grok`, and its skill roots are `skills/` and `bundled/skills/`. Do not run `knolo-box init`. `init` requires exactly one `agent-data/workflows` or `sand-data/workflows` directory and does not look at those default skill roots, so it fails on a normal Grok home and never reaches `build`. A computer that is not `~/.grok` keeps the existing `knolo-box init --config <file>` step in the Box README. Setup does not invent a computer layout. Writes stay under the Box output directory, `~/.knolo/box/` unless that config says otherwise.
 3. If `knolo-box` is missing, or no Grok home exists, print that and continue. Do not run `build`. Setup exits 0. Empty scopes stay empty.
 4. Print three next steps and do not write anything else. Every registry URL in those steps is the registry resolved in step 1. `knolo login`, `knolo skill publish`, `knolo publish`, and `knolo yank` include `--registry <resolved>` so they do not store or send a token for a different origin. `knolo login` without `--registry` stores the token for the process default, and a later call refuses to send that token anywhere else.
    - First search: the Box MCP config path, or `knolo-mcp` when a mount already exists.
-   - First install: `knolo skill install <publisher>/<name> --dir <path>`. Today's command calls `loadCredentials()` before the public download and exits with `Not logged in` until `knolo login --registry <resolved>` has run. The download does not send the token. Follow-up 2 removes that credential check.
+   - First install: `knolo skill install <publisher>/<name> --dir <path>`. This command does not read a stored token. The download does not send one.
    - First publish: mint a token at `<resolved>/dashboard/tokens`, then `knolo login --registry <resolved>`, then `knolo skill publish` or `knolo publish` with the same `--registry`.
 5. Do not install a community pack. Do not call a hub write API. Do not add tools to MCP.
 
@@ -53,13 +53,13 @@ Publishing `@knolo/box` is a release task. It is not part of #143. The plugin RE
 
 ## Auth
 
-GitHub sign-in is for the hub dashboard. The dashboard mints a `kno_…` token. `knolo login` stores that token for one registry and does not call a hub login route. The stored registry is the `--registry` value, or the same default as the other hub commands. Reads of both catalogs are public. Publish and yank send `Authorization: Bearer kno_…` and require the publish scope. A 401 means the scheme is missing or the token was revoked. It does not mean the write API requires a browser session. Today's `knolo skill install <publisher>/<name>` still calls `loadCredentials()` before its public download. That check is follow-up 2.
+GitHub sign-in is for the hub dashboard. The dashboard mints a `kno_…` token. `knolo login` stores that token for one registry and does not call a hub login route. The stored registry is the `--registry` value, or the same default as the other hub commands. Reads of both catalogs are public. `knolo skill install <publisher>/<name>`, `knolo skill search`, and `knolo skill info` do not read that token, and their downloads do not send it. Publish and yank send `Authorization: Bearer kno_…` and require the publish scope. A 401 means the scheme is missing or the token was revoked. It does not mean the write API requires a browser session.
 
 `knolo setup` does not mint a token and does not publish.
 
 ## Sharing
 
-Browse knowledge packs at `/explore` and with `knolo search` / `knolo info`. Browse skill packs at `/skills`. The CLI cannot search skills yet. That is follow-up 3.
+Browse knowledge packs at `/explore` and with `knolo search` / `knolo info`. Browse skill packs at `/skills`, or with `knolo skill search` and `knolo skill info`. Skill search reads `GET /api/v1/skills` and filters on this machine. The list has no `q` parameter. Skill info reads one detail row. Neither command sends a token.
 
 A skill catalog row carries the name (`publisher/name`), description, publisher, skill SHA-256, and policy SHA-256. When the pack includes an image, it also carries the image SHA-256 and state root. The detail response adds the archive SHA-256, the Blob URL, and the size. The list omits the archive URL. The hub does not search the image.
 
@@ -89,15 +89,14 @@ New skill images are built with `@knolo/core` `^6.2.0`, the same floor as `@knol
 
 ## First session
 
-These are the commands that exist today on the production hub. `knolo setup` will replace the Box build and the printed next steps. It is not implemented yet. A custom registry uses the same commands with `--registry <url>` on `login`, `publish`, and `yank`.
+These are the commands that exist today on the production hub. `knolo setup` runs step 2 when `knolo-box` is on `PATH` and a Grok home exists, then prints the next steps. A custom registry uses `--registry <url>` on `setup`, `login`, `publish`, and `yank`.
 
-1. Install the CLI: `npm install -g @knolo/cli`.
-2. Build a local index when this checkout is available and a Grok home exists: `node packages/box/bin/knolo-box.mjs build`, then `node packages/box/bin/knolo-box.mjs mcp`. Do not run `init` for this default layout. Skip this step when there is no Grok home. The host then calls `knolo_search`. For a `.knolo` file already on disk, `knolo query` or `knolo verify` is the local check.
-3. Browse skills at `https://hub.knolo.dev/skills`. Knowledge packs: `knolo search "refund policy"`. `knolo search` does not require login.
-4. Log in before a registry skill install. Create a token at `https://hub.knolo.dev/dashboard/tokens`, then `knolo login --token kno_…`. `knolo skill install <publisher>/<name>` calls `loadCredentials()` before the public download and exits with `Not logged in` until that file exists. The download does not send the token. `--hub` and `--pack` do not use it.
-5. Install one skill into a directory you choose: `knolo skill install <publisher>/<name> --dir ./skills`.
-6. Publish with the stored token: `knolo skill publish <pack>` or `knolo publish <pack.knolo>`.
-7. Verify: `knolo skill check <dir>` for a skill directory, or `knolo verify <pack.knolo>` for a knowledge pack.
+1. Install the CLI from this checkout: `node packages/cli/bin/knolo.mjs`. The published npm CLI does not include `knolo setup` until a later release.
+2. Build a local index: `knolo setup`. When this checkout is available and you are not using `PATH`, `node packages/box/bin/knolo-box.mjs build` then `node packages/box/bin/knolo-box.mjs mcp` is the same build. Do not run `init` for the default layout. Skip the build when there is no Grok home. The host then calls `knolo_search`. For a `.knolo` file already on disk, `knolo query` or `knolo verify` is the local check.
+3. Browse skills at `https://hub.knolo.dev/skills`, or run `knolo skill search "refund"`. Knowledge packs: `knolo search "refund policy"`. Neither search requires login.
+4. Install one skill into a directory you choose: `knolo skill install <publisher>/<name> --dir ./skills`. This does not require `knolo login`.
+5. Publish: create a token at `https://hub.knolo.dev/dashboard/tokens`, run `knolo login --token kno_…`, then `knolo skill publish <pack>` or `knolo publish <pack.knolo>`.
+6. Verify a skill you are authoring with `knolo skill check <dir>`. That command reads a `knowledge/` directory. An installed pack already passed its pin check and contains `knowledge.v5`. `knolo verify <pack.knolo>` checks a knowledge pack.
 
 ## Follow-up checklist
 
@@ -105,25 +104,25 @@ File these only when asked. The acceptance notes are the scope. Do not start a b
 
 ### knolo-core
 
-1. **`knolo setup`.** Implement the contract in [Install](#install). Tests use a temporary `PATH` and a fake `knolo-box` that accepts `build` and fails if setup runs `init`. No network. No new dependency on `@knolo/box`. Can start now.
-2. **Public skill install.** `knolo skill install <publisher>/<name>` resolves the registry with `resolveRegistryUrl` and does not call `loadCredentials()`. A stored credential for another registry is not consulted. `--hub` and `--pack` stay local. Can start now.
-3. **`knolo skill search` and `knolo skill info`.** Read `GET /api/v1/skills` with the same registry flags as `knolo search`. Read-only. Can start now. The hub list route already exists.
+1. **`knolo setup`.** Implemented. The contract is in [Install](#install).
+2. **Public skill install.** Implemented. `knolo skill install <publisher>/<name>` resolves the registry with `resolveRegistryUrl` and does not call `loadCredentials()`.
+3. **`knolo skill search` and `knolo skill info`.** Implemented. Search reads `GET /api/v1/skills` and filters on this machine. Info reads one detail row.
 4. **Skill install `@version` and `knolo-skills.lock.json`.** Wait for hub item 6. `--force` replaces a directory only when the downloaded pin matches. A mismatch writes nothing.
 5. **Box npm release.** Keep the plugin README accurate: `grok plugin install` works only after `@knolo/box` is published. Publishing that package is a release task, not part of #143.
 
 ### knolo-hub
 
-6. **Skill versions.** Add `skill_pack_versions` and a latest pointer. `GET /api/v1/skills/:publisher/:name/:version` returns one version. The same version and the same pin return unchanged. The same version and a different pin return `409`. The Blob path stays content-addressed. Can start in parallel with core items 1, 2, and 3. Blocks core item 4.
+6. **Skill versions.** Add `skill_pack_versions` and a latest pointer. `GET /api/v1/skills/:publisher/:name/:version` returns one version. The same version and the same pin return unchanged. The same version and a different pin return `409`. The Blob path stays content-addressed. Blocks core item 4.
 7. **Skill secret scan.** Run the pack scanner (`lib/verify/secret-scan.ts`) on `SKILL.md` and packed knowledge text inside skill registration, before insert. A hit fails closed and does not list the pack. Can start in parallel with item 6.
 8. **Skill yank and report.** Owner yank and signed-in report. New target type. Do not point `reports.pack_id` at a skill row. Admin list and staff yank. `410` keeps the digest visible. Blob bytes stay. Start after item 6 so yank has a version to target.
 9. **Publisher profile and skill page.** The publisher profile lists that publisher's skills. The skill page shows version, yank state, and `knolo skill install <publisher>/<name> --dir <path>`. It does not suggest a host-private path. Start after item 6.
 10. **Contract docs in the same PR.** Update `docs/registry-api.md` and `docs/cli-contract.md` with each API change in items 6 through 9. Do not leave the HTTP docs on the one-pin rule after versions exist.
 
-Order: this document first. Hub items 6 and 7 can proceed with core items 1, 2, and 3. Core item 4 waits on hub item 6. Hub items 8 and 9 follow item 6.
+Core items 1, 2, and 3 are implemented. Hub items 6 and 7 can proceed on their own. Core item 4 waits on hub item 6. Hub items 8 and 9 follow item 6.
 
 ## Out of scope
 
-- Implementing setup, public skill install, skill search, skill versions, secret scan, or yank in the pull request that adds this document.
+- Skill versions, the skill secret scan, and skill yank. Those belong in the hub repository.
 - A version bump, tag, or npm publish.
 - Changing the read-only tools in `@knolo/mcp` or `@knolo/ai-sdk`.
 - Calling a model from Knolo, or answering a question on the hub.

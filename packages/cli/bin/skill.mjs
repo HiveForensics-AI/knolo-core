@@ -11,7 +11,11 @@ import { lstat, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { normalizeRegistryUrl, registryApiUrl } from './registry/config.mjs';
+import {
+  normalizeRegistryUrl,
+  registryApiUrl,
+  resolveRegistryUrl,
+} from './registry/config.mjs';
 import { loadCredentials } from './registry/credentials.mjs';
 import { getJson, postJson, putBytes } from './registry/http.mjs';
 
@@ -23,7 +27,7 @@ export const MAX_KNOWLEDGE_BYTES = 1024 * 1024;
 const NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const EXTENSIONS = new Set(['.md', '.txt', '.json']);
 
-const USAGE = `Usage: knolo skill <init|check|pack|publish|install> [options]
+const USAGE = `Usage: knolo skill <init|check|pack|publish|install|search|info> [options]
 
   knolo skill init <name> [--dir <parent>]
   knolo skill check [<dir>] [--query <text>] [--json]
@@ -33,6 +37,8 @@ const USAGE = `Usage: knolo skill <init|check|pack|publish|install> [options]
   knolo skill install <publisher>/<name> --dir <path> [--registry <url>] [--json]
   knolo skill install <name> --hub <dir> --dir <path> [--json]
   knolo skill install --pack <pack> --dir <path> [--json]
+  knolo skill search <query> [--registry <url>] [--json]
+  knolo skill info <publisher>/<name> [--registry <url>] [--json]
 
 A skill is guidance for the host agent. Knolo does not call a model.
 check searches the skill's own knowledge and returns a receipt id.
@@ -55,6 +61,8 @@ export async function runSkillCli(argv) {
   if (sub === 'pack') return packSkill(positionals[1], flags);
   if (sub === 'publish') return publishSkill(positionals[1], flags);
   if (sub === 'install') return installSkill(positionals[1], flags);
+  if (sub === 'search') return searchSkills(positionals.slice(1).join(' '), flags);
+  if (sub === 'info') return infoSkill(positionals[1], flags);
   throw new Error(`Unknown skill command "${sub}".\n${USAGE}`);
 }
 
@@ -249,7 +257,7 @@ async function publishSkillDirectory(packArg, flags) {
   else console.log(`published        ${dest}`);
 }
 
-async function installSkill(nameArg, flags) {
+export async function installSkill(nameArg, flags) {
   if (!flags.dir) throw new Error('Missing --dir');
   const destRoot = path.resolve(process.cwd(), flags.dir);
   if (flags.hub && flags.registry) {
@@ -259,18 +267,17 @@ async function installSkill(nameArg, flags) {
   }
   if (!flags.pack && !flags.hub) {
     if (flags.hub === undefined && nameArg && nameArg.includes('/')) {
-      const credentials = await loadCredentials();
-      const registry = resolveSkillRegistry(
-        flags.registry,
-        credentials.registry
-      );
+      const registry = resolveRegistryUrl({
+        value: flags.registry,
+        env: flags.env ?? process.env,
+      });
       const summary = await installSkillFromRegistry(nameArg, destRoot, {
         registry,
-        fetchImpl: globalThis.fetch,
+        fetchImpl: flags.fetchImpl ?? globalThis.fetch,
       });
       if (flags.json) console.log(JSON.stringify(summary));
       else console.log(`installed        ${summary.dir}`);
-      return;
+      return summary;
     }
     throw new Error(
       'SKILL_HUB: pass publisher/name, or --hub for a directory catalog.'
@@ -1048,6 +1055,91 @@ function readArchiveSection(bytes, offset, name) {
   return {
     body: bytes.subarray(header.next, header.next + length),
     next: header.next + length,
+  };
+}
+
+export async function searchSkills(query, flags = {}) {
+  const print = flags.print ?? console.log;
+  const text = typeof query === 'string' ? query.trim() : '';
+  if (!text) throw new Error('SKILL_HUB: pass a search query.');
+  const registry = resolveRegistryUrl({
+    value: flags.registry,
+    env: flags.env ?? process.env,
+  });
+  const body = await getJson(String(registryApiUrl(registry, ['skills'])), {
+    fetchImpl: flags.fetchImpl ?? globalThis.fetch,
+  });
+  if (!body || !Array.isArray(body.skills)) {
+    throw new Error('SKILL_HUB: skill catalog response is invalid.');
+  }
+  const terms = text.toLowerCase().split(/\s+/u);
+  const skills = body.skills
+    .filter((skill) => skillMatches(skill, terms))
+    .map(catalogSkill);
+  if (flags.json) print(JSON.stringify({ skills }, null, 2));
+  else if (skills.length === 0) print('no skills');
+  else {
+    for (const skill of skills) {
+      print(`${skill.publisher}/${skill.slug}`);
+      print(`  ${skill.description}`);
+    }
+  }
+  return { registry, skills };
+}
+
+export async function infoSkill(id, flags = {}) {
+  const print = flags.print ?? console.log;
+  const { publisher, name } = parseSkillId(id);
+  const registry = resolveRegistryUrl({
+    value: flags.registry,
+    env: flags.env ?? process.env,
+  });
+  let body;
+  try {
+    body = await getJson(
+      String(registryApiUrl(registry, ['skills', publisher, name])),
+      { fetchImpl: flags.fetchImpl ?? globalThis.fetch }
+    );
+  } catch (error) {
+    if (error?.status === 404) {
+      throw new Error(`SKILL_HUB: ${publisher}/${name} was not found.`);
+    }
+    throw error;
+  }
+  if (flags.json) print(JSON.stringify(body, null, 2));
+  else {
+    print(`name             ${publisher}/${name}`);
+    print(`description      ${body?.description ?? ''}`);
+    print(`skill sha256     ${body?.skillSha256 ?? ''}`);
+    print(`policy sha256    ${body?.policySha256 ?? ''}`);
+    if (body?.image) {
+      print(`image sha256     ${body.image.sha256 ?? ''}`);
+      print(`state root       ${body.image.stateRoot ?? ''}`);
+    }
+    print(`archive sha256   ${body?.archiveSha256 ?? ''}`);
+    print(`size             ${body?.sizeBytes ?? ''}`);
+    print(`url              ${body?.url ?? ''}`);
+  }
+  return { registry, skill: body };
+}
+
+function skillMatches(skill, terms) {
+  const haystack = [skill?.name, skill?.slug, skill?.publisher, skill?.description]
+    .filter((value) => typeof value === 'string')
+    .join('\n')
+    .toLowerCase();
+  return terms.every((term) => haystack.includes(term));
+}
+
+function catalogSkill(skill) {
+  return {
+    name: skill?.name,
+    publisher: skill?.publisher,
+    slug: skill?.slug,
+    description: skill?.description,
+    skillSha256: skill?.skillSha256,
+    policySha256: skill?.policySha256,
+    image: skill?.image ?? null,
   };
 }
 
