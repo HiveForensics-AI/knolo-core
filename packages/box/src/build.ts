@@ -1,8 +1,10 @@
 import { createHash } from 'node:crypto';
 import { access, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createKnowledgeImageV5, type KnowledgePolicyV1 } from '@knolo/core';
 import { SCOPE_NAMES, type BoxConfig, type BoxScopeName } from './config.js';
+import { BoxError } from './errors.js';
 import { collectCorpora, digestScopeSources, utf8 } from './sources.js';
 
 export const MAX_AUDIT_RECORDS = 10_000;
@@ -21,13 +23,22 @@ export type BoxPins = {
   skipped: Array<{ path: string; reason: 'missing-root' | 'too-large' }>;
 };
 
+export type BoxAutoRebuild = {
+  at: string;
+  ok: boolean;
+  reason?: string;
+};
+
 export type BoxScopeStatus = {
   id: BoxScopeName;
   stateRoot: string;
   builtAt: string;
   pinMatches: boolean;
   stale: boolean;
+  lastAutoRebuild: BoxAutoRebuild | null;
 };
+
+const AUTO_REBUILD_INTERVAL_MS = 2_000;
 
 const PRIVATE_SCOPES = new Set<BoxScopeName>(['memory', 'transcripts']);
 
@@ -116,29 +127,60 @@ export async function buildBox(
   return pins;
 }
 
-export async function boxStatus(config: BoxConfig): Promise<BoxScopeStatus[]> {
+export async function boxStatus(
+  config: BoxConfig,
+  now = new Date()
+): Promise<BoxScopeStatus[]> {
+  const lastAutoRebuild = await ensureFresh(config, now);
   const pins = await readPins(config.output);
   const scopes: BoxScopeStatus[] = [];
   for (const name of SCOPE_NAMES) {
     const pin = pins.scopes[name];
     if (!pin) continue;
-    const digest = await digestScopeSources({
-      scope: name,
-      roots: config.scopes[name].roots,
-      grokHome: config.grokHome,
-    });
+    const digest = await readScopeDigest(config, name, pin);
     scopes.push({
       id: name,
       stateRoot: pin.stateRoot,
       builtAt: pin.builtAt,
       pinMatches: await pinMatches(config.output, name, pin),
-      stale:
-        digest.sourceDigest === null ||
-        digest.missingRoot ||
-        digest.sourceDigest !== pin.sourceDigest,
+      stale: digest.stale,
+      lastAutoRebuild,
     });
   }
   return scopes;
+}
+
+export async function ensureFresh(
+  config: BoxConfig,
+  now = new Date()
+): Promise<BoxAutoRebuild | null> {
+  if (config.autoRebuild !== true) return null;
+  const previous = await readAutoRebuild(config.output);
+  if (previous && withinAutoRebuildInterval(previous, now)) {
+    return previous;
+  }
+  if (!(await sourcesChanged(config))) return previous;
+  const at = now.toISOString();
+  await writeAutoRebuild(config.output, {
+    version: 1,
+    at,
+    ok: false,
+    reason: 'rebuild did not finish',
+  });
+  try {
+    await buildBox(config, now);
+    await writeAutoRebuild(config.output, { version: 1, at, ok: true });
+    return { at, ok: true };
+  } catch (error) {
+    const reason = rebuildReason(error);
+    await writeAutoRebuild(config.output, {
+      version: 1,
+      at,
+      ok: false,
+      reason,
+    });
+    return { at, ok: false, reason };
+  }
 }
 
 export function mcpConfig(
@@ -159,7 +201,7 @@ export function mcpConfig(
         sha256: pin.sha256,
         stateRoot: pin.stateRoot,
         policyPath,
-        agents: PRIVATE_SCOPES.has(name) ? ['box'] : config.agents,
+        agents: mountAgents(config, name),
         principal: 'box:reader',
         builtAt: pin.builtAt,
         sourceDigest: pin.sourceDigest,
@@ -169,14 +211,39 @@ export function mcpConfig(
       },
     ];
   });
+  const agentId = config.agentId ?? 'box';
   return {
-    agentId: 'box',
+    agentId,
+    ...(config.sessionId ? { sessionId: config.sessionId } : {}),
+    ...(config.autoRebuild === true && config.configPath
+      ? {
+          autoRebuild: {
+            command: process.execPath,
+            args: [
+              boxBinPath(),
+              'ensure-fresh',
+              '--config',
+              config.configPath,
+            ],
+          },
+        }
+      : {}),
     grokHome: config.grokHome,
     auditDir,
     maxAuditRecords: MAX_AUDIT_RECORDS,
     maxAuditBytes: MAX_AUDIT_BYTES,
     mounts,
   };
+}
+
+function mountAgents(config: BoxConfig, name: BoxScopeName): string[] {
+  const agentId = config.agentId ?? 'box';
+  if (PRIVATE_SCOPES.has(name)) return [agentId];
+  return [...new Set([agentId, ...config.agents])];
+}
+
+function boxBinPath(): string {
+  return fileURLToPath(new URL('../bin/knolo-box.mjs', import.meta.url));
 }
 
 async function writeMcpConfigs(
@@ -243,4 +310,105 @@ async function pinMatches(
 
 function sha256(bytes: Uint8Array): string {
   return createHash('sha256').update(bytes).digest('hex');
+}
+
+async function readScopeDigest(
+  config: BoxConfig,
+  name: BoxScopeName,
+  pin: BoxPin | undefined
+): Promise<{ stale: boolean; sourceDigest: string | null; blocked: boolean }> {
+  try {
+    const digest = await digestScopeSources({
+      scope: name,
+      roots: config.scopes[name].roots,
+      grokHome: config.grokHome,
+    });
+    const stale = pin
+      ? digest.sourceDigest === null ||
+        digest.missingRoot ||
+        digest.sourceDigest !== pin.sourceDigest
+      : digest.sourceDigest !== null && !digest.missingRoot;
+    return {
+      stale,
+      sourceDigest: digest.sourceDigest,
+      blocked: false,
+    };
+  } catch (error) {
+    if (error instanceof BoxError && error.code === 'BOX_SECRET') {
+      return { stale: true, sourceDigest: null, blocked: true };
+    }
+    throw error;
+  }
+}
+
+async function sourcesChanged(config: BoxConfig): Promise<boolean> {
+  const pins = await readPins(config.output);
+  for (const name of SCOPE_NAMES) {
+    const digest = await readScopeDigest(config, name, pins.scopes[name]);
+    if (digest.blocked || digest.stale) return true;
+  }
+  return false;
+}
+
+type StoredAutoRebuild = {
+  version: 1;
+  at: string;
+  ok: boolean;
+  reason?: string;
+};
+
+function autoRebuildPath(output: string): string {
+  return path.join(output, 'auto-rebuild.json');
+}
+
+async function readAutoRebuild(
+  output: string
+): Promise<BoxAutoRebuild | null> {
+  try {
+    const parsed = JSON.parse(
+      await readFile(autoRebuildPath(output), 'utf8')
+    ) as StoredAutoRebuild;
+    if (
+      !parsed ||
+      parsed.version !== 1 ||
+      typeof parsed.at !== 'string' ||
+      typeof parsed.ok !== 'boolean'
+    ) {
+      return null;
+    }
+    return parsed.reason
+      ? { at: parsed.at, ok: parsed.ok, reason: parsed.reason }
+      : { at: parsed.at, ok: parsed.ok };
+  } catch {
+    return null;
+  }
+}
+
+async function writeAutoRebuild(
+  output: string,
+  record: StoredAutoRebuild
+): Promise<void> {
+  await mkdir(output, { recursive: true, mode: 0o700 });
+  const body: StoredAutoRebuild = record.reason
+    ? record
+    : { version: 1, at: record.at, ok: record.ok };
+  await writeFile(autoRebuildPath(output), `${JSON.stringify(body, null, 2)}\n`, {
+    mode: 0o600,
+  });
+}
+
+function withinAutoRebuildInterval(
+  record: BoxAutoRebuild,
+  now: Date
+): boolean {
+  const at = Date.parse(record.at);
+  if (!Number.isFinite(at)) return false;
+  const delta = now.getTime() - at;
+  return delta >= 0 && delta < AUTO_REBUILD_INTERVAL_MS;
+}
+
+function rebuildReason(error: unknown): string {
+  const message = error instanceof Error ? error.message : 'rebuild failed';
+  const flat = message.replace(/\s+/g, ' ').trim() || 'rebuild failed';
+  return flat.length > 180 ? `${flat.slice(0, 177)}...` : flat;
 }

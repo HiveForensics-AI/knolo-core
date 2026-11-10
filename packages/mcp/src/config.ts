@@ -43,6 +43,13 @@ export const knoloMcpConfigSchema = z
   .object({
     agentId: z.string().regex(ID_PATTERN).default('mcp'),
     sessionId: z.string().min(1).max(256).optional(),
+    autoRebuild: z
+      .object({
+        command: z.string().min(1),
+        args: z.array(z.string()).min(1),
+      })
+      .strict()
+      .optional(),
     grokHome: z.string().min(1).optional(),
     auditDir: z.string().min(1),
     mounts: z.array(mountSchema).min(1),

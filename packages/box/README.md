@@ -20,14 +20,14 @@ The default computer is `$GROK_HOME` or `~/.grok`. Output defaults to `~/.knolo/
 | ------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------- |
 | `skills`      | `skills/` and `bundled/skills/` under the Grok home. Only `SKILL.md`.                                 | Configured agents. Default `box`. |
 | `files`       | None. A fresh install does not walk the disk. Add roots yourself. `.md`, `.mdx`, `.txt`, `.markdown`. | Configured agents.                |
-| `memory`      | `memory-v2/`. Topic notes and `observations/_inbox/*.md`.                                             | `box` only.                       |
-| `transcripts` | `sessions/`. Newest 2,000 `summary.json` files, plus user and assistant text.                         | `box` only.                       |
+| `memory`      | `memory-v2/`. Topic notes and `observations/_inbox/*.md`.                                             | Configured agent. Default `box`.  |
+| `transcripts` | `sessions/`. Newest 2,000 `summary.json` files, plus user and assistant text.                         | Configured agent. Default `box`.  |
 
 Empty scopes are omitted. `MEMORY.md` is a generated index and is not indexed. Sqlite files, system prompts, tool definitions, reasoning, tool results, and backend tool calls are left out. Chat history over 8 MiB is skipped, and the summary is still indexed. A turn over 8 KiB is dropped. A session stops after 64 KiB of kept turn text. Other files over 256 KiB are skipped and listed in the build report.
 
 The builder refuses the build before it writes a new image when kept text contains a private-key header or a `ghp_` / `github_pat_` token. The previous images stay in place.
 
-Each chunk starts with `source` and `locator`, plus `when` and `agent` when the source has them. Search excerpts include that header. `locator` is `lines N-M` or `turn N`. `knolo_search` matches whole words and can label a hit `partial`. EQL `SEARCH` still matches every term as a substring. A search receipt records `caller.agentId`, `hitCount`, and `durationMs`. `sessionId` is the MCP config value when set, otherwise the MCP client name. One shared server process cannot see a different session id per chat. The rules and the stopword list are in [the box doc](../../docs/box/README.md).
+Each chunk starts with `source` and `locator`, plus `when` and `agent` when the source has them. Search excerpts include that header. `locator` is `lines N-M` or `turn N`. `knolo_search` matches whole words and can label a hit `partial`. EQL `SEARCH` still matches every term as a substring. A search receipt records `caller.agentId`, `hitCount`, and `durationMs`. `agentId` comes from `box.config.json` when that field is set, otherwise from `KNOLO_BOX_AGENT_ID`, and otherwise it is `box`. `sessionId` uses the config field, then `KNOLO_BOX_SESSION_ID`. When `sessionId` is unset, the MCP client name remains the session fallback. The client name does not become the agent id. Tool arguments cannot set either value. One shared server process cannot see a different session id per chat. The rules and the stopword list are in [the box doc](../../docs/box/README.md).
 
 ## Files
 
@@ -36,16 +36,18 @@ Each chunk starts with `source` and `locator`, plus `when` and `agent` when the 
 - `skills.v5`, `files.v5`, `memory.v5`, `transcripts.v5` for scopes that had text
 - `policy.json` with default deny, and query plus read for principal `box:reader`
 - `pins.json` with the file SHA-256, `stateRoot`, `builtAt`, and the source digest
-- `knolo-mcp.json` for agent `box`, including private mounts, when at least one image was built
+- `knolo-mcp.json` for the configured agent, default `box`, including private mounts, when at least one image was built
 - `knolo-mcp-shared.json` when at least one shared mount remains, without memory and transcripts
 
 A later build removes a config that would have no mounts. `knolo-box mcp` stops before starting the server when `knolo-mcp.json` is missing or has no mounts.
 
 - `audit/` beside the images, capped at 10,000 records and 256 MiB
 
-The same source digest keeps the same image bytes, `stateRoot`, and `builtAt`. `knolo-box status` prints `stateRoot`, `builtAt`, `pinMatches`, and `stale`. `stale: true` means the files under that scope changed after `builtAt`, or a root is missing, or indexed text now matches a secret pattern. The pin can still match. `knolo_status` and `knolo_verify` include `builtAt` and `stale` only when the mount records `sourceRoots`. A config without those fields omits them. `knolo_verify` stays `valid: true` when the pin matches and the sources are stale. Search does not walk the source tree, and nothing rebuilds the image on its own.
+The same source digest keeps the same image bytes, `stateRoot`, and `builtAt`. `knolo-box status` prints `stateRoot`, `builtAt`, `pinMatches`, `stale`, and `lastAutoRebuild`. `stale: true` means the files under that scope changed after `builtAt`, or a root is missing, or indexed text now matches a secret pattern. The pin can still match. `knolo_status` and `knolo_verify` include `builtAt` and `stale` only when the mount records `sourceRoots`. A config without those fields omits them. `knolo_verify` stays `valid: true` when the pin matches and the sources are stale.
 
-There is no daemon. A user crontab can refresh the images:
+`autoRebuild` is off when the field is absent. `KNOLO_BOX_AUTO_REBUILD` is read only when the field is absent: `true` or `1` turns it on, and `false` or `0` leaves it off. While it is off, a source change leaves `stale: true` and does not write a new image or pin. While it is on, the next `knolo-box status`, `knolo_status`, or `knolo_search` that sees a changed source fingerprint rebuilds that scope. A second call inside 2 seconds does not rebuild again. Success writes a new image and a new pin, status reports `stale: false`, and `lastAutoRebuild` records the time and `ok: true`. Failure leaves the previous image and pin, leaves `stale: true`, and records `ok: false` with a short reason. `knolo_status` then shows that new pin, or the previous pin when the rebuild failed. There is no file-watcher daemon. The MCP hook is written when `knolo-box` was started with `--config`, because the hook keeps that config path.
+
+A user crontab can still refresh the images:
 
 ```cron
 0 3 * * * knolo-box build

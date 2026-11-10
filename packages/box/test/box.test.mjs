@@ -85,7 +85,12 @@ async function openService(output) {
   const raw = JSON.parse(
     await readFile(path.join(output, 'knolo-mcp.json'), 'utf8')
   );
-  const { agentId: _agentId, ...plugin } = raw;
+  const {
+    agentId: _agentId,
+    sessionId: _sessionId,
+    autoRebuild: _autoRebuild,
+    ...plugin
+  } = raw;
   return KnoloOpenClawService.create(plugin);
 }
 
@@ -1457,4 +1462,280 @@ test('a secret in one scope leaves the other scope fresh', async () => {
 
 test('the builder does not use the network', () => {
   assert.equal(networkCalls, 0);
+});
+
+test('caller identity comes from the box config, then the environment', async () => {
+  const home = await tempHome();
+  try {
+    const configPath = path.join(home, 'box.json');
+    const grok = path.join(home, 'grok');
+    const topicDir = path.join(grok, 'memory-v2', 'topics');
+    await mkdir(topicDir, { recursive: true });
+    await writeFile(topicDir + '/note.md', 'IDENTITY_PHRASE stays on one image.\n');
+    const stored = {
+      output: path.join(home, 'out'),
+      grokHome: grok,
+      agents: ['box'],
+      scopes: {
+        files: { roots: [] },
+        skills: { roots: [] },
+        memory: { roots: [path.join(grok, 'memory-v2')] },
+        transcripts: { roots: [] },
+      },
+    };
+    await writeFile(configPath, `${JSON.stringify(stored)}\n`);
+    const fromEnv = await loadBoxConfig(
+      configPath,
+      {
+        KNOLO_BOX_AGENT_ID: 'env-agent',
+        KNOLO_BOX_SESSION_ID: 'env-session',
+        KNOLO_BOX_AUTO_REBUILD: 'true',
+      },
+      home
+    );
+    assert.equal(fromEnv.agentId, 'env-agent');
+    assert.equal(fromEnv.sessionId, 'env-session');
+    assert.equal(fromEnv.autoRebuild, true);
+    await writeFile(
+      configPath,
+      `${JSON.stringify({
+        ...stored,
+        agentId: 'file-agent',
+        sessionId: 'file-session',
+        autoRebuild: false,
+      })}\n`
+    );
+    const fromFile = await loadBoxConfig(
+      configPath,
+      {
+        KNOLO_BOX_AGENT_ID: 'env-agent',
+        KNOLO_BOX_SESSION_ID: 'env-session',
+        KNOLO_BOX_AUTO_REBUILD: 'true',
+      },
+      home
+    );
+    assert.equal(fromFile.agentId, 'file-agent');
+    assert.equal(fromFile.sessionId, 'file-session');
+    assert.equal(fromFile.autoRebuild, false);
+    assert.equal(fromFile.configPath, configPath);
+    const bare = defaultBoxConfig(
+      {
+        GROK_HOME: grok,
+        KNOLO_BOX_AGENT_ID: 'desk',
+        KNOLO_BOX_SESSION_ID: 'chat-9',
+        KNOLO_BOX_AUTO_REBUILD: '1',
+      },
+      home
+    );
+    assert.equal(bare.agentId, 'desk');
+    assert.equal(bare.sessionId, 'chat-9');
+    assert.equal(bare.autoRebuild, true);
+    assert.throws(
+      () => defaultBoxConfig({ KNOLO_BOX_AGENT_ID: 'bad id' }, home),
+      (error) => error instanceof BoxError && error.code === 'BOX_CONFIG'
+    );
+
+    await writeFile(configPath, `${JSON.stringify(stored)}\n`);
+    const built = await loadBoxConfig(configPath, {}, home);
+    assert.equal(built.agentId, 'box');
+    assert.equal(built.sessionId, undefined);
+    const pins = await buildBox(built, new Date('2026-11-04T00:00:00.000Z'));
+    const policyPath = path.join(built.output, 'policy.json');
+    const auditDir = path.join(built.output, 'audit');
+    const alpha = box.mcpConfig(
+      { ...built, agentId: 'alpha', sessionId: 'chat-a', agents: ['box'] },
+      pins,
+      policyPath,
+      auditDir,
+      false
+    );
+    const beta = box.mcpConfig(
+      { ...built, agentId: 'beta', sessionId: 'chat-b', agents: ['box'] },
+      pins,
+      policyPath,
+      auditDir,
+      false
+    );
+    assert.equal(alpha.agentId, 'alpha');
+    assert.equal(alpha.sessionId, 'chat-a');
+    assert.equal(beta.agentId, 'beta');
+    assert.equal(beta.sessionId, 'chat-b');
+    assert.equal(alpha.mounts[0].path, beta.mounts[0].path);
+    assert.equal(alpha.mounts[0].sha256, beta.mounts[0].sha256);
+    assert.deepEqual(alpha.mounts[0].agents, ['alpha']);
+    assert.deepEqual(beta.mounts[0].agents, ['beta']);
+    const {
+      agentId: _alphaId,
+      sessionId: _alphaSession,
+      ...pluginA
+    } = alpha;
+    const {
+      agentId: _betaId,
+      sessionId: _betaSession,
+      ...pluginB
+    } = beta;
+    const serviceA = await KnoloOpenClawService.create(pluginA);
+    const serviceB = await KnoloOpenClawService.create(pluginB);
+    const hitA = await serviceA.search(
+      { query: 'IDENTITY_PHRASE', imageIds: ['memory'], limit: 2 },
+      { agentId: 'alpha', sessionId: 'chat-a' }
+    );
+    const hitB = await serviceB.search(
+      { query: 'IDENTITY_PHRASE', imageIds: ['memory'], limit: 2 },
+      { agentId: 'beta', sessionId: 'chat-b' }
+    );
+    const receiptA = JSON.parse(
+      await readFile(path.join(auditDir, `${hitA.receipts[0].receiptId}.json`), 'utf8')
+    );
+    const receiptB = JSON.parse(
+      await readFile(path.join(auditDir, `${hitB.receipts[0].receiptId}.json`), 'utf8')
+    );
+    assert.equal(receiptA.caller.agentId, 'alpha');
+    assert.equal(receiptA.caller.sessionId, 'chat-a');
+    assert.equal(receiptB.caller.agentId, 'beta');
+    assert.equal(receiptB.caller.sessionId, 'chat-b');
+    assert.notEqual(receiptA.caller.agentId, receiptB.caller.agentId);
+    await assert.rejects(
+      () =>
+        serviceA.search(
+          { query: 'IDENTITY_PHRASE', imageIds: ['memory'] },
+          { agentId: 'knolo-mcp-test', sessionId: 'chat-a' }
+        ),
+      (error) => error.code === 'ACCESS_DENIED'
+    );
+
+    const plain = box.mcpConfig(built, pins, policyPath, auditDir, false);
+    assert.equal(plain.agentId, 'box');
+    assert.equal(Object.hasOwn(plain, 'sessionId'), false);
+    const plainService = await openService(built.output);
+    const plainHit = await plainService.search(
+      { query: 'IDENTITY_PHRASE', imageIds: ['memory'], limit: 2 },
+      { agentId: 'box' }
+    );
+    const plainReceipt = JSON.parse(
+      await readFile(
+        path.join(auditDir, `${plainHit.receipts[0].receiptId}.json`),
+        'utf8'
+      )
+    );
+    assert.equal(plainReceipt.caller.agentId, 'box');
+    assert.equal(Object.hasOwn(plainReceipt.caller, 'sessionId'), false);
+    assert.equal(plainReceipt.version, 'openclaw-knolo-query-v1');
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('autoRebuild is off unless the config asks, and then status rebuilds once', async () => {
+  const home = await tempHome();
+  try {
+    const grok = path.join(home, 'grok');
+    const topic = path.join(grok, 'memory-v2', 'topics', 'note.md');
+    await mkdir(path.dirname(topic), { recursive: true });
+    await writeFile(topic, 'REBUILD_PHRASE original line.\n');
+    const configPath = path.join(home, 'box.json');
+    const stored = {
+      output: path.join(home, 'out'),
+      grokHome: grok,
+      agents: ['box'],
+      autoRebuild: false,
+      scopes: {
+        files: { roots: [] },
+        skills: { roots: [] },
+        memory: { roots: [path.join(grok, 'memory-v2')] },
+        transcripts: { roots: [] },
+      },
+    };
+    await writeFile(configPath, `${JSON.stringify(stored)}\n`);
+    const config = await loadBoxConfig(configPath, {}, home);
+    assert.equal(config.autoRebuild, false);
+    await buildBox(config, new Date('2026-11-04T00:00:00.000Z'));
+    await writeFile(topic, 'REBUILD_PHRASE edited while off.\n');
+    const off = await boxStatus(config, new Date('2026-11-04T01:00:00.000Z'));
+    assert.equal(off[0].stale, true);
+    assert.equal(off[0].pinMatches, true);
+    assert.equal(off[0].lastAutoRebuild, null);
+    const stateOff = off[0].stateRoot;
+
+    stored.autoRebuild = true;
+    await writeFile(configPath, `${JSON.stringify(stored)}\n`);
+    const enabled = await loadBoxConfig(configPath, {}, home);
+    const first = await boxStatus(enabled, new Date('2026-11-04T02:00:00.000Z'));
+    assert.equal(first[0].stale, false);
+    assert.equal(first[0].pinMatches, true);
+    assert.notEqual(first[0].stateRoot, stateOff);
+    assert.equal(first[0].lastAutoRebuild.ok, true);
+    assert.equal(first[0].lastAutoRebuild.at, '2026-11-04T02:00:00.000Z');
+    assert.equal(Object.hasOwn(first[0].lastAutoRebuild, 'reason'), false);
+    const raw = JSON.parse(
+      await readFile(path.join(enabled.output, 'knolo-mcp.json'), 'utf8')
+    );
+    assert.equal(raw.autoRebuild.command, process.execPath);
+    assert.deepEqual(raw.autoRebuild.args.slice(1), [
+      'ensure-fresh',
+      '--config',
+      configPath,
+    ]);
+    const service = await openService(enabled.output);
+    const found = await service.search(
+      { query: 'edited', imageIds: ['memory'], limit: 2 },
+      { agentId: 'box' }
+    );
+    assert.match(found.hits[0].excerpt, /edited while off/);
+
+    await writeFile(topic, 'REBUILD_PHRASE second edit.\n');
+    const skipped = await boxStatus(
+      enabled,
+      new Date('2026-11-04T02:00:01.000Z')
+    );
+    assert.equal(skipped[0].stale, true);
+    assert.equal(skipped[0].stateRoot, first[0].stateRoot);
+    assert.equal(skipped[0].lastAutoRebuild.at, first[0].lastAutoRebuild.at);
+
+    const later = await boxStatus(
+      enabled,
+      new Date('2026-11-04T02:00:03.000Z')
+    );
+    assert.equal(later[0].stale, false);
+    assert.notEqual(later[0].stateRoot, first[0].stateRoot);
+    assert.equal(later[0].lastAutoRebuild.ok, true);
+    const again = await openService(enabled.output);
+    const second = await again.search(
+      { query: 'second', imageIds: ['memory'], limit: 2 },
+      { agentId: 'box' }
+    );
+    assert.match(second.hits[0].excerpt, /second edit/);
+
+    const beforeFail = await readFile(path.join(enabled.output, 'memory.v5'));
+    await writeFile(topic, '-----BEGIN PRIVATE KEY-----\nREBUILD_PHRASE secret\n');
+    const failed = await boxStatus(
+      enabled,
+      new Date('2026-11-04T02:00:10.000Z')
+    );
+    assert.equal(failed[0].stale, true);
+    assert.equal(failed[0].stateRoot, later[0].stateRoot);
+    assert.equal(failed[0].lastAutoRebuild.ok, false);
+    assert.match(failed[0].lastAutoRebuild.reason, /No new image was written/);
+    assert.equal(failed[0].lastAutoRebuild.reason.includes('PRIVATE KEY'), false);
+    assert.deepEqual(
+      await readFile(path.join(enabled.output, 'memory.v5')),
+      beforeFail
+    );
+
+    await writeFile(topic, 'REBUILD_PHRASE recovered line.\n');
+    const held = await boxStatus(enabled, new Date('2026-11-04T02:00:11.000Z'));
+    assert.equal(held[0].stale, true);
+    assert.equal(held[0].stateRoot, later[0].stateRoot);
+    assert.equal(held[0].lastAutoRebuild.ok, false);
+    const recovered = await boxStatus(
+      enabled,
+      new Date('2026-11-04T02:00:13.000Z')
+    );
+    assert.equal(recovered[0].stale, false);
+    assert.equal(recovered[0].lastAutoRebuild.ok, true);
+    assert.notEqual(recovered[0].stateRoot, later[0].stateRoot);
+    assert.equal(await main(['ensure-fresh', '--config', configPath], {}, home), 0);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
 });

@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { loadBoxConfig } from './config.js';
 import { BoxError } from './errors.js';
-import { boxStatus, buildBox } from './build.js';
+import { boxStatus, buildBox, ensureFresh } from './build.js';
 import { initBox } from './init.js';
 import { launchMcp } from './launch.js';
 
@@ -15,7 +15,7 @@ export async function main(
   const command = argv[0];
   if (!command || command === '--help' || command === '-h') {
     console.error(
-      'knolo-box build|status|mcp|init [--config <file>] [--root <dir>] [--skills <path>] [--managed-skills <path>] [--memory <path>] [--transcripts <path>] [--files <path>]'
+      'knolo-box build|status|mcp|init|ensure-fresh [--config <file>] [--root <dir>] [--skills <path>] [--managed-skills <path>] [--memory <path>] [--transcripts <path>] [--files <path>]'
     );
     return command ? 0 : 1;
   }
@@ -63,6 +63,10 @@ export async function main(
     }
     if (command === 'status') {
       console.log(JSON.stringify(await boxStatus(config), null, 2));
+      return 0;
+    }
+    if (command === 'ensure-fresh') {
+      await ensureFresh(config);
       return 0;
     }
     if (command === 'mcp') {
