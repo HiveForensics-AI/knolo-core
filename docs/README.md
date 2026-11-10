@@ -74,8 +74,8 @@ operational guides for Knolo.
   catalog. The hub stores packs and does not answer questions. Box stays
   separate.
 - [Community hub and one install path](hub/COMMUNITY.md) — how the CLI,
-  Box, MCP, and hub.knolo.dev fit one setup. `knolo setup` is specified
-  there and is not a command yet.
+  Box, MCP, and hub.knolo.dev fit one setup. `knolo setup` prepares a
+  local index when Box is available and prints the hub next steps.
 - [Code image](code/README.md) — local V4 pack of a workspace and the Grok
   Build plugin that retrieves structure before full chunks. The published
   `@knolo/code` check is recorded on that page. npm `latest` is `0.1.1`.

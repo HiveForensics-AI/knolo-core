@@ -28,6 +28,8 @@ knolo skill publish dist/refund-policy.knolo-skill
 knolo skill install acme/refund-policy --dir ./skills
 knolo skill publish dist/refund-policy.knolo-skill --hub ./catalog
 knolo skill install refund-policy --hub ./catalog --dir ./skills
+knolo skill search refund
+knolo skill info acme/refund-policy
 ```
 
 `init` writes `SKILL.md` and an empty `knowledge/` directory. It refuses to replace an existing directory.
@@ -48,10 +50,12 @@ dist/refund-policy.knolo-skill/
 
 `publish <pack>` sends the pack to `https://hub.knolo.dev` with the stored `kno_…` token. Publishing the same pin again leaves the catalog row unchanged. Publishing a different pin for the same name fails, and the catalog row stays as it was. `publish <pack> --hub <dir>` copies that directory to `<hub>/<name>/` and does not call the hub. `--hub` and `--registry` cannot be combined.
 
-`install <publisher>/<name> --dir <path>` downloads one pack, checks the archive SHA-256 and the pins inside it, then writes `<path>/<name>/`. `install <name> --hub <dir> --dir <path>` does the same from a directory catalog. The directory name must be the manifest name. `install --pack <pack> --dir <path>` reads a pack directory on disk. A pin mismatch stops before any write. That includes a changed `knowledge.v5` byte, a state root that does not match the image, a `SKILL.md` whose name or description differs from the manifest, and a `policy.json` that does not match the image policy root. Guidance that tells the agent to skip a pin or a receipt is refused as well. The destination is left untouched. Install refuses to replace an existing `<path>/<name>` directory.
+`search <query>` reads the public skill catalog and filters it on this machine. It does not send a token. `info <publisher>/<name>` reads one catalog row, including the archive SHA-256 and Blob URL. A missing skill exits non-zero.
+
+`install <publisher>/<name> --dir <path>` downloads one pack without a stored token, checks the archive SHA-256 and the pins inside it, then writes `<path>/<name>/`. The download does not send a token. `install <name> --hub <dir> --dir <path>` does the same from a directory catalog. The directory name must be the manifest name. `install --pack <pack> --dir <path>` reads a pack directory on disk. A pin mismatch stops before any write. That includes a changed `knowledge.v5` byte, a state root that does not match the image, a `SKILL.md` whose name or description differs from the manifest, and a `policy.json` that does not match the image policy root. Guidance that tells the agent to skip a pin or a receipt is refused as well. The destination is left untouched. Install refuses to replace an existing `<path>/<name>` directory.
 
 ## Catalog
 
-The hub stores the name, description, publisher, and pin. It does not run a model, and it does not answer questions. `--hub` is a directory of skill packs on the machine where you run the command. Use it for an offline catalog. How these commands fit Box, MCP, and the hub is [Community install](../hub/COMMUNITY.md). `knolo setup` is specified there and is not a command yet.
+The hub stores the name, description, publisher, and pin. It does not run a model, and it does not answer questions. `--hub` is a directory of skill packs on the machine where you run the command. Use it for an offline catalog. How these commands fit Box, MCP, and the hub is [Community install](../hub/COMMUNITY.md). `knolo setup` prepares a local index when `knolo-box` and a Grok home are available, then prints the hub next steps.
 
 `knolo search`, `knolo info`, `knolo login`, `knolo publish`, `knolo yank`, and `knolo add` remain the Hub registry for `.knolo` knowledge packs. A skill pack is not a `.knolo` pack and is not published through those commands.
