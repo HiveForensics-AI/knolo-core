@@ -80,9 +80,7 @@ def assert_search(config_path: Path) -> tuple[list[str], str, str]:
             raise SystemExit(f"receiptId {receipt_id!r}")
         return names, excerpt, receipt_id
     finally:
-        worker = getattr(toolset, "_worker", None)
-        if worker is not None:
-            worker.stop()
+        toolset.close()
 
 
 def assert_audit_unavailable(config_path: Path) -> None:
@@ -98,9 +96,7 @@ def assert_audit_unavailable(config_path: Path) -> None:
         if "AUDIT_UNAVAILABLE" not in text:
             raise SystemExit(f"audit error {text}")
     finally:
-        worker = getattr(toolset, "_worker", None)
-        if worker is not None:
-            worker.stop()
+        toolset.close()
 
 
 def main() -> None:
