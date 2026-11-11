@@ -1,12 +1,12 @@
 # @knolo/mcp
 
-`@knolo/mcp` is a read-only [MCP](https://modelcontextprotocol.io) server for
-pinned Knolo V5 Knowledge Images. It exposes the same four tools as
-`@knolo/openclaw`: `knolo_search`, `knolo_get`, `knolo_verify`, and
-`knolo_status`. Pins, policy checks, and query receipts come from
-`@knolo/tools`. When at least one mount includes a `kar` block, the server
-also exposes `knolo_kar_evaluate`, `knolo_kar_verify`, and
-`knolo_cortex_verify`.
+`@knolo/mcp` is how an agent consumes knowledge another agent shared. It is
+a read-only [MCP](https://modelcontextprotocol.io) server for a pinned Knolo
+V5 Knowledge Image. It exposes `knolo_search`, `knolo_get`, `knolo_verify`,
+and `knolo_status`, the same four tools as `@knolo/openclaw`. Pins, policy
+checks, and query receipts come from `@knolo/tools`. When at least one mount
+includes a `kar` block, the server also exposes `knolo_kar_evaluate`,
+`knolo_kar_verify`, and `knolo_cortex_verify`.
 
 The server speaks stdio only. It does not download images, open a runtime
 network connection, write or compile knowledge, or expose MCP resources or

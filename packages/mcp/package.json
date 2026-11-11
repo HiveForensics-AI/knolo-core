@@ -3,7 +3,7 @@
   "version": "0.2.3",
   "mcpName": "io.github.HiveForensics-AI/knolo",
   "type": "module",
-  "description": "Verified, local-first Knolo Knowledge Image tools over MCP, including read-only KAR and Cortex checks.",
+  "description": "Read-only MCP tools an agent uses on a pinned Knowledge Image.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

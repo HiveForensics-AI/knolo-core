@@ -1,10 +1,14 @@
 # Knolo
 
-## The verifiable knowledge layer for trustworthy AI
+Knolo is the open framework AI agents use to share knowledge with one
+another: pack it into a portable Knowledge Image, pin it by digest, mount
+it locally, and prove what was used.
 
-Knolo turns organizational knowledge into portable, deterministic, and cryptographically verifiable runtime artifacts.
-
-AI products are becoming easier to build. The hard problem is making their knowledge dependable: traceable to evidence, reproducible across environments, safe to move, and defensible under review. Knolo is infrastructure for that problem.
+One agent packs knowledge into a file. Another agent mounts that file on
+its own machine. The pin is the digest. A query returns a receipt. A
+receipt is an integrity check. It does not mean a claim is proven. Knolo
+does not call a model, and it does not run the agent. The short guide is
+[two agents sharing knowledge](docs/guides/agents-sharing-knowledge.md).
 
 > **Knowledge should be an asset you can inspect, verify, migrate, and run—not opaque context trapped inside an application.**
 
@@ -28,6 +32,8 @@ import {
 The root `@knolo/core` entry does not load KAR. `@knolo/core/experimental/kar` remains a compatibility entry for this cycle. `SATISFIED` means the declared evidence requirements were met. It does not mean a claim is proven. `UNSATISFIED_EVIDENCE_REQUIREMENTS` means those requirements were not met. It does not mean the claim is false.
 
 Published `@knolo/core` is `6.2.1`. That patch adds optional `textQuery` plans: a kept term matches as a whole word. An EQL `SEARCH` plan without `textQuery` still requires every term as a substring, in object id order. `@knolo/langchain`, `@knolo/llamaindex`, `@knolo/semantic-ollama`, and `create-knolo-app` stay `6.2.0` and depend on `@knolo/core` `^6.0.0`. This tree's `@knolo/cli` package file is `6.2.3` and depends on `@knolo/core` `^6.2.0`. npm `latest` for the CLI is `6.2.3`. `@knolo/tools` is `0.2.1` and depends on `@knolo/core` `^6.2.1`. This tree's `@knolo/mcp` is `0.2.3` and depends on `@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`. npm `latest` for MCP is `0.2.3`. `@knolo/ai-sdk` is `0.1.0` and stays on `@knolo/core` `^6.2.0` and `@knolo/tools` `^0.2.0`. npm `latest` for `@knolo/box` is `0.1.1`. `@knolo/code` is `0.1.1`. `@knolo/reflex` stays `0.2.0`. `@knolo/evidence-gate` stays `0.1.0`. Rust, Python, and the ICP canister stay `5.5.1` and do not implement KAR, composition, or Cortex. The bundled contracts, policy, and operations Domain Packs are `review-required`. The local tag `v6.0.0` stays on the 6.0.0 commit. The local tag `v6.1.0` stays on the 6.1.0 commit. Do not republish these versions.
+
+The `description` fields in this tree name the sharing job above. npm still shows the previous descriptions until a later publish.
 
 Start with the [KAR guide](docs/kar/README.md), the [composition guide](docs/composition/README.md), the [Cortex guide](docs/cortex/README.md), the [6.2.0 release notes](docs/releases/v6.2.0.md), [`examples/kar-v6`](examples/kar-v6/README.md), [`examples/kar-coverage`](examples/kar-coverage/README.md), and [`examples/composition-v1`](examples/composition-v1/README.md).
 

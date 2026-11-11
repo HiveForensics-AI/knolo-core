@@ -2,7 +2,7 @@
   "name": "@knolo/box",
   "version": "0.1.1",
   "type": "module",
-  "description": "Build pinned V5 images of a Grok Bot computer and launch the read-only Knolo MCP server.",
+  "description": "Turn a host agent's local skills into a pinned Knowledge Image and start read-only MCP.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

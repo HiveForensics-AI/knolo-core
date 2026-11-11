@@ -9,7 +9,7 @@
     "bin/",
     "templates/"
   ],
-  "description": "CLI for Knolo V4 packs, V5 Knowledge Images, KAR evidence-set retrieval, and offline composition.",
+  "description": "Publish, pin, and install shared Knolo knowledge, including Hub packs and skills.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
