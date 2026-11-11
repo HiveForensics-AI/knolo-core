@@ -26,6 +26,14 @@ test('goose extension is a stdio npx draft', () => {
   assert.doesNotMatch(text, /:\/\//);
 });
 
+test('cline logo is a 400 by 400 png', () => {
+  const bytes = readFileSync(path.join(packageRoot, 'listings/cline/logo.png'));
+  assert.equal(bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+  assert.equal(bytes.subarray(12, 16).toString('ascii'), 'IHDR');
+  assert.equal(bytes.readUInt32BE(16), 400);
+  assert.equal(bytes.readUInt32BE(20), 400);
+});
+
 test('awesome-mcp-servers entry matches the directory line', () => {
   const text = readFileSync(
     path.join(packageRoot, 'listings/awesome-mcp-servers.md'),
