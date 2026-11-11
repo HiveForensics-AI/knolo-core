@@ -83,6 +83,15 @@ const npmPackages = [
     directory: 'openai-agents',
     expected: ['README.md', 'dist/index.js', 'dist/index.d.ts'],
   },
+  {
+    name: 'n8n-nodes-knolo',
+    directory: 'n8n-nodes-knolo',
+    expected: [
+      'README.md',
+      'dist/nodes/Knolo/Knolo.node.js',
+      'dist/nodes/Knolo/Knolo.node.d.ts',
+    ],
+  },
 ];
 
 const rustPackages = [

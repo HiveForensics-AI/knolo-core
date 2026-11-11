@@ -217,6 +217,32 @@ assert.equal(
 assert.equal(openaiAgentsPackage.dependencies?.['@openai/agents'], undefined);
 assert.equal(openaiAgentsPackage.devDependencies?.['@openai/agents'], '0.21.0');
 
+const n8nNodesVersion = '0.1.0';
+const n8nNodesPackage = readJson('packages/n8n-nodes-knolo/package.json');
+assert.equal(n8nNodesPackage.name, 'n8n-nodes-knolo');
+assert.equal(n8nNodesPackage.version, n8nNodesVersion);
+assert.equal(n8nNodesPackage.license, 'Apache-2.0');
+assert.equal(n8nNodesPackage.type, undefined);
+assert.notEqual(n8nNodesPackage.private, true);
+assert.equal(n8nNodesPackage.publishConfig?.access, 'public');
+assert.equal(n8nNodesPackage.engines?.node, '>=22');
+assert.equal(n8nNodesPackage.dependencies?.['@knolo/core'], toolsCoreRange);
+assert.equal(n8nNodesPackage.dependencies?.['@knolo/tools'], '^0.2.1');
+assert.deepEqual(n8nNodesPackage.peerDependencies, { 'n8n-workflow': '*' });
+assert.equal(n8nNodesPackage.dependencies?.['n8n-workflow'], undefined);
+assert.equal(n8nNodesPackage.dependencies?.n8n, undefined);
+assert.equal(n8nNodesPackage.dependencies?.['n8n-core'], undefined);
+assert.equal(n8nNodesPackage.devDependencies?.['n8n-workflow'], '2.47.0');
+assert.equal(n8nNodesPackage.n8n?.n8nNodesApiVersion, 1);
+assert.deepEqual(n8nNodesPackage.n8n?.credentials, []);
+assert.deepEqual(n8nNodesPackage.n8n?.nodes, [
+  'dist/nodes/Knolo/Knolo.node.js',
+]);
+assert.equal(
+  n8nNodesPackage.keywords?.includes('n8n-community-node-package'),
+  true
+);
+
 const openclawPackage = readJson('packages/openclaw/package.json');
 assert.equal(openclawPackage.name, '@knolo/openclaw');
 assert.equal(openclawPackage.version, openclawVersion);
@@ -225,5 +251,5 @@ assert.equal(openclawPackage.dependencies?.['@knolo/tools'], '^0.1.0');
 assert.equal(openclawPackage.engines?.node, '>=24.16.0');
 
 console.log(
-  `Release metadata passed for npm ${releaseVersion} with core ${coreReleaseVersion} and CLI ${cliReleaseVersion}. Rust and Python stay ${platformVersion}. @knolo/tools is ${toolsVersion}. @knolo/mcp is ${mcpVersion}. @knolo/ai-sdk is ${aiSdkVersion}. @knolo/mastra is ${mastraVersion} and is not published. @knolo/openai-agents is ${openaiAgentsVersion} and is not published. @knolo/openclaw stays ${openclawVersion}. @knolo/box is 0.1.1.`
+  `Release metadata passed for npm ${releaseVersion} with core ${coreReleaseVersion} and CLI ${cliReleaseVersion}. Rust and Python stay ${platformVersion}. @knolo/tools is ${toolsVersion}. @knolo/mcp is ${mcpVersion}. @knolo/ai-sdk is ${aiSdkVersion}. @knolo/mastra is ${mastraVersion} and is not published. @knolo/openai-agents is ${openaiAgentsVersion} and is not published. n8n-nodes-knolo is ${n8nNodesVersion} and is not published. @knolo/openclaw stays ${openclawVersion}. @knolo/box is 0.1.1.`
 );
