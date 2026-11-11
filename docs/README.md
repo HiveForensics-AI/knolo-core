@@ -136,6 +136,10 @@ operational guides for Knolo.
   `@knolo/tools`. Knolo does not call a model. A search returns a query
   receipt. `SATISFIED` means evidence requirements were met.
   `@knolo/mastra@0.1.0` is not published yet.
+- [n8n](integrations/n8n.md) — `n8n-nodes-knolo` search, get, and verify
+  for a pinned Knowledge Image. Knolo does not call a model. A search
+  returns a query receipt. A receipt is an integrity check. `SATISFIED`
+  is not a search result. `n8n-nodes-knolo@0.1.0` is not on npm yet.
 - [Box](box/README.md) — pinned V5 images of skills, opted-in notes, private
   memory, and capped session text on a Grok Bot computer. `@knolo/box` starts
   the existing read-only MCP server in one process. npm `latest` is `0.1.1`.

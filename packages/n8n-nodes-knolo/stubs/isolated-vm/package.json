@@ -1,0 +1,7 @@
+{
+  "name": "isolated-vm",
+  "version": "7.0.2",
+  "description": "Stand-in so this repository can install n8n-workflow without a Node 24 native module.",
+  "main": "index.js",
+  "license": "Apache-2.0"
+}

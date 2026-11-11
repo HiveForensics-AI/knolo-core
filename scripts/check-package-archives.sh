@@ -15,7 +15,8 @@ for package_name in \
   '@knolo/tools' \
   '@knolo/mcp' \
   '@knolo/ai-sdk' \
-  '@knolo/openai-agents'; do
+  '@knolo/openai-agents' \
+  'n8n-nodes-knolo'; do
   npm --cache "$npm_cache_dir" pack --workspace "$package_name" --dry-run --json >/dev/null
   echo "npm archive check passed: $package_name"
 done
