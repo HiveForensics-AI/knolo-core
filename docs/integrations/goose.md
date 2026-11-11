@@ -13,18 +13,18 @@ extensions:
     cmd: npx
     args:
       - -y
-      - "@knolo/mcp@0.2.2"
+      - "@knolo/mcp@0.2.3"
       - --config
       - /absolute/knolo-mcp.json
     timeout: 300
 ```
 
-Replace `/absolute/knolo-mcp.json` with the absolute path of a Knolo MCP config. `npx` and Node must be on the PATH Goose uses. `@knolo/mcp@0.2.2` is the npm release.
+Replace `/absolute/knolo-mcp.json` with the absolute path of a Knolo MCP config. `npx` and Node must be on the PATH Goose uses. `@knolo/mcp@0.2.3` is the npm release.
 
 That command is the same one the other host docs run:
 
 ```bash
-npx -y @knolo/mcp@0.2.2 --config /absolute/knolo-mcp.json
+npx -y @knolo/mcp@0.2.3 --config /absolute/knolo-mcp.json
 ```
 
 A mount without a `kar` block exposes `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`. A mount with a `kar` block also exposes `knolo_kar_evaluate`, `knolo_kar_verify`, and `knolo_cortex_verify`. Pins, policy, and the audit directory stay in the config file. Tool arguments cannot set the caller.
@@ -37,7 +37,7 @@ A receipt is an integrity check. It does not mean a claim is proven. Verificatio
 
 The server does not download images, write knowledge, or call a model. An unwritable audit directory returns `AUDIT_UNAVAILABLE` and no hits.
 
-Continuous integration checks that the draft is a stdio `npx` command for `@knolo/mcp@0.2.2` and that the file has no URL. It does not install the Goose app. The same fixture search the other host jobs run is what this command returns once Goose starts it.
+Continuous integration checks that the draft is a stdio `npx` command for `@knolo/mcp@0.2.3` and that the file has no URL. It does not install the Goose app. The same fixture search the other host jobs run is what this command returns once Goose starts it.
 
 Submitting the extension to the Goose directory is a separate pull request.
 

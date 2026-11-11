@@ -10,7 +10,7 @@ extensions:
     cmd: npx
     args:
       - -y
-      - "@knolo/mcp@0.2.2"
+      - "@knolo/mcp@0.2.3"
       - --config
       - /absolute/knolo-mcp.json
     timeout: 300

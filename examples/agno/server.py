@@ -14,7 +14,7 @@ from mcp import StdioServerParameters
 
 os.environ.setdefault("AGNO_TELEMETRY", "false")
 
-PUBLISHED_PACKAGE = "@knolo/mcp@0.2.1"
+PUBLISHED_PACKAGE = "@knolo/mcp@0.2.3"
 
 
 def mcp_config_path() -> Path | None:

@@ -48,7 +48,7 @@ pip install mcp-haystack==2.1.1
 Node.js is required because the published server command is:
 
 ```bash
-npx -y @knolo/mcp@0.2.1 --config /absolute/knolo-mcp.json
+npx -y @knolo/mcp@0.2.3 --config /absolute/knolo-mcp.json
 ```
 
 ## Usage
@@ -59,7 +59,7 @@ from haystack_integrations.tools.mcp import MCPToolset, StdioServerInfo
 toolset = MCPToolset(
     server_info=StdioServerInfo(
         command="npx",
-        args=["-y", "@knolo/mcp@0.2.1", "--config", "/absolute/knolo-mcp.json"],
+        args=["-y", "@knolo/mcp@0.2.3", "--config", "/absolute/knolo-mcp.json"],
     ),
     connection_timeout=60,
     invocation_timeout=60,

@@ -1,10 +1,10 @@
 # langflow
 
-One [Langflow](https://docs.langflow.org/mcp-client) flow reads a pinned Knolo V5 Knowledge Image through `@knolo/mcp@0.2.1`. The server is stdio only. The host owns the model. This example does not call one, and it does not read an API key.
+One [Langflow](https://docs.langflow.org/mcp-client) flow reads a pinned Knolo V5 Knowledge Image through `@knolo/mcp@0.2.3`. The server is stdio only. The host owns the model. This example does not call one, and it does not read an API key.
 
 Tested with Langflow 1.13.1 and `lfx` 1.13.1. The smoke loads `flow.json` through `Graph.from_payload`, then asks the MCP Tools component for its tools and runs one search. It does not run the Agent and it does not open the playground.
 
-`flow.json` wires Chat Input to the Agent, the Agent response to Chat Output, and the MCP Tools toolset to the Agent tools port. The MCP server value is stdio: command `npx`, arguments `-y @knolo/mcp@0.2.1 --config /absolute/knolo-mcp.json`. The Tool field stays blank, so the component lists every tool. Use Cached Server stays off. The Agent model and API key stay empty.
+`flow.json` wires Chat Input to the Agent, the Agent response to Chat Output, and the MCP Tools toolset to the Agent tools port. The MCP server value is stdio: command `npx`, arguments `-y @knolo/mcp@0.2.3 --config /absolute/knolo-mcp.json`. The Tool field stays blank, so the component lists every tool. Use Cached Server stays off. The Agent model and API key stay empty.
 
 The fixture has no pinned graph, so the server exposes `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`.
 
@@ -21,7 +21,7 @@ Langflow 1.13.1:
 1. Build or reuse a `knolo-mcp.json` whose image, policy, and audit paths are absolute. The fixture command is in the next section.
 2. Import `examples/langflow/flow.json`.
 3. Open MCP Tools. Replace `/absolute/knolo-mcp.json` with that config path. Leave Tool blank and leave Use Cached Server off.
-4. You can register the same process under Settings, then MCP Servers, in STDIO mode, and select that server on the component. Name `knolo`, command `npx`, arguments `-y`, `@knolo/mcp@0.2.1`, `--config`, and the absolute config path.
+4. You can register the same process under Settings, then MCP Servers, in STDIO mode, and select that server on the component. Name `knolo`, command `npx`, arguments `-y`, `@knolo/mcp@0.2.3`, `--config`, and the absolute config path.
 5. Leave the Agent model and API key empty until the host chooses a model. This repository does not run that step.
 
 `npx` needs Node on the host. A Langflow container needs Node inside the image. This example does not add a container. If `mcp_server_allowed_packages` is set, include `@knolo/mcp`. The default leaves that list unset. Langflow rejects `node` when the first argument is an option, so a local server uses command `node` and the script path as the first argument. The config path stays on the argument list. It is not an environment variable.
@@ -44,7 +44,7 @@ python examples/langflow/smoke.py
 `prepare-fixture.mjs` writes a two-chunk image, a deny-default policy, and `knolo-mcp.json` under a temporary directory. Omit `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` to start the published server instead:
 
 ```bash
-npx -y @knolo/mcp@0.2.1 --config "$KNOLO_MCP_CONFIG"
+npx -y @knolo/mcp@0.2.3 --config "$KNOLO_MCP_CONFIG"
 ```
 
 The smoke checks the published pin in `flow.json`, loads the four components, lists the four tools, checks that the graph tools are absent, then searches for `enterprise refunds`. It expects the refunds excerpt, an object id, a `sha256-` state root, and a `qr_` receipt id. It does not construct a Langflow model and it does not call one.

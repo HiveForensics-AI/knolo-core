@@ -8,13 +8,13 @@ node packages/box/bin/knolo-box.mjs status
 node packages/box/bin/knolo-box.mjs mcp
 ```
 
-npm `latest` for `@knolo/box` is `0.1.0`. This tree is `0.1.1` until that version is published. The workspace binary above runs this tree. The Grok plugin install still needs `--trust`:
+npm `latest` for `@knolo/box` is `0.1.1`. The workspace binary above runs this tree. The Grok plugin install still needs `--trust`:
 
 ```bash
 grok plugin install HiveForensics-AI/knolo-core#plugins/knolo-box --trust
 ```
 
-The plugin MCP entry is `npx -y @knolo/box@0.1.0 mcp`. That pin matches npm `latest`. This tree is `0.1.1` until that version is published. Setup from the published CLI is `npx -y @knolo/cli@6.2.2 setup`. This tree's CLI is `6.2.3` until that version is published.
+The plugin MCP entry is `npx -y @knolo/box@0.1.1 mcp`. That pin matches npm `latest`. Setup from the published CLI is `npx -y @knolo/cli@6.2.3 setup`.
 
 ## Scopes
 

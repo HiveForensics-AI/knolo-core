@@ -3,7 +3,7 @@
 The Knolo Agent Skill tells the host to answer through the mounted Knolo
 tools and cite the roots those tools return. The Claude Code plugin in
 [`plugins/knolo`](../../plugins/knolo/README.md) bundles that skill and
-registers published `@knolo/mcp@0.2.2` over stdio. Knolo does not call a model
+registers published `@knolo/mcp@0.2.3` over stdio. Knolo does not call a model
 and does not open a port.
 
 Set `KNOLO_MCP_CONFIG` to an absolute `knolo-mcp.json`. Pins, a policy file,
@@ -21,7 +21,7 @@ directory. Cite `imageId`, `objectId`, and `stateRoot`. A receipt is an
 integrity check. It does not mean a claim is proven.
 
 An operator can verify a fixture image with the workspace CLI or published
-`@knolo/cli@6.2.2`. `v5 query` does not apply the mount policy and does not
+`@knolo/cli@6.2.3`. `v5 query` does not apply the mount policy and does not
 write the audit receipt. It is not a substitute for `knolo_search`.
 
 ```bash

@@ -11,4 +11,4 @@ The line has no badge. Knolo is not in that directory, so there is no badge
 URL to copy. The marks are TypeScript (`📇`), a local service (`🏠`), and
 macOS, Windows, and Linux.
 
-- [HiveForensics-AI/knolo-core](https://github.com/HiveForensics-AI/knolo-core/tree/main/packages/mcp) 📇 🏠 🍎 🪟 🐧 - Read-only stdio search over a pinned local Knolo Knowledge Image (@knolo/mcp@0.2.2), with receipt ids from an integrity check.
+- [HiveForensics-AI/knolo-core](https://github.com/HiveForensics-AI/knolo-core/tree/main/packages/mcp) 📇 🏠 🍎 🪟 🐧 - Read-only stdio search over a pinned local Knolo Knowledge Image (@knolo/mcp@0.2.3), with receipt ids from an integrity check.

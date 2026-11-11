@@ -12,7 +12,7 @@ const packageRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '..'
 );
-const published = '@knolo/mcp@0.2.2';
+const published = '@knolo/mcp@0.2.3';
 
 test('goose extension is a stdio npx draft', () => {
   const text = readFileSync(
@@ -44,7 +44,7 @@ test('awesome-mcp-servers entry matches the directory line', () => {
     'utf8'
   );
   const line =
-    '- [HiveForensics-AI/knolo-core](https://github.com/HiveForensics-AI/knolo-core/tree/main/packages/mcp) 📇 🏠 🍎 🪟 🐧 - Read-only stdio search over a pinned local Knolo Knowledge Image (@knolo/mcp@0.2.2), with receipt ids from an integrity check.';
+    '- [HiveForensics-AI/knolo-core](https://github.com/HiveForensics-AI/knolo-core/tree/main/packages/mcp) 📇 🏠 🍎 🪟 🐧 - Read-only stdio search over a pinned local Knolo Knowledge Image (@knolo/mcp@0.2.3), with receipt ids from an integrity check.';
   assert.ok(text.includes(line));
   assert.equal(text.includes('glama.ai'), false);
   assert.match(text, /Knowledge & Memory/);
@@ -65,13 +65,13 @@ const bannedInstallPhrases = [
 
 test('cline install docs keep the published pins', () => {
   for (const text of [installDoc, readme]) {
-    assert.match(text, /@knolo\/mcp@0\.2\.2/);
-    assert.match(text, /@knolo\/cli@6\.2\.2/);
+    assert.match(text, /@knolo\/mcp@0\.2\.3/);
+    assert.match(text, /@knolo\/cli@6\.2\.3/);
     for (const phrase of bannedInstallPhrases) {
       assert.doesNotMatch(text, phrase);
     }
   }
-  assert.match(installDoc, /npx -y @knolo\/cli@6\.2\.2 verify /);
+  assert.match(installDoc, /npx -y @knolo\/cli@6\.2\.3 verify /);
   assert.match(installDoc, /"command": "npx"/);
   const serverBlocks = installDoc.match(/```json[\s\S]*?```/g) ?? [];
   assert.equal(serverBlocks.length > 0, true);

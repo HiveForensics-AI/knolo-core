@@ -3,10 +3,10 @@
 The OpenAI Agents SDK can call the published Knolo MCP server over stdio. The TypeScript example is [`examples/openai_agents_js`](../../examples/openai_agents_js/README.md). Knolo does not call a model and does not read an API key. `run()` belongs to the host.
 
 ```bash
-npx -y @knolo/mcp@0.2.1 --config /absolute/knolo-mcp.json
+npx -y @knolo/mcp@0.2.3 --config /absolute/knolo-mcp.json
 ```
 
-`@knolo/mcp@0.2.1` is the npm release. A mount without a `kar` block exposes `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`. A mount with a `kar` block also exposes `knolo_kar_evaluate`, `knolo_kar_verify`, and `knolo_cortex_verify`. Pins, policy, and the audit directory stay in the config file. Tool arguments cannot set the caller.
+`@knolo/mcp@0.2.3` is the npm release. A mount without a `kar` block exposes `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`. A mount with a `kar` block also exposes `knolo_kar_evaluate`, `knolo_kar_verify`, and `knolo_cortex_verify`. Pins, policy, and the audit directory stay in the config file. Tool arguments cannot set the caller.
 
 ## What a search returns
 
@@ -35,7 +35,7 @@ config="$(node examples/google_adk_python/prepare-fixture.mjs)"
 export KNOLO_MCP_CONFIG="$config"
 ```
 
-Continuous integration starts `packages/mcp/bin/knolo-mcp.mjs` with Node so the job does not depend on a registry fetch of Knolo. Set `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` for that path. The default command is `npx` with `@knolo/mcp@0.2.1`. The smoke runs on Node 22 because it uses `node --experimental-strip-types`. The rest of CI stays on Node 20.
+Continuous integration starts `packages/mcp/bin/knolo-mcp.mjs` with Node so the job does not depend on a registry fetch of Knolo. Set `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` for that path. The default command is `npx` with `@knolo/mcp@0.2.3`. The smoke runs on Node 22 because it uses `node --experimental-strip-types`. The rest of CI stays on Node 20.
 
 ## Native tools
 
@@ -68,7 +68,7 @@ server = MCPServerStdio(
     name="Knolo",
     params={
         "command": "npx",
-        "args": ["-y", "@knolo/mcp@0.2.1", "--config", "/absolute/knolo-mcp.json"],
+        "args": ["-y", "@knolo/mcp@0.2.3", "--config", "/absolute/knolo-mcp.json"],
     },
     client_session_timeout_seconds=60,
 )

@@ -1,6 +1,6 @@
 # google_adk_js
 
-One [Google ADK](https://github.com/google/adk-js) agent reads a pinned Knolo V5 Knowledge Image through `@knolo/mcp@0.2.1`. The server is stdio only. ADK owns the model. This example does not call one.
+One [Google ADK](https://github.com/google/adk-js) agent reads a pinned Knolo V5 Knowledge Image through `@knolo/mcp@0.2.3`. The server is stdio only. ADK owns the model. This example does not call one.
 
 `rootAgent` is created only when `KNOLO_MCP_CONFIG` is set. The toolset is `MCPToolset` with `StdioConnectionParams`. A search returns hits and an `openclaw-knolo-query-v1` receipt id.
 
@@ -24,7 +24,7 @@ node --experimental-strip-types examples/google_adk_js/smoke.ts
 `prepare-fixture.mjs` writes a two-chunk image, a deny-default policy, and `knolo-mcp.json` under a temporary directory. Omit `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` to start the published server instead:
 
 ```bash
-npx -y @knolo/mcp@0.2.1 --config "$KNOLO_MCP_CONFIG"
+npx -y @knolo/mcp@0.2.3 --config "$KNOLO_MCP_CONFIG"
 ```
 
 The smoke lists `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`, then searches for `enterprise refunds`. It expects the refunds excerpt and a receipt id. It does not call a model. It also points the server at an unwritable audit directory and checks that `knolo_search` returns `AUDIT_UNAVAILABLE`.

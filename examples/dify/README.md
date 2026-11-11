@@ -1,6 +1,6 @@
 # dify
 
-One stdio command reads a pinned Knolo V5 Knowledge Image through `@knolo/mcp@0.2.1`. The server is stdio only. The host owns the model. This example does not call one, and it does not read an API key.
+One stdio command reads a pinned Knolo V5 Knowledge Image through `@knolo/mcp@0.2.3`. The server is stdio only. The host owns the model. This example does not call one, and it does not read an API key.
 
 Dify 1.19.0's built-in MCP client accepts an `http` or `https` server URL. The [Dify tools documentation](https://docs.dify.ai/en/use-dify/build/mcp) says only MCP servers with HTTP transport are supported. `mcp.json` is the stdio command a host launches. It is not a Dify server registration, and this example does not open a port, add a proxy, or install Dify.
 
@@ -36,7 +36,7 @@ python examples/dify/smoke.py
 `prepare-fixture.mjs` writes a two-chunk image, a deny-default policy, and `knolo-mcp.json` under a temporary directory. Omit `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` to start the published server instead:
 
 ```bash
-npx -y @knolo/mcp@0.2.1 --config "$KNOLO_MCP_CONFIG"
+npx -y @knolo/mcp@0.2.3 --config "$KNOLO_MCP_CONFIG"
 ```
 
 The smoke checks the published pin in `mcp.json`, lists the four tools, checks that the graph tools are absent, then searches for `enterprise refunds`. It expects the refunds excerpt, an object id, a `sha256-` state root, and a `qr_` receipt id. It does not construct a Dify app and it does not call a model.

@@ -54,7 +54,7 @@ image. A config file that cannot be read fails that call. `agentId`,
 `sessionId`, and `maxHits` stay at the values from process start. KAR graphs
 are authorized with that same startup `agentId`.
 
-npm `latest` is `@knolo/mcp@0.2.2` until `0.2.3` is published. This tree sets `server.json` and the MCP
+npm `latest` is `@knolo/mcp@0.2.3`. This tree sets `server.json` and the MCP
 server version to `0.2.3`. The published `0.2.1` tarball still reports
 `0.2.0` in those two fields. A mount without a `kar` block exposes
 the four tools above. A mount with a `kar` block also exposes
@@ -101,7 +101,7 @@ extension is a separate pull request.
 
 The [awesome-mcp-servers](listings/awesome-mcp-servers.md) line belongs under
 Knowledge & Memory. It names this package as a local TypeScript server and
-pins `@knolo/mcp@0.2.2`. There is no badge, because Knolo is not listed there
+pins `@knolo/mcp@0.2.3`. There is no badge, because Knolo is not listed there
 yet. Submitting the line is a separate pull request.
 
 ## Config
@@ -198,8 +198,8 @@ VS Code (`.vscode/mcp.json`):
 
 Cline uses the same stdio server. The file hash, `knolo verify`, and the
 Cline settings block are in [llms-install.md](llms-install.md). The published
-server pin is `@knolo/mcp@0.2.2`. The CLI pin for `stateRoot` is
-`@knolo/cli@6.2.2`. Pins, the policy file, and the audit directory stay in
+server pin is `@knolo/mcp@0.2.3`. The CLI pin for `stateRoot` is
+`@knolo/cli@6.2.3`. Pins, the policy file, and the audit directory stay in
 the config.
 
 ```json
@@ -207,7 +207,7 @@ the config.
   "mcpServers": {
     "knolo": {
       "command": "npx",
-      "args": ["-y", "@knolo/mcp@0.2.2", "--config", "/absolute/knolo-mcp.json"]
+      "args": ["-y", "@knolo/mcp@0.2.3", "--config", "/absolute/knolo-mcp.json"]
     }
   }
 }
