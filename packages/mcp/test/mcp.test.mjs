@@ -237,6 +237,17 @@ test('lists exactly four read-only tools and keeps caller identity in config', a
     assert.equal(receipt.caller.sessionId, 'knolo-mcp-test');
     assert.equal(receipt.match, 'all');
     assert.equal(receipt.queryResult.plan.search, null);
+    const nulled = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+      imageIds: null,
+      limit: null,
+    });
+    assert.notEqual(nulled.isError, true);
+    assert.equal(nulled.structuredContent.hits.length, 1);
+    assert.match(
+      nulled.structuredContent.hits[0].excerpt,
+      /Annual enterprise refunds/
+    );
     assert.equal(receipt.queryResult.plan.textQuery.mode, 'all');
     await service.verifyReceipt(body.receipts[0].receiptId);
 

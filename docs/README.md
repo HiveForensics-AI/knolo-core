@@ -95,6 +95,10 @@ operational guides for Knolo.
   `@knolo/mcp@0.2.1` over stdio through Agno `MCPTools`. Knolo does not call
   a model. A search returns a query receipt. `SATISFIED` means evidence
   requirements were met.
+- [CrewAI](integrations/crewai.md) — a Python smoke that calls published
+  `@knolo/mcp@0.2.2` over stdio through CrewAI `MCPServerAdapter`. Knolo does
+  not call a model. A search returns a query receipt. `SATISFIED` means
+  evidence requirements were met.
 - [Haystack](integrations/haystack.md) — a Python smoke that calls published
   `@knolo/mcp@0.2.1` over stdio through Haystack `MCPToolset`. Knolo does not
   call a model. A search returns a query receipt. `SATISFIED` means evidence
@@ -114,6 +118,9 @@ operational guides for Knolo.
   from this repository. It does not listen on a port. A bad pin exits before
   the server accepts a tool call. An unwritable audit directory returns no
   hits. The image is not on Docker Hub. The catalog pull request is separate.
+- [Goose](integrations/goose.md) — a stdio extension draft for Goose. The
+  server does not listen on a port. `@knolo/mcp@0.2.2` is the published
+  command Goose launches. The directory pull request is separate.
 - [Vercel AI SDK](integrations/ai-sdk.md) — `@knolo/ai-sdk` tools over
   `@knolo/tools`. Knolo does not call a model. A search returns a query
   receipt. `SATISFIED` means evidence requirements were met.

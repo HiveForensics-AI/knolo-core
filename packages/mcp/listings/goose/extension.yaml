@@ -1,0 +1,16 @@
+# Draft Goose extension. Replace /absolute/knolo-mcp.json with the
+# absolute config path on the machine Goose runs on.
+# A pull request to aaif-goose/goose is a separate step.
+# Knolo has no API key. The server is stdio and does not listen on a port.
+extensions:
+  knolo:
+    type: stdio
+    name: knolo
+    enabled: true
+    cmd: npx
+    args:
+      - -y
+      - "@knolo/mcp@0.2.2"
+      - --config
+      - /absolute/knolo-mcp.json
+    timeout: 300
