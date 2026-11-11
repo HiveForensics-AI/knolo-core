@@ -2145,6 +2145,11 @@ test('init refuses to overwrite unless --force, and --merge keeps existing field
     });
     assert.equal(merged.agentId, 'grok-bot');
     assert.equal(merged.autoRebuild, true);
+    assert.equal(
+      merged.scopes.skills.roots.includes(path.join(home, 'skills')),
+      false
+    );
+    assert.deepEqual(merged.scopes.memory.roots, []);
     assert.equal(merged.scopes.skills.roots.includes(priorRoot), true);
     assert.equal(merged.scopes.skills.roots.includes(await realpath(hub)), true);
     assert.equal(
@@ -2155,6 +2160,50 @@ test('init refuses to overwrite unless --force, and --merge keeps existing field
     );
     const written = JSON.parse(await readFile(configPath, 'utf8'));
     assert.equal(written.note, 'keep');
+
+    const omittedPath = path.join(home, 'omitted.json');
+    const grokHome = path.join(home, 'grok');
+    await writeFile(
+      omittedPath,
+      `${JSON.stringify({
+        output: path.join(home, 'out'),
+        grokHome,
+        agents: ['box'],
+        agentId: 'grok-bot',
+        autoRebuild: true,
+      })}\n`
+    );
+    const omitted = await initBox({
+      configPath: omittedPath,
+      roots: [home],
+      home,
+      env: {},
+      tolerant: true,
+      merge: true,
+      hubSkills: hub,
+    });
+    assert.equal(omitted.agentId, 'grok-bot');
+    assert.equal(omitted.autoRebuild, true);
+    assert.equal(
+      omitted.scopes.skills.roots.includes(path.join(grokHome, 'skills')),
+      true
+    );
+    assert.equal(
+      omitted.scopes.skills.roots.includes(path.join(grokHome, 'bundled', 'skills')),
+      true
+    );
+    assert.equal(
+      omitted.scopes.skills.roots.includes(await realpath(hub)),
+      true
+    );
+    assert.equal(
+      omitted.scopes.memory.roots.includes(path.join(grokHome, 'memory-v2')),
+      true
+    );
+    assert.equal(
+      omitted.scopes.transcripts.roots.includes(path.join(grokHome, 'sessions')),
+      true
+    );
   } finally {
     await rm(home, { recursive: true, force: true });
   }

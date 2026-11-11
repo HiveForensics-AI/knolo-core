@@ -229,13 +229,23 @@ async function mergeConfig(
       ? { ...(existing.scopes as Record<string, unknown>) }
       : {};
   const scopes: Record<string, unknown> = { ...priorScopes };
+  const grokHome = path.resolve(
+    expandHomePath(
+      typeof existing.grokHome === 'string' ? existing.grokHome : fresh.grokHome,
+      home
+    )
+  );
   for (const name of ['files', 'skills', 'memory', 'transcripts'] as const) {
     const priorEntry = scopes[name];
     const entry =
       priorEntry && typeof priorEntry === 'object' && !Array.isArray(priorEntry)
         ? { ...(priorEntry as Record<string, unknown>) }
         : {};
-    entry.roots = await unionRoots(rootsOf(priorEntry), fresh.scopes[name].roots, home);
+    // An omitted scope still has loader defaults. Writing only the scan
+    // would replace those defaults with an explicit list.
+    const listed = explicitRoots(priorEntry);
+    const prior = listed ?? implicitScopeRoots(name, grokHome);
+    entry.roots = await unionRoots(prior, fresh.scopes[name].roots, home);
     scopes[name] = entry;
   }
   next.scopes = scopes;
@@ -247,11 +257,29 @@ async function mergeConfig(
   return next;
 }
 
-function rootsOf(entry: unknown): string[] {
-  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return [];
+function explicitRoots(entry: unknown): string[] | undefined {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return undefined;
   const roots = (entry as { roots?: unknown }).roots;
-  if (!Array.isArray(roots)) return [];
+  if (!Array.isArray(roots)) return undefined;
   return roots.filter((item): item is string => typeof item === 'string' && item.length > 0);
+}
+
+function implicitScopeRoots(
+  name: 'files' | 'skills' | 'memory' | 'transcripts',
+  grokHome: string
+): string[] {
+  if (name === 'skills') {
+    return [path.join(grokHome, 'skills'), path.join(grokHome, 'bundled', 'skills')];
+  }
+  if (name === 'memory') return [path.join(grokHome, 'memory-v2')];
+  if (name === 'transcripts') return [path.join(grokHome, 'sessions')];
+  return [];
+}
+
+function expandHomePath(input: string, home: string): string {
+  if (input === '~') return home;
+  if (input.startsWith('~/')) return path.join(home, input.slice(2));
+  return input;
 }
 
 async function unionRoots(
