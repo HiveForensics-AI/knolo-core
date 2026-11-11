@@ -138,8 +138,8 @@ operational guides for Knolo.
   `@knolo/mastra@0.1.0` is not published yet.
 - [Box](box/README.md) — pinned V5 images of skills, opted-in notes, private
   memory, and capped session text on a Grok Bot computer. `@knolo/box` starts
-  the existing read-only MCP server in one process. This package is not
-  published yet.
+  the existing read-only MCP server in one process. npm `latest` is `0.1.0`.
+  This tree is `0.1.1` until that version is published.
 
 Architecture sources, future-version specifications, and internal planning
 records are kept local and are not part of the public repository. The
@@ -152,10 +152,10 @@ the V5 Knowledge Image: deterministic images, verification, migration,
 bounded runtime features, diagnostics, and a read-only Studio management
 snapshot remain. 6.1.0 adds offline composition and attestation. 6.2.0 adds
 Knolo Cortex. Published `@knolo/core` is `6.2.1`. `@knolo/tools` `0.2.1`
-depends on `@knolo/core` `^6.2.1`. This tree's `@knolo/mcp` is `0.2.2`.
-npm `latest` for MCP is `0.2.1` until `0.2.2` is published. This tree's
-`@knolo/cli` package file is `6.2.2` and depends on `@knolo/core` `^6.2.0`.
-npm `latest` for the CLI is `6.2.1` until `6.2.2` is published. `@knolo/langchain`, `@knolo/llamaindex`,
+depends on `@knolo/core` `^6.2.1`. This tree's `@knolo/mcp` is `0.2.3`.
+npm `latest` for MCP is `0.2.2` until `0.2.3` is published. This tree's
+`@knolo/cli` package file is `6.2.3` and depends on `@knolo/core` `^6.2.0`.
+npm `latest` for the CLI is `6.2.2` until `6.2.3` is published. `@knolo/langchain`, `@knolo/llamaindex`,
 `@knolo/semantic-ollama`, `create-knolo-app`, and `@knolo/reflex` stay on
 `@knolo/core` `^6.0.0`. `@knolo/ai-sdk@0.1.0` stays on `@knolo/core` `^6.2.0`
 and `@knolo/tools` `^0.2.0`. `@knolo/mastra` `0.1.0` is not published yet and

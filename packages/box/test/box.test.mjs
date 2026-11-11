@@ -2014,3 +2014,226 @@ test('a failed publish leaves the previous image and pin', async () => {
     await rm(home, { recursive: true, force: true });
   }
 });
+
+test('init accepts an agent-data root and a symlink to sand-data', async () => {
+  const home = await tempHome();
+  try {
+    const agentData = path.join(home, 'agent-data');
+    await writeSkillTree(agentData);
+    const direct = await initBox({
+      configPath: path.join(home, 'direct.json'),
+      roots: [agentData],
+      home,
+      env: {},
+      tolerant: true,
+    });
+    assert.equal(
+      direct.scopes.skills.roots.includes(await realpath(path.join(agentData, 'workflows'))),
+      true
+    );
+    assert.equal(
+      direct.scopes.skills.roots.includes(
+        await realpath(path.join(agentData, 'managed-skills', 'skills'))
+      ),
+      true
+    );
+
+    const linkedHome = await tempHome();
+    const store = path.join(linkedHome, 'sand-data');
+    await writeSkillTree(store);
+    await symlink(store, path.join(linkedHome, 'agent-data'));
+    const viaLink = await initBox({
+      configPath: path.join(linkedHome, 'link.json'),
+      roots: [path.join(linkedHome, 'agent-data')],
+      home: linkedHome,
+      env: {},
+      tolerant: true,
+    });
+    assert.equal(
+      viaLink.scopes.skills.roots.includes(await realpath(path.join(store, 'workflows'))),
+      true
+    );
+    await rm(linkedHome, { recursive: true, force: true });
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('tolerant init names the scanned root when no skill folder exists', async () => {
+  const home = await tempHome();
+  try {
+    const created = await initBox({
+      configPath: path.join(home, 'box.json'),
+      roots: [home],
+      home,
+      env: {},
+      tolerant: true,
+    });
+    const report = created.reports.join('\n');
+    assert.match(report, new RegExp(home));
+    assert.match(
+      report,
+      /A root needs to contain agent-data or sand-data, or be the skill folder itself/
+    );
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('init refuses to overwrite unless --force, and --merge keeps existing fields', async () => {
+  const home = await tempHome();
+  try {
+    await writeSkillTree(path.join(home, 'agent-data'));
+    const configPath = path.join(home, 'box.json');
+    await initBox({
+      configPath,
+      roots: [home],
+      home,
+      env: {},
+      agentId: 'grok-bot',
+      autoRebuild: true,
+    });
+    await assert.rejects(
+      () => initBox({ configPath, roots: [home], home, env: {} }),
+      (error) => {
+        assert.equal(error.code, 'BOX_CONFIG');
+        assert.match(error.message, /Pass --force to replace it/);
+        return true;
+      }
+    );
+    const kept = JSON.parse(await readFile(configPath, 'utf8'));
+    assert.equal(kept.agentId, 'grok-bot');
+    assert.equal(kept.autoRebuild, true);
+
+    const replaced = await initBox({
+      configPath,
+      roots: [home],
+      home,
+      env: {},
+      force: true,
+    });
+    assert.equal(replaced.agentId, undefined);
+    assert.equal(replaced.autoRebuild, undefined);
+
+    const priorRoot = path.join(home, 'already');
+    await writeFile(
+      configPath,
+      `${JSON.stringify({
+        note: 'keep',
+        output: path.join(home, 'out'),
+        grokHome: home,
+        agents: ['box'],
+        agentId: 'grok-bot',
+        autoRebuild: true,
+        scopes: {
+          files: { roots: [] },
+          skills: { roots: [priorRoot] },
+          memory: { roots: [] },
+          transcripts: { roots: [] },
+        },
+      })}\n`
+    );
+    const hub = path.join(home, 'hub-skills');
+    const merged = await initBox({
+      configPath,
+      roots: [home],
+      home,
+      env: {},
+      tolerant: true,
+      merge: true,
+      hubSkills: hub,
+    });
+    assert.equal(merged.agentId, 'grok-bot');
+    assert.equal(merged.autoRebuild, true);
+    assert.equal(merged.scopes.skills.roots.includes(priorRoot), true);
+    assert.equal(merged.scopes.skills.roots.includes(await realpath(hub)), true);
+    assert.equal(
+      merged.scopes.skills.roots.includes(
+        await realpath(path.join(home, 'agent-data', 'workflows'))
+      ),
+      true
+    );
+    const written = JSON.parse(await readFile(configPath, 'utf8'));
+    assert.equal(written.note, 'keep');
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
+test('a skill knowledge image is searchable and a bad image is skipped', async () => {
+  const home = await tempHome();
+  try {
+    const skillDir = path.join(home, 'skills', 'agenda');
+    await mkdir(skillDir, { recursive: true });
+    await writeFile(path.join(skillDir, 'SKILL.md'), '# Agenda\n\nSKILL_PAGE_PHRASE\n');
+    const image = createKnowledgeImageV5({
+      actor: 'skill-pack',
+      policy: {
+        version: 1,
+        default: 'deny',
+        rules: [
+          {
+            effect: 'allow',
+            action: 'query',
+            principal: 'skill:reader',
+            kind: 'chunk',
+          },
+          {
+            effect: 'allow',
+            action: 'read',
+            principal: 'skill:reader',
+            kind: 'chunk',
+          },
+        ],
+      },
+      objects: [
+        {
+          kind: 'chunk',
+          bytes: Buffer.from('HUB_IMAGE_PHRASE lives in the skill image.'),
+          meta: { source: 'notes.md' },
+        },
+      ],
+    });
+    await writeFile(path.join(skillDir, 'knowledge.v5'), image.bytes);
+    await writeFile(
+      path.join(skillDir, 'policy.json'),
+      `${JSON.stringify({ version: 1 })}\n`
+    );
+    const brokenDir = path.join(home, 'skills', 'broken');
+    await mkdir(brokenDir, { recursive: true });
+    await writeFile(path.join(brokenDir, 'SKILL.md'), '# Broken\n\nBROKEN_PAGE_PHRASE\n');
+    await writeFile(path.join(brokenDir, 'knowledge.v5'), Buffer.from('not-an-image'));
+    await writeFile(path.join(brokenDir, 'policy.json'), '{}\n');
+    const output = path.join(home, 'out');
+    const config = {
+      output,
+      grokHome: home,
+      agents: ['box'],
+      scopes: {
+        files: { roots: [] },
+        skills: { roots: [path.join(home, 'skills')] },
+        memory: { roots: [] },
+        transcripts: { roots: [] },
+      },
+    };
+    const pins = await buildBox(config, new Date('2026-11-11T12:00:00.000Z'));
+    const text = await indexedText(output);
+    assert.equal(text.includes('SKILL_PAGE_PHRASE'), true);
+    assert.equal(text.includes('HUB_IMAGE_PHRASE'), true);
+    assert.equal(text.includes('BROKEN_PAGE_PHRASE'), true);
+    assert.equal(
+      pins.skipped.some((item) => item.reason === 'unreadable-image'),
+      true
+    );
+    const caller = { agentId: 'box', sessionId: 'knolo-box-test' };
+    const service = await openService(output);
+    const found = await service.search(
+      { query: 'HUB_IMAGE_PHRASE', imageIds: ['skills'], limit: 4 },
+      caller
+    );
+    assert.equal(found.hits.length, 1);
+    assert.match(found.hits[0].excerpt, /knowledge\.v5/);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});

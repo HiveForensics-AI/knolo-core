@@ -171,6 +171,8 @@ test('setup uses GROK_HOME and fails when build exits non-zero', () => {
   });
   assert.notEqual(built.status, 0);
   assert.match(built.stderr, /knolo-box build exited with status 2/);
+  assert.doesNotMatch(built.stderr, /\bat /);
+  assert.equal(built.stderr.trim().split('\n').length, 1);
   const lines = readFileSync(log, 'utf8').trim().split('\n');
   assert.match(lines[0], /^init /);
   assert.match(lines[0], new RegExp(`--root ${grok}`));
@@ -291,8 +293,9 @@ test('setup keeps an existing config and only rebuilds it', () => {
   const log = path.join(root, 'box.log');
   const configPath = path.join(home, '.knolo', 'box', 'box.config.json');
   mkdirSync(path.dirname(configPath), { recursive: true });
+  const hub = path.join(home, '.knolo', 'skills');
   const original = `${JSON.stringify(
-    { output: '/keep-me', scopes: { skills: { roots: [] } } },
+    { output: '/keep-me', scopes: { skills: { roots: [hub] } } },
     null,
     2
   )}\n`;
@@ -319,18 +322,82 @@ exit 0
   rmSync(root, { recursive: true, force: true });
 });
 
-test('setup refuses to replace a config unless --reset is passed', () => {
+test('setup merges flags into an existing config', () => {
   const root = tempDir();
   const home = path.join(root, 'home');
+  const bin = path.join(root, 'bin');
+  const log = path.join(root, 'box.log');
   const configPath = path.join(home, '.knolo', 'box', 'box.config.json');
   mkdirSync(path.dirname(configPath), { recursive: true });
-  writeFileSync(configPath, '{}\n');
-  const result = runSetup(['--agent', 'grok-bot'], {
-    PATH: '',
+  const original = `${JSON.stringify({ agentId: 'kept', output: '/keep-me' })}\n`;
+  writeFileSync(configPath, original);
+  mkdirSync(bin);
+  writeBox(
+    bin,
+    `#!/bin/sh
+printf '%s\\n' "$*" >> "$KNOLO_BOX_LOG"
+exit 0
+`
+  );
+  const merged = runSetup(['--agent', 'grok-bot', '--root', path.join(root, 'agent-data')], {
+    PATH: bin,
     HOME: home,
+    KNOLO_BOX_LOG: log,
   });
-  assert.equal(result.status, 1);
-  assert.match(result.stderr, /Pass --reset to replace it/);
-  assert.equal(readFileSync(configPath, 'utf8'), '{}\n');
+  assert.equal(merged.status, 0, merged.stderr);
+  const calls = readFileSync(log, 'utf8');
+  assert.match(calls, /init /);
+  assert.match(calls, /--merge/);
+  assert.match(calls, /--agent grok-bot/);
+  assert.match(calls, /--hub-skills/);
+  assert.doesNotMatch(calls, /--force/);
+  assert.match(merged.stderr, /Kept the existing config/);
+  assert.equal(readFileSync(configPath, 'utf8'), original);
+  const reset = runSetup(['--reset'], {
+    PATH: bin,
+    HOME: home,
+    KNOLO_BOX_LOG: log,
+  });
+  assert.equal(reset.status, 0, reset.stderr);
+  assert.match(readFileSync(log, 'utf8'), /--force/);
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('setup names the scanned root when no skill folder is found', () => {
+  const root = tempDir();
+  const home = path.join(root, 'home');
+  const bin = path.join(root, 'bin');
+  const agentData = path.join(root, 'agent-data');
+  mkdirSync(bin);
+  writeBox(
+    bin,
+    `#!/bin/sh
+exit 0
+`
+  );
+  const result = runSetup(['--root', agentData], { PATH: bin, HOME: home });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stderr, /No Grok skill folder was found/);
+  assert.match(result.stderr, new RegExp(`Scanned ${agentData}`));
+  assert.match(
+    result.stderr,
+    /A root needs to contain agent-data or sand-data, or be the skill folder itself/
+  );
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('setup errors stay on one line unless --debug is set', () => {
+  const root = tempDir();
+  const home = path.join(root, 'home');
+  const plain = runSetup(['--nope'], { PATH: '', HOME: home });
+  assert.equal(plain.status, 1);
+  assert.match(plain.stderr, /^knolo: Unknown argument for setup: --nope\n$/);
+  assert.doesNotMatch(plain.stderr, /\bat /);
+  const debug = spawnSync(process.execPath, [cliPath, '--debug', 'setup', '--nope'], {
+    env: { PATH: '', HOME: home },
+    encoding: 'utf8',
+  });
+  assert.equal(debug.status, 1);
+  assert.match(debug.stderr, /\n {4}at /);
   rmSync(root, { recursive: true, force: true });
 });

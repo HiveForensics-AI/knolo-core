@@ -1,6 +1,6 @@
 {
   "name": "@knolo/box",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Build pinned V5 images of a Grok Bot computer and launch the read-only Knolo MCP server.",
   "license": "Apache-2.0",
@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@knolo/core": "^6.2.1",
-    "@knolo/mcp": "^0.2.2",
+    "@knolo/mcp": "^0.2.3",
     "typescript": "^5.5.0"
   },
   "devDependencies": {

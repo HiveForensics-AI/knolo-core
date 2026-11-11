@@ -8,22 +8,22 @@ node packages/box/bin/knolo-box.mjs status
 node packages/box/bin/knolo-box.mjs mcp
 ```
 
-`@knolo/box@0.1.0` is not published yet. The workspace binary above is the command to use until it is. The Grok plugin install still needs `--trust`:
+npm `latest` for `@knolo/box` is `0.1.0`. This tree is `0.1.1` until that version is published. The workspace binary above runs this tree. The Grok plugin install still needs `--trust`:
 
 ```bash
 grok plugin install HiveForensics-AI/knolo-core#plugins/knolo-box --trust
 ```
 
-The plugin MCP entry is `npx -y @knolo/box@0.1.0 mcp`. Point a local server at `node packages/box/bin/knolo-box.mjs mcp` until that package is on npm. Setup from the CLI release is `npx -y @knolo/cli@6.2.2 setup`. That CLI release is not on npm until it is published.
+The plugin MCP entry is `npx -y @knolo/box@0.1.0 mcp`. That pin matches npm `latest`. This tree is `0.1.1` until that version is published. Setup from the published CLI is `npx -y @knolo/cli@6.2.2 setup`. This tree's CLI is `6.2.3` until that version is published.
 
 ## Scopes
 
-| Image            | Contents                                                         | Agents                           |
-| ---------------- | ---------------------------------------------------------------- | -------------------------------- |
-| `skills.v5`      | `SKILL.md` under the Grok skills directories                     | Configured agents, default `box` |
-| `files.v5`       | Markdown and text under roots you set. The default list is empty | Configured agents                |
-| `memory.v5`      | `memory-v2` topic notes and inbox observations                   | Configured agent, default `box`  |
-| `transcripts.v5` | Session summaries and user or assistant text                     | Configured agent, default `box`  |
+| Image            | Contents                                                                                  | Agents                           |
+| ---------------- | ----------------------------------------------------------------------------------------- | -------------------------------- |
+| `skills.v5`      | `SKILL.md`, plus chunk text from a sibling `knowledge.v5` when `policy.json` is beside it | Configured agents, default `box` |
+| `files.v5`       | Markdown and text under roots you set. The default list is empty                          | Configured agents                |
+| `memory.v5`      | `memory-v2` topic notes and inbox observations                                            | Configured agent, default `box`  |
+| `transcripts.v5` | Session summaries and user or assistant text                                              | Configured agent, default `box`  |
 
 `knolo-mcp.json` mounts every image that was built. `knolo-mcp-shared.json` is written only when a shared image exists, and it leaves out memory and transcripts. A later build deletes either file when it would have no mounts. Both files set `agentId` from `box.config.json`, then from `KNOLO_BOX_AGENT_ID`, and otherwise to `box`. `sessionId` is set from the config field, then from `KNOLO_BOX_SESSION_ID`. When that field is unset, the MCP client name remains the session fallback. The client name does not become the agent id. Tool arguments cannot set either value. Private mounts allow the configured agent. Other mounts allow that agent plus the `agents` list. Mount paths are absolute. Pins are checked before the server serves a query. `knolo-box mcp` stops before starting the server when the primary config is missing or empty.
 

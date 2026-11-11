@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const releaseVersion = '6.2.0';
 const coreReleaseVersion = '6.2.1';
-const cliReleaseVersion = '6.2.2';
+const cliReleaseVersion = '6.2.3';
 const reflexReleaseVersion = '0.2.0';
 const platformVersion = '5.5.1';
 const coreRange = '^6.0.0';
@@ -128,7 +128,7 @@ assert.match(
 
 const toolsVersion = '0.2.1';
 const toolsCoreRange = '^6.2.1';
-const mcpVersion = '0.2.2';
+const mcpVersion = '0.2.3';
 const openclawVersion = '0.1.0';
 const toolsPackage = readJson('packages/knolo-tools/package.json');
 assert.equal(toolsPackage.name, '@knolo/tools');
@@ -161,14 +161,14 @@ const mcpIndex = readFileSync(
   path.join(root, 'packages/mcp/src/index.ts'),
   'utf8'
 );
-assert.match(mcpIndex, /name: 'knolo', version: '0\.2\.2'/);
+assert.match(mcpIndex, /name: 'knolo', version: '0\.2\.3'/);
 
 const boxPackage = readJson('packages/box/package.json');
 assert.equal(boxPackage.name, '@knolo/box');
-assert.equal(boxPackage.version, '0.1.0');
+assert.equal(boxPackage.version, '0.1.1');
 assert.equal(boxPackage.private, undefined);
 assert.equal(boxPackage.dependencies?.['@knolo/core'], toolsCoreRange);
-assert.equal(boxPackage.dependencies?.['@knolo/mcp'], '^0.2.2');
+assert.equal(boxPackage.dependencies?.['@knolo/mcp'], '^0.2.3');
 assert.equal(boxPackage.devDependencies?.['@knolo/tools'], '^0.2.1');
 
 const aiSdkVersion = '0.1.0';
@@ -225,5 +225,5 @@ assert.equal(openclawPackage.dependencies?.['@knolo/tools'], '^0.1.0');
 assert.equal(openclawPackage.engines?.node, '>=24.16.0');
 
 console.log(
-  `Release metadata passed for npm ${releaseVersion} with core ${coreReleaseVersion} and CLI ${cliReleaseVersion}. Rust and Python stay ${platformVersion}. @knolo/tools is ${toolsVersion}. @knolo/mcp is ${mcpVersion}. @knolo/ai-sdk is ${aiSdkVersion}. @knolo/mastra is ${mastraVersion} and is not published. @knolo/openai-agents is ${openaiAgentsVersion} and is not published. @knolo/openclaw stays ${openclawVersion}. @knolo/box stays 0.1.0.`
+  `Release metadata passed for npm ${releaseVersion} with core ${coreReleaseVersion} and CLI ${cliReleaseVersion}. Rust and Python stay ${platformVersion}. @knolo/tools is ${toolsVersion}. @knolo/mcp is ${mcpVersion}. @knolo/ai-sdk is ${aiSdkVersion}. @knolo/mastra is ${mastraVersion} and is not published. @knolo/openai-agents is ${openaiAgentsVersion} and is not published. @knolo/openclaw stays ${openclawVersion}. @knolo/box is 0.1.1.`
 );

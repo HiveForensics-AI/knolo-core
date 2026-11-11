@@ -16,9 +16,12 @@ export const SETUP_HELP = `Usage: knolo setup [--registry <url>] [--root <dir>] 
 
 Resolves the hub the same way as the other hub commands.
 Scans ~/.grok when that directory exists, plus every --root.
+--root may be the parent of agent-data, or the agent-data directory itself.
 Runs knolo-box init --tolerant, then knolo-box build --config.
 Keeps an existing config and rebuilds it. Pass --reset to replace it.
+--agent, --auto-rebuild, --root, and the scope paths merge into an existing config.
 Always includes ~/.knolo/skills as a skills root.
+When no skill folder is found, setup names the roots it scanned.
 Pass --agent to set the caller name. Pass --auto-rebuild to rebuild on the next search.
 Does not prompt. Does not install a pack or call the hub.
 A missing knolo-box is printed, and setup still exits 0.
@@ -51,18 +54,16 @@ export async function runKnoloSetup(
   for (const root of parsed.roots) roots.push(root);
 
   const existing = await fileExists(configPath);
-  if (existing && !parsed.reset && requestsNewConfig(parsed)) {
-    throw new Error(
-      `Config already exists: ${configPath}. Pass --reset to replace it.`
-    );
-  }
+  const hubPresent =
+    existing && (await configHasHubRoot(configPath, hubSkills, homeDir));
   const replace = !existing || parsed.reset === true;
+  const merge = existing && !parsed.reset && (requestsNewConfig(parsed) || !hubPresent);
 
   let built = false;
   if (!box) {
     printError('knolo-box is not on PATH. Skipping the local index.');
     if (existing && !parsed.reset) printError('Kept the existing config.');
-  } else if (!replace) {
+  } else if (existing && !replace && !merge) {
     const buildStatus = await spawnImpl(
       box,
       ['build', '--config', configPath],
@@ -82,6 +83,8 @@ export async function runKnoloSetup(
       '--hub-skills',
       hubSkills,
     ];
+    if (parsed.reset && existing) initArgs.push('--force');
+    if (merge) initArgs.push('--merge');
     for (const root of roots) initArgs.push('--root', root);
     if (parsed.agent) initArgs.push('--agent', parsed.agent);
     if (parsed.autoRebuild) initArgs.push('--auto-rebuild');
@@ -102,8 +105,13 @@ export async function runKnoloSetup(
       throw new Error(`knolo-box build exited with status ${buildStatus}.`);
     }
     built = true;
-    if ((await skillRootsBesideHub(configPath, hubSkills)).length === 0) {
+    if (existing && !parsed.reset) printError('Kept the existing config.');
+    if ((await skillRootsBesideHub(configPath, hubSkills, homeDir)).length === 0) {
       printError('No Grok skill folder was found.');
+      const scanned = roots.length > 0 ? roots.join(', ') : grokHome;
+      printError(
+        `Scanned ${scanned}. A root needs to contain agent-data or sand-data, or be the skill folder itself.`
+      );
     }
   }
 
@@ -217,7 +225,27 @@ async function directoryExists(candidate) {
   }
 }
 
-async function skillRootsBesideHub(configPath, hubSkills) {
+async function configHasHubRoot(configPath, hubSkills, homeDir) {
+  const roots = await skillRoots(configPath);
+  const hub = await canonicalDir(hubSkills);
+  for (const root of roots) {
+    if ((await canonicalDir(expandHome(root, homeDir))) === hub) return true;
+  }
+  return false;
+}
+
+async function skillRootsBesideHub(configPath, hubSkills, homeDir) {
+  const roots = await skillRoots(configPath);
+  const hub = await canonicalDir(hubSkills);
+  const others = [];
+  for (const root of roots) {
+    if ((await canonicalDir(expandHome(root, homeDir))) === hub) continue;
+    others.push(root);
+  }
+  return others;
+}
+
+async function skillRoots(configPath) {
   let config;
   try {
     config = JSON.parse(await readFile(configPath, 'utf8'));
@@ -226,14 +254,13 @@ async function skillRootsBesideHub(configPath, hubSkills) {
   }
   const roots = config?.scopes?.skills?.roots;
   if (!Array.isArray(roots)) return [];
-  const hub = await canonicalDir(hubSkills);
-  const others = [];
-  for (const root of roots) {
-    if (typeof root !== 'string' || root.length === 0) continue;
-    if ((await canonicalDir(root)) === hub) continue;
-    others.push(root);
-  }
-  return others;
+  return roots.filter((root) => typeof root === 'string' && root.length > 0);
+}
+
+function expandHome(input, homeDir) {
+  if (input === '~') return homeDir;
+  if (input.startsWith('~/')) return path.join(homeDir, input.slice(2));
+  return input;
 }
 
 async function canonicalDir(candidate) {

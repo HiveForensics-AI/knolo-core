@@ -259,6 +259,9 @@ test('lists exactly four read-only tools and keeps caller identity in config', a
     assert.equal(got.structuredContent.content, body.hits[0].excerpt);
     const verified = await call(client, 'knolo_verify', {});
     assert.equal(verified.structuredContent.results[0].valid, true);
+    const verifiedNull = await call(client, 'knolo_verify', { imageId: null });
+    assert.notEqual(verifiedNull.isError, true);
+    assert.equal(verifiedNull.structuredContent.results[0].valid, true);
     const status = await call(client, 'knolo_status', {});
     assert.deepEqual(status.structuredContent.mounts, [
       {

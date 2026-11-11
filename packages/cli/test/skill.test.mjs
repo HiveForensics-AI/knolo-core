@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import http from 'node:http';
 import { createHash } from 'node:crypto';
 import {
   chmodSync,
@@ -1038,4 +1039,107 @@ exit 3
   assert.deepEqual(missingBox, [
     'knolo-box is not on PATH. The install was not indexed.',
   ]);
+});
+
+test('skill install adds the hub skills root before rebuild', async () => {
+  const root = tempDir();
+  const home = path.join(root, 'home');
+  const bin = path.join(root, 'bin');
+  const log = path.join(root, 'calls.log');
+  assert.equal(run(['skill', 'init', 'refund-policy'], root).status, 0);
+  const packed = run(
+    ['skill', 'pack', path.join(root, 'refund-policy'), '--out', 'pack', '--json'],
+    root
+  );
+  assert.equal(packed.status, 0, packed.stderr);
+  const configPath = path.join(home, '.knolo', 'box', 'box.config.json');
+  mkdirSync(path.dirname(configPath), { recursive: true });
+  writeFileSync(
+    configPath,
+    `${JSON.stringify({
+      agentId: 'grok-bot',
+      autoRebuild: true,
+      scopes: { skills: { roots: ['/keep-me'] } },
+    })}\n`
+  );
+  mkdirSync(bin);
+  const box = path.join(bin, 'knolo-box');
+  writeFileSync(
+    box,
+    `#!/bin/sh
+printf '%s\\n' "$*" >> ${JSON.stringify(log)}
+exit 0
+`
+  );
+  chmodSync(box, 0o755);
+  await installSkill(undefined, {
+    pack: path.join(root, 'pack'),
+    env: { HOME: home, PATH: bin },
+    print() {},
+    printError() {},
+  });
+  const config = JSON.parse(readFileSync(configPath, 'utf8'));
+  assert.equal(config.agentId, 'grok-bot');
+  assert.equal(config.autoRebuild, true);
+  assert.equal(config.scopes.skills.roots.includes('/keep-me'), true);
+  assert.equal(
+    config.scopes.skills.roots.includes(path.join(home, '.knolo', 'skills')),
+    true
+  );
+  assert.match(readFileSync(log, 'utf8'), /build --config /);
+  rmSync(root, { recursive: true, force: true });
+});
+
+function runAsync(args) {
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [cliPath, ...args]);
+    let stdout = '';
+    let stderr = '';
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk;
+    });
+    child.on('close', (status) => {
+      resolve({ status: status ?? 1, stdout, stderr });
+    });
+  });
+}
+
+test('skill install prints one line when the hub skill is missing', async () => {
+  const server = http.createServer((_req, res) => {
+    res.writeHead(404, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ code: 'not_found' }));
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const address = server.address();
+  const port = typeof address === 'object' && address ? address.port : 0;
+  const registry = `http://127.0.0.1:${port}`;
+  try {
+    const missing = await runAsync([
+      'skill',
+      'install',
+      'acme/missing',
+      '--registry',
+      registry,
+    ]);
+    assert.equal(missing.status, 1);
+    assert.match(missing.stderr, /^knolo: Registry resource not found\.\n$/);
+    assert.doesNotMatch(missing.stderr, /\bat /);
+    const debug = await runAsync([
+      '--debug',
+      'skill',
+      'install',
+      'acme/missing',
+      '--registry',
+      registry,
+    ]);
+    assert.equal(debug.status, 1);
+    assert.match(debug.stderr, /\n {4}at /);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
 });

@@ -54,8 +54,8 @@ image. A config file that cannot be read fails that call. `agentId`,
 `sessionId`, and `maxHits` stay at the values from process start. KAR graphs
 are authorized with that same startup `agentId`.
 
-npm `latest` is `@knolo/mcp@0.2.2`. This tree sets `server.json` and the MCP
-server version to `0.2.2`. The published `0.2.1` tarball still reports
+npm `latest` is `@knolo/mcp@0.2.2` until `0.2.3` is published. This tree sets `server.json` and the MCP
+server version to `0.2.3`. The published `0.2.1` tarball still reports
 `0.2.0` in those two fields. A mount without a `kar` block exposes
 the four tools above. A mount with a `kar` block also exposes
 `knolo_kar_evaluate`, `knolo_kar_verify`, and `knolo_cortex_verify`. The
