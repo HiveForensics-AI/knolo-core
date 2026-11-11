@@ -37,7 +37,25 @@ export KNOLO_MCP_CONFIG="$config"
 
 Continuous integration starts `packages/mcp/bin/knolo-mcp.mjs` with Node so the job does not depend on a registry fetch of Knolo. Set `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` for that path. The default command is `npx` with `@knolo/mcp@0.2.1`. The smoke runs on Node 22 because it uses `node --experimental-strip-types`. The rest of CI stays on Node 20.
 
-This repository does not publish an `@knolo/openai-agents` package. The SDK talks to the MCP server directly.
+## Native tools
+
+`@knolo/openai-agents` wraps `@knolo/tools` with the Agents SDK `tool()` helper. `@knolo/openai-agents@0.1.0` is not on npm yet. It depends on `@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`. The peer dependency is `@openai/agents` `^0.21.0`. The package asks for Node.js 22 or newer. Knolo does not call a model.
+
+```js
+import { knoloTools } from '@knolo/openai-agents';
+
+const tools = await knoloTools(config);
+```
+
+`knoloTools` accepts the same object as `knolo-mcp.json`. Paths are absolute. A bad image pin, graph pin, or policy root throws before any tool is returned. `loadKnoloOpenAIAgentsConfigFile(path)` reads an absolute config file.
+
+Without a `kar` block the tools are `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`. A mount with a `kar` block also adds `knolo_kar_evaluate`, `knolo_kar_verify`, and `knolo_cortex_verify`. Caller identity is `agentId` in the config, default `mcp`. Tool arguments cannot set it.
+
+Search, get, verify, and status use a strict Zod schema. Optional arguments may arrive as JSON `null`. The tools treat `null` the same as an omitted field. A KAR plan and a Cortex answer are open objects. The Agents SDK strict schema rejects that shape, so those three tools keep the object and turn strict mode off.
+
+A closed failure is visible to the model as `CODE: text`, including `ACCESS_DENIED` and `AUDIT_UNAVAILABLE`. `SATISFIED` from `knolo_kar_evaluate` means evidence requirements were met. It does not mean a claim is proven.
+
+The native package does not start a server and does not open a port. The MCP example above remains the subprocess path.
 
 ## Python
 

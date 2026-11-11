@@ -31,6 +31,8 @@ The smoke lists the four tools, checks that the graph tools are absent, then sea
 
 A host that does call a model passes the same server on `mcpServers`. That call stays outside this repository.
 
+Native tools that do not start a subprocess are `@knolo/openai-agents`. `@knolo/openai-agents@0.1.0` is not on npm yet. This example stays on the MCP server.
+
 The integration page is [docs/integrations/openai-agents.md](../../docs/integrations/openai-agents.md). Server config is in the [`@knolo/mcp` README](../../packages/mcp/README.md).
 
 ---

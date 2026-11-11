@@ -1,0 +1,5 @@
+{
+  "name": "knolo",
+  "version": "0.1.0",
+  "description": "Read-only Knolo search over a pinned local Knowledge Image. The host owns the model."
+}
