@@ -260,7 +260,7 @@
       </feMerge>
     </filter>
     <filter
-       id="filter84"
+       id="edgeBloom"
        x="-80%"
        y="-80%"
        width="260%"
@@ -379,7 +379,7 @@
      id="polygon135" />
   <!-- bloom pass -->
   <g
-     filter="url(#bloom)"
+     filter="url(#edgeBloom)"
      fill="none"
      stroke-linecap="round"
      stroke-linejoin="round"
