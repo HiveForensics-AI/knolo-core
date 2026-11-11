@@ -5,9 +5,11 @@ another: pack it into a portable Knowledge Image, pin it by digest, mount
 it locally, and prove what was used.
 
 One agent packs knowledge into a file. Another agent mounts that file on
-its own machine. The pin is the digest. A query returns a receipt. A
-receipt is an integrity check. It does not mean a claim is proven. Knolo
-does not call a model, and it does not run the agent. The short guide is
+its own machine. The pin is the digest. A query returns a receipt id and
+the state root. The receipt file stays on the machine that ran the query.
+It is an integrity check. It does not mean a claim is proven. The next
+agent checks the mounted image against its pin. Knolo does not call a
+model, and it does not run the agent. The short guide is
 [two agents sharing knowledge](docs/guides/agents-sharing-knowledge.md).
 
 > **Knowledge should be an asset you can inspect, verify, migrate, and run—not opaque context trapped inside an application.**

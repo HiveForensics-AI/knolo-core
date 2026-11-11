@@ -13,13 +13,22 @@ shows the previous descriptions until a later publish.
 
 ## 1. Pack knowledge or install a skill
 
-Create a skill, check it, and pack it:
+Create a skill, put one knowledge file in it, check it, and pack it.
+`init` creates an empty `knowledge/` directory. An empty directory checks
+with no receipt and packs no `knowledge.v5`.
 
 ```bash
 knolo skill init refund-policy
+printf '%s\n' 'Annual enterprise refunds are available within 30 days.' \
+  > refund-policy/knowledge/policy.md
 knolo skill check refund-policy
 knolo skill pack refund-policy --out dist/refund-policy.knolo-skill
 ```
+
+`check` searches the first words of that file. With the file above, those
+words are `annual enterprise refunds`. It prints a receipt id that starts
+with `sr_` and the image state root. `pack` then writes `knowledge.v5`
+plus the image SHA-256 and state root in `manifest.json`.
 
 Or install a skill that is already on the hub:
 
@@ -87,11 +96,17 @@ receipts come from `@knolo/tools`. Details are in the
 [MCP README](../../packages/mcp/README.md). Box starts that same server
 after a build. See the [Box README](../../packages/box/README.md).
 
-## 4. A query returns a receipt the next agent can verify
+## 4. A query returns a receipt id, and the next agent verifies the image
 
-`knolo_search` returns hits, a receipt id (`qr_` plus 24 hex characters),
-and the state root. The server writes the receipt before it returns hits.
-`knolo_verify` checks the mounted image. `knolo_get` reads one object.
+`knolo_search` returns hits and a receipt record: a receipt id (`qr_` plus
+24 hex characters), the state root, the plan root, and the result root. The
+server writes the receipt file in its audit directory before it returns
+hits. That file stays on the machine that ran the query. MCP does not
+return the file, and it has no tool that verifies it.
+
+`knolo_verify` checks the mounted image bytes and V5 roots. A matching pin
+stays valid. `knolo_get` reads one object at the state root from search.
+The next agent proves which image it mounted by that pin and state root.
 
 A receipt is an integrity check. It does not mean a claim is proven.
 `SATISFIED` is not a search result from these tools, and it is not proof.
