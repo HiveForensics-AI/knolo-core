@@ -59,7 +59,11 @@ export async function initBox(request: InitRequest): Promise<InitResult> {
   if (request.force === true && request.merge === true) {
     throw new BoxError('BOX_CONFIG', 'Pass either --merge or --force.');
   }
-  const existing = await readConfigFile(request.configPath);
+  // --force replaces the file. A malformed config must not block that.
+  const existing =
+    request.force === true
+      ? undefined
+      : await readConfigFile(request.configPath);
   if (existing && request.merge !== true && request.force !== true) {
     throw new BoxError(
       'BOX_CONFIG',

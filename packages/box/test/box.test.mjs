@@ -2119,6 +2119,32 @@ test('init refuses to overwrite unless --force, and --merge keeps existing field
     assert.equal(replaced.agentId, undefined);
     assert.equal(replaced.autoRebuild, undefined);
 
+    await writeFile(configPath, '{');
+    await assert.rejects(
+      () =>
+        initBox({
+          configPath,
+          roots: [home],
+          home,
+          env: {},
+          merge: true,
+        }),
+      (error) => {
+        assert.match(error.message, /Could not read/);
+        return true;
+      }
+    );
+    const recovered = await initBox({
+      configPath,
+      roots: [home],
+      home,
+      env: {},
+      tolerant: true,
+      force: true,
+    });
+    assert.equal(recovered.agentId, undefined);
+    JSON.parse(await readFile(configPath, 'utf8'));
+
     const priorRoot = path.join(home, 'already');
     await writeFile(
       configPath,
