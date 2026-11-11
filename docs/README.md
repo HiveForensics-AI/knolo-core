@@ -90,9 +90,10 @@ operational guides for Knolo.
   `@knolo/openai-agents@0.1.0` is not published yet.
 - [Anthropic Agent Skill](integrations/anthropic-skills.md) — a Claude Code
   plugin that loads a Knolo skill and registers `@knolo/mcp@0.2.2` over
-  stdio. The skill cites `stateRoot`, `resultRoot`, and `objectId`. A receipt
-  file is an integrity check. `SATISFIED` means evidence requirements were
-  met. The upstream skills listing is separate.
+  stdio. The skill answers through the mounted tools and cites `imageId`,
+  `objectId`, and `stateRoot`. A receipt is an integrity check. `SATISFIED`
+  means evidence requirements were met. The upstream skills listing is
+  separate.
 - [Pydantic AI](integrations/pydantic-ai.md) — a Python smoke that calls
   published `@knolo/mcp@0.2.1` over stdio. Knolo does not call a model. A
   search returns a query receipt. `SATISFIED` means evidence requirements

@@ -13,10 +13,17 @@ The skill is `skills/knolo/SKILL.md` inside this plugin. Its `name` is
 `packages/openclaw/skills/knolo-grounding/SKILL.md`. Claude Code rejects a
 skill path that leaves the plugin directory, so this copy lives here.
 
-`node plugins/knolo/skills/knolo/scripts/query-fixture.mjs` verifies a fixture
-image and runs one `v5 query`. The `--receipt` file is an integrity check.
-Cite `stateRoot`, `resultRoot`, and `objectId`. `SATISFIED` means evidence
-requirements were met. It does not mean a claim is proven.
+The agent answers through `knolo_search`, `knolo_get`, `knolo_verify`, and
+`knolo_status`. Those tools enforce the pin, the policy, and the audit
+directory. Cite `imageId`, `objectId`, and `stateRoot`. A receipt is an
+integrity check.
+
+`node plugins/knolo/skills/knolo/scripts/query-fixture.mjs` is an operator
+check. It verifies a fixture image and runs one `v5 query`. That command does
+not apply a mount policy and does not write the audit receipt, so it is not
+the path an agent uses to answer. The `--receipt` file holds `stateRoot`,
+`resultRoot`, and `objectId`. `SATISFIED` means evidence requirements were
+met. It does not mean a claim is proven.
 
 The upstream pull request to `anthropics/skills` is separate. This repository
 does not open it.

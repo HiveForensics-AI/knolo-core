@@ -47,8 +47,15 @@ test('the skill keeps the OpenClaw grounding paragraphs', () => {
   );
   assert.match(skill, /integrity check/);
   assert.match(skill, /stateRoot/);
-  assert.match(skill, /resultRoot/);
   assert.match(skill, /objectId/);
+  assert.equal(
+    skill.includes('Do not answer by reading the image with `knolo v5 query`.'),
+    true
+  );
+  assert.equal(
+    skill.includes('node packages/cli/bin/knolo.mjs v5 query'),
+    false
+  );
   assert.equal(/skip (the )?pins?/i.test(skill), false);
   assert.equal(/skip verification/i.test(skill), false);
   assert.equal(/disable audit/i.test(skill), false);

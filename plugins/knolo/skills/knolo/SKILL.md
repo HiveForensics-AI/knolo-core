@@ -11,19 +11,12 @@ Use `knolo_get` only with the `stateRoot` returned by `knolo_search`. If Knolo r
 
 Use `knolo_verify` when the user asks which artifact or root was used. Use `knolo_status` to determine which Knowledge Images are available to the current agent.
 
-## Verify and query
+## Answer through the mounted tools
 
 Pins, a policy file, and an audit directory are required. The config file is an absolute `knolo-mcp.json`. Tool arguments cannot set the caller.
 
-Published `@knolo/cli@6.2.2` can verify an image and run one query. From this repository the same commands are:
+Answer with `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`. Those tools enforce the pin, the policy, and the audit directory. Cite the `imageId`, `objectId`, and `stateRoot`. A receipt is an integrity check. It does not mean a claim is proven.
 
-```bash
-node packages/cli/bin/knolo.mjs verify /absolute/support.v5
-node packages/cli/bin/knolo.mjs v5 query /absolute/support.v5 'FROM chunk SEARCH "refunds" LIMIT 5' --json --receipt /absolute/query-result.json
-```
-
-`verify` checks the image bytes. Run a query only after verification succeeds. The `--receipt` file holds `stateRoot`, `planRoot`, `resultRoot`, and hits. That file is an integrity check. Cite `stateRoot`, `resultRoot`, and `objectId`. It does not mean a claim is proven.
+Do not answer by reading the image with `knolo v5 query`. That command does not apply the mount policy and does not write the audit receipt.
 
 `SATISFIED` means evidence requirements were met. It does not mean a claim is proven.
-
-The offline check is `node plugins/knolo/skills/knolo/scripts/query-fixture.mjs`. It builds a fixture image, verifies it, and runs one query. It does not call a model and it does not open a port.
