@@ -1,6 +1,9 @@
 # @knolo/box
 
-`@knolo/box` builds pinned V5 images of a Grok Bot computer and starts the existing read-only `knolo-mcp` server as one process. It is a builder and a launcher. It does not proxy JSON-RPC, and it does not call a model.
+`@knolo/box` turns a host agent's local skills into a pinned V5 Knowledge
+Image and starts the existing read-only `knolo-mcp` server as one process.
+It is a builder and a launcher. It does not proxy JSON-RPC, and it does not
+call a model.
 
 npm `latest` is `@knolo/box@0.1.1`. From this repository, after the workspace build:
 

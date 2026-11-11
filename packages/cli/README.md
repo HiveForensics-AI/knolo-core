@@ -1,5 +1,11 @@
 # @knolo/cli
 
+`@knolo/cli` is how an agent publishes, pins, and installs shared knowledge.
+Hub knowledge packs use `knolo publish` and `knolo add`. Skill packs use
+`knolo skill pack`, `knolo skill publish`, and `knolo skill install`. The
+pin is the digest. A receipt is an integrity check. It does not mean a
+claim is proven.
+
 The CLI preserves the Knolo V4 pack workflow and adds explicit V5 Knowledge
 Image inspection and querying. Normal builds emit V4; the ICP legacy build path explicitly
 emits V3 until the canister gains a V4 profile. V5 Studio output is a verified

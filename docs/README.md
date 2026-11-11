@@ -5,6 +5,10 @@ operational guides for Knolo.
 
 ## Start here
 
+- [Two agents sharing knowledge](guides/agents-sharing-knowledge.md) — pack a
+  Knowledge Image, pin it, mount it from a second agent, and verify the
+  mounted image. A receipt is an integrity check. `SATISFIED` is not a
+  search result.
 - [V5 roadmap](ROADMAP.md) — delivered foundation, release hardening, and the
   next implementation waves.
 - [Release guide](RELEASE.md) — preflight checks and publication commands for
