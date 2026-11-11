@@ -24,7 +24,7 @@
     "README.md"
   ],
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   },
   "scripts": {
     "build": "npm run build --workspace @knolo/core && npm run build --workspace @knolo/tools && tsc -p tsconfig.json",

@@ -22,7 +22,9 @@ const { NodeConnectionTypes, NodeOperationError } = nodeRequire(
   'n8n-workflow'
 ) as typeof import('n8n-workflow');
 // @knolo/tools is ESM and does not publish a require entry. Load the file
-// named by its import export. Node can require that file directly.
+// named by its import export. require() of that file is on by default in
+// Node 22.12+ and 20.19+. Node 22.0 through 22.11 still throw ERR_REQUIRE_ESM.
+assertCanRequireKnoloModules();
 const { KNOLO_SEARCH_DESCRIPTION, KnoloOpenClawService, KnoloPluginError } =
   nodeRequire(packageEntry('@knolo/tools')) as typeof import('@knolo/tools');
 
@@ -67,6 +69,7 @@ export class Knolo implements INodeType {
         displayName: 'Agent ID',
         name: 'agentId',
         type: 'string',
+        noDataExpression: true,
         default: 'n8n',
         required: true,
         description:
@@ -76,6 +79,7 @@ export class Knolo implements INodeType {
         displayName: 'Mount ID',
         name: 'mountId',
         type: 'string',
+        noDataExpression: true,
         default: 'image',
         required: true,
       },
@@ -83,6 +87,7 @@ export class Knolo implements INodeType {
         displayName: 'Image Path',
         name: 'imagePath',
         type: 'string',
+        noDataExpression: true,
         default: '',
         required: true,
         description: 'Absolute path of the pinned Knowledge Image.',
@@ -91,6 +96,7 @@ export class Knolo implements INodeType {
         displayName: 'SHA-256',
         name: 'sha256',
         type: 'string',
+        noDataExpression: true,
         default: '',
         required: true,
         description: 'Hex SHA-256 of the image file.',
@@ -99,6 +105,7 @@ export class Knolo implements INodeType {
         displayName: 'State Root',
         name: 'stateRoot',
         type: 'string',
+        noDataExpression: true,
         default: '',
         required: true,
       },
@@ -106,6 +113,7 @@ export class Knolo implements INodeType {
         displayName: 'Policy Path',
         name: 'policyPath',
         type: 'string',
+        noDataExpression: true,
         default: '',
         required: true,
       },
@@ -113,6 +121,7 @@ export class Knolo implements INodeType {
         displayName: 'Audit Directory',
         name: 'auditDir',
         type: 'string',
+        noDataExpression: true,
         default: '',
         required: true,
         description: 'Writable directory for query receipts.',
@@ -121,6 +130,7 @@ export class Knolo implements INodeType {
         displayName: 'Principal',
         name: 'principal',
         type: 'string',
+        noDataExpression: true,
         default: 'n8n:reader',
         required: true,
       },
@@ -170,6 +180,9 @@ export class Knolo implements INodeType {
     try {
       service = await KnoloOpenClawService.create(settings.plugin);
     } catch (error) {
+      if (this.continueOnFail()) {
+        return [loadErrors(items, error)];
+      }
       throw asNodeError(error, node, 0);
     }
     const caller: KnoloCaller = { agentId: settings.agentId };
@@ -283,10 +296,42 @@ function optional(
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function loadErrors(
+  items: INodeExecutionData[],
+  error: unknown
+): INodeExecutionData[] {
+  const text = errorText(error);
+  const count = items.length > 0 ? items.length : 1;
+  return Array.from({ length: count }, (_, index) => ({
+    json: { error: text },
+    pairedItem: { item: index },
+  }));
+}
+
 function errorText(error: unknown): string {
   if (error instanceof KnoloPluginError)
     return `${error.code}: ${error.message}`;
   return error instanceof Error ? error.message : String(error);
+}
+
+/** True when this Node can require() an ES module without a flag. */
+export function canRequireKnoloModules(
+  version: string = process.versions.node
+): boolean {
+  const [majorText, minorText] = version.split('.');
+  const major = Number(majorText);
+  const minor = Number(minorText);
+  if (!Number.isInteger(major) || !Number.isInteger(minor)) return false;
+  return (
+    (major === 20 && minor >= 19) || (major === 22 && minor >= 12) || major > 22
+  );
+}
+
+function assertCanRequireKnoloModules(): void {
+  if (canRequireKnoloModules()) return;
+  throw new Error(
+    `n8n-nodes-knolo cannot load @knolo/tools on Node.js ${process.versions.node}. Use Node.js 22.12 or newer.`
+  );
 }
 
 function asNodeError(

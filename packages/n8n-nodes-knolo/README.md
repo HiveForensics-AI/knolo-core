@@ -11,7 +11,10 @@ as a dev dependency so the node can typecheck.
 
 n8n loads community nodes with `require`, so the built node is CommonJS.
 `@knolo/core` and `@knolo/tools` stay ESM packages. The node loads the file
-named by each package's import export.
+named by each package's import export. Engines ask for Node.js 22.12 or
+newer, the first Node 22 release that loads an ES module with `require()`
+without a flag. Node 20.19 and newer can load that file, and this
+repository's tests run there. Node 21, and Node 22.0 through 22.11, cannot.
 
 `n8n-workflow` depends on `isolated-vm` 7, which publishes prebuilds for
 Node 24 and newer. This repository's CI uses Node 20. The root install
@@ -40,7 +43,9 @@ export N8N_CUSTOM_EXTENSIONS=/absolute/path/to/packages/n8n-nodes-knolo
 
 The node parameters hold the mount: image path, SHA-256, state root, policy
 path, audit directory, mount id, principal, and agent id. Those values are
-configuration. Search, get, and verify do not accept `agentId` from an item.
+configuration. n8n does not evaluate them as item expressions, so an item
+cannot change the caller or the pin. Search, get, and verify do not accept
+`agentId` from an item.
 An incoming item field named `agentId` is ignored. The caller is the Agent ID
 parameter, and the mount's agent list is that same id.
 
@@ -53,7 +58,9 @@ an optional image id. An empty image id uses the Mount ID.
 A successful search returns hits, the receipt id (`qr_` plus 24 hex
 characters), and the state root. A bad pin fails with `IMAGE_INVALID` before
 any hit. A policy denial fails with `ACCESS_DENIED`. An unwritable audit
-directory fails with `AUDIT_UNAVAILABLE` and returns no hits.
+directory fails with `AUDIT_UNAVAILABLE` and returns no hits. If the node
+is set to continue on fail, a failure while loading the image is returned
+as `error` on every input item, or on one item when the input is empty.
 
 A receipt is an integrity check. It does not mean a claim is proven.
 `SATISFIED` is not a search result from this node, and it is not proof.

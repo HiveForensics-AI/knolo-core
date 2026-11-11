@@ -4,11 +4,12 @@
 Image. `n8n-nodes-knolo@0.1.0` is not on npm yet. Knolo does not call a model
 and does not read an API key.
 
-The node asks for Node.js 22 or newer. n8n loads it with `require`, so the
-built file is CommonJS. It depends on `@knolo/core` `^6.2.1`
-and `@knolo/tools` `^0.2.1`. The license is Apache-2.0. n8n itself is under
-the Sustainable Use License. This package does not include n8n source. The
-only peer dependency is `n8n-workflow`.
+The node asks for Node.js 22.12 or newer. Synchronous `require()` of the
+`@knolo/tools` ES module is on by default from that release. n8n loads the
+node with `require`, so the built file is CommonJS. It depends on
+`@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`. The license is
+Apache-2.0. n8n itself is under the Sustainable Use License. This package
+does not include n8n source. The only peer dependency is `n8n-workflow`.
 
 This node does not start a server and does not open a port. Install by npm
 name waits until `0.1.0` is published. Until then, build the package and
@@ -23,7 +24,8 @@ export N8N_CUSTOM_EXTENSIONS=/absolute/path/to/packages/n8n-nodes-knolo
 
 Search, Get, and Verify read one mounted image. The mount is configuration
 on the node: image path, SHA-256, state root, policy path, audit directory,
-mount id, principal, and agent id.
+mount id, principal, and agent id. n8n does not evaluate those fields as
+item expressions, so an item cannot change the caller or the pin.
 
 Caller identity is the Agent ID parameter. An item field named `agentId` is
 ignored. Search and get arguments cannot set the caller.
@@ -41,7 +43,9 @@ node. Verify checks the same mounted image.
 
 A bad pin throws `IMAGE_INVALID` before any hit. A policy denial throws
 `ACCESS_DENIED`. An unwritable audit directory throws `AUDIT_UNAVAILABLE`
-and returns no hits. Each thrown message is `CODE: text`.
+and returns no hits. Each thrown message is `CODE: text`. If the node is
+set to continue on fail, a failure while loading the image is returned as
+`error` on every input item, or on one item when the input is empty.
 
 This node does not evaluate KAR. `SATISFIED` is not a search result, and it
 does not mean a claim is proven.

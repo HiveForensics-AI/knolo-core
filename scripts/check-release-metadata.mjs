@@ -225,7 +225,7 @@ assert.equal(n8nNodesPackage.license, 'Apache-2.0');
 assert.equal(n8nNodesPackage.type, undefined);
 assert.notEqual(n8nNodesPackage.private, true);
 assert.equal(n8nNodesPackage.publishConfig?.access, 'public');
-assert.equal(n8nNodesPackage.engines?.node, '>=22');
+assert.equal(n8nNodesPackage.engines?.node, '>=22.12');
 assert.equal(n8nNodesPackage.dependencies?.['@knolo/core'], toolsCoreRange);
 assert.equal(n8nNodesPackage.dependencies?.['@knolo/tools'], '^0.2.1');
 assert.deepEqual(n8nNodesPackage.peerDependencies, { 'n8n-workflow': '*' });

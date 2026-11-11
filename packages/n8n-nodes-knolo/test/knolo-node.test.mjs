@@ -10,7 +10,9 @@ import { KNOLO_SEARCH_DESCRIPTION } from '@knolo/tools';
 
 const nodeRequire = createRequire(import.meta.url);
 const { NodeOperationError } = nodeRequire('n8n-workflow');
-const { Knolo } = nodeRequire('../dist/nodes/Knolo/Knolo.node.js');
+const { Knolo, canRequireKnoloModules } = nodeRequire(
+  '../dist/nodes/Knolo/Knolo.node.js'
+);
 
 const encoder = new TextEncoder();
 
@@ -84,7 +86,7 @@ async function fixture(overrides = {}) {
   return { root, image, parameters };
 }
 
-function execute(parameters, items) {
+function execute(parameters, items, options = {}) {
   const node = new Knolo();
   const context = {
     getInputData() {
@@ -107,7 +109,7 @@ function execute(parameters, items) {
       return parameters[name];
     },
     continueOnFail() {
-      return false;
+      return options.continueOnFail === true;
     },
   };
   return node.execute.call(context);
@@ -153,6 +155,35 @@ test('the node describes a read-only Knolo tool', () => {
     description.properties.some((property) => property.name === 'port'),
     false
   );
+  for (const name of [
+    'agentId',
+    'mountId',
+    'imagePath',
+    'sha256',
+    'stateRoot',
+    'policyPath',
+    'auditDir',
+    'principal',
+  ]) {
+    const property = description.properties.find((item) => item.name === name);
+    assert.equal(property.noDataExpression, true, name);
+  }
+  for (const name of ['query', 'limit', 'objectId', 'imageId']) {
+    const property = description.properties.find((item) => item.name === name);
+    assert.equal(property.noDataExpression, undefined, name);
+  }
+});
+
+test('require of the tools module needs Node 22.12, or Node 20.19 in CI', () => {
+  assert.equal(canRequireKnoloModules('20.18.0'), false);
+  assert.equal(canRequireKnoloModules('20.19.0'), true);
+  assert.equal(canRequireKnoloModules('20.20.2'), true);
+  assert.equal(canRequireKnoloModules('21.7.3'), false);
+  assert.equal(canRequireKnoloModules('22.0.0'), false);
+  assert.equal(canRequireKnoloModules('22.11.0'), false);
+  assert.equal(canRequireKnoloModules('22.12.0'), true);
+  assert.equal(canRequireKnoloModules('24.11.0'), true);
+  assert.equal(canRequireKnoloModules(process.versions.node), true);
 });
 
 test('search returns a receipt, and an item cannot change the caller', async () => {
@@ -215,6 +246,31 @@ test('a bad pin fails before any hit', async () => {
     }
   );
   assert.deepEqual(await receiptNames(broken.parameters.auditDir), []);
+});
+
+test('continue on fail returns the load error on each item', async () => {
+  const broken = await fixture({ sha256: 'a'.repeat(64) });
+  const [output] = await execute(
+    broken.parameters,
+    [{ json: {} }, { json: {} }],
+    { continueOnFail: true }
+  );
+  assert.equal(output.length, 2);
+  assert.match(
+    output[0].json.error,
+    /^IMAGE_INVALID: Image image does not match its SHA-256 pin\./
+  );
+  assert.equal(output[1].json.error, output[0].json.error);
+  assert.equal(output[0].pairedItem.item, 0);
+  assert.equal(output[1].pairedItem.item, 1);
+  assert.deepEqual(await receiptNames(broken.parameters.auditDir), []);
+
+  const [empty] = await execute(broken.parameters, [], {
+    continueOnFail: true,
+  });
+  assert.equal(empty.length, 1);
+  assert.match(empty[0].json.error, /^IMAGE_INVALID: /);
+  assert.equal(empty[0].pairedItem.item, 0);
 });
 
 test('policy denial is ACCESS_DENIED and writes no receipt', async () => {
