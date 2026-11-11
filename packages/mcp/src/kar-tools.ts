@@ -81,8 +81,15 @@ function referencesKar(answer: unknown): boolean {
   return Array.isArray(evaluations) && evaluations.length > 0;
 }
 
-function questionOf(answer: unknown, supplied: string | undefined): string {
-  if (supplied !== undefined) return supplied;
+function omitted(value: unknown): value is null | undefined {
+  return value === undefined || value === null;
+}
+
+function questionOf(
+  answer: unknown,
+  supplied: string | null | undefined
+): string {
+  if (!omitted(supplied)) return supplied;
   if (
     answer &&
     typeof answer === 'object' &&
@@ -162,20 +169,19 @@ export function registerKarTools(
           mountId: z.string().min(1),
           proposition: z.string().min(1),
           plan: planSchema,
-          result: z.record(z.string(), z.unknown()).optional(),
+          result: z.record(z.string(), z.unknown()).nullish(),
           dossier: z
             .object({
               manifest: z.unknown(),
               certificate: z.unknown(),
-              evaluation: z.unknown().optional(),
-              evidenceMarkdown: z.string().optional(),
+              evaluation: z.unknown().nullish(),
+              evidenceMarkdown: z.string().nullish(),
             })
-            .optional(),
+            .nullish(),
         })
         .superRefine((value, context) => {
           const selected =
-            Number(value.result !== undefined) +
-            Number(value.dossier !== undefined);
+            Number(!omitted(value.result)) + Number(!omitted(value.dossier));
           if (selected !== 1) {
             context.addIssue({
               code: 'custom',
@@ -189,7 +195,9 @@ export function registerKarTools(
       try {
         await refresh?.();
         assertPlanSize(plan);
-        if ((result === undefined) === (dossier === undefined)) {
+        const resultValue = omitted(result) ? undefined : result;
+        const dossierValue = omitted(dossier) ? undefined : dossier;
+        if ((resultValue === undefined) === (dossierValue === undefined)) {
           throw new KnoloPluginError(
             'QUERY_INVALID',
             'Provide exactly one of result or dossier.'
@@ -198,27 +206,27 @@ export function registerKarTools(
         const caller = callerFrom(server, agentId, sessionId);
         const mount = service.readAuthorizedMount(mountId, caller);
         const pinned = requireGraph(graphs, mountId);
-        const verdict = dossier
+        const verdict = dossierValue
           ? verifyKarDossier({
               image: mount.image,
               graph: pinned.graph,
               plan,
               proposition,
-              manifest: dossier.manifest,
-              certificate: dossier.certificate,
-              ...(dossier.evaluation === undefined
+              manifest: dossierValue.manifest,
+              certificate: dossierValue.certificate,
+              ...(omitted(dossierValue.evaluation)
                 ? {}
-                : { evaluation: dossier.evaluation }),
-              ...(dossier.evidenceMarkdown === undefined
+                : { evaluation: dossierValue.evaluation }),
+              ...(omitted(dossierValue.evidenceMarkdown)
                 ? {}
-                : { evidenceMarkdown: dossier.evidenceMarkdown }),
+                : { evidenceMarkdown: dossierValue.evidenceMarkdown }),
             })
           : verifyKar({
               image: mount.image,
               graph: pinned.graph,
               proposition,
               plan,
-              result,
+              result: resultValue,
             });
         const receipt = await service.writeEvidenceReceipt({
           imageId: mount.id,
@@ -251,7 +259,7 @@ export function registerKarTools(
       description: `Verify a Cortex trace against a pinned Knowledge Image. ${CORTEX_VERIFY_STATEMENT}`,
       inputSchema: z.object({
         mountId: z.string().min(1),
-        question: z.string().min(1).optional(),
+        question: z.string().min(1).nullish(),
         answer: z.record(z.string(), z.unknown()),
       }),
       annotations: readOnly,
