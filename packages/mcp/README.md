@@ -196,6 +196,28 @@ VS Code (`.vscode/mcp.json`):
 }
 ```
 
+Cline uses the same stdio server. The file hash, `knolo verify`, and the
+Cline settings block are in [llms-install.md](llms-install.md). The published
+server pin is `@knolo/mcp@0.2.2`. The CLI pin for `stateRoot` is
+`@knolo/cli@6.2.2`. Pins, the policy file, and the audit directory stay in
+the config.
+
+```json
+{
+  "mcpServers": {
+    "knolo": {
+      "command": "npx",
+      "args": ["-y", "@knolo/mcp@0.2.2", "--config", "/absolute/knolo-mcp.json"]
+    }
+  }
+}
+```
+
+The 400×400 listing logo is
+[listings/cline/logo.png](listings/cline/logo.png). The marketplace
+submission is
+[cline/mcp-marketplace#3696](https://github.com/cline/mcp-marketplace/issues/3696).
+
 The package requires Node 20 or newer, `@knolo/core` `^6.2.1`, and
 `@knolo/tools` `^0.2.1`. Coverage, composition, and authoring stay outside
 this server. Verification checks integrity. It does not decide that a claim
