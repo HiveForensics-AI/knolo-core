@@ -65,6 +65,7 @@ const npmPackages = [
       'dist/index.d.ts',
       'bin/knolo-mcp.mjs',
       'server.json',
+      'llms-install.md',
     ],
   },
   {
