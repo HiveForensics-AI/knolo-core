@@ -1,0 +1,52 @@
+{
+  "name": "@knolo/openai-agents",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "OpenAI Agents SDK tools for read-only Knolo search, verify, KAR, and Cortex.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HiveForensics-AI/knolo-core.git",
+    "directory": "packages/openai-agents"
+  },
+  "homepage": "https://github.com/HiveForensics-AI/knolo-core#readme",
+  "bugs": {
+    "url": "https://github.com/HiveForensics-AI/knolo-core/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "npm run build --workspace @knolo/core && npm run build --workspace @knolo/tools && tsc -p tsconfig.json",
+    "test": "npm run build --workspace @knolo/core && npm run build --workspace @knolo/tools && tsc -p tsconfig.json && node --test test/*.test.mjs",
+    "prepublishOnly": "npm test"
+  },
+  "dependencies": {
+    "@knolo/core": "^6.2.1",
+    "@knolo/tools": "^0.2.1",
+    "zod": "^4.2.0"
+  },
+  "peerDependencies": {
+    "@openai/agents": "^0.21.0"
+  },
+  "devDependencies": {
+    "@openai/agents": "0.21.0",
+    "@types/node": "^20.11.0",
+    "typescript": "^5.5.0"
+  }
+}

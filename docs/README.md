@@ -84,9 +84,15 @@ operational guides for Knolo.
   receipt. Verification checks the image. `SATISFIED` means evidence
   requirements were met.
 - [OpenAI Agents SDK](integrations/openai-agents.md) — a TypeScript smoke
-  that calls published `@knolo/mcp@0.2.1` over stdio. Knolo does not call a
-  model. A search returns a query receipt. `SATISFIED` means evidence
-  requirements were met.
+  that calls published `@knolo/mcp@0.2.1` over stdio, and native
+  `@knolo/openai-agents` tools. Knolo does not call a model. A search returns
+  a query receipt. `SATISFIED` means evidence requirements were met.
+  `@knolo/openai-agents@0.1.0` is not published yet.
+- [Anthropic Agent Skill](integrations/anthropic-skills.md) — a Claude Code
+  plugin that loads a Knolo skill and registers `@knolo/mcp@0.2.2` over
+  stdio. The skill cites `stateRoot`, `resultRoot`, and `objectId`. A receipt
+  file is an integrity check. `SATISFIED` means evidence requirements were
+  met. The upstream skills listing is separate.
 - [Pydantic AI](integrations/pydantic-ai.md) — a Python smoke that calls
   published `@knolo/mcp@0.2.1` over stdio. Knolo does not call a model. A
   search returns a query receipt. `SATISFIED` means evidence requirements
@@ -152,7 +158,9 @@ npm `latest` for the CLI is `6.2.1` until `6.2.2` is published. `@knolo/langchai
 `@knolo/semantic-ollama`, `create-knolo-app`, and `@knolo/reflex` stay on
 `@knolo/core` `^6.0.0`. `@knolo/ai-sdk@0.1.0` stays on `@knolo/core` `^6.2.0`
 and `@knolo/tools` `^0.2.0`. `@knolo/mastra` `0.1.0` is not published yet and
-depends on `@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`. V4 retrieval
+depends on `@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`.
+`@knolo/openai-agents` `0.1.0` is not published yet and depends on
+`@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`. V4 retrieval
 APIs remain compatible. Rust, Python,
 and ICP stay 5.5.1 and do not implement KAR, composition, or Cortex.
 Bundled Domain Packs are `review-required`. Networking,

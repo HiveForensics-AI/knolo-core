@@ -200,6 +200,23 @@ assert.equal(mastraPackage.dependencies?.['@mastra/core'], undefined);
 assert.equal(mastraPackage.devDependencies?.['@mastra/core'], '1.82.0');
 assert.equal(mastraPackage.devDependencies?.['@knolo/mcp'], '^0.2.1');
 
+const openaiAgentsVersion = '0.1.0';
+const openaiAgentsPackage = readJson('packages/openai-agents/package.json');
+assert.equal(openaiAgentsPackage.name, '@knolo/openai-agents');
+assert.equal(openaiAgentsPackage.version, openaiAgentsVersion);
+assert.equal(openaiAgentsPackage.license, 'Apache-2.0');
+assert.notEqual(openaiAgentsPackage.private, true);
+assert.equal(openaiAgentsPackage.publishConfig?.access, 'public');
+assert.equal(openaiAgentsPackage.engines?.node, '>=22');
+assert.equal(openaiAgentsPackage.dependencies?.['@knolo/core'], toolsCoreRange);
+assert.equal(openaiAgentsPackage.dependencies?.['@knolo/tools'], '^0.2.1');
+assert.equal(
+  openaiAgentsPackage.peerDependencies?.['@openai/agents'],
+  '^0.21.0'
+);
+assert.equal(openaiAgentsPackage.dependencies?.['@openai/agents'], undefined);
+assert.equal(openaiAgentsPackage.devDependencies?.['@openai/agents'], '0.21.0');
+
 const openclawPackage = readJson('packages/openclaw/package.json');
 assert.equal(openclawPackage.name, '@knolo/openclaw');
 assert.equal(openclawPackage.version, openclawVersion);
@@ -208,5 +225,5 @@ assert.equal(openclawPackage.dependencies?.['@knolo/tools'], '^0.1.0');
 assert.equal(openclawPackage.engines?.node, '>=24.16.0');
 
 console.log(
-  `Release metadata passed for npm ${releaseVersion} with core ${coreReleaseVersion} and CLI ${cliReleaseVersion}. Rust and Python stay ${platformVersion}. @knolo/tools is ${toolsVersion}. @knolo/mcp is ${mcpVersion}. @knolo/ai-sdk is ${aiSdkVersion}. @knolo/mastra is ${mastraVersion} and is not published. @knolo/openclaw stays ${openclawVersion}. @knolo/box stays 0.1.0.`
+  `Release metadata passed for npm ${releaseVersion} with core ${coreReleaseVersion} and CLI ${cliReleaseVersion}. Rust and Python stay ${platformVersion}. @knolo/tools is ${toolsVersion}. @knolo/mcp is ${mcpVersion}. @knolo/ai-sdk is ${aiSdkVersion}. @knolo/mastra is ${mastraVersion} and is not published. @knolo/openai-agents is ${openaiAgentsVersion} and is not published. @knolo/openclaw stays ${openclawVersion}. @knolo/box stays 0.1.0.`
 );

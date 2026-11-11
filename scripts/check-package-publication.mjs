@@ -77,6 +77,11 @@ const npmPackages = [
     directory: 'mastra',
     expected: ['README.md', 'dist/index.js', 'dist/index.d.ts'],
   },
+  {
+    name: '@knolo/openai-agents',
+    directory: 'openai-agents',
+    expected: ['README.md', 'dist/index.js', 'dist/index.d.ts'],
+  },
 ];
 
 const rustPackages = [
