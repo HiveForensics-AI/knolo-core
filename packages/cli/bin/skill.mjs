@@ -8,7 +8,17 @@
  */
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { lstat, mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import {
+  chmod,
+  lstat,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  realpath,
+  rm,
+  writeFile,
+} from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -341,8 +351,19 @@ async function indexInstalledSkill(destRoot, flags) {
   } catch {
     config = null;
   }
-  const roots = skillRootsFromConfig(config, env, home);
   const dest = await canonicalDir(destRoot);
+  const hubSkills = path.resolve(path.join(home, '.knolo', 'skills'));
+  if (config && (await canonicalDir(hubSkills)) === dest) {
+    const added = await ensureHubSkillsRoot(configPath, config, dest, env, home);
+    if (added) {
+      try {
+        config = JSON.parse(await readFile(configPath, 'utf8'));
+      } catch {
+        config = null;
+      }
+    }
+  }
+  const roots = skillRootsFromConfig(config, env, home);
   let indexed = false;
   for (const root of roots) {
     if (typeof root !== 'string' || root.length === 0) continue;
@@ -368,6 +389,33 @@ async function indexInstalledSkill(destRoot, flags) {
       `knolo-box build exited with status ${status}. The install was not indexed.`
     );
   }
+}
+
+async function ensureHubSkillsRoot(configPath, config, dest, env, home) {
+  const roots = skillRootsFromConfig(config, env, home);
+  for (const root of roots) {
+    if ((await canonicalDir(root)) === dest) return false;
+  }
+  const next = { ...config };
+  const scopes =
+    next.scopes && typeof next.scopes === 'object' && !Array.isArray(next.scopes)
+      ? { ...next.scopes }
+      : {};
+  const skills =
+    scopes.skills && typeof scopes.skills === 'object' && !Array.isArray(scopes.skills)
+      ? { ...scopes.skills }
+      : {};
+  const hadRoots = Array.isArray(skills.roots);
+  const prior = hadRoots
+    ? skills.roots.filter((item) => typeof item === 'string' && item.length > 0)
+    : roots;
+  skills.roots = [...prior, dest];
+  scopes.skills = skills;
+  next.scopes = scopes;
+  await mkdir(path.dirname(configPath), { recursive: true, mode: 0o700 });
+  await writeFile(configPath, `${JSON.stringify(next, null, 2)}\n`, { mode: 0o600 });
+  await chmod(configPath, 0o600);
+  return true;
 }
 
 function skillRootsFromConfig(config, env, home) {

@@ -8,7 +8,7 @@ grok plugin install HiveForensics-AI/knolo-core#plugins/knolo-box --trust
 
 `--trust` is required so the skill and the MCP server load. Node.js 20 or newer must already be on `PATH`.
 
-`@knolo/box@0.1.0` is not published yet. The plugin command is `npx -y @knolo/box@0.1.0 mcp`, and that download will fail until the package is on npm. Until then, run the workspace binary:
+npm `latest` is `@knolo/box@0.1.0`. The plugin command is `npx -y @knolo/box@0.1.0 mcp`. This tree is `0.1.1` until that version is published. To run this tree, use the workspace binary:
 
 ```bash
 node packages/box/bin/knolo-box.mjs build

@@ -21,8 +21,8 @@ implement composition. The adapter preserves Knolo’s deterministic V4 retrieva
 API. V5 Knowledge Image inspection, verification, migration, and runtime
 management are exposed by [`@knolo/core`](https://www.npmjs.com/package/@knolo/core)
 and [`@knolo/cli`](https://www.npmjs.com/package/@knolo/cli). Composition is
-`@knolo/core/composition`. Cortex is `@knolo/core/cortex`. Published `@knolo/cli` is `6.2.1` and depends on `@knolo/core`
-`^6.2.0`. This tree's CLI package file is `6.2.2`.
+`@knolo/core/composition`. Cortex is `@knolo/core/cortex`. Published `@knolo/cli` is `6.2.2` and depends on `@knolo/core`
+`^6.2.0`. This tree's CLI package file is `6.2.3` until that version is published.
 
 For a mounted V5 image, pass `image` (or a Node `imagePath`) to the retriever.
 The adapter uses bounded V5 EQL search and includes the image state root, query

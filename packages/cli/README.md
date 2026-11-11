@@ -13,8 +13,8 @@ reader.
 
 `knolo compose`, `knolo attest`, and `knolo verify-attestation` cite local
 Knowledge Images and write an attestation sidecar. This tree's `@knolo/cli`
-package file is `6.2.2` and depends on `@knolo/core` `^6.2.0`. npm
-`latest` is `6.2.1` until `6.2.2` is published. They do not fetch Hub. Verification
+package file is `6.2.3` and depends on `@knolo/core` `^6.2.0`. npm
+`latest` is `6.2.2` until `6.2.3` is published. They do not fetch Hub. Verification
 recomputes `compositionRoot` and checks bundled excerpt bytes. A keyring key
 must fall inside `notBefore`, `notAfter`, and `revokedAt`. `used` means a
 query or evaluation ran. It does not mean `SATISFIED`, and it does not mean a
@@ -188,9 +188,11 @@ every `publisher/name`. `check` reads a source directory that contains
 when `knolo-box` is on `PATH`. It scans `~/.grok` when that directory
 exists, plus every `--root`. It does not require `~/.grok`. It always
 includes `~/.knolo/skills`. An existing `~/.knolo/box/box.config.json` is
-kept and rebuilt. `--reset` replaces it. `--agent` sets the caller name.
-`--auto-rebuild` turns on a rebuild at the next search. Those flags require
-`--reset` when a config file is already there. Setup does not prompt,
+kept and rebuilt. `--reset` replaces it. `--agent`, `--auto-rebuild`,
+`--root`, and the scope paths merge into that file. `--root` may be the
+parent of `agent-data`, or the `agent-data` directory itself. `--agent` sets
+the caller name. `--auto-rebuild` turns on a rebuild at the next search.
+Setup does not prompt,
 install a pack, or call the hub. A missing `knolo-box` is one line, and
 setup still exits 0. It prints the config path, `knolo skill install <publisher>/<name>`,
 and `knolo-box mcp --config <path>`. The install path, auth, trust, and
@@ -359,7 +361,7 @@ This ensures:
 ## 🗺 Roadmap
 
 The active roadmap is maintained in [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
-The published npm release is `6.2.1`. This package file is `6.2.2`. It preserves the V4 CLI, keeps V5 verification,
+The published npm release is `6.2.2`. This package file is `6.2.3` until that version is published. It preserves the V4 CLI, keeps V5 verification,
 migration, diagnostics, and read-only Studio management, and adds offline
 composition, attestation, and `knolo cortex`. Cortex verification does not
 mean an answer is true.

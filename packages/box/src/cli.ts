@@ -15,7 +15,7 @@ export async function main(
   const command = argv[0];
   if (!command || command === '--help' || command === '-h') {
     console.error(
-      'knolo-box build|status|mcp|init|ensure-fresh [--config <file>] [--root <dir>] [--skills <path>] [--managed-skills <path>] [--memory <path>] [--transcripts <path>] [--files <path>] [--tolerant] [--agent <id>] [--auto-rebuild] [--hub-skills <path>]'
+      'knolo-box build|status|mcp|init|ensure-fresh [--config <file>] [--root <dir>] [--skills <path>] [--managed-skills <path>] [--memory <path>] [--transcripts <path>] [--files <path>] [--tolerant] [--agent <id>] [--auto-rebuild] [--hub-skills <path>] [--force] [--merge]'
     );
     return command ? 0 : 1;
   }
@@ -44,6 +44,8 @@ export async function main(
         agentId: flag(argv, '--agent'),
         autoRebuild: argv.includes('--auto-rebuild') ? true : undefined,
         hubSkills: flag(argv, '--hub-skills'),
+        force: argv.includes('--force'),
+        merge: argv.includes('--merge'),
       });
       for (const line of result.reports) console.error(line);
       console.log(

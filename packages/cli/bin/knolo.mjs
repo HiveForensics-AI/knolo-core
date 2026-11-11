@@ -225,9 +225,12 @@ function printCommandHelp(command) {
 
 Resolves the hub the same way as the other hub commands.
 Scans ~/.grok when that directory exists, plus every --root.
+--root may be the parent of agent-data, or the agent-data directory itself.
 Runs knolo-box init --tolerant, then knolo-box build --config.
 Keeps an existing config and rebuilds it. Pass --reset to replace it.
+--agent, --auto-rebuild, --root, and the scope paths merge into an existing config.
 Always includes ~/.knolo/skills as a skills root.
+When no skill folder is found, setup names the roots it scanned.
 Pass --agent to set the caller name. Pass --auto-rebuild to rebuild on the next search.
 Does not prompt. Does not install a pack or call the hub.
 A missing knolo-box is printed, and setup still exits 0.
@@ -1902,27 +1905,27 @@ async function main() {
         return printCommandHelp(command);
       if (command === 'kar') {
         const { runKarCli } = await import('./kar.mjs');
-        return runKarCli(commandArgs);
+        return await runKarCli(commandArgs);
       }
       if (command === 'compose' || command === 'attest' || command === 'verify-attestation') {
         const { runComposeCli } = await import('./compose.mjs');
-        return runComposeCli(command, commandArgs);
+        return await runComposeCli(command, commandArgs);
       }
       if (command === 'cortex') {
         const { runCortexCli } = await import('./cortex.mjs');
-        return runCortexCli(commandArgs);
+        return await runCortexCli(commandArgs);
       }
       if (command === 'flight') {
         const { runFlightCli } = await import('./flight.mjs');
-        return runFlightCli(commandArgs);
+        return await runFlightCli(commandArgs);
       }
       if (command === 'skill') {
         const { runSkillCli } = await import('./skill.mjs');
-        return runSkillCli(commandArgs);
+        return await runSkillCli(commandArgs);
       }
       if (command === 'setup') {
         const { runKnoloSetup } = await import('./setup.mjs');
-        return runKnoloSetup(commandArgs);
+        return await runKnoloSetup(commandArgs);
       }
       if (command === 'init') return await cmdInit();
       if (command === 'add') return await cmdAdd(commandArgs);
@@ -1931,8 +1934,8 @@ async function main() {
       if (command === 'login') return await runHubLogin(commandArgs);
       if (command === 'whoami') return await runHubWhoami(commandArgs);
       if (command === 'logout') return await runHubLogout(commandArgs);
-      if (command === 'publish') return runHubPublish(commandArgs);
-      if (command === 'yank') return runHubYank(commandArgs);
+      if (command === 'publish') return await runHubPublish(commandArgs);
+      if (command === 'yank') return await runHubYank(commandArgs);
 
       const core = await loadCore();
       if (command === 'build') return await cmdBuild(core);

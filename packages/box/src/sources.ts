@@ -1,6 +1,7 @@
-import { createHash } from 'node:crypto';
+import { createHash, type Hash } from 'node:crypto';
 import { lstat, readdir, readFile, realpath, stat } from 'node:fs/promises';
 import path from 'node:path';
+import { openKnowledgeImageV5 } from '@knolo/core';
 import { citationHeader, sliceText } from './chunk.js';
 import type { BoxConfig, BoxScopeName } from './config.js';
 import { isDeniedPath, isInsideRoot } from './deny.js';
@@ -25,7 +26,7 @@ export type IndexedChunk = {
 
 export type SkippedPath = {
   path: string;
-  reason: 'missing-root' | 'too-large';
+  reason: 'missing-root' | 'too-large' | 'unreadable-image';
 };
 
 export type ScopeCorpus = {
@@ -132,7 +133,7 @@ async function collectFiles(
   scope: 'files' | 'skills' | 'memory'
 ): Promise<ScopeCorpus> {
   const skipped: SkippedPath[] = [];
-  const files: Array<{ abs: string; source: string }> = [];
+  const files: Array<{ abs: string; source: string; root: string }> = [];
   for (const root of config.scopes[scope].roots) {
     let realRoot: string;
     try {
@@ -159,6 +160,7 @@ async function collectFiles(
       files.push({
         abs,
         source: displayPath(abs, config, realRoot),
+        root: realRoot,
       });
     });
   }
@@ -184,6 +186,17 @@ async function collectFiles(
         }),
       });
     }
+    if (scope === 'skills') {
+      chunks.push(
+        ...(await bundledSkillChunks(
+          file.abs,
+          file.root,
+          config,
+          digest,
+          skipped
+        ))
+      );
+    }
   }
   return {
     scope,
@@ -191,6 +204,63 @@ async function collectFiles(
     sourceDigest: digest.digest('hex'),
     skipped,
   };
+}
+
+async function bundledSkillChunks(
+  skillFile: string,
+  scopeRoot: string,
+  config: BoxConfig,
+  digest: Hash,
+  skipped: SkippedPath[]
+): Promise<IndexedChunk[]> {
+  const dir = path.dirname(skillFile);
+  const imagePath = path.join(dir, 'knowledge.v5');
+  const policyPath = path.join(dir, 'policy.json');
+  let imageInfo;
+  let policyInfo;
+  try {
+    imageInfo = await stat(imagePath);
+    policyInfo = await stat(policyPath);
+  } catch {
+    return [];
+  }
+  if (!imageInfo.isFile() || !policyInfo.isFile()) return [];
+  const imageSource = displayPath(imagePath, config, scopeRoot);
+  if (imageInfo.size > FILE_BYTE_CAP) {
+    skipped.push({ path: imageSource, reason: 'too-large' });
+    return [];
+  }
+  const bytes = await readFile(imagePath);
+  digest.update(imageSource);
+  digest.update('\0');
+  digest.update(bytes);
+  digest.update('\0');
+  let objects: Array<{ kind: string; bytes: Uint8Array }>;
+  try {
+    objects = openKnowledgeImageV5(bytes).materialize().objects;
+  } catch {
+    skipped.push({ path: imageSource, reason: 'unreadable-image' });
+    return [];
+  }
+  const chunks: IndexedChunk[] = [];
+  for (const object of objects) {
+    if (object.kind !== 'chunk') continue;
+    const text = Buffer.from(object.bytes).toString('utf8');
+    for (const slice of sliceText(text, true)) {
+      const locator = `lines ${slice.startLine}-${slice.endLine}`;
+      chunks.push({
+        scope: 'skills',
+        source: imageSource,
+        locator,
+        text: citationHeader({
+          source: imageSource,
+          locator,
+          body: slice.text,
+        }),
+      });
+    }
+  }
+  return chunks;
 }
 
 async function collectTranscripts(config: BoxConfig): Promise<ScopeCorpus> {

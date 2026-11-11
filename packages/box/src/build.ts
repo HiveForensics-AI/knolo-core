@@ -32,7 +32,10 @@ export type BoxPin = {
 export type BoxPins = {
   version: 1;
   scopes: Partial<Record<BoxScopeName, BoxPin>>;
-  skipped: Array<{ path: string; reason: 'missing-root' | 'too-large' }>;
+  skipped: Array<{
+    path: string;
+    reason: 'missing-root' | 'too-large' | 'unreadable-image';
+  }>;
   emptyDigests?: Partial<Record<BoxScopeName, string>>;
 };
 
