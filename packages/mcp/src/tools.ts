@@ -44,8 +44,8 @@ export function registerKnoloTools(
       description: KNOLO_SEARCH_DESCRIPTION,
       inputSchema: z.object({
         query: z.string().min(1),
-        imageIds: z.array(z.string().min(1)).optional(),
-        limit: z.number().int().min(1).optional(),
+        imageIds: z.array(z.string().min(1)).nullish(),
+        limit: z.number().int().min(1).nullish(),
       }),
       annotations: readOnly,
     },
@@ -55,8 +55,12 @@ export function registerKnoloTools(
         const result = await service.search(
           {
             query,
-            ...(imageIds === undefined ? {} : { imageIds }),
-            ...(limit === undefined ? {} : { limit: Math.min(limit, maxHits) }),
+            ...(imageIds === undefined || imageIds === null
+              ? {}
+              : { imageIds }),
+            ...(limit === undefined || limit === null
+              ? {}
+              : { limit: Math.min(limit, maxHits) }),
           },
           callerFrom(server, agentId, sessionId)
         );
@@ -76,8 +80,8 @@ export function registerKnoloTools(
         imageId: z.string().min(1),
         objectId: z.string().min(1),
         stateRoot: z.string().min(1),
-        start: z.number().int().min(0).optional(),
-        end: z.number().int().min(0).optional(),
+        start: z.number().int().min(0).nullish(),
+        end: z.number().int().min(0).nullish(),
       }),
       annotations: readOnly,
     },
@@ -89,8 +93,8 @@ export function registerKnoloTools(
             imageId,
             objectId,
             stateRoot,
-            ...(start === undefined ? {} : { start }),
-            ...(end === undefined ? {} : { end }),
+            ...(start === undefined || start === null ? {} : { start }),
+            ...(end === undefined || end === null ? {} : { end }),
           },
           callerFrom(server, agentId, sessionId)
         );
@@ -107,7 +111,7 @@ export function registerKnoloTools(
       description:
         'Verify the local bytes and V5 roots for approved Knolo Knowledge Images. A matching pin stays valid when sources are stale. builtAt and stale are set only when the mount records source roots.',
       inputSchema: z.object({
-        imageId: z.string().min(1).optional(),
+        imageId: z.string().min(1).nullish(),
       }),
       annotations: readOnly,
     },
@@ -115,7 +119,7 @@ export function registerKnoloTools(
       try {
         await refresh?.();
         const results = await service.verify(
-          imageId,
+          imageId ?? undefined,
           callerFrom(server, agentId, sessionId)
         );
         return success({ results });

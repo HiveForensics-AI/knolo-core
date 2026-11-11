@@ -237,6 +237,17 @@ test('lists exactly four read-only tools and keeps caller identity in config', a
     assert.equal(receipt.caller.sessionId, 'knolo-mcp-test');
     assert.equal(receipt.match, 'all');
     assert.equal(receipt.queryResult.plan.search, null);
+    const nulled = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+      imageIds: null,
+      limit: null,
+    });
+    assert.notEqual(nulled.isError, true);
+    assert.equal(nulled.structuredContent.hits.length, 1);
+    assert.match(
+      nulled.structuredContent.hits[0].excerpt,
+      /Annual enterprise refunds/
+    );
     assert.equal(receipt.queryResult.plan.textQuery.mode, 'all');
     await service.verifyReceipt(body.receipts[0].receiptId);
 
@@ -584,6 +595,23 @@ test('pinned graphs add read-only KAR and Cortex tools', async () => {
     });
     assert.equal(verified.structuredContent.ok, true);
     assert.equal(verified.structuredContent.code, 'VERIFIED');
+    const verifiedWithNullDossier = await call(client, 'knolo_kar_verify', {
+      mountId: 'support',
+      proposition: support.proposition,
+      plan: support.plan,
+      result: evaluation,
+      dossier: null,
+    });
+    assert.equal(verifiedWithNullDossier.structuredContent.ok, true);
+    assert.equal(verifiedWithNullDossier.structuredContent.code, 'VERIFIED');
+    const neither = await call(client, 'knolo_kar_verify', {
+      mountId: 'support',
+      proposition: support.proposition,
+      plan: support.plan,
+      result: null,
+      dossier: null,
+    });
+    assert.match(textOf(neither), /exactly one of result or dossier/);
 
     const tampered = JSON.parse(JSON.stringify(evaluation));
     tampered.certificate.roots.karRoot = flipDigest(
@@ -619,6 +647,19 @@ test('pinned graphs add read-only KAR and Cortex tools', async () => {
       },
     });
     assert.equal(dossierVerdict.structuredContent.ok, true);
+    const dossierNullOptionals = await call(client, 'knolo_kar_verify', {
+      mountId: 'support',
+      proposition: support.proposition,
+      plan: support.plan,
+      result: null,
+      dossier: {
+        manifest: dossier.manifest,
+        certificate: dossier.certificate,
+        evaluation: null,
+        evidenceMarkdown: null,
+      },
+    });
+    assert.equal(dossierNullOptionals.structuredContent.ok, true);
     const language = await call(client, 'knolo_kar_verify', {
       mountId: 'support',
       proposition: support.proposition,
@@ -648,6 +689,12 @@ test('pinned graphs add read-only KAR and Cortex tools', async () => {
       answer: found,
     });
     assert.equal(cortex.structuredContent.ok, true);
+    const cortexNullQuestion = await call(client, 'knolo_cortex_verify', {
+      mountId: 'cortex-v5',
+      question: null,
+      answer: found,
+    });
+    assert.equal(cortexNullQuestion.structuredContent.ok, true);
     assert.equal(cortex.structuredContent.traceRoot, found.receipt.traceRoot);
     assert.match(
       cortex.structuredContent.statement,

@@ -54,7 +54,7 @@ image. A config file that cannot be read fails that call. `agentId`,
 `sessionId`, and `maxHits` stay at the values from process start. KAR graphs
 are authorized with that same startup `agentId`.
 
-npm still has `@knolo/mcp@0.2.1`. This tree sets `server.json` and the MCP
+npm `latest` is `@knolo/mcp@0.2.2`. This tree sets `server.json` and the MCP
 server version to `0.2.2`. The published `0.2.1` tarball still reports
 `0.2.0` in those two fields. A mount without a `kar` block exposes
 the four tools above. A mount with a `kar` block also exposes
@@ -69,8 +69,9 @@ server over stdio and run one search.
 [OpenAI Agents SDK example](../../docs/integrations/openai-agents.md) uses the
 same server. The
 [Pydantic AI example](../../docs/integrations/pydantic-ai.md), the
-[Langflow example](../../docs/integrations/langflow.md), and the
-[Dify example](../../docs/integrations/dify.md) use the same
+[Langflow example](../../docs/integrations/langflow.md), the
+[Dify example](../../docs/integrations/dify.md), and the
+[CrewAI example](../../docs/integrations/crewai.md) use the same
 server. The
 [Vercel AI SDK example](../../docs/integrations/ai-sdk.md) calls the same
 service through `@knolo/ai-sdk`. `@knolo/ai-sdk@0.1.0` is published. The
@@ -86,6 +87,17 @@ no hits. Publishing the image and opening the `docker/mcp-registry` pull
 request are separate steps. The draft catalog entry is
 [`listings/docker/server.yaml`](listings/docker/server.yaml). The integration
 note is [Docker](../../docs/integrations/docker.md).
+
+[Goose](../../docs/integrations/goose.md) launches this server as a stdio
+extension. The draft is
+[`listings/goose/extension.yaml`](listings/goose/extension.yaml). Goose does
+not receive a URL. The server does not listen on a port. Submitting the
+extension is a separate pull request.
+
+The [awesome-mcp-servers](listings/awesome-mcp-servers.md) line belongs under
+Knowledge & Memory. It names this package as a local TypeScript server and
+pins `@knolo/mcp@0.2.2`. There is no badge, because Knolo is not listed there
+yet. Submitting the line is a separate pull request.
 
 ## Config
 
