@@ -188,7 +188,13 @@ async function collectFiles(
     }
     if (scope === 'skills') {
       chunks.push(
-        ...(await bundledSkillChunks(file.abs, file.root, config, digest, skipped))
+        ...(await bundledSkillChunks(
+          file.abs,
+          file.root,
+          config,
+          digest,
+          skipped
+        ))
       );
     }
   }

@@ -361,7 +361,7 @@ This ensures:
 ## 🗺 Roadmap
 
 The active roadmap is maintained in [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
-The published npm release is `6.2.1`. This package file is `6.2.2`. It preserves the V4 CLI, keeps V5 verification,
+The published npm release is `6.2.2`. This package file is `6.2.3` until that version is published. It preserves the V4 CLI, keeps V5 verification,
 migration, diagnostics, and read-only Studio management, and adds offline
 composition, attestation, and `knolo cortex`. Cortex verification does not
 mean an answer is true.

@@ -2028,7 +2028,9 @@ test('init accepts an agent-data root and a symlink to sand-data', async () => {
       tolerant: true,
     });
     assert.equal(
-      direct.scopes.skills.roots.includes(await realpath(path.join(agentData, 'workflows'))),
+      direct.scopes.skills.roots.includes(
+        await realpath(path.join(agentData, 'workflows'))
+      ),
       true
     );
     assert.equal(
@@ -2050,7 +2052,9 @@ test('init accepts an agent-data root and a symlink to sand-data', async () => {
       tolerant: true,
     });
     assert.equal(
-      viaLink.scopes.skills.roots.includes(await realpath(path.join(store, 'workflows'))),
+      viaLink.scopes.skills.roots.includes(
+        await realpath(path.join(store, 'workflows'))
+      ),
       true
     );
     await rm(linkedHome, { recursive: true, force: true });
@@ -2151,7 +2155,10 @@ test('init refuses to overwrite unless --force, and --merge keeps existing field
     );
     assert.deepEqual(merged.scopes.memory.roots, []);
     assert.equal(merged.scopes.skills.roots.includes(priorRoot), true);
-    assert.equal(merged.scopes.skills.roots.includes(await realpath(hub)), true);
+    assert.equal(
+      merged.scopes.skills.roots.includes(await realpath(hub)),
+      true
+    );
     assert.equal(
       merged.scopes.skills.roots.includes(
         await realpath(path.join(home, 'agent-data', 'workflows'))
@@ -2189,7 +2196,9 @@ test('init refuses to overwrite unless --force, and --merge keeps existing field
       true
     );
     assert.equal(
-      omitted.scopes.skills.roots.includes(path.join(grokHome, 'bundled', 'skills')),
+      omitted.scopes.skills.roots.includes(
+        path.join(grokHome, 'bundled', 'skills')
+      ),
       true
     );
     assert.equal(
@@ -2201,7 +2210,9 @@ test('init refuses to overwrite unless --force, and --merge keeps existing field
       true
     );
     assert.equal(
-      omitted.scopes.transcripts.roots.includes(path.join(grokHome, 'sessions')),
+      omitted.scopes.transcripts.roots.includes(
+        path.join(grokHome, 'sessions')
+      ),
       true
     );
   } finally {
@@ -2214,7 +2225,10 @@ test('a skill knowledge image is searchable and a bad image is skipped', async (
   try {
     const skillDir = path.join(home, 'skills', 'agenda');
     await mkdir(skillDir, { recursive: true });
-    await writeFile(path.join(skillDir, 'SKILL.md'), '# Agenda\n\nSKILL_PAGE_PHRASE\n');
+    await writeFile(
+      path.join(skillDir, 'SKILL.md'),
+      '# Agenda\n\nSKILL_PAGE_PHRASE\n'
+    );
     const image = createKnowledgeImageV5({
       actor: 'skill-pack',
       policy: {
@@ -2250,8 +2264,14 @@ test('a skill knowledge image is searchable and a bad image is skipped', async (
     );
     const brokenDir = path.join(home, 'skills', 'broken');
     await mkdir(brokenDir, { recursive: true });
-    await writeFile(path.join(brokenDir, 'SKILL.md'), '# Broken\n\nBROKEN_PAGE_PHRASE\n');
-    await writeFile(path.join(brokenDir, 'knowledge.v5'), Buffer.from('not-an-image'));
+    await writeFile(
+      path.join(brokenDir, 'SKILL.md'),
+      '# Broken\n\nBROKEN_PAGE_PHRASE\n'
+    );
+    await writeFile(
+      path.join(brokenDir, 'knowledge.v5'),
+      Buffer.from('not-an-image')
+    );
     await writeFile(path.join(brokenDir, 'policy.json'), '{}\n');
     const output = path.join(home, 'out');
     const config = {

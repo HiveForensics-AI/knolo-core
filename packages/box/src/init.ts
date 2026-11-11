@@ -1,4 +1,11 @@
-import { lstat, mkdir, readFile, realpath, stat, writeFile } from 'node:fs/promises';
+import {
+  lstat,
+  mkdir,
+  readFile,
+  realpath,
+  stat,
+  writeFile,
+} from 'node:fs/promises';
 import path from 'node:path';
 import { defaultBoxConfig, type BoxConfig } from './config.js';
 import { isDeniedInitPath } from './deny.js';
@@ -150,7 +157,9 @@ export async function initBox(request: InitRequest): Promise<InitResult> {
     grokHome: stringField(stored, 'grokHome', config.grokHome),
     agents: agentsField(stored, config.agents),
     scopes: scopesField(stored, config.scopes),
-    ...(stringField(stored, 'agentId', '') ? { agentId: stringField(stored, 'agentId', '') } : {}),
+    ...(stringField(stored, 'agentId', '')
+      ? { agentId: stringField(stored, 'agentId', '') }
+      : {}),
     ...(stored.autoRebuild === true ? { autoRebuild: true as const } : {}),
     reports,
   };
@@ -163,7 +172,12 @@ async function readConfigFile(
   try {
     text = await readFile(configPath, 'utf8');
   } catch (error) {
-    if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
+    if (
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      error.code === 'ENOENT'
+    ) {
       return undefined;
     }
     throw new BoxError('BOX_CONFIG', `Could not read ${configPath}.`);
@@ -205,14 +219,16 @@ function scopesField(
   fallback: BoxConfig['scopes']
 ): BoxConfig['scopes'] {
   const value = (stored as Record<string, unknown>).scopes;
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return fallback;
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    return fallback;
   const record = value as Record<string, unknown>;
   const scopes = { ...fallback };
   for (const name of ['files', 'skills', 'memory', 'transcripts'] as const) {
     const entry = record[name];
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
     const roots = (entry as { roots?: unknown }).roots;
-    if (!Array.isArray(roots) || roots.some((item) => typeof item !== 'string')) continue;
+    if (!Array.isArray(roots) || roots.some((item) => typeof item !== 'string'))
+      continue;
     scopes[name] = { roots: roots as string[] };
   }
   return scopes;
@@ -225,13 +241,17 @@ async function mergeConfig(
 ): Promise<Record<string, unknown>> {
   const next: Record<string, unknown> = { ...existing };
   const priorScopes =
-    existing.scopes && typeof existing.scopes === 'object' && !Array.isArray(existing.scopes)
+    existing.scopes &&
+    typeof existing.scopes === 'object' &&
+    !Array.isArray(existing.scopes)
       ? { ...(existing.scopes as Record<string, unknown>) }
       : {};
   const scopes: Record<string, unknown> = { ...priorScopes };
   const grokHome = path.resolve(
     expandHomePath(
-      typeof existing.grokHome === 'string' ? existing.grokHome : fresh.grokHome,
+      typeof existing.grokHome === 'string'
+        ? existing.grokHome
+        : fresh.grokHome,
       home
     )
   );
@@ -258,10 +278,13 @@ async function mergeConfig(
 }
 
 function explicitRoots(entry: unknown): string[] | undefined {
-  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return undefined;
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry))
+    return undefined;
   const roots = (entry as { roots?: unknown }).roots;
   if (!Array.isArray(roots)) return undefined;
-  return roots.filter((item): item is string => typeof item === 'string' && item.length > 0);
+  return roots.filter(
+    (item): item is string => typeof item === 'string' && item.length > 0
+  );
 }
 
 function implicitScopeRoots(
@@ -269,7 +292,10 @@ function implicitScopeRoots(
   grokHome: string
 ): string[] {
   if (name === 'skills') {
-    return [path.join(grokHome, 'skills'), path.join(grokHome, 'bundled', 'skills')];
+    return [
+      path.join(grokHome, 'skills'),
+      path.join(grokHome, 'bundled', 'skills'),
+    ];
   }
   if (name === 'memory') return [path.join(grokHome, 'memory-v2')];
   if (name === 'transcripts') return [path.join(grokHome, 'sessions')];
@@ -300,7 +326,11 @@ async function unionRoots(
 
 async function rootKey(root: string, home: string): Promise<string> {
   const expanded =
-    root === '~' ? home : root.startsWith('~/') ? path.join(home, root.slice(2)) : root;
+    root === '~'
+      ? home
+      : root.startsWith('~/')
+        ? path.join(home, root.slice(2))
+        : root;
   const resolved = path.resolve(expanded);
   try {
     return await realpath(resolved);
@@ -453,11 +483,17 @@ async function resolveRole(
 }
 
 function emptySkillReport(label: string, roots: readonly string[]): string {
-  const scanned = roots.length > 0 ? roots.map((root) => path.resolve(root)).join(', ') : '(none)';
+  const scanned =
+    roots.length > 0
+      ? roots.map((root) => path.resolve(root)).join(', ')
+      : '(none)';
   return `${label}: no directory found. Scanned ${scanned}. A root needs to contain agent-data or sand-data, or be the skill folder itself.`;
 }
 
-async function pathsForCandidate(root: string, relative: string): Promise<string[]> {
+async function pathsForCandidate(
+  root: string,
+  relative: string
+): Promise<string[]> {
   const resolved = path.resolve(root);
   const paths = [path.join(resolved, relative)];
   let real = resolved;
