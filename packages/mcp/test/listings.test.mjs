@@ -73,8 +73,16 @@ test('cline install docs keep the published pins', () => {
   }
   assert.match(installDoc, /npx -y @knolo\/cli@6\.2\.2 verify /);
   assert.match(installDoc, /"command": "npx"/);
-  assert.doesNotMatch(installDoc, /https?:\/\//);
-  assert.doesNotMatch(installDoc, /"url"/);
+  const serverBlocks = installDoc.match(/```json[\s\S]*?```/g) ?? [];
+  assert.equal(serverBlocks.length > 0, true);
+  for (const block of serverBlocks) {
+    assert.doesNotMatch(block, /https?:\/\//);
+    assert.doesNotMatch(block, /"url"/);
+  }
+  const manifest = JSON.parse(
+    readFileSync(path.join(packageRoot, 'package.json'), 'utf8')
+  );
+  assert.equal(manifest.files.includes('llms-install.md'), true);
   const installText = installDoc.replace(/\s+/g, ' ');
   assert.match(
     installText,

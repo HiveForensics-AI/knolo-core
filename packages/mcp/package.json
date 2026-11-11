@@ -32,7 +32,8 @@
     "dist",
     "bin",
     "server.json",
-    "README.md"
+    "README.md",
+    "llms-install.md"
   ],
   "engines": {
     "node": ">=20"

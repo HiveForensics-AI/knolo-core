@@ -214,7 +214,8 @@ the config.
 ```
 
 The 400×400 listing logo is
-[listings/cline/logo.png](listings/cline/logo.png). The marketplace
+[logo.png](https://raw.githubusercontent.com/HiveForensics-AI/knolo-core/main/packages/mcp/listings/cline/logo.png).
+The marketplace
 submission is
 [cline/mcp-marketplace#3696](https://github.com/cline/mcp-marketplace/issues/3696).
 

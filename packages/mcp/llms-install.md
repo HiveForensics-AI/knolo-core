@@ -87,5 +87,5 @@ Each kept search term is a whole word. The server does not download images or
 write knowledge.
 
 The 400×400 logo for the marketplace listing is
-[listings/cline/logo.png](listings/cline/logo.png). Server details are in the
-[README](README.md).
+[logo.png](https://raw.githubusercontent.com/HiveForensics-AI/knolo-core/main/packages/mcp/listings/cline/logo.png).
+Server details are in the [README](README.md).
