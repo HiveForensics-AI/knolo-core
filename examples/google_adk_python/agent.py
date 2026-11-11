@@ -16,7 +16,7 @@ from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
 from google.adk.tools.mcp_tool.mcp_toolset import McpToolset
 from mcp import StdioServerParameters
 
-PUBLISHED_PACKAGE = "@knolo/mcp@0.2.1"
+PUBLISHED_PACKAGE = "@knolo/mcp@0.2.3"
 
 
 def mcp_config_path() -> Path | None:

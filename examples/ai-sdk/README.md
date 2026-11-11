@@ -14,7 +14,7 @@ evidence requirements were met.
 A host that already speaks MCP can use the published server instead:
 
 ```bash
-npx -y @knolo/mcp@0.2.1 --config /absolute/knolo-mcp.json
+npx -y @knolo/mcp@0.2.3 --config /absolute/knolo-mcp.json
 ```
 
 ## Run the smoke

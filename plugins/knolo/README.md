@@ -1,7 +1,7 @@
 # Knolo Claude Code plugin
 
 This plugin loads the Knolo Agent Skill and registers the published Knolo MCP
-server. `@knolo/mcp@0.2.2` is the npm release. The server is stdio. It does
+server. `@knolo/mcp@0.2.3` is the npm release. The server is stdio. It does
 not listen on a port.
 
 Set `KNOLO_MCP_CONFIG` to an absolute `knolo-mcp.json` before Claude Code

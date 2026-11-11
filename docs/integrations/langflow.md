@@ -5,12 +5,12 @@ Langflow can call the published Knolo MCP server over stdio. The Python example 
 Tested with Langflow 1.13.1 and `lfx` 1.13.1.
 
 ```bash
-npx -y @knolo/mcp@0.2.1 --config /absolute/knolo-mcp.json
+npx -y @knolo/mcp@0.2.3 --config /absolute/knolo-mcp.json
 ```
 
-`@knolo/mcp@0.2.1` is the npm release. A mount without a `kar` block exposes `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`. A mount with a `kar` block also exposes `knolo_kar_evaluate`, `knolo_kar_verify`, and `knolo_cortex_verify`. Pins, policy, and the audit directory stay in the config file. Tool arguments cannot set the caller.
+`@knolo/mcp@0.2.3` is the npm release. A mount without a `kar` block exposes `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`. A mount with a `kar` block also exposes `knolo_kar_evaluate`, `knolo_kar_verify`, and `knolo_cortex_verify`. Pins, policy, and the audit directory stay in the config file. Tool arguments cannot set the caller.
 
-`examples/langflow/flow.json` is a Langflow 1.13.1 flow. Chat Input connects to the Agent, the Agent response connects to Chat Output, and MCP Tools in tool mode connects its toolset to the Agent tools port. The MCP server value is STDIO, command `npx`, arguments `-y @knolo/mcp@0.2.1 --config /absolute/knolo-mcp.json`. The Tool field is blank, so every tool is listed. Use Cached Server is off. The Agent model and API key are empty.
+`examples/langflow/flow.json` is a Langflow 1.13.1 flow. Chat Input connects to the Agent, the Agent response connects to Chat Output, and MCP Tools in tool mode connects its toolset to the Agent tools port. The MCP server value is STDIO, command `npx`, arguments `-y @knolo/mcp@0.2.3 --config /absolute/knolo-mcp.json`. The Tool field is blank, so every tool is listed. Use Cached Server is off. The Agent model and API key are empty.
 
 Import that file in Langflow 1.13.1 and replace `/absolute/knolo-mcp.json` with the absolute config path. The same command can be registered under Settings, then MCP Servers, in STDIO mode. `npx` needs Node on the host. A container needs Node in the image. This repository does not ship a container or a custom Langflow component.
 
@@ -43,7 +43,7 @@ config="$(node examples/google_adk_python/prepare-fixture.mjs)"
 export KNOLO_MCP_CONFIG="$config"
 ```
 
-Continuous integration starts `packages/mcp/bin/knolo-mcp.mjs` with Node so the job does not depend on a registry fetch of Knolo. Set `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` for that path. The default command is `npx` with `@knolo/mcp@0.2.1`. The smoke runs on Python 3.12. The Node half of that job stays on Node 20.
+Continuous integration starts `packages/mcp/bin/knolo-mcp.mjs` with Node so the job does not depend on a registry fetch of Knolo. Set `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` for that path. The default command is `npx` with `@knolo/mcp@0.2.3`. The smoke runs on Python 3.12. The Node half of that job stays on Node 20.
 
 `Graph.from_payload` checks that the flow loads. `MCPToolsComponent.update_tool_list` lists the tools, and the stdio client runs `knolo_search`. The smoke does not run the Agent.
 

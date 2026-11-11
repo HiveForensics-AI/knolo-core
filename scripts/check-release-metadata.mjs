@@ -198,7 +198,7 @@ assert.equal(mastraPackage.dependencies?.['@knolo/tools'], '^0.2.1');
 assert.equal(mastraPackage.peerDependencies?.['@mastra/core'], '^1.82.0');
 assert.equal(mastraPackage.dependencies?.['@mastra/core'], undefined);
 assert.equal(mastraPackage.devDependencies?.['@mastra/core'], '1.82.0');
-assert.equal(mastraPackage.devDependencies?.['@knolo/mcp'], '^0.2.1');
+assert.equal(mastraPackage.devDependencies?.['@knolo/mcp'], '^0.2.3');
 
 const openaiAgentsVersion = '0.1.0';
 const openaiAgentsPackage = readJson('packages/openai-agents/package.json');

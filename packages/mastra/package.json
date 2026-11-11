@@ -45,7 +45,7 @@
     "@mastra/core": "^1.82.0"
   },
   "devDependencies": {
-    "@knolo/mcp": "^0.2.1",
+    "@knolo/mcp": "^0.2.3",
     "@mastra/core": "1.82.0",
     "@types/node": "^20.11.0",
     "typescript": "^5.5.0"

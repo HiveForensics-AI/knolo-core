@@ -1,6 +1,6 @@
 # crewai
 
-One [CrewAI](https://docs.crewai.com/en/mcp/stdio) process reads a pinned Knolo V5 Knowledge Image through `@knolo/mcp@0.2.2`. The server is stdio only. The host owns the model. This example does not call one, and it does not read an API key.
+One [CrewAI](https://docs.crewai.com/en/mcp/stdio) process reads a pinned Knolo V5 Knowledge Image through `@knolo/mcp@0.2.3`. The server is stdio only. The host owns the model. This example does not call one, and it does not read an API key.
 
 `MCPServerAdapter` starts `knolo-mcp` with `StdioServerParameters`. The command and argument list are passed separately, so a path that contains spaces stays one argument. A search returns hits and an `openclaw-knolo-query-v1` receipt id. The fixture has no pinned graph, so the server exposes `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`.
 
@@ -24,7 +24,7 @@ python examples/crewai/smoke.py
 `prepare-fixture.mjs` writes a two-chunk image, a deny-default policy, and `knolo-mcp.json` under a temporary directory. Omit `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` to start the published server instead:
 
 ```bash
-npx -y @knolo/mcp@0.2.2 --config "$KNOLO_MCP_CONFIG"
+npx -y @knolo/mcp@0.2.3 --config "$KNOLO_MCP_CONFIG"
 ```
 
 The smoke lists the four tools, checks that the graph tools are absent, then searches for `enterprise refunds`. It expects the refunds excerpt, an object id, a `sha256-` state root, and a `qr_` receipt id. It does not construct an agent, a task, or a crew, and it does not call a model. It also points the server at an unwritable audit directory and checks that `knolo_search` returns `AUDIT_UNAVAILABLE`.

@@ -59,7 +59,7 @@ MCP tool returns for that input and image.
 A host that already has an MCP client can launch the published server:
 
 ```bash
-npx -y @knolo/mcp@0.2.1 --config /absolute/knolo-mcp.json
+npx -y @knolo/mcp@0.2.3 --config /absolute/knolo-mcp.json
 ```
 
 That command is stdio. This package does not start it and does not open a

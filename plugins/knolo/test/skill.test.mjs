@@ -78,7 +78,7 @@ test('the plugin registers stdio MCP and the fixture query runs', () => {
   assert.equal(server.command, 'npx');
   assert.deepEqual(server.args, [
     '-y',
-    '@knolo/mcp@0.2.2',
+    '@knolo/mcp@0.2.3',
     '--config',
     '${KNOLO_MCP_CONFIG}',
   ]);

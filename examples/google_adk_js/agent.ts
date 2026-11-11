@@ -10,7 +10,7 @@ import path from 'node:path';
 import { LlmAgent, MCPToolset } from '@google/adk';
 import type { StdioConnectionParams } from '@google/adk';
 
-export const PUBLISHED_PACKAGE = '@knolo/mcp@0.2.1';
+export const PUBLISHED_PACKAGE = '@knolo/mcp@0.2.3';
 
 export function mcpConfigPath(): string | undefined {
   const raw = (process.env.KNOLO_MCP_CONFIG ?? '').trim();

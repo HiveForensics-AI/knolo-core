@@ -1,6 +1,6 @@
 # Install @knolo/mcp for Cline
 
-`@knolo/mcp@0.2.2` is a read-only stdio server for a pinned Knolo V5
+`@knolo/mcp@0.2.3` is a read-only stdio server for a pinned Knolo V5
 Knowledge Image. It does not listen on a port, does not take an API key, and
 does not call a model. Cline launches it with `npx`. Node 20 or newer is
 required.
@@ -21,10 +21,10 @@ console.log(createHash("sha256").update(readFileSync(file)).digest("hex"));
 ' /absolute/image.v5
 ```
 
-Read the state root with the published CLI `@knolo/cli@6.2.2`:
+Read the state root with the published CLI `@knolo/cli@6.2.3`:
 
 ```sh
-npx -y @knolo/cli@6.2.2 verify /absolute/image.v5
+npx -y @knolo/cli@6.2.3 verify /absolute/image.v5
 ```
 
 Copy `stateRoot` from that JSON. It starts with `sha256-`. `verified` must be
@@ -68,7 +68,7 @@ Add a stdio server in Cline's MCP settings. The command is `npx`.
   "mcpServers": {
     "knolo": {
       "command": "npx",
-      "args": ["-y", "@knolo/mcp@0.2.2", "--config", "/absolute/knolo-mcp.json"]
+      "args": ["-y", "@knolo/mcp@0.2.3", "--config", "/absolute/knolo-mcp.json"]
     }
   }
 }

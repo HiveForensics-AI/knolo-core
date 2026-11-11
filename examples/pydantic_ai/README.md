@@ -1,6 +1,6 @@
 # pydantic_ai
 
-One [Pydantic AI](https://pydantic.dev/docs/ai/mcp/client/) process reads a pinned Knolo V5 Knowledge Image through `@knolo/mcp@0.2.1`. The server is stdio only. The host owns the model. This example does not call one, and it does not read an API key.
+One [Pydantic AI](https://pydantic.dev/docs/ai/mcp/client/) process reads a pinned Knolo V5 Knowledge Image through `@knolo/mcp@0.2.3`. The server is stdio only. The host owns the model. This example does not call one, and it does not read an API key.
 
 `MCPToolset` starts `knolo-mcp` with FastMCP `StdioTransport`. A search returns hits and an `openclaw-knolo-query-v1` receipt id. The fixture has no pinned graph, so the server exposes `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`.
 
@@ -24,7 +24,7 @@ python examples/pydantic_ai/smoke.py
 `prepare-fixture.mjs` writes a two-chunk image, a deny-default policy, and `knolo-mcp.json` under a temporary directory. Omit `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` to start the published server instead:
 
 ```bash
-npx -y @knolo/mcp@0.2.1 --config "$KNOLO_MCP_CONFIG"
+npx -y @knolo/mcp@0.2.3 --config "$KNOLO_MCP_CONFIG"
 ```
 
 The smoke lists the four tools, checks that the graph tools are absent, then searches for `enterprise refunds`. It expects the refunds excerpt, an object id, a `sha256-` state root, and a `qr_` receipt id. It does not construct an `Agent` and it does not call a model. It also points the server at an unwritable audit directory and checks that `knolo_search` returns `AUDIT_UNAVAILABLE`.

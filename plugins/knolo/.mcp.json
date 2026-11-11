@@ -2,7 +2,7 @@
   "mcpServers": {
     "knolo": {
       "command": "npx",
-      "args": ["-y", "@knolo/mcp@0.2.2", "--config", "${KNOLO_MCP_CONFIG}"]
+      "args": ["-y", "@knolo/mcp@0.2.3", "--config", "${KNOLO_MCP_CONFIG}"]
     }
   }
 }

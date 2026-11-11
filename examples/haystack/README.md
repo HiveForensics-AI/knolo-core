@@ -1,6 +1,6 @@
 # haystack
 
-One [Haystack](https://haystack.deepset.ai/) process reads a pinned Knolo V5 Knowledge Image through `@knolo/mcp@0.2.1`. The server is stdio only. The host owns the model. This example does not call one, and it does not read an API key.
+One [Haystack](https://haystack.deepset.ai/) process reads a pinned Knolo V5 Knowledge Image through `@knolo/mcp@0.2.3`. The server is stdio only. The host owns the model. This example does not call one, and it does not read an API key.
 
 `MCPToolset` from `mcp-haystack` starts `knolo-mcp` with `StdioServerInfo`. The command and argument list are passed separately, so a path that contains spaces stays one argument. `eager_connect` is true, so the tool list is the Knolo tools. A search returns hits and an `openclaw-knolo-query-v1` receipt id. The fixture has no pinned graph, so the server exposes `knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`.
 
@@ -24,7 +24,7 @@ python examples/haystack/smoke.py
 `prepare-fixture.mjs` writes a two-chunk image, a deny-default policy, and `knolo-mcp.json` under a temporary directory. Omit `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` to start the published server instead:
 
 ```bash
-npx -y @knolo/mcp@0.2.1 --config "$KNOLO_MCP_CONFIG"
+npx -y @knolo/mcp@0.2.3 --config "$KNOLO_MCP_CONFIG"
 ```
 
 The smoke lists the four tools, checks that the graph tools are absent, then searches for `enterprise refunds`. It expects the refunds excerpt, an object id, a `sha256-` state root, and a `qr_` receipt id. It does not build a pipeline and it does not call a model. It also points the server at an unwritable audit directory and checks that `knolo_search` returns `AUDIT_UNAVAILABLE`. The smoke stops the MCP session after each check so the process can exit.

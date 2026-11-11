@@ -80,45 +80,45 @@ operational guides for Knolo.
   Build plugin that retrieves structure before full chunks. The published
   `@knolo/code` check is recorded on that page. npm `latest` is `0.1.1`.
 - [Google ADK](integrations/google-adk.md) — Python and TypeScript agents
-  that call published `@knolo/mcp@0.2.1` over stdio. A search returns a query
+  that call published `@knolo/mcp@0.2.3` over stdio. A search returns a query
   receipt. Verification checks the image. `SATISFIED` means evidence
   requirements were met.
 - [OpenAI Agents SDK](integrations/openai-agents.md) — a TypeScript smoke
-  that calls published `@knolo/mcp@0.2.1` over stdio, and native
+  that calls published `@knolo/mcp@0.2.3` over stdio, and native
   `@knolo/openai-agents` tools. Knolo does not call a model. A search returns
   a query receipt. `SATISFIED` means evidence requirements were met.
   `@knolo/openai-agents@0.1.0` is not published yet.
 - [Anthropic Agent Skill](integrations/anthropic-skills.md) — a Claude Code
-  plugin that loads a Knolo skill and registers `@knolo/mcp@0.2.2` over
+  plugin that loads a Knolo skill and registers `@knolo/mcp@0.2.3` over
   stdio. The skill answers through the mounted tools and cites `imageId`,
   `objectId`, and `stateRoot`. A receipt is an integrity check. `SATISFIED`
   means evidence requirements were met. The upstream skills listing is
   separate.
 - [Pydantic AI](integrations/pydantic-ai.md) — a Python smoke that calls
-  published `@knolo/mcp@0.2.1` over stdio. Knolo does not call a model. A
+  published `@knolo/mcp@0.2.3` over stdio. Knolo does not call a model. A
   search returns a query receipt. `SATISFIED` means evidence requirements
   were met.
 - [Agno](integrations/agno.md) — a Python smoke that calls published
-  `@knolo/mcp@0.2.1` over stdio through Agno `MCPTools`. Knolo does not call
+  `@knolo/mcp@0.2.3` over stdio through Agno `MCPTools`. Knolo does not call
   a model. A search returns a query receipt. `SATISFIED` means evidence
   requirements were met.
 - [CrewAI](integrations/crewai.md) — a Python smoke that calls published
-  `@knolo/mcp@0.2.2` over stdio through CrewAI `MCPServerAdapter`. Knolo does
+  `@knolo/mcp@0.2.3` over stdio through CrewAI `MCPServerAdapter`. Knolo does
   not call a model. A search returns a query receipt. `SATISFIED` means
   evidence requirements were met.
 - [Haystack](integrations/haystack.md) — a Python smoke that calls published
-  `@knolo/mcp@0.2.1` over stdio through Haystack `MCPToolset`. Knolo does not
+  `@knolo/mcp@0.2.3` over stdio through Haystack `MCPToolset`. Knolo does not
   call a model. A search returns a query receipt. `SATISFIED` means evidence
   requirements were met.
 - [smolagents](integrations/smolagents.md) — a Python smoke that calls
-  published `@knolo/mcp@0.2.1` over stdio through `ToolCollection.from_mcp`.
+  published `@knolo/mcp@0.2.3` over stdio through `ToolCollection.from_mcp`.
   Knolo does not call a model. A search returns a query receipt. `SATISFIED`
   means evidence requirements were met.
 - [Langflow](integrations/langflow.md) — a Python smoke that calls published
-  `@knolo/mcp@0.2.1` over stdio. Knolo does not call a model. A search
+  `@knolo/mcp@0.2.3` over stdio. Knolo does not call a model. A search
   returns a query receipt. `SATISFIED` means evidence requirements were met.
 - [Dify](integrations/dify.md) — Dify 1.19.0 registers an MCP server by
-  an http or https URL. A Python smoke calls published `@knolo/mcp@0.2.1`
+  an http or https URL. A Python smoke calls published `@knolo/mcp@0.2.3`
   over stdio. Knolo does not call a model. A search returns a query
   receipt. `SATISFIED` means evidence requirements were met.
 - [Docker](integrations/docker.md) — a stdio image of `@knolo/mcp` built
@@ -126,7 +126,7 @@ operational guides for Knolo.
   the server accepts a tool call. An unwritable audit directory returns no
   hits. The image is not on Docker Hub. The catalog pull request is separate.
 - [Goose](integrations/goose.md) — a stdio extension draft for Goose. The
-  server does not listen on a port. `@knolo/mcp@0.2.2` is the published
+  server does not listen on a port. `@knolo/mcp@0.2.3` is the published
   command Goose launches. The directory pull request is separate.
 - [Vercel AI SDK](integrations/ai-sdk.md) — `@knolo/ai-sdk` tools over
   `@knolo/tools`. Knolo does not call a model. A search returns a query
@@ -138,8 +138,8 @@ operational guides for Knolo.
   `@knolo/mastra@0.1.0` is not published yet.
 - [Box](box/README.md) — pinned V5 images of skills, opted-in notes, private
   memory, and capped session text on a Grok Bot computer. `@knolo/box` starts
-  the existing read-only MCP server in one process. npm `latest` is `0.1.0`.
-  This tree is `0.1.1` until that version is published.
+  the existing read-only MCP server in one process. npm `latest` is `0.1.1`.
+  This tree is `0.1.1`.
 
 Architecture sources, future-version specifications, and internal planning
 records are kept local and are not part of the public repository. The
@@ -153,9 +153,9 @@ bounded runtime features, diagnostics, and a read-only Studio management
 snapshot remain. 6.1.0 adds offline composition and attestation. 6.2.0 adds
 Knolo Cortex. Published `@knolo/core` is `6.2.1`. `@knolo/tools` `0.2.1`
 depends on `@knolo/core` `^6.2.1`. This tree's `@knolo/mcp` is `0.2.3`.
-npm `latest` for MCP is `0.2.2` until `0.2.3` is published. This tree's
+npm `latest` for MCP is `0.2.3`. This tree's
 `@knolo/cli` package file is `6.2.3` and depends on `@knolo/core` `^6.2.0`.
-npm `latest` for the CLI is `6.2.2` until `6.2.3` is published. `@knolo/langchain`, `@knolo/llamaindex`,
+npm `latest` for the CLI is `6.2.3`. `@knolo/langchain`, `@knolo/llamaindex`,
 `@knolo/semantic-ollama`, `create-knolo-app`, and `@knolo/reflex` stay on
 `@knolo/core` `^6.0.0`. `@knolo/ai-sdk@0.1.0` stays on `@knolo/core` `^6.2.0`
 and `@knolo/tools` `^0.2.0`. `@knolo/mastra` `0.1.0` is not published yet and

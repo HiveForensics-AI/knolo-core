@@ -2,7 +2,7 @@
 
 `@knolo/box` builds pinned V5 images of a Grok Bot computer and starts the existing read-only `knolo-mcp` server as one process. It is a builder and a launcher. It does not proxy JSON-RPC, and it does not call a model.
 
-npm `latest` is `@knolo/box@0.1.0`. This tree is `0.1.1` until that version is published. From this repository, after the workspace build:
+npm `latest` is `@knolo/box@0.1.1`. From this repository, after the workspace build:
 
 ```bash
 node packages/box/bin/knolo-box.mjs build
@@ -63,6 +63,6 @@ Grok Build can install the skill and the MCP server with `--trust`:
 grok plugin install HiveForensics-AI/knolo-core#plugins/knolo-box --trust
 ```
 
-The plugin command is `npx -y @knolo/box@0.1.0 mcp`. npm `latest` is `0.1.0`. This tree is `0.1.1` until that version is published, so keep the plugin pin on `0.1.0` until then. See [the box doc](../../docs/box/README.md) and [the plugin README](../../plugins/knolo-box/README.md).
+The plugin command is `npx -y @knolo/box@0.1.1 mcp`. npm `latest` is `0.1.1`. See [the box doc](../../docs/box/README.md) and [the plugin README](../../plugins/knolo-box/README.md).
 
 Repository code stays on [@knolo/code](../code/README.md). This package does not index `.ts`, `.js`, or `.py` trees.

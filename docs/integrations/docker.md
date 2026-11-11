@@ -17,7 +17,7 @@ From the repository root:
 docker build -f packages/mcp/Dockerfile -t knolo-mcp:local .
 ```
 
-The build uses the server in this tree, including the `0.2.1` handshake.
+The build uses the server in this tree, including the `0.2.3` handshake.
 It does not install the published npm tarball.
 
 ## Run

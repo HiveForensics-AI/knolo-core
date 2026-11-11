@@ -66,7 +66,7 @@ const mcp = new MCPClient({
   servers: {
     knolo: {
       command: 'npx',
-      args: ['-y', '@knolo/mcp@0.2.1', '--config', '/absolute/knolo-mcp.json'],
+      args: ['-y', '@knolo/mcp@0.2.3', '--config', '/absolute/knolo-mcp.json'],
     },
   },
 });

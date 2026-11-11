@@ -2,7 +2,7 @@
   "mcpServers": {
     "knolo-box": {
       "command": "npx",
-      "args": ["-y", "@knolo/box@0.1.0", "mcp"]
+      "args": ["-y", "@knolo/box@0.1.1", "mcp"]
     }
   }
 }

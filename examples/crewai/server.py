@@ -15,7 +15,7 @@ from mcp import StdioServerParameters
 os.environ.setdefault("CREWAI_DISABLE_TELEMETRY", "true")
 os.environ.setdefault("CREWAI_TRACING_ENABLED", "false")
 
-PUBLISHED_PACKAGE = "@knolo/mcp@0.2.2"
+PUBLISHED_PACKAGE = "@knolo/mcp@0.2.3"
 
 
 def mcp_config_path() -> Path | None:
