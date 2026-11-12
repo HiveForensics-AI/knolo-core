@@ -3,6 +3,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import { isIP } from 'node:net';
 import {
   createKnowledgeExchangeReceiptV1,
   decodeKnowledgeExchangeDecisionV1,
@@ -78,8 +79,7 @@ export async function startExchangeServer(
   const address = server.address();
   if (!address || typeof address === 'string')
     throw new Error('V5 exchange server did not bind a port.');
-  const host =
-    config.listen.host === '0.0.0.0' ? '127.0.0.1' : config.listen.host;
+  const host = endpointHost(config.listen.host);
   const url = `https://${host}:${address.port}`;
   await writeEndpoint(config.storePath, url);
   return {
@@ -234,9 +234,7 @@ async function sendBlob(
   const truncated = truncateAfter !== undefined && slice.length > truncateAfter;
   const payload = truncated ? slice.subarray(0, truncateAfter) : slice;
   if (full && !truncated) {
-    response.on('finish', () => {
-      void writeSenderReceipt(config, identity, homeDir, now, offer, decision);
-    });
+    await writeSenderReceipt(config, identity, homeDir, now, offer, decision);
   }
   response.writeHead(
     full && !truncated ? 200 : 206,
@@ -290,6 +288,11 @@ async function assertBlob(
     );
 }
 
+function endpointHost(host: string): string {
+  if (host === '0.0.0.0') return '127.0.0.1';
+  return isIP(host) === 6 ? `[${host}]` : host;
+}
+
 async function writeSenderReceipt(
   config: ExchangeConfig,
   identity: ExchangeIdentity,
@@ -298,10 +301,8 @@ async function writeSenderReceipt(
   offer: KnowledgeExchangeOfferV1,
   decision: KnowledgeExchangeDecisionV1
 ): Promise<void> {
-  await writeBytesAtomic(
-    servedPath(config.storePath, decision.decisionId),
-    new Uint8Array()
-  );
+  // A failed receipt must leave the decision reusable, so the served marker
+  // is written only after the receipt is durable.
   const receipt = await signKnowledgeExchangeReceiptWithEd25519(
     createKnowledgeExchangeReceiptV1({
       offer,
@@ -324,6 +325,10 @@ async function writeSenderReceipt(
   await writeBytesAtomic(
     receiptPath(homeDir, receipt.receiptId),
     encodeKnowledgeExchangeReceiptV1(receipt)
+  );
+  await writeBytesAtomic(
+    servedPath(config.storePath, decision.decisionId),
+    new Uint8Array()
   );
 }
 

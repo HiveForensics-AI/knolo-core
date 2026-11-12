@@ -6,6 +6,7 @@ import {
   readFile,
   rename,
   rm,
+  rmdir,
   stat,
   truncate,
   writeFile,
@@ -33,12 +34,18 @@ import {
   type KnowledgeExchangeReceiptV1,
 } from '@knolo/core';
 import { peerByName, type ExchangeConfig } from './config.js';
-import { httpsJson, tlsServerName } from './http.js';
+import {
+  httpsJson,
+  readLimitedBody,
+  requestHostname,
+  tlsServerName,
+} from './http.js';
 import { loadExchangeIdentity, type ExchangeIdentity } from './identity.js';
 import { evaluateReceivePolicy } from './policy.js';
 import {
   contentCachePath,
   knoloHome,
+  offerClaimPath,
   partialPath,
   receiptPath,
 } from './paths.js';
@@ -125,65 +132,86 @@ export async function pullExchangeOffer(
   const homeDir = input.homeDir ?? knoloHome();
   const peer = peerByName(config, input.from);
   await assertOfferUnused(homeDir, input.offerId);
-  const fetched = await httpsJson(
-    `${peer.url}/v1/offers/${encodeURIComponent(input.offerId)}`,
-    { method: 'GET', caPath: config.tls.caPath }
-  );
-  if (fetched.status !== 200) throw httpFailure(fetched.status, fetched.body);
-  const offer = decodeKnowledgeExchangeOfferV1(fetched.body);
-  if (offer.offerId !== input.offerId)
-    throw new Error('V5 exchange offer ID mismatch.');
-  await verifyKnowledgeExchangeOfferWithEd25519(
-    offer,
-    identity.keyring,
-    input.now,
-    globalThis.crypto,
-    config.identity.principal
-  );
-  const policy = evaluateReceivePolicy(config.policy.receive, offer);
-  if (!policy.ok) throw new Error('V5 exchange policy denied.');
-  const decision = await acceptDecision(
-    config,
-    identity,
-    offer,
-    peer.url,
-    input.now,
-    input.ttlMs ?? 300_000
-  );
-  const cached = await readMatchingCache(homeDir, offer);
-  const imageBytes =
-    cached ?? (await downloadBlob(config, peer.url, offer, decision, homeDir));
-  const image = await acceptKnowledgeExchangeTransferWithEd25519(
-    offer,
-    imageBytes,
-    identity.keyring,
-    new KnowledgeSyncReplayCacheV1(),
-    input.now,
-    globalThis.crypto,
-    config.identity.principal
-  ).catch(async (error: unknown) => {
+  try {
+    const fetched = await httpsJson(
+      `${peer.url}/v1/offers/${encodeURIComponent(input.offerId)}`,
+      { method: 'GET', caPath: config.tls.caPath }
+    );
+    if (fetched.status !== 200) throw httpFailure(fetched.status, fetched.body);
+    const offer = decodeKnowledgeExchangeOfferV1(fetched.body);
+    if (offer.offerId !== input.offerId)
+      throw new Error('V5 exchange offer ID mismatch.');
+    await verifyKnowledgeExchangeOfferWithEd25519(
+      offer,
+      identity.keyring,
+      input.now,
+      globalThis.crypto,
+      config.identity.principal
+    );
+    const policy = evaluateReceivePolicy(config.policy.receive, offer);
+    if (!policy.ok) throw new Error('V5 exchange policy denied.');
+    const decision = await acceptDecision(
+      config,
+      identity,
+      offer,
+      peer.url,
+      input.now,
+      input.ttlMs ?? 300_000
+    );
+    const cached = await readMatchingCache(homeDir, offer);
+    const imageBytes =
+      cached ??
+      (await downloadBlob(config, peer.url, offer, decision, homeDir));
+    const image = await acceptKnowledgeExchangeTransferWithEd25519(
+      offer,
+      imageBytes,
+      identity.keyring,
+      new KnowledgeSyncReplayCacheV1(),
+      input.now,
+      globalThis.crypto,
+      config.identity.principal
+    ).catch(async (error: unknown) => {
+      await rm(partialPath(homeDir, offer.offerId), { force: true });
+      throw error;
+    });
+    const committed = await commitAcceptedExchange(
+      config,
+      identity,
+      offer,
+      imageBytes,
+      image.stateRoot,
+      homeDir,
+      input.now
+    );
     await rm(partialPath(homeDir, offer.offerId), { force: true });
+    return committed;
+  } catch (error) {
+    await abandonOfferClaim(homeDir, input.offerId);
     throw error;
-  });
-  const committed = await commitAcceptedExchange(
-    config,
-    identity,
-    offer,
-    imageBytes,
-    image.stateRoot,
-    homeDir,
-    input.now
-  );
-  await rm(partialPath(homeDir, offer.offerId), { force: true });
-  return committed;
+  }
 }
 
 export async function assertOfferUnused(
   homeDir: string,
   offerId: string
 ): Promise<void> {
-  if (await knownOffer(homeDir, offerId))
-    throw new Error('V5 exchange replay detected.');
+  await claimUnusedOffer(homeDir, offerId);
+}
+
+export async function abandonOfferClaim(
+  homeDir: string,
+  offerId: string
+): Promise<void> {
+  const removed = await withOfferIndexLock(homeDir, async () => {
+    const index = await readOfferIndex(homeDir);
+    if (typeof index[offerId] === 'string') return false;
+    const claim = offerClaimPath(homeDir, offerId);
+    await rm(claim, { force: true });
+    await rmdir(path.dirname(claim)).catch(() => undefined);
+    return true;
+  });
+  if (removed)
+    await rmdir(path.join(homeDir, 'exchange')).catch(() => undefined);
 }
 
 export async function commitAcceptedExchange(
@@ -319,8 +347,10 @@ async function downloadBlob(
     return new Uint8Array(await readFile(partial));
   const ca = config.tls.caPath ? readFileSync(config.tls.caPath) : undefined;
   const target = new URL(`${peerUrl}/v1/blobs/${offer.sha256}`);
+  const hostname = requestHostname(target.hostname);
   await new Promise<void>((resolve, reject) => {
     let settled = false;
+    let limited = false;
     const fail = (error: Error) => {
       if (settled) return;
       settled = true;
@@ -334,7 +364,7 @@ async function downloadBlob(
     const req = httpsRequest(
       {
         protocol: target.protocol,
-        hostname: target.hostname,
+        hostname,
         port: target.port,
         path: target.pathname,
         method: 'GET',
@@ -343,23 +373,23 @@ async function downloadBlob(
           ...(existing > 0 ? { range: `bytes=${existing}-` } : {}),
         },
         ...(ca ? { ca } : {}),
-        ...tlsServerName(target.hostname),
+        ...tlsServerName(hostname),
         agent: false,
       },
       (response) => {
         if ((response.statusCode ?? 0) >= 400) {
-          const chunks: Buffer[] = [];
-          response.on('data', (chunk: Buffer) => chunks.push(chunk));
-          response.on('end', () =>
-            fail(
-              httpFailure(
-                response.statusCode ?? 0,
-                new Uint8Array(Buffer.concat(chunks))
-              )
-            )
-          );
-          response.on('error', () =>
-            fail(new Error('V5 exchange transfer interrupted.'))
+          void readLimitedBody(response, undefined, () => {
+            limited = true;
+          }).then(
+            (body) => fail(httpFailure(response.statusCode ?? 0, body)),
+            (error: unknown) => {
+              limited = true;
+              fail(
+                error instanceof Error
+                  ? error
+                  : new Error('V5 exchange transfer interrupted.')
+              );
+            }
           );
           return;
         }
@@ -387,7 +417,10 @@ async function downloadBlob(
         );
       }
     );
-    req.on('error', () => fail(new Error('V5 exchange transfer interrupted.')));
+    req.on('error', () => {
+      if (limited) return;
+      fail(new Error('V5 exchange transfer interrupted.'));
+    });
     req.end();
   });
   let imageBytes: Uint8Array;
@@ -451,16 +484,28 @@ async function readMatchingCache(
   return undefined;
 }
 
-async function knownOffer(homeDir: string, offerId: string): Promise<boolean> {
-  try {
-    const index = JSON.parse(
-      await readFile(indexPath(homeDir), 'utf8')
-    ) as Record<string, string>;
-    return typeof index[offerId] === 'string';
-  } catch (error) {
-    if (isNotFound(error)) return false;
-    throw error;
-  }
+const OFFER_INDEX_LOCK_WAIT_MS = 10_000;
+const OFFER_INDEX_LOCK_STALE_MS = 30_000;
+
+async function claimUnusedOffer(
+  homeDir: string,
+  offerId: string
+): Promise<void> {
+  const claim = offerClaimPath(homeDir, offerId);
+  await mkdir(path.dirname(claim), { recursive: true });
+  await withOfferIndexLock(homeDir, async () => {
+    const index = await readOfferIndex(homeDir);
+    if (typeof index[offerId] === 'string' || (await claimIsLive(claim))) {
+      throw new Error('V5 exchange replay detected.');
+    }
+    await rm(claim, { force: true });
+    const handle = await open(claim, 'wx');
+    try {
+      await handle.writeFile(`${process.pid}\n`);
+    } finally {
+      await handle.close();
+    }
+  });
 }
 
 async function rememberOffer(
@@ -468,22 +513,110 @@ async function rememberOffer(
   offerId: string,
   receiptId: string
 ): Promise<void> {
-  const file = indexPath(homeDir);
-  let index: Record<string, string> = {};
+  await withOfferIndexLock(homeDir, async () => {
+    const file = indexPath(homeDir);
+    const index = await readOfferIndex(homeDir);
+    index[offerId] = receiptId;
+    const temp = `${file}.${process.pid}.${Date.now()}.tmp`;
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(temp, JSON.stringify(index));
+    await rename(temp, file);
+  });
+}
+
+async function withOfferIndexLock<T>(
+  homeDir: string,
+  body: () => Promise<T>
+): Promise<T> {
+  const directory = path.join(homeDir, 'exchange');
+  await mkdir(directory, { recursive: true });
+  const lockPath = path.join(directory, 'offers.json.lock');
+  const handle = await acquireOfferLock(lockPath);
   try {
-    index = JSON.parse(await readFile(file, 'utf8')) as Record<string, string>;
-  } catch (error) {
-    if (!isNotFound(error)) throw error;
+    return await body();
+  } finally {
+    await handle.close();
+    await rm(lockPath, { force: true });
   }
-  index[offerId] = receiptId;
-  const temp = `${file}.${process.pid}.tmp`;
-  await mkdir(path.dirname(file), { recursive: true });
-  await writeFile(temp, JSON.stringify(index));
-  await rename(temp, file);
+}
+
+async function acquireOfferLock(lockPath: string) {
+  const started = Date.now();
+  for (;;) {
+    try {
+      const handle = await open(lockPath, 'wx');
+      try {
+        await handle.writeFile(`${process.pid}\n`);
+      } catch (error) {
+        await handle.close();
+        await rm(lockPath, { force: true });
+        throw error;
+      }
+      return handle;
+    } catch (error) {
+      if (!isAlreadyExists(error)) throw error;
+      if (await lockIsStale(lockPath)) {
+        await rm(lockPath, { force: true }).catch(() => undefined);
+        continue;
+      }
+      if (Date.now() - started > OFFER_INDEX_LOCK_WAIT_MS) {
+        throw new Error('V5 exchange offer index is locked.');
+      }
+      await delay(25);
+    }
+  }
+}
+
+async function lockIsStale(lockPath: string): Promise<boolean> {
+  try {
+    const pid = Number((await readFile(lockPath, 'utf8')).trim());
+    if (Number.isInteger(pid) && pid > 0) return !pidAlive(pid);
+    const info = await stat(lockPath);
+    return Date.now() - info.mtimeMs > OFFER_INDEX_LOCK_STALE_MS;
+  } catch (error) {
+    return isNotFound(error);
+  }
+}
+
+async function claimIsLive(claim: string): Promise<boolean> {
+  try {
+    const pid = Number((await readFile(claim, 'utf8')).trim());
+    return Number.isInteger(pid) && pid > 0 && pidAlive(pid);
+  } catch (error) {
+    if (isNotFound(error)) return false;
+    throw error;
+  }
+}
+
+async function readOfferIndex(
+  homeDir: string
+): Promise<Record<string, string>> {
+  try {
+    return JSON.parse(await readFile(indexPath(homeDir), 'utf8')) as Record<
+      string,
+      string
+    >;
+  } catch (error) {
+    if (isNotFound(error)) return {};
+    throw error;
+  }
 }
 
 function indexPath(homeDir: string): string {
   return path.join(homeDir, 'exchange', 'offers.json');
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function pidAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return isErrorCode(error, 'EPERM');
+  }
 }
 
 function httpFailure(status: number, body: Uint8Array): Error {
@@ -505,10 +638,18 @@ function randomNonce(): Uint8Array {
 }
 
 function isNotFound(error: unknown): boolean {
+  return isErrorCode(error, 'ENOENT');
+}
+
+function isAlreadyExists(error: unknown): boolean {
+  return isErrorCode(error, 'EEXIST');
+}
+
+function isErrorCode(error: unknown, code: string): boolean {
   return Boolean(
     error &&
     typeof error === 'object' &&
     'code' in error &&
-    (error as { code?: string }).code === 'ENOENT'
+    (error as { code?: string }).code === code
   );
 }

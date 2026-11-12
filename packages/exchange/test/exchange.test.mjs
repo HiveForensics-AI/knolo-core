@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { request as httpsRequest } from 'node:https';
+import { createServer, request as httpsRequest } from 'node:https';
 import { isIP } from 'node:net';
 import {
   cpSync,
@@ -19,6 +19,7 @@ import {
   createKnowledgeImageV5,
   describeKnowledgeExchangeArtifactV1,
 } from '@knolo/core';
+import { httpsJson, requestHostname } from '../dist/http.js';
 import {
   adoptExchangeReceipt,
   evaluateReceivePolicy,
@@ -723,6 +724,170 @@ test('a truncated download resumes from the partial and a range does not count a
       existsSync(path.join(started.dir, 'recipient', 'knolo.lock.json')),
       false
     );
+    await assert.rejects(
+      () => pull(started, offered, { home: 'recipient' }),
+      /replay/
+    );
+  } finally {
+    await started.close();
+  }
+});
+
+test('concurrent pulls claim one offer and keep every accepted offer', async () => {
+  const started = await boot('claim');
+  try {
+    const offeredA = await publish(
+      started,
+      imageBytes('claim-alpha'),
+      'claim-a'
+    );
+    const offeredB = await publish(
+      started,
+      imageBytes('claim-beta'),
+      'claim-b'
+    );
+    const home = path.join(started.dir, 'recipient');
+    const raced = await Promise.allSettled([
+      pull(started, offeredA, { home: 'recipient' }),
+      pull(started, offeredA, { home: 'recipient' }),
+    ]);
+    const fulfilled = raced.filter((result) => result.status === 'fulfilled');
+    const rejected = raced.filter((result) => result.status === 'rejected');
+    assert.equal(fulfilled.length, 1);
+    assert.equal(rejected.length, 1);
+    assert.match(rejected[0].reason.message, /replay/);
+    const index = JSON.parse(
+      readFileSync(path.join(home, 'exchange', 'offers.json'), 'utf8')
+    );
+    assert.equal(typeof index[offeredA.offerId], 'string');
+    assert.equal(
+      existsSync(path.join(home, 'exchange', 'claims', offeredA.offerId)),
+      true
+    );
+
+    const both = path.join(started.dir, 'both');
+    const [left, right] = await Promise.all([
+      pull(started, offeredA, { home: 'both' }),
+      pull(started, offeredB, { home: 'both' }),
+    ]);
+    const bothIndex = JSON.parse(
+      readFileSync(path.join(both, 'exchange', 'offers.json'), 'utf8')
+    );
+    assert.equal(bothIndex[offeredA.offerId], left.receiptId);
+    assert.equal(bothIndex[offeredB.offerId], right.receiptId);
+  } finally {
+    await started.close();
+  }
+});
+
+test('peer response bodies stop at the wire limit while streaming', async () => {
+  const server = createServer(
+    {
+      cert: readFileSync(fixture.cert),
+      key: readFileSync(fixture.key),
+    },
+    (_request, response) => {
+      response.writeHead(200, { 'content-type': 'application/cbor' });
+      const chunk = Buffer.alloc(256 * 1024, 7);
+      const write = () => {
+        if (response.destroyed || response.writableEnded) return;
+        if (!response.write(chunk)) response.once('drain', write);
+        else setImmediate(write);
+      };
+      write();
+    }
+  );
+  await new Promise((resolve) => {
+    server.listen(0, '127.0.0.1', () => resolve());
+  });
+  const address = server.address();
+  const port = typeof address === 'object' && address ? address.port : 0;
+  try {
+    await assert.rejects(
+      () =>
+        httpsJson(`https://127.0.0.1:${port}/v1/offers/stream`, {
+          method: 'GET',
+          caPath: fixture.cert,
+        }),
+      /size limit/
+    );
+  } finally {
+    server.closeAllConnections();
+    await new Promise((resolve) => {
+      server.close(() => resolve());
+    });
+  }
+});
+
+test('an ipv6 listen host is bracketed in the endpoint url', async () => {
+  const dir = path.join(fixture.root, 'ipv6');
+  mkdirSync(dir, { recursive: true });
+  const store = path.join(dir, 'store');
+  const file = path.join(dir, 'exchange.json');
+  const body = hostConfig({
+    principal: 'agent-a',
+    peerName: 'agent-b',
+    peerUrl: 'https://127.0.0.1:9',
+    store,
+    senders: ['agent-b'],
+    maxBytes: 10_000_000,
+  });
+  body.listen = '::1:0';
+  writeFileSync(file, JSON.stringify(body));
+  const server = await startExchangeServer(loadExchangeConfig(file), {
+    homeDir: path.join(dir, 'home'),
+    now: () => NOW,
+  });
+  try {
+    assert.match(server.url, /^https:\/\/\[::1\]:\d+$/);
+    const parsed = new URL(server.url);
+    assert.equal(requestHostname(parsed.hostname), '::1');
+    const endpoint = JSON.parse(
+      readFileSync(path.join(store, 'endpoint.json'), 'utf8')
+    );
+    assert.equal(endpoint.url, server.url);
+    await assert.rejects(
+      () =>
+        httpsJson(`${server.url}/v1/offers/sha256-${'ab'.repeat(32)}`, {
+          method: 'GET',
+          caPath: fixture.cert,
+        }),
+      (error) => {
+        assert.notEqual(error.code, 'ENOTFOUND');
+        return true;
+      }
+    );
+  } finally {
+    await server.close();
+  }
+});
+
+test('a sender receipt failure stays on the response and can be retried', async () => {
+  const started = await boot('receipt-fail');
+  try {
+    const offered = await publish(
+      started,
+      imageBytes('receipt-fail'),
+      'receipt-fail'
+    );
+    const receipts = path.join(started.senderHome, 'exchange', 'receipts');
+    mkdirSync(path.dirname(receipts), { recursive: true });
+    writeFileSync(receipts, 'not-a-directory');
+    await assert.rejects(
+      () => pull(started, offered, { home: 'recipient' }),
+      /not a directory|ENOTDIR|EEXIST/
+    );
+    assert.equal(existsSync(path.join(started.store, 'served')), false);
+    rmSync(receipts);
+    const pulled = await pull(started, offered, { home: 'recipient' });
+    assert.equal(pulled.sha256, offered.described.sha256);
+    assert.equal(
+      readdirSync(path.join(started.senderHome, 'exchange', 'receipts')).some(
+        (name) => name.endsWith('.cbor')
+      ),
+      true
+    );
+    assert.equal(fileCount(path.join(started.store, 'served')), 1);
     await assert.rejects(
       () => pull(started, offered, { home: 'recipient' }),
       /replay/

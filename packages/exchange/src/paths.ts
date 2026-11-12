@@ -31,6 +31,12 @@ export function partialPath(home: string, offerId: string): string {
   return path.join(home, 'exchange', 'partial', `${offerId}.part`);
 }
 
+export function offerClaimPath(home: string, offerId: string): string {
+  if (!OFFER_ID.test(offerId))
+    throw new Error('Malformed V5 exchange offer id.');
+  return path.join(home, 'exchange', 'claims', offerId);
+}
+
 export function endpointPath(store: string): string {
   return path.join(store, 'endpoint.json');
 }

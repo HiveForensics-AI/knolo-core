@@ -11,6 +11,7 @@ import {
   verifyKnowledgeExchangeOfferWithEd25519,
 } from '@knolo/core';
 import {
+  abandonOfferClaim,
   assertOfferUnused,
   commitAcceptedExchange,
   type ExchangePullResult,
@@ -95,40 +96,45 @@ export async function importExchangeDirectory(
     new Uint8Array(await readFile(path.join(directory, 'offer.cbor')))
   );
   await assertOfferUnused(homeDir, offer.offerId);
-  await verifyKnowledgeExchangeOfferWithEd25519(
-    offer,
-    identity.keyring,
-    input.now,
-    globalThis.crypto,
-    config.identity.principal
-  );
-  const policy = evaluateReceivePolicy(config.policy.receive, offer);
-  if (!policy.ok) throw new Error('V5 exchange policy denied.');
-  if (!SHA256.test(offer.sha256))
-    throw new Error('Malformed V5 exchange sha256.');
-  const imagePath = path.join(directory, `${offer.sha256}.knolo`);
-  const info = await stat(imagePath);
-  if (info.size !== offer.sizeBytes)
-    throw new Error('V5 exchange artifact size mismatch.');
-  const imageBytes = new Uint8Array(await readFile(imagePath));
-  const image = await acceptKnowledgeExchangeTransferWithEd25519(
-    offer,
-    imageBytes,
-    identity.keyring,
-    new KnowledgeSyncReplayCacheV1(),
-    input.now,
-    globalThis.crypto,
-    config.identity.principal
-  );
-  return commitAcceptedExchange(
-    config,
-    identity,
-    offer,
-    imageBytes,
-    image.stateRoot,
-    homeDir,
-    input.now
-  );
+  try {
+    await verifyKnowledgeExchangeOfferWithEd25519(
+      offer,
+      identity.keyring,
+      input.now,
+      globalThis.crypto,
+      config.identity.principal
+    );
+    const policy = evaluateReceivePolicy(config.policy.receive, offer);
+    if (!policy.ok) throw new Error('V5 exchange policy denied.');
+    if (!SHA256.test(offer.sha256))
+      throw new Error('Malformed V5 exchange sha256.');
+    const imagePath = path.join(directory, `${offer.sha256}.knolo`);
+    const info = await stat(imagePath);
+    if (info.size !== offer.sizeBytes)
+      throw new Error('V5 exchange artifact size mismatch.');
+    const imageBytes = new Uint8Array(await readFile(imagePath));
+    const image = await acceptKnowledgeExchangeTransferWithEd25519(
+      offer,
+      imageBytes,
+      identity.keyring,
+      new KnowledgeSyncReplayCacheV1(),
+      input.now,
+      globalThis.crypto,
+      config.identity.principal
+    );
+    return await commitAcceptedExchange(
+      config,
+      identity,
+      offer,
+      imageBytes,
+      image.stateRoot,
+      homeDir,
+      input.now
+    );
+  } catch (error) {
+    await abandonOfferClaim(homeDir, offer.offerId);
+    throw error;
+  }
 }
 
 function randomNonce(): Uint8Array {
