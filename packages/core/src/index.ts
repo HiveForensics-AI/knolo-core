@@ -27,6 +27,9 @@ export {
   V5_OPTIONAL_SEGMENT_VQF_QUERY_INDEX,
   V5_SEGMENT_FLAG_VQF1,
   knowledgePolicyRootV5,
+  knowledgeObjectIdV1,
+  knowledgeObjectRootV1,
+  knowledgeCommitStateV1,
 } from './knowledge_image_v5.js';
 export type {
   CompressKnowledgeImageV5Options,
@@ -93,6 +96,16 @@ export {
   verifyKnowledgeExchangeOfferV1,
   verifyKnowledgeExchangeReceiptV1,
 } from './knowledge_exchange_v1.js';
+export {
+  createKnowledgeCapsuleV1,
+  decodeKnowledgeCapsuleV1,
+  encodeKnowledgeCapsuleV1,
+  verifyKnowledgeCapsuleV1,
+} from './knowledge_capsule_v1.js';
+export type {
+  KnowledgeCapsuleObjectV1,
+  KnowledgeCapsuleV1,
+} from './knowledge_capsule_v1.js';
 export {
   KnowledgeSyncReplayCacheV1,
   deserializeKnowledgeSyncReplayStateV1,

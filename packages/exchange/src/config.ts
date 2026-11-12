@@ -21,7 +21,7 @@ export type ExchangeConfig = {
   adminToken?: string;
   storePath: string;
   peers: Record<string, { principal: string; keyId: string; url: string }>;
-  policy: { receive: ExchangeReceivePolicy; adopt: 'deny' };
+  policy: { receive: ExchangeReceivePolicy; adopt: 'deny' | 'allow' };
 };
 
 const PRINCIPAL = /^[\x21-\x7e]{1,256}$/;
@@ -48,8 +48,8 @@ export function loadExchangeConfig(configPath: string): ExchangeConfig {
       'V5 exchange listen address requires adminToken when it is not loopback.'
     );
   }
-  if (policy.adopt !== 'deny')
-    throw new Error('V5 exchange adopt must be deny in this version.');
+  if (policy.adopt !== 'deny' && policy.adopt !== 'allow')
+    throw new Error('V5 exchange adopt must be allow or deny.');
   const kinds = asStringArray(receive.kinds, 'policy.receive.kinds');
   if (kinds.length !== 1 || kinds[0] !== 'knowledge-image') {
     throw new Error(
@@ -96,7 +96,7 @@ export function loadExchangeConfig(configPath: string): ExchangeConfig {
     peers,
     policy: {
       receive: { senders, kinds: ['knowledge-image'], maxBytes, namespaces },
-      adopt: 'deny',
+      adopt: policy.adopt,
     },
   };
 }

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
+import { createServer } from 'node:http';
 import {
   existsSync,
   mkdtempSync,
@@ -25,11 +26,350 @@ test('exchange help lists the peer commands', async () => {
   const help = await runCli(['exchange', '--help']);
   assert.match(help.stdout, /knolo exchange serve/);
   assert.match(help.stdout, /knolo exchange pull/);
+  assert.match(help.stdout, /knolo exchange export/);
+  assert.match(help.stdout, /knolo exchange import/);
   assert.match(help.stdout, /knolo.lock.json/);
   await assert.rejects(
     () => runCli(['exchange', 'serve', '--nope']),
     /Unknown flag/
   );
+});
+
+test('discover prints a fixture advertisement and does not download', async () => {
+  const requests = [];
+  const endpoint = {
+    url: 'https://agents.example.com/exchange',
+    keyId: 'agent-a-1',
+    keyringRoot: `sha256-${'ab'.repeat(32)}`,
+  };
+  const server = createServer((request, response) => {
+    requests.push(request.url);
+    response.setHeader('content-type', 'application/json');
+    if (request.url === '/api/v1/publishers/acme') {
+      response.end(
+        JSON.stringify({
+          publisher: { handle: 'acme', exchange: [endpoint] },
+          packs: [{ id: 'acme/refunds', url: 'https://blob.example/pack' }],
+        })
+      );
+      return;
+    }
+    if (request.url === '/api/v1/publishers/quiet') {
+      response.end(
+        JSON.stringify({ publisher: { handle: 'quiet' }, packs: [] })
+      );
+      return;
+    }
+    response.statusCode = 404;
+    response.end('{}');
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const address = server.address();
+  const registry = `http://127.0.0.1:${address.port}`;
+  try {
+    const found = await runCli([
+      'exchange',
+      'discover',
+      'acme',
+      '--registry',
+      registry,
+    ]);
+    assert.match(found.stdout, /url: https:\/\/agents\.example\.com\/exchange/);
+    assert.match(found.stdout, /keyId: agent-a-1/);
+    assert.match(
+      found.stdout,
+      new RegExp(`keyringRoot: ${endpoint.keyringRoot}`)
+    );
+    await assert.rejects(
+      () => runCli(['exchange', 'discover', 'quiet', '--registry', registry]),
+      /advertisement is missing/
+    );
+    assert.deepEqual(requests, [
+      '/api/v1/publishers/acme',
+      '/api/v1/publishers/quiet',
+    ]);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('export and import move a verified image without a socket', async (t) => {
+  const root = mkdtempSync(path.join(tmpdir(), 'knolo-exchange-fs-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const tls = writeCert(root);
+  const keys = await writeKeys(root);
+  const bytes = createKnowledgeImageV5({
+    objects: [
+      {
+        kind: 'metadata',
+        bytes: new TextEncoder().encode('offline-cli'),
+        meta: {},
+      },
+    ],
+  }).bytes;
+  const described = describeKnowledgeExchangeArtifactV1(bytes);
+  const imagePath = path.join(root, 'knowledge.knolo');
+  writeFileSync(imagePath, bytes);
+  const senderConfig = path.join(root, 'sender.json');
+  const recipientConfig = path.join(root, 'recipient.json');
+  const handoff = path.join(root, 'handoff');
+  const home = path.join(root, 'home-b');
+  writeFileSync(
+    senderConfig,
+    JSON.stringify(
+      exchangeConfig({
+        principal: 'agent-a',
+        privateKey: keys['agent-a'],
+        keyring: keys.keyring,
+        cert: tls.cert,
+        key: tls.key,
+        store: path.join(root, 'store-a'),
+        peerName: 'agent-b',
+        peerUrl: 'https://127.0.0.1:9',
+        senders: ['agent-b'],
+      })
+    )
+  );
+  writeFileSync(
+    recipientConfig,
+    JSON.stringify(
+      exchangeConfig({
+        principal: 'agent-b',
+        privateKey: keys['agent-b'],
+        keyring: keys.keyring,
+        cert: tls.cert,
+        key: tls.key,
+        store: path.join(root, 'store-b'),
+        peerName: 'agent-a',
+        peerUrl: 'https://127.0.0.1:9',
+        senders: ['agent-a'],
+        adopt: 'allow',
+      })
+    )
+  );
+  const exported = await runCli(
+    [
+      'exchange',
+      'export',
+      imagePath,
+      '--to',
+      'agent-b',
+      '--out',
+      handoff,
+      '--config',
+      senderConfig,
+      '--now',
+      String(NOW),
+    ],
+    home
+  );
+  assert.match(exported.stdout, new RegExp(`sha256: ${described.sha256}`));
+  assert.equal(
+    existsSync(path.join(handoff, `${described.sha256}.knolo`)),
+    true
+  );
+  const imported = await runCli(
+    [
+      'exchange',
+      'import',
+      handoff,
+      '--config',
+      recipientConfig,
+      '--home',
+      home,
+      '--now',
+      String(NOW),
+    ],
+    home
+  );
+  assert.match(imported.stdout, new RegExp(`sha256: ${described.sha256}`));
+  assert.match(imported.stdout, /stateRoot: sha256-/);
+  assert.equal(
+    existsSync(path.join(home, 'cache', 'sha256', `${described.sha256}.knolo`)),
+    true
+  );
+  assert.equal(existsSync(path.join(home, 'knolo.lock.json')), false);
+  const receipt = imported.stdout
+    .split('\n')
+    .find((line) => line.startsWith('receipt:'))
+    .slice('receipt:'.length)
+    .trim();
+  const store = path.join(root, 'adopted.knolo');
+  const adopted = await runCli(
+    [
+      'exchange',
+      'adopt',
+      receipt,
+      '--store',
+      store,
+      '--home',
+      home,
+      '--config',
+      recipientConfig,
+      '--now',
+      String(NOW),
+    ],
+    home
+  );
+  assert.match(adopted.stdout, /relation: created/);
+  assert.match(adopted.stdout, new RegExp(`stateRoot: ${described.stateRoot}`));
+  assert.deepEqual(readFileSync(store), Buffer.from(bytes));
+});
+
+test('a second pull process resumes a truncated transfer', async (t) => {
+  const root = mkdtempSync(path.join(tmpdir(), 'knolo-exchange-resume-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const tls = writeCert(root);
+  const keys = await writeKeys(root);
+  const bytes = createKnowledgeImageV5({
+    objects: [
+      {
+        kind: 'metadata',
+        bytes: new TextEncoder().encode('resume-cli'),
+        meta: {},
+      },
+    ],
+  }).bytes;
+  const described = describeKnowledgeExchangeArtifactV1(bytes);
+  const imagePath = path.join(root, 'knowledge.knolo');
+  writeFileSync(imagePath, bytes);
+  const store = path.join(root, 'store');
+  const senderHome = path.join(root, 'home-a');
+  const recipientHome = path.join(root, 'home-b');
+  const senderConfig = path.join(root, 'sender.json');
+  const recipientConfig = path.join(root, 'recipient.json');
+  writeFileSync(
+    senderConfig,
+    JSON.stringify(
+      exchangeConfig({
+        principal: 'agent-a',
+        privateKey: keys['agent-a'],
+        keyring: keys.keyring,
+        cert: tls.cert,
+        key: tls.key,
+        store,
+        peerName: 'agent-b',
+        peerUrl: 'https://127.0.0.1:9',
+        senders: ['agent-b'],
+      })
+    )
+  );
+  const serveArgs = [
+    'exchange',
+    'serve',
+    '--config',
+    senderConfig,
+    '--home',
+    senderHome,
+    '--now',
+    String(NOW),
+  ];
+  const truncated = startServe(serveArgs, senderHome, {
+    KNOLO_EXCHANGE_TRUNCATE_AFTER: '32',
+  });
+  try {
+    const url = await truncated.url;
+    const offered = await runCli(
+      [
+        'exchange',
+        'offer',
+        imagePath,
+        '--to',
+        'agent-b',
+        '--config',
+        senderConfig,
+        '--now',
+        String(NOW),
+      ],
+      senderHome
+    );
+    const offerId = offered.stdout.trim();
+    writeFileSync(
+      recipientConfig,
+      JSON.stringify(
+        exchangeConfig({
+          principal: 'agent-b',
+          privateKey: keys['agent-b'],
+          keyring: keys.keyring,
+          cert: tls.cert,
+          key: tls.key,
+          store: path.join(root, 'recipient-store'),
+          peerName: 'agent-a',
+          peerUrl: url,
+          senders: ['agent-a'],
+        })
+      )
+    );
+    const pullArgs = [
+      'exchange',
+      'pull',
+      offerId,
+      '--from',
+      'agent-a',
+      '--config',
+      recipientConfig,
+      '--home',
+      recipientHome,
+      '--now',
+      String(NOW),
+    ];
+    await assert.rejects(() => runCli(pullArgs, recipientHome), /interrupted/);
+    assert.equal(
+      existsSync(
+        path.join(recipientHome, 'cache', 'sha256', `${described.sha256}.knolo`)
+      ),
+      false
+    );
+    assert.equal(
+      existsSync(path.join(recipientHome, 'exchange', 'offers.json')),
+      false
+    );
+    const partial = path.join(
+      recipientHome,
+      'exchange',
+      'partial',
+      `${offerId}.part`
+    );
+    assert.equal(readFileSync(partial).length, 32);
+  } finally {
+    await truncated.stop();
+  }
+
+  const resumed = startServe(serveArgs, senderHome);
+  try {
+    const url = await resumed.url;
+    const body = JSON.parse(readFileSync(recipientConfig, 'utf8'));
+    body.peers['agent-a'].url = url;
+    writeFileSync(recipientConfig, JSON.stringify(body));
+    const partialName = readdirSync(
+      path.join(recipientHome, 'exchange', 'partial')
+    )[0];
+    const pulled = await runCli(
+      [
+        'exchange',
+        'pull',
+        partialName.replace(/\.part$/, ''),
+        '--from',
+        'agent-a',
+        '--config',
+        recipientConfig,
+        '--home',
+        recipientHome,
+        '--now',
+        String(NOW),
+      ],
+      recipientHome
+    );
+    assert.match(pulled.stdout, new RegExp(`sha256: ${described.sha256}`));
+    assert.deepEqual(
+      readFileSync(
+        path.join(recipientHome, 'cache', 'sha256', `${described.sha256}.knolo`)
+      ),
+      Buffer.from(bytes)
+    );
+  } finally {
+    await resumed.stop();
+  }
 });
 
 test('two processes exchange a verified image without Hub or a lockfile', async (t) => {
@@ -239,6 +579,7 @@ function exchangeConfig({
   peerName,
   peerUrl,
   senders,
+  adopt = 'deny',
 }) {
   return {
     identity: {
@@ -260,7 +601,7 @@ function exchangeConfig({
         maxBytes: 10_000_000,
         namespaces: [],
       },
-      adopt: 'deny',
+      adopt,
     },
   };
 }
@@ -369,9 +710,9 @@ function runCli(args, home) {
   });
 }
 
-function startServe(args, home) {
+function startServe(args, home, env = {}) {
   const child = spawn(process.execPath, [cliPath, ...args], {
-    env: { ...process.env, KNOLO_HOME: home },
+    env: { ...process.env, KNOLO_HOME: home, ...env },
   });
   let stdout = '';
   let stderr = '';

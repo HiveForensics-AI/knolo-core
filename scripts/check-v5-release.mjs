@@ -29,6 +29,8 @@ const runtimeExports = [
   'executeKnowledgeAgentRunV1', 'verifyKnowledgeRunAuthorityV5',
   'exchangeKnowledgeSyncImageOverTransportV5', 'createKnowledgeExchangeOfferV1',
   'verifyKnowledgeExchangeOfferV1', 'acceptKnowledgeExchangeTransferV1',
+  'createKnowledgeCapsuleV1', 'verifyKnowledgeCapsuleV1',
+  'knowledgeObjectIdV1', 'knowledgeObjectRootV1', 'knowledgeCommitStateV1',
   'inspectKnowledgeRuntimeV5',
   'verifyKnowledgeRuntimeDiagnosticsV5', 'inspectKnowledgeStudioManagementV5',
   'verifyKnowledgeStudioManagementV5',

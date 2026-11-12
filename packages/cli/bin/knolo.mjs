@@ -237,16 +237,23 @@ Pass --agent to set the caller name. Pass --auto-rebuild to rebuild on the next 
 Does not prompt. Does not install a pack or call the hub.
 A missing knolo-box is printed, and setup still exits 0.
 When more than one skill folder matches, pass --skills or --managed-skills.`,
-    exchange: `Usage: knolo exchange <serve|offer|pull|inspect> --config <exchange.json>
+    exchange: `Usage: knolo exchange <serve|offer|pull|export|import|adopt|discover|inspect> --config <exchange.json>
 
   knolo exchange serve --config exchange.json
   knolo exchange offer <image.knolo> --to <peer> --config exchange.json
   knolo exchange pull <offer-id> --from <peer> --config exchange.json
+  knolo exchange export <image.knolo> --to <peer> --out <dir> --config exchange.json
+  knolo exchange import <dir> --config exchange.json
+  knolo exchange adopt <receipt-id> --store <file> --home <dir> --config exchange.json
+  knolo exchange discover <handle> [--registry <url>]
   knolo exchange inspect <receipt-id> --home <dir> [--config exchange.json]
 
-Peer transfer does not call Knolo Hub and does not write knolo.lock.json.
-Receiving an image verifies SHA-256 and the V5 state root. It does not mount
-the image into a store or activate a skill.`,
+Pull, export, and import do not call Knolo Hub and do not write knolo.lock.json.
+export writes offer.cbor and the image into a directory. import reads that
+directory. Receiving an image verifies SHA-256 and the V5 state root. It does
+not mount the image into a store or activate a skill. adopt opens a local
+store only when policy.adopt is allow. discover reads a public publisher
+advertisement and does not download pack bytes.`,
     skill: `Usage: knolo skill <init|check|pack|publish|install|search|info|list>
 
   knolo skill init <name> [--dir <parent>]

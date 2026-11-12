@@ -1194,6 +1194,39 @@ function eventToCbor(event: KnowledgeEventV1): CborValue {
     provenance: event.provenance as CborValue,
   };
 }
+export function knowledgeObjectIdV1(object: {
+  kind: KnowledgeObjectV1['kind'];
+  bytes: Uint8Array;
+  meta: Record<string, unknown>;
+}): Digest {
+  return digestDomain(
+    'object',
+    canonicalCbor({
+      kind: object.kind,
+      bytes: object.bytes,
+      meta: object.meta as CborValue,
+    })
+  );
+}
+
+export function knowledgeObjectRootV1(objectIds: readonly Digest[]): Digest {
+  return digestDomain('object-root', canonicalCbor([...objectIds]));
+}
+
+export function knowledgeCommitStateV1(commit: KnowledgeCommitV1): {
+  commitDigest: Digest;
+  stateRoot: Digest;
+} {
+  const commitDigest = digestDomain(
+    'commit',
+    canonicalCbor(commitToCbor(commit))
+  );
+  return {
+    commitDigest,
+    stateRoot: digestDomain('state', digestBytes(commitDigest)),
+  };
+}
+
 function commitToCbor(commit: KnowledgeCommitV1): CborValue {
   return {
     version: commit.version,

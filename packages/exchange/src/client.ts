@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import {
   mkdir,
@@ -123,8 +124,7 @@ export async function pullExchangeOffer(
   const identity = await loadExchangeIdentity(config);
   const homeDir = input.homeDir ?? knoloHome();
   const peer = peerByName(config, input.from);
-  if (await knownOffer(homeDir, input.offerId))
-    throw new Error('V5 exchange replay detected.');
+  await assertOfferUnused(homeDir, input.offerId);
   const fetched = await httpsJson(
     `${peer.url}/v1/offers/${encodeURIComponent(input.offerId)}`,
     { method: 'GET', caPath: config.tls.caPath }
@@ -150,13 +150,9 @@ export async function pullExchangeOffer(
     input.now,
     input.ttlMs ?? 300_000
   );
-  const imageBytes = await downloadBlob(
-    config,
-    peer.url,
-    offer,
-    decision,
-    homeDir
-  );
+  const cached = await readMatchingCache(homeDir, offer);
+  const imageBytes =
+    cached ?? (await downloadBlob(config, peer.url, offer, decision, homeDir));
   const image = await acceptKnowledgeExchangeTransferWithEd25519(
     offer,
     imageBytes,
@@ -169,9 +165,38 @@ export async function pullExchangeOffer(
     await rm(partialPath(homeDir, offer.offerId), { force: true });
     throw error;
   });
+  const committed = await commitAcceptedExchange(
+    config,
+    identity,
+    offer,
+    imageBytes,
+    image.stateRoot,
+    homeDir,
+    input.now
+  );
+  await rm(partialPath(homeDir, offer.offerId), { force: true });
+  return committed;
+}
+
+export async function assertOfferUnused(
+  homeDir: string,
+  offerId: string
+): Promise<void> {
+  if (await knownOffer(homeDir, offerId))
+    throw new Error('V5 exchange replay detected.');
+}
+
+export async function commitAcceptedExchange(
+  config: ExchangeConfig,
+  identity: ExchangeIdentity,
+  offer: KnowledgeExchangeOfferV1,
+  imageBytes: Uint8Array,
+  stateRoot: string,
+  homeDir: string,
+  now: number
+): Promise<ExchangePullResult> {
   const cachePath = contentCachePath(homeDir, offer.sha256);
   await writeBytesAtomic(cachePath, imageBytes);
-  await rm(partialPath(homeDir, offer.offerId), { force: true });
   const receipt = await signKnowledgeExchangeReceiptWithEd25519(
     createKnowledgeExchangeReceiptV1({
       offer,
@@ -185,7 +210,7 @@ export async function pullExchangeOffer(
         ? {}
         : { keyringRoot: identity.keyring.keyringRoot }),
       nonce: randomNonce(),
-      issuedAt: input.now,
+      issuedAt: now,
       expiresAt: offer.expiresAt,
     }),
     identity.privateKey,
@@ -199,7 +224,7 @@ export async function pullExchangeOffer(
   return {
     cachePath,
     sha256: offer.sha256,
-    stateRoot: image.stateRoot,
+    stateRoot,
     receiptId: receipt.receiptId,
   };
 }
@@ -403,6 +428,27 @@ function createWriteAt(
     },
     done: () => chain,
   };
+}
+
+async function readMatchingCache(
+  homeDir: string,
+  offer: KnowledgeExchangeOfferV1
+): Promise<Uint8Array | undefined> {
+  const file = contentCachePath(homeDir, offer.sha256);
+  let bytes: Uint8Array;
+  try {
+    bytes = new Uint8Array(await readFile(file));
+  } catch (error) {
+    if (isNotFound(error)) return undefined;
+    throw error;
+  }
+  if (
+    bytes.length === offer.sizeBytes &&
+    createHash('sha256').update(bytes).digest('hex') === offer.sha256
+  ) {
+    return bytes;
+  }
+  return undefined;
 }
 
 async function knownOffer(homeDir: string, offerId: string): Promise<boolean> {

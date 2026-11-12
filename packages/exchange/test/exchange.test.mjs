@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { request as httpsRequest } from 'node:https';
 import { isIP } from 'node:net';
 import {
+  cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -19,7 +20,10 @@ import {
   describeKnowledgeExchangeArtifactV1,
 } from '@knolo/core';
 import {
+  adoptExchangeReceipt,
   evaluateReceivePolicy,
+  exportExchangeDirectory,
+  importExchangeDirectory,
   inspectExchangeReceipt,
   loadExchangeConfig,
   publishExchangeOffer,
@@ -57,7 +61,17 @@ test('config stays on deny, https, and knowledge images', () => {
       })
     )
   );
-  assert.throws(() => loadExchangeConfig(file), /adopt must be deny/);
+  assert.equal(loadExchangeConfig(file).policy.adopt, 'allow');
+
+  writeFileSync(
+    file,
+    JSON.stringify(
+      configDocument(dir, {
+        policy: { ...configDocument(dir, {}).policy, adopt: 'later' },
+      })
+    )
+  );
+  assert.throws(() => loadExchangeConfig(file), /adopt must be allow or deny/);
 
   const skill = configDocument(dir, {});
   skill.policy.receive.kinds = ['knowledge-image', 'skill'];
@@ -86,6 +100,309 @@ test('config stays on deny, https, and knowledge images', () => {
   nobody.policy.receive.senders = [];
   writeFileSync(file, JSON.stringify(nobody));
   assert.throws(() => loadExchangeConfig(file), /senders/);
+});
+
+test('a directory handoff caches a verified image and refuses a bad copy', async () => {
+  const dir = path.join(fixture.root, 'filesystem');
+  mkdirSync(dir, { recursive: true });
+  const senderFile = path.join(dir, 'sender.json');
+  writeFileSync(
+    senderFile,
+    JSON.stringify(
+      hostConfig({
+        principal: 'agent-a',
+        peerName: 'agent-b',
+        peerUrl: 'https://127.0.0.1:9',
+        store: path.join(dir, 'sender-store'),
+        senders: ['agent-b'],
+        maxBytes: 10_000_000,
+      })
+    )
+  );
+  const recipientFile = path.join(dir, 'recipient.json');
+  writeFileSync(
+    recipientFile,
+    JSON.stringify(
+      hostConfig({
+        principal: 'agent-b',
+        peerName: 'agent-a',
+        peerUrl: 'https://127.0.0.1:9',
+        store: path.join(dir, 'recipient-store'),
+        senders: ['agent-a'],
+        maxBytes: 10_000_000,
+      })
+    )
+  );
+  const image = imageBytes('offline-contract');
+  const imagePath = path.join(dir, 'knowledge.knolo');
+  writeFileSync(imagePath, image);
+  const exported = await exportExchangeDirectory(
+    loadExchangeConfig(senderFile),
+    {
+      imagePath,
+      to: 'agent-b',
+      outDir: path.join(dir, 'handoff'),
+      now: NOW,
+    }
+  );
+  assert.equal(existsSync(path.join(exported.directory, 'offer.cbor')), true);
+  assert.deepEqual(
+    readFileSync(path.join(exported.directory, `${exported.sha256}.knolo`)),
+    Buffer.from(image)
+  );
+  assert.equal(existsSync(path.join(dir, 'sender-store')), false);
+
+  const home = path.join(dir, 'home');
+  const imported = await importExchangeDirectory(
+    loadExchangeConfig(recipientFile),
+    { directory: exported.directory, now: NOW, homeDir: home }
+  );
+  assert.deepEqual(readFileSync(imported.cachePath), Buffer.from(image));
+  assert.equal(imported.sha256, exported.sha256);
+  assert.equal(imported.stateRoot, exported.stateRoot);
+  assert.equal(existsSync(path.join(home, 'knolo.lock.json')), false);
+  const receipt = await inspectExchangeReceipt(home, imported.receiptId);
+  assert.equal(receipt.role, 'recipient');
+  assert.equal(receipt.decision, 'accept');
+  assert.equal(receipt.verification, 'verified');
+
+  const flipped = path.join(dir, 'flipped');
+  cpSync(exported.directory, flipped, { recursive: true });
+  const flippedFile = path.join(flipped, `${exported.sha256}.knolo`);
+  const flippedBytes = readFileSync(flippedFile);
+  flippedBytes[flippedBytes.length - 1] ^= 0xff;
+  writeFileSync(flippedFile, flippedBytes);
+  const flippedHome = path.join(dir, 'flipped-home');
+  await assert.rejects(
+    () =>
+      importExchangeDirectory(loadExchangeConfig(recipientFile), {
+        directory: flipped,
+        now: NOW,
+        homeDir: flippedHome,
+      }),
+    /artifact digest mismatch/
+  );
+  assert.equal(existsSync(path.join(flippedHome, 'cache')), false);
+  assert.equal(existsSync(path.join(flippedHome, 'exchange')), false);
+
+  const mismatchFile = path.join(dir, 'mismatch.json');
+  writeFileSync(
+    mismatchFile,
+    JSON.stringify(
+      hostConfig({
+        principal: 'agent-c',
+        peerName: 'agent-a',
+        peerUrl: 'https://127.0.0.1:9',
+        store: path.join(dir, 'mismatch-store'),
+        senders: ['agent-a'],
+        maxBytes: 10_000_000,
+      })
+    )
+  );
+  const mismatchHome = path.join(dir, 'mismatch-home');
+  await assert.rejects(
+    () =>
+      importExchangeDirectory(loadExchangeConfig(mismatchFile), {
+        directory: exported.directory,
+        now: NOW,
+        homeDir: mismatchHome,
+      }),
+    /recipient mismatch/
+  );
+  assert.equal(existsSync(path.join(mismatchHome, 'cache')), false);
+  assert.equal(existsSync(path.join(mismatchHome, 'exchange')), false);
+});
+
+test('adopt creates a store, fast-forwards, and refuses deny or divergence', async () => {
+  const dir = path.join(fixture.root, 'adopt');
+  mkdirSync(dir, { recursive: true });
+  const sender = loadExchangeConfig(
+    writeJson(
+      path.join(dir, 'sender.json'),
+      hostConfig({
+        principal: 'agent-a',
+        peerName: 'agent-b',
+        peerUrl: 'https://127.0.0.1:9',
+        store: path.join(dir, 'sender-store'),
+        senders: ['agent-b'],
+        maxBytes: 10_000_000,
+      })
+    )
+  );
+  const allowFile = writeJson(
+    path.join(dir, 'allow.json'),
+    hostConfig({
+      principal: 'agent-b',
+      peerName: 'agent-a',
+      peerUrl: 'https://127.0.0.1:9',
+      store: path.join(dir, 'allow-store'),
+      senders: ['agent-a'],
+      maxBytes: 10_000_000,
+      adopt: 'allow',
+    })
+  );
+  const denyFile = writeJson(
+    path.join(dir, 'deny.json'),
+    hostConfig({
+      principal: 'agent-b',
+      peerName: 'agent-a',
+      peerUrl: 'https://127.0.0.1:9',
+      store: path.join(dir, 'deny-store'),
+      senders: ['agent-a'],
+      maxBytes: 10_000_000,
+    })
+  );
+  const allow = loadExchangeConfig(allowFile);
+  const deny = loadExchangeConfig(denyFile);
+  const base = createKnowledgeImageV5({
+    objects: [
+      {
+        kind: 'metadata',
+        bytes: new TextEncoder().encode('adopt-base'),
+        meta: {},
+      },
+    ],
+  });
+  const child = createKnowledgeImageV5({
+    baseImage: base,
+    objects: [
+      {
+        kind: 'metadata',
+        bytes: new TextEncoder().encode('adopt-child'),
+        meta: {},
+      },
+    ],
+  });
+  const other = createKnowledgeImageV5({
+    objects: [
+      {
+        kind: 'metadata',
+        bytes: new TextEncoder().encode('adopt-other'),
+        meta: {},
+      },
+    ],
+  });
+
+  async function handoff(image, label) {
+    const imagePath = path.join(dir, `${label}.knolo`);
+    writeFileSync(imagePath, image.bytes);
+    const exported = await exportExchangeDirectory(sender, {
+      imagePath,
+      to: 'agent-b',
+      outDir: path.join(dir, `${label}-out`),
+      now: NOW,
+    });
+    const homeDir = path.join(dir, `${label}-home`);
+    const imported = await importExchangeDirectory(allow, {
+      directory: exported.directory,
+      now: NOW,
+      homeDir,
+    });
+    return {
+      homeDir,
+      receiptId: imported.receiptId,
+      cachePath: imported.cachePath,
+    };
+  }
+
+  const stores = path.join(dir, 'stores');
+  const denied = await handoff(base, 'denied');
+  const denyStore = path.join(stores, 'missing-parent', 'store.knolo');
+  await assert.rejects(
+    () =>
+      adoptExchangeReceipt(deny, {
+        receiptId: denied.receiptId,
+        storePath: denyStore,
+        homeDir: denied.homeDir,
+        now: NOW,
+      }),
+    /adopt is deny/
+  );
+  assert.equal(existsSync(path.join(stores, 'missing-parent')), false);
+
+  const skill = await handoff(base, 'skill');
+  writeFileSync(skill.cachePath, Buffer.from('skill-archive'));
+  const skillStore = path.join(stores, 'skill.knolo');
+  await assert.rejects(
+    () =>
+      adoptExchangeReceipt(allow, {
+        receiptId: skill.receiptId,
+        storePath: skillStore,
+        homeDir: skill.homeDir,
+        now: NOW,
+      }),
+    /size mismatch|digest mismatch|failed to mount/
+  );
+  assert.equal(existsSync(skillStore), false);
+
+  const created = await handoff(base, 'created');
+  const createdStore = path.join(stores, 'created.knolo');
+  const made = await adoptExchangeReceipt(allow, {
+    receiptId: created.receiptId,
+    storePath: createdStore,
+    homeDir: created.homeDir,
+    now: NOW,
+  });
+  assert.equal(made.relation, 'created');
+  assert.equal(made.stateRoot, base.stateRoot);
+  assert.deepEqual(readFileSync(createdStore), Buffer.from(base.bytes));
+  const again = await adoptExchangeReceipt(allow, {
+    receiptId: created.receiptId,
+    storePath: createdStore,
+    homeDir: created.homeDir,
+    now: NOW,
+  });
+  assert.equal(again.relation, 'equal');
+  assert.deepEqual(readFileSync(createdStore), Buffer.from(base.bytes));
+
+  const ahead = await handoff(child, 'ahead');
+  const aheadStore = path.join(stores, 'ahead.knolo');
+  writeFileSync(aheadStore, base.bytes);
+  const forwarded = await adoptExchangeReceipt(allow, {
+    receiptId: ahead.receiptId,
+    storePath: aheadStore,
+    homeDir: ahead.homeDir,
+    now: NOW,
+  });
+  assert.equal(forwarded.relation, 'remote-ahead');
+  assert.equal(forwarded.stateRoot, child.stateRoot);
+  assert.deepEqual(readFileSync(aheadStore), Buffer.from(child.bytes));
+
+  const diverged = await handoff(other, 'diverged');
+  const divergedStore = path.join(stores, 'diverged.knolo');
+  writeFileSync(divergedStore, base.bytes);
+  const before = readFileSync(divergedStore);
+  await assert.rejects(
+    () =>
+      adoptExchangeReceipt(allow, {
+        receiptId: diverged.receiptId,
+        storePath: divergedStore,
+        homeDir: diverged.homeDir,
+        now: NOW,
+      }),
+    /diverged/
+  );
+  assert.deepEqual(readFileSync(divergedStore), before);
+  assert.equal(
+    describeKnowledgeExchangeArtifactV1(new Uint8Array(before)).stateRoot,
+    base.stateRoot
+  );
+
+  const behind = await handoff(base, 'behind');
+  const localStore = path.join(stores, 'local.knolo');
+  writeFileSync(localStore, child.bytes);
+  const beforeLocal = readFileSync(localStore);
+  await assert.rejects(
+    () =>
+      adoptExchangeReceipt(allow, {
+        receiptId: behind.receiptId,
+        storePath: localStore,
+        homeDir: behind.homeDir,
+        now: NOW,
+      }),
+    /local-ahead/
+  );
+  assert.deepEqual(readFileSync(localStore), beforeLocal);
 });
 
 test('receive policy separates sender, size, and namespace', () => {
@@ -121,6 +438,83 @@ test('receive policy separates sender, size, and namespace', () => {
     ).ok,
     true
   );
+});
+
+test('a warm cache skips a bad blob and a corrupt cache waits for a verified download', async () => {
+  const started = await boot('cache-reuse');
+  try {
+    const image = imageBytes('cache-reuse');
+    const first = await publish(started, image, 'first');
+    const home = path.join(started.dir, 'recipient');
+    const pulled = await pull(started, first, { home: 'recipient' });
+    const second = await publish(started, image, 'second');
+    assert.notEqual(second.offerId, first.offerId);
+    writeFileSync(
+      path.join(started.store, 'blobs', `${first.described.sha256}.knolo`),
+      Buffer.from('garbage-blob')
+    );
+    const again = await pull(started, second, { home: 'recipient' });
+    assert.equal(again.sha256, first.described.sha256);
+    assert.notEqual(again.receiptId, pulled.receiptId);
+    assert.deepEqual(
+      readFileSync(
+        path.join(home, 'cache', 'sha256', `${first.described.sha256}.knolo`)
+      ),
+      Buffer.from(image)
+    );
+    assert.equal(existsSync(path.join(home, 'knolo.lock.json')), false);
+  } finally {
+    await started.close();
+  }
+
+  const broken = await boot('cache-broken', { truncateAfter: 16 });
+  try {
+    const image = imageBytes('cache-broken');
+    const offered = await publish(broken, image, 'broken');
+    const cache = path.join(
+      broken.dir,
+      'broken-home',
+      'cache',
+      'sha256',
+      `${offered.described.sha256}.knolo`
+    );
+    mkdirSync(path.dirname(cache), { recursive: true });
+    const garbage = Buffer.from('corrupt-cache');
+    writeFileSync(cache, garbage);
+    await assert.rejects(
+      () => pull(broken, offered, { home: 'broken-home' }),
+      /interrupted/
+    );
+    assert.deepEqual(readFileSync(cache), garbage);
+    assert.equal(
+      existsSync(
+        path.join(broken.dir, 'broken-home', 'exchange', 'offers.json')
+      ),
+      false
+    );
+  } finally {
+    await broken.close();
+  }
+
+  const healed = await boot('cache-healed');
+  try {
+    const image = imageBytes('cache-healed');
+    const offered = await publish(healed, image, 'healed');
+    const cache = path.join(
+      healed.dir,
+      'healed-home',
+      'cache',
+      'sha256',
+      `${offered.described.sha256}.knolo`
+    );
+    mkdirSync(path.dirname(cache), { recursive: true });
+    writeFileSync(cache, Buffer.from('corrupt-cache'));
+    const pulled = await pull(healed, offered, { home: 'healed-home' });
+    assert.deepEqual(readFileSync(pulled.cachePath), Buffer.from(image));
+    assert.equal(pulled.sha256, offered.described.sha256);
+  } finally {
+    await healed.close();
+  }
 });
 
 test('two hosts exchange images, refuse bad offers, and keep digests apart', async () => {
@@ -453,6 +847,11 @@ function configDocument(dir, overrides) {
   };
 }
 
+function writeJson(file, value) {
+  writeFileSync(file, JSON.stringify(value));
+  return file;
+}
+
 function hostConfig({
   principal,
   peerName,
@@ -460,6 +859,7 @@ function hostConfig({
   store,
   senders,
   maxBytes,
+  adopt = 'deny',
 }) {
   return {
     identity: {
@@ -481,7 +881,7 @@ function hostConfig({
         maxBytes,
         namespaces: [],
       },
-      adopt: 'deny',
+      adopt,
     },
   };
 }

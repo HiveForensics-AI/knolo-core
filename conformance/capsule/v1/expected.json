@@ -1,0 +1,8 @@
+{
+  "cases": [
+    "valid-capsule",
+    "swapped-object-body",
+    "object-root-mismatch",
+    "state-root-mismatch"
+  ]
+}
