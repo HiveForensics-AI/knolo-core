@@ -1,6 +1,6 @@
 {
   "name": "@knolo/core",
-  "version": "6.2.1",
+  "version": "6.2.2",
   "type": "module",
   "description": "Pack, mount, and verify the Knowledge Images agents share.",
   "keywords": [

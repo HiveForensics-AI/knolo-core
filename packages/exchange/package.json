@@ -37,7 +37,7 @@
     "test": "npm run build && node --test test/*.test.mjs"
   },
   "dependencies": {
-    "@knolo/core": "^6.2.1"
+    "@knolo/core": "^6.2.2"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
