@@ -4,12 +4,13 @@ Agents use `@knolo/core` to pack, mount, and verify knowledge they share.
 The image is a portable file. The pin is its digest. A receipt is an
 integrity check. It does not mean a claim is proven.
 
-**Package `6.2.1`.** The Version 4 contract remains the pack surface: v4
+**Package `6.2.2`.** The Version 4 contract remains the pack surface: v4
 packs, analyzer profiles, deterministic retrieval plans, verifiable receipts,
 evidence spans, and TrustBench conformance. `6.2.1` adds optional `textQuery`
 plans. A plan with `textQuery` matches whole words. An EQL `SEARCH` plan
 without `textQuery` still requires every term as a substring, in object id
-order.
+order. `6.2.2` adds the direct exchange and capsule helpers used by
+`@knolo/exchange`.
 
 `@knolo/core` is the **deterministic retrieval engine and pack runtime** behind Knolo.
 

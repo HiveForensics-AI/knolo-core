@@ -19,8 +19,11 @@ reader.
 
 `knolo compose`, `knolo attest`, and `knolo verify-attestation` cite local
 Knowledge Images and write an attestation sidecar. This tree's `@knolo/cli`
-package file is `6.2.3` and depends on `@knolo/core` `^6.2.0`. npm
-`latest` is `6.2.3`. They do not fetch Hub. Verification
+package file is `6.2.4` and depends on `@knolo/core` `^6.2.0` and
+`@knolo/exchange` `^0.1.0`. npm `latest` is `6.2.4`. `knolo exchange` hands
+a verified V5 image to another agent. Shipped configs keep `adopt: deny`.
+Discover reads a public advertisement and does not download a pack. They do
+not fetch Hub for that handoff. Verification
 recomputes `compositionRoot` and checks bundled excerpt bytes. A keyring key
 must fall inside `notBefore`, `notAfter`, and `revokedAt`. `used` means a
 query or evaluation ran. It does not mean `SATISFIED`, and it does not mean a
@@ -367,7 +370,7 @@ This ensures:
 ## 🗺 Roadmap
 
 The active roadmap is maintained in [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
-The published npm release is `6.2.3`. It preserves the V4 CLI, keeps V5 verification,
+The published npm release is `6.2.4`. It preserves the V4 CLI, keeps V5 verification,
 migration, diagnostics, and read-only Studio management, and adds offline
 composition, attestation, and `knolo cortex`. Cortex verification does not
 mean an answer is true.

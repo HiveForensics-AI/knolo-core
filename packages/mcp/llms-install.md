@@ -21,10 +21,10 @@ console.log(createHash("sha256").update(readFileSync(file)).digest("hex"));
 ' /absolute/image.v5
 ```
 
-Read the state root with the published CLI `@knolo/cli@6.2.3`:
+Read the state root with the published CLI `@knolo/cli@6.2.4`:
 
 ```sh
-npx -y @knolo/cli@6.2.3 verify /absolute/image.v5
+npx -y @knolo/cli@6.2.4 verify /absolute/image.v5
 ```
 
 Copy `stateRoot` from that JSON. It starts with `sha256-`. `verified` must be

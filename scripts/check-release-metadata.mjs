@@ -5,8 +5,8 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const releaseVersion = '6.2.0';
-const coreReleaseVersion = '6.2.1';
-const cliReleaseVersion = '6.2.3';
+const coreReleaseVersion = '6.2.2';
+const cliReleaseVersion = '6.2.4';
 const reflexReleaseVersion = '0.2.0';
 const platformVersion = '5.5.1';
 const coreRange = '^6.0.0';
