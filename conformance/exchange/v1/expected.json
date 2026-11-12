@@ -1,0 +1,17 @@
+{
+  "cases": [
+    "valid-offer",
+    "wire-roundtrip",
+    "tampered-digest",
+    "state-root-mismatch",
+    "unauthorized-recipient",
+    "expired-offer",
+    "replayed-offer",
+    "revoked-key",
+    "inactive-key",
+    "decision-wrong-signer",
+    "reject-cannot-verify",
+    "mount-failed",
+    "extra-wire-field"
+  ]
+}

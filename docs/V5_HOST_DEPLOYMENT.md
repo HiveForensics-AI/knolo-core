@@ -41,6 +41,14 @@ transport without adding any of those dependencies to `@knolo/core`.
 fake-host tests. It intentionally does not model sockets, credentials,
 endpoint discovery, or durable checkpoint storage.
 
+`@knolo/exchange` is the HTTPS adapter for a direct handoff of one complete
+V5 image ([KIP-0028](../spec/KIP-0028-exchange-offer-v1.md)). The in-memory
+sync adapter remains the test double for the sync coordinator. A peer
+transfer checks the signed offer, the SHA-256, and the state root, then
+writes the image into the content cache and an exchange receipt. Adoption,
+Hub publication, and `knolo.lock.json` stay explicit host actions. See the
+[exchange package](../packages/exchange/README.md).
+
 ## Failure behavior
 
 | Failure                                       | Retry behavior                         | Replay state                                      |

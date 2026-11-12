@@ -1,0 +1,468 @@
+import { readFileSync } from 'node:fs';
+import {
+  mkdir,
+  open,
+  readFile,
+  rename,
+  rm,
+  stat,
+  truncate,
+  writeFile,
+} from 'node:fs/promises';
+import { request as httpsRequest } from 'node:https';
+import * as path from 'node:path';
+import {
+  KnowledgeSyncReplayCacheV1,
+  acceptKnowledgeExchangeTransferWithEd25519,
+  createKnowledgeExchangeDecisionV1,
+  createKnowledgeExchangeOfferV1,
+  createKnowledgeExchangeReceiptV1,
+  decodeKnowledgeExchangeOfferV1,
+  decodeKnowledgeExchangeReceiptV1,
+  describeKnowledgeExchangeArtifactV1,
+  encodeKnowledgeExchangeDecisionV1,
+  encodeKnowledgeExchangeOfferV1,
+  encodeKnowledgeExchangeReceiptV1,
+  signKnowledgeExchangeDecisionWithEd25519,
+  signKnowledgeExchangeOfferWithEd25519,
+  signKnowledgeExchangeReceiptWithEd25519,
+  verifyKnowledgeExchangeOfferWithEd25519,
+  verifyKnowledgeExchangeReceiptWithEd25519,
+  type KnowledgeExchangeOfferV1,
+  type KnowledgeExchangeReceiptV1,
+} from '@knolo/core';
+import { peerByName, type ExchangeConfig } from './config.js';
+import { httpsJson, tlsServerName } from './http.js';
+import { loadExchangeIdentity, type ExchangeIdentity } from './identity.js';
+import { evaluateReceivePolicy } from './policy.js';
+import {
+  contentCachePath,
+  knoloHome,
+  partialPath,
+  receiptPath,
+} from './paths.js';
+import {
+  blobPath,
+  offerPath,
+  readEndpoint,
+  writeBytesAtomic,
+} from './store.js';
+
+export type ExchangePullResult = {
+  cachePath: string;
+  sha256: string;
+  stateRoot: string;
+  receiptId: string;
+};
+
+export async function publishExchangeOffer(
+  config: ExchangeConfig,
+  input: {
+    imagePath: string;
+    to: string;
+    now: number;
+    ttlMs?: number;
+    namespace?: string;
+  }
+): Promise<{ offerId: string }> {
+  const identity = await loadExchangeIdentity(config);
+  const peer = peerByName(config, input.to);
+  const imageBytes = new Uint8Array(await readFile(input.imagePath));
+  const described = describeKnowledgeExchangeArtifactV1(imageBytes);
+  const ttl = input.ttlMs ?? 300_000;
+  const offer = await signKnowledgeExchangeOfferWithEd25519(
+    createKnowledgeExchangeOfferV1({
+      sender: config.identity.principal,
+      recipient: peer.principal,
+      artifactKind: 'knowledge-image',
+      sha256: described.sha256,
+      stateRoot: described.stateRoot,
+      sizeBytes: described.sizeBytes,
+      ...(input.namespace === undefined ? {} : { namespace: input.namespace }),
+      algorithm: 'Ed25519',
+      keyId: config.identity.keyId,
+      ...(identity.keyring.keyringRoot === undefined
+        ? {}
+        : { keyringRoot: identity.keyring.keyringRoot }),
+      nonce: randomNonce(),
+      issuedAt: input.now,
+      expiresAt: input.now + ttl,
+    }),
+    identity.privateKey,
+    globalThis.crypto
+  );
+  await writeBytesAtomic(blobPath(config.storePath, offer.sha256), imageBytes);
+  const wire = encodeKnowledgeExchangeOfferV1(offer);
+  await writeBytesAtomic(offerPath(config.storePath, offer.offerId), wire);
+  const endpoint = await readEndpoint(config.storePath);
+  const posted = await httpsJson(`${endpoint}/v1/offers`, {
+    method: 'POST',
+    body: wire,
+    headers: {
+      'content-type': 'application/cbor',
+      ...(config.adminToken
+        ? { authorization: `Bearer ${config.adminToken}` }
+        : {}),
+    },
+    caPath: config.tls.caPath,
+  });
+  if (posted.status !== 201) throw httpFailure(posted.status, posted.body);
+  return { offerId: offer.offerId };
+}
+
+export async function pullExchangeOffer(
+  config: ExchangeConfig,
+  input: {
+    offerId: string;
+    from: string;
+    now: number;
+    homeDir?: string;
+    ttlMs?: number;
+  }
+): Promise<ExchangePullResult> {
+  const identity = await loadExchangeIdentity(config);
+  const homeDir = input.homeDir ?? knoloHome();
+  const peer = peerByName(config, input.from);
+  if (await knownOffer(homeDir, input.offerId))
+    throw new Error('V5 exchange replay detected.');
+  const fetched = await httpsJson(
+    `${peer.url}/v1/offers/${encodeURIComponent(input.offerId)}`,
+    { method: 'GET', caPath: config.tls.caPath }
+  );
+  if (fetched.status !== 200) throw httpFailure(fetched.status, fetched.body);
+  const offer = decodeKnowledgeExchangeOfferV1(fetched.body);
+  if (offer.offerId !== input.offerId)
+    throw new Error('V5 exchange offer ID mismatch.');
+  await verifyKnowledgeExchangeOfferWithEd25519(
+    offer,
+    identity.keyring,
+    input.now,
+    globalThis.crypto,
+    config.identity.principal
+  );
+  const policy = evaluateReceivePolicy(config.policy.receive, offer);
+  if (!policy.ok) throw new Error('V5 exchange policy denied.');
+  const decision = await acceptDecision(
+    config,
+    identity,
+    offer,
+    peer.url,
+    input.now,
+    input.ttlMs ?? 300_000
+  );
+  const imageBytes = await downloadBlob(
+    config,
+    peer.url,
+    offer,
+    decision,
+    homeDir
+  );
+  const image = await acceptKnowledgeExchangeTransferWithEd25519(
+    offer,
+    imageBytes,
+    identity.keyring,
+    new KnowledgeSyncReplayCacheV1(),
+    input.now,
+    globalThis.crypto,
+    config.identity.principal
+  ).catch(async (error: unknown) => {
+    await rm(partialPath(homeDir, offer.offerId), { force: true });
+    throw error;
+  });
+  const cachePath = contentCachePath(homeDir, offer.sha256);
+  await writeBytesAtomic(cachePath, imageBytes);
+  await rm(partialPath(homeDir, offer.offerId), { force: true });
+  const receipt = await signKnowledgeExchangeReceiptWithEd25519(
+    createKnowledgeExchangeReceiptV1({
+      offer,
+      role: 'recipient',
+      decision: 'accept',
+      verification: 'verified',
+      policy: 'receive',
+      algorithm: 'Ed25519',
+      keyId: config.identity.keyId,
+      ...(identity.keyring.keyringRoot === undefined
+        ? {}
+        : { keyringRoot: identity.keyring.keyringRoot }),
+      nonce: randomNonce(),
+      issuedAt: input.now,
+      expiresAt: offer.expiresAt,
+    }),
+    identity.privateKey,
+    globalThis.crypto
+  );
+  await writeBytesAtomic(
+    receiptPath(homeDir, receipt.receiptId),
+    encodeKnowledgeExchangeReceiptV1(receipt)
+  );
+  await rememberOffer(homeDir, offer.offerId, receipt.receiptId);
+  return {
+    cachePath,
+    sha256: offer.sha256,
+    stateRoot: image.stateRoot,
+    receiptId: receipt.receiptId,
+  };
+}
+
+export async function inspectExchangeReceipt(
+  homeDir: string,
+  receiptId: string,
+  config?: ExchangeConfig,
+  now = Date.now()
+): Promise<KnowledgeExchangeReceiptV1> {
+  const receipt = decodeKnowledgeExchangeReceiptV1(
+    new Uint8Array(await readFile(receiptPath(homeDir, receiptId)))
+  );
+  if (config) {
+    const identity = await loadExchangeIdentity(config);
+    const offerBytes = await readFile(
+      offerPath(config.storePath, receipt.offerId)
+    ).catch(() => undefined);
+    if (offerBytes) {
+      await verifyKnowledgeExchangeReceiptWithEd25519(
+        decodeKnowledgeExchangeOfferV1(new Uint8Array(offerBytes)),
+        receipt,
+        identity.keyring,
+        now,
+        globalThis.crypto
+      );
+    }
+  }
+  return receipt;
+}
+
+async function acceptDecision(
+  config: ExchangeConfig,
+  identity: ExchangeIdentity,
+  offer: KnowledgeExchangeOfferV1,
+  peerUrl: string,
+  now: number,
+  ttlMs: number
+): Promise<Uint8Array> {
+  const decision = await signKnowledgeExchangeDecisionWithEd25519(
+    createKnowledgeExchangeDecisionV1({
+      offer,
+      decision: 'accept',
+      algorithm: 'Ed25519',
+      keyId: config.identity.keyId,
+      ...(identity.keyring.keyringRoot === undefined
+        ? {}
+        : { keyringRoot: identity.keyring.keyringRoot }),
+      nonce: randomNonce(),
+      issuedAt: now,
+      expiresAt: Math.min(offer.expiresAt, now + ttlMs),
+    }),
+    identity.privateKey,
+    globalThis.crypto
+  );
+  const wire = encodeKnowledgeExchangeDecisionV1(decision);
+  const posted = await httpsJson(
+    `${peerUrl}/v1/offers/${encodeURIComponent(offer.offerId)}/decision`,
+    {
+      method: 'POST',
+      body: wire,
+      headers: { 'content-type': 'application/cbor' },
+      caPath: config.tls.caPath,
+    }
+  );
+  if (posted.status !== 200) throw httpFailure(posted.status, posted.body);
+  return wire;
+}
+
+async function downloadBlob(
+  config: ExchangeConfig,
+  peerUrl: string,
+  offer: KnowledgeExchangeOfferV1,
+  decision: Uint8Array,
+  homeDir: string
+): Promise<Uint8Array> {
+  if (offer.sizeBytes > config.policy.receive.maxBytes)
+    throw new Error('V5 exchange policy denied.');
+  const partial = partialPath(homeDir, offer.offerId);
+  await mkdir(path.dirname(partial), { recursive: true });
+  let existing = 0;
+  try {
+    existing = (await stat(partial)).size;
+  } catch (error) {
+    if (!isNotFound(error)) throw error;
+  }
+  if (existing > offer.sizeBytes) {
+    await rm(partial, { force: true });
+    existing = 0;
+  }
+  if (existing === offer.sizeBytes)
+    return new Uint8Array(await readFile(partial));
+  const ca = config.tls.caPath ? readFileSync(config.tls.caPath) : undefined;
+  const target = new URL(`${peerUrl}/v1/blobs/${offer.sha256}`);
+  await new Promise<void>((resolve, reject) => {
+    let settled = false;
+    const fail = (error: Error) => {
+      if (settled) return;
+      settled = true;
+      reject(error);
+    };
+    const succeed = () => {
+      if (settled) return;
+      settled = true;
+      resolve();
+    };
+    const req = httpsRequest(
+      {
+        protocol: target.protocol,
+        hostname: target.hostname,
+        port: target.port,
+        path: target.pathname,
+        method: 'GET',
+        headers: {
+          'knolo-decision': Buffer.from(decision).toString('base64url'),
+          ...(existing > 0 ? { range: `bytes=${existing}-` } : {}),
+        },
+        ...(ca ? { ca } : {}),
+        ...tlsServerName(target.hostname),
+        agent: false,
+      },
+      (response) => {
+        if ((response.statusCode ?? 0) >= 400) {
+          const chunks: Buffer[] = [];
+          response.on('data', (chunk: Buffer) => chunks.push(chunk));
+          response.on('end', () =>
+            fail(
+              httpFailure(
+                response.statusCode ?? 0,
+                new Uint8Array(Buffer.concat(chunks))
+              )
+            )
+          );
+          response.on('error', () =>
+            fail(new Error('V5 exchange transfer interrupted.'))
+          );
+          return;
+        }
+        const offset = response.statusCode === 206 ? existing : 0;
+        const writer = createWriteAt(
+          partial,
+          offset,
+          response.statusCode !== 206
+        );
+        let received = offset;
+        response.on('data', (chunk: Buffer) => {
+          if (received + chunk.length > offer.sizeBytes) {
+            response.destroy();
+            fail(new Error('V5 exchange transfer interrupted.'));
+            return;
+          }
+          received += chunk.length;
+          writer.write(chunk);
+        });
+        response.on('end', () => {
+          void writer.done().then(succeed, fail);
+        });
+        response.on('error', () =>
+          fail(new Error('V5 exchange transfer interrupted.'))
+        );
+      }
+    );
+    req.on('error', () => fail(new Error('V5 exchange transfer interrupted.')));
+    req.end();
+  });
+  let imageBytes: Uint8Array;
+  try {
+    imageBytes = new Uint8Array(await readFile(partial));
+  } catch (error) {
+    if (isNotFound(error)) throw new Error('V5 exchange transfer interrupted.');
+    throw error;
+  }
+  if (imageBytes.length !== offer.sizeBytes)
+    throw new Error('V5 exchange transfer interrupted.');
+  return imageBytes;
+}
+
+function createWriteAt(
+  file: string,
+  offset: number,
+  replace: boolean
+): { write: (chunk: Buffer) => void; done: () => Promise<void> } {
+  let position = offset;
+  let chain = replace
+    ? truncate(file, 0)
+        .catch(() => undefined)
+        .then(() => undefined)
+    : Promise.resolve();
+  return {
+    write(chunk: Buffer) {
+      const start = position;
+      position += chunk.length;
+      chain = chain.then(async () => {
+        const handle = await open(file, 'r+').catch(() => open(file, 'w+'));
+        try {
+          await handle.write(chunk, 0, chunk.length, start);
+        } finally {
+          await handle.close();
+        }
+      });
+    },
+    done: () => chain,
+  };
+}
+
+async function knownOffer(homeDir: string, offerId: string): Promise<boolean> {
+  try {
+    const index = JSON.parse(
+      await readFile(indexPath(homeDir), 'utf8')
+    ) as Record<string, string>;
+    return typeof index[offerId] === 'string';
+  } catch (error) {
+    if (isNotFound(error)) return false;
+    throw error;
+  }
+}
+
+async function rememberOffer(
+  homeDir: string,
+  offerId: string,
+  receiptId: string
+): Promise<void> {
+  const file = indexPath(homeDir);
+  let index: Record<string, string> = {};
+  try {
+    index = JSON.parse(await readFile(file, 'utf8')) as Record<string, string>;
+  } catch (error) {
+    if (!isNotFound(error)) throw error;
+  }
+  index[offerId] = receiptId;
+  const temp = `${file}.${process.pid}.tmp`;
+  await mkdir(path.dirname(file), { recursive: true });
+  await writeFile(temp, JSON.stringify(index));
+  await rename(temp, file);
+}
+
+function indexPath(homeDir: string): string {
+  return path.join(homeDir, 'exchange', 'offers.json');
+}
+
+function httpFailure(status: number, body: Uint8Array): Error {
+  try {
+    const parsed = JSON.parse(Buffer.from(body).toString('utf8')) as {
+      error?: string;
+    };
+    if (parsed.error) return new Error(parsed.error);
+  } catch {
+    // The body was not the JSON error envelope.
+  }
+  return new Error(`V5 exchange request failed with status ${status}.`);
+}
+
+function randomNonce(): Uint8Array {
+  const bytes = new Uint8Array(16);
+  globalThis.crypto.getRandomValues(bytes);
+  return bytes;
+}
+
+function isNotFound(error: unknown): boolean {
+  return Boolean(
+    error &&
+    typeof error === 'object' &&
+    'code' in error &&
+    (error as { code?: string }).code === 'ENOENT'
+  );
+}

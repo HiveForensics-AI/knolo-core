@@ -157,6 +157,10 @@ The exchange helper verifies both messages before admitting the request to a
 bounded replay cache; durable replay persistence and network transport remain
 host responsibilities.
 
+KIP-0028 is a separate offer for one named recipient. It carries the artifact
+SHA-256, V5 state root, size, and an accept or reject. It does not reuse
+`sync-request`, and accepting a transfer does not adopt the image into a store.
+
 Signed sync messages can be serialized for transport with the bounded,
 canonical-CBOR `encodeKnowledgeSyncRequestV1` and
 `encodeKnowledgeSyncResponseV1` helpers and restored with their matching decode

@@ -40,6 +40,19 @@ import {
   type KnowledgeRunAuthorityVerificationV1,
 } from './knowledge_run_authority_v5.js';
 import type { KnowledgeRunV1 } from './knowledge_run_v5.js';
+import {
+  acceptKnowledgeExchangeTransferV1,
+  exchangeDecisionPayloadV1,
+  exchangeOfferPayloadV1,
+  exchangeReceiptPayloadV1,
+  verifyKnowledgeExchangeDecisionV1,
+  verifyKnowledgeExchangeOfferV1,
+  verifyKnowledgeExchangeReceiptV1,
+  type KnowledgeExchangeDecisionV1,
+  type KnowledgeExchangeOfferV1,
+  type KnowledgeExchangeReceiptV1,
+  type KnowledgeExchangeVerificationOptionsV1,
+} from './knowledge_exchange_v1.js';
 
 export type Ed25519AuthorityKeyV1 = {
   principal: string;
@@ -226,6 +239,78 @@ export async function exchangeKnowledgeSyncOverTransportWithEd25519(
     replayCache,
     transport,
   });
+}
+
+export async function signKnowledgeExchangeOfferWithEd25519(offer: KnowledgeExchangeOfferV1, privateKey: CryptoKey, cryptoLike?: { subtle: SubtleCrypto }): Promise<KnowledgeExchangeOfferV1> {
+  return { ...offer, signature: await signExchangePayload(offer.algorithm, exchangeOfferPayloadV1(offer), privateKey, cryptoLike) };
+}
+
+export async function signKnowledgeExchangeDecisionWithEd25519(decision: KnowledgeExchangeDecisionV1, privateKey: CryptoKey, cryptoLike?: { subtle: SubtleCrypto }): Promise<KnowledgeExchangeDecisionV1> {
+  return { ...decision, signature: await signExchangePayload(decision.algorithm, exchangeDecisionPayloadV1(decision), privateKey, cryptoLike) };
+}
+
+export async function signKnowledgeExchangeReceiptWithEd25519(receipt: KnowledgeExchangeReceiptV1, privateKey: CryptoKey, cryptoLike?: { subtle: SubtleCrypto }): Promise<KnowledgeExchangeReceiptV1> {
+  return { ...receipt, signature: await signExchangePayload(receipt.algorithm, exchangeReceiptPayloadV1(receipt), privateKey, cryptoLike) };
+}
+
+export async function verifyKnowledgeExchangeOfferWithEd25519(offer: KnowledgeExchangeOfferV1, keyring: Ed25519AuthorityKeyringV1, now: number, cryptoLike?: { subtle: SubtleCrypto }, expectedRecipient?: string): Promise<void> {
+  await verifyKnowledgeExchangeOfferV1(offer, exchangeVerificationOptions(keyring, now, cryptoLike, expectedRecipient));
+}
+
+export async function verifyKnowledgeExchangeDecisionWithEd25519(offer: KnowledgeExchangeOfferV1, decision: KnowledgeExchangeDecisionV1, keyring: Ed25519AuthorityKeyringV1, now: number, cryptoLike?: { subtle: SubtleCrypto }): Promise<void> {
+  await verifyKnowledgeExchangeDecisionV1(offer, decision, exchangeVerificationOptions(keyring, now, cryptoLike));
+}
+
+export async function verifyKnowledgeExchangeReceiptWithEd25519(offer: KnowledgeExchangeOfferV1, receipt: KnowledgeExchangeReceiptV1, keyring: Ed25519AuthorityKeyringV1, now: number, cryptoLike?: { subtle: SubtleCrypto }): Promise<void> {
+  await verifyKnowledgeExchangeReceiptV1(offer, receipt, exchangeVerificationOptions(keyring, now, cryptoLike));
+}
+
+export async function acceptKnowledgeExchangeTransferWithEd25519(
+  offer: KnowledgeExchangeOfferV1,
+  imageBytes: Uint8Array,
+  keyring: Ed25519AuthorityKeyringV1,
+  replayCache: KnowledgeSyncReplayCacheV1,
+  now: number,
+  cryptoLike?: { subtle: SubtleCrypto },
+  expectedRecipient?: string,
+): Promise<KnowledgeImageV5> {
+  return acceptKnowledgeExchangeTransferV1(offer, imageBytes, { ...exchangeVerificationOptions(keyring, now, cryptoLike, expectedRecipient), replayCache });
+}
+
+function exchangeVerificationOptions(keyring: Ed25519AuthorityKeyringV1, now: number, cryptoLike: { subtle: SubtleCrypto } | undefined, expectedRecipient?: string): KnowledgeExchangeVerificationOptionsV1 {
+  const { resolveKey, verifySignature } = ed25519ExchangeVerifier(keyring, now, cryptoLike);
+  return { now, expectedKeyringRoot: keyring.keyringRoot, ...(expectedRecipient === undefined ? {} : { expectedRecipient }), resolveKey, verifySignature };
+}
+
+async function signExchangePayload(algorithm: string, payload: Uint8Array, privateKey: CryptoKey, cryptoLike?: { subtle: SubtleCrypto }): Promise<Uint8Array> {
+  const subtle = cryptoLike?.subtle ?? globalThis.crypto?.subtle;
+  if (!subtle) throw new Error('WebCrypto SubtleCrypto is unavailable for Ed25519 signing.');
+  if (algorithm !== 'Ed25519') throw new Error('V5 exchange algorithm must be Ed25519 for this adapter.');
+  return new Uint8Array(await subtle.sign({ name: 'Ed25519' }, privateKey, payload.buffer as ArrayBuffer));
+}
+
+function ed25519ExchangeVerifier(keyring: Ed25519AuthorityKeyringV1, now: number, cryptoLike?: { subtle: SubtleCrypto }): { resolveKey: KnowledgeExchangeVerificationOptionsV1['resolveKey']; verifySignature: KnowledgeExchangeVerificationOptionsV1['verifySignature'] } {
+  const subtle = cryptoLike?.subtle ?? globalThis.crypto?.subtle;
+  if (!subtle) throw new Error('WebCrypto SubtleCrypto is unavailable for Ed25519 verification.');
+  const resolveKey = (principal: string, algorithm: string, keyId?: string): Uint8Array | undefined => {
+    if (algorithm !== 'Ed25519' || !keyId) return undefined;
+    const matches = keyring.keys.filter((key) => key.principal === principal && key.keyId === keyId && key.publicKey.length === 32);
+    if (matches.length !== 1) return undefined;
+    const key = matches[0];
+    if (key.revokedAt !== undefined && now >= key.revokedAt) throw new Error('V5 exchange key is revoked.');
+    if ((key.notBefore !== undefined && now < key.notBefore) || (key.notAfter !== undefined && now >= key.notAfter)) throw new Error('V5 exchange key is outside its validity window.');
+    return key.publicKey;
+  };
+  const verifySignature = async (algorithm: string, key: Uint8Array, message: Uint8Array, signature: Uint8Array): Promise<boolean> => {
+    if (algorithm !== 'Ed25519' || key.length !== 32 || signature.length !== 64) return false;
+    try {
+      const publicKey = await subtle.importKey('raw', key.slice().buffer as ArrayBuffer, { name: 'Ed25519' }, false, ['verify']);
+      return await subtle.verify({ name: 'Ed25519' }, publicKey, signature.slice().buffer as ArrayBuffer, message.slice().buffer as ArrayBuffer);
+    } catch {
+      return false;
+    }
+  };
+  return { resolveKey, verifySignature };
 }
 
 function ed25519SyncVerifier(keyring: Ed25519AuthorityKeyringV1, now: number, cryptoLike?: { subtle: SubtleCrypto }): { subtle: SubtleCrypto; resolveKey: (principal: string, algorithm: string, keyId?: string) => Uint8Array | undefined; verifySignature: KnowledgeSyncMessageAsyncVerificationOptionsV1['verifySignature'] } {
