@@ -66,12 +66,12 @@ const bannedInstallPhrases = [
 test('cline install docs keep the published pins', () => {
   for (const text of [installDoc, readme]) {
     assert.match(text, /@knolo\/mcp@0\.2\.3/);
-    assert.match(text, /@knolo\/cli@6\.2\.3/);
+    assert.match(text, /@knolo\/cli@6\.2\.4/);
     for (const phrase of bannedInstallPhrases) {
       assert.doesNotMatch(text, phrase);
     }
   }
-  assert.match(installDoc, /npx -y @knolo\/cli@6\.2\.3 verify /);
+  assert.match(installDoc, /npx -y @knolo\/cli@6\.2\.4 verify /);
   assert.match(installDoc, /"command": "npx"/);
   const serverBlocks = installDoc.match(/```json[\s\S]*?```/g) ?? [];
   assert.equal(serverBlocks.length > 0, true);

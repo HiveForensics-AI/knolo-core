@@ -199,7 +199,7 @@ VS Code (`.vscode/mcp.json`):
 Cline uses the same stdio server. The file hash, `knolo verify`, and the
 Cline settings block are in [llms-install.md](llms-install.md). The published
 server pin is `@knolo/mcp@0.2.3`. The CLI pin for `stateRoot` is
-`@knolo/cli@6.2.3`. Pins, the policy file, and the audit directory stay in
+`@knolo/cli@6.2.4`. Pins, the policy file, and the audit directory stay in
 the config.
 
 ```json

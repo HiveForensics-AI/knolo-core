@@ -159,11 +159,11 @@ The current product line in this repository is Knolo 6.2.0. V6 adds KAR on
 the V5 Knowledge Image: deterministic images, verification, migration,
 bounded runtime features, diagnostics, and a read-only Studio management
 snapshot remain. 6.1.0 adds offline composition and attestation. 6.2.0 adds
-Knolo Cortex. Published `@knolo/core` is `6.2.1`. `@knolo/tools` `0.2.1`
+Knolo Cortex. Published `@knolo/core` is `6.2.2`. `@knolo/tools` `0.2.1`
 depends on `@knolo/core` `^6.2.1`. This tree's `@knolo/mcp` is `0.2.3`.
 npm `latest` for MCP is `0.2.3`. This tree's
-`@knolo/cli` package file is `6.2.3` and depends on `@knolo/core` `^6.2.0`.
-npm `latest` for the CLI is `6.2.3`. `@knolo/langchain`, `@knolo/llamaindex`,
+`@knolo/cli` package file is `6.2.4` and depends on `@knolo/core` `^6.2.0` and `@knolo/exchange` `^0.1.0`.
+npm `latest` for the CLI is `6.2.4`. npm `latest` for `@knolo/exchange` is `0.1.0`. `@knolo/langchain`, `@knolo/llamaindex`,
 `@knolo/semantic-ollama`, `create-knolo-app`, and `@knolo/reflex` stay on
 `@knolo/core` `^6.0.0`. `@knolo/ai-sdk@0.1.0` stays on `@knolo/core` `^6.2.0`
 and `@knolo/tools` `^0.2.0`. `@knolo/mastra` `0.1.0` is not published yet and
