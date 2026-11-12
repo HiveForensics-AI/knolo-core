@@ -79,7 +79,10 @@ for (const relativePath of npmPackages) {
         const expected =
           relativePath === 'packages/cli/package.json' && name === '@knolo/core'
             ? cliCoreRange
-            : coreRange;
+            : relativePath === 'packages/cli/package.json' &&
+                name === '@knolo/exchange'
+              ? '^0.1.0'
+              : coreRange;
         assert.equal(
           range,
           expected,

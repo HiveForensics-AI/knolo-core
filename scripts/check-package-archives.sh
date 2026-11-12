@@ -7,6 +7,7 @@ mkdir -p "$npm_cache_dir"
 for package_name in \
   '@knolo/core' \
   '@knolo/cli' \
+  '@knolo/exchange' \
   '@knolo/langchain' \
   '@knolo/llamaindex' \
   '@knolo/semantic-ollama' \

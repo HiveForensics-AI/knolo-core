@@ -115,3 +115,45 @@ That does not mean the claim is true.
 
 Each kept search term must appear as a whole word. An EQL `SEARCH` string
 is a different matcher: every term is a substring.
+
+## 5. Hand a private image to one peer
+
+Hub is the public catalog. A private image can move from one agent to
+another on the local network. `knolo exchange` sends one V5 Knowledge Image
+over HTTPS. `@knolo/core` checks the signed offer, the SHA-256, and the
+state root ([KIP-0028](../../spec/KIP-0028-exchange-offer-v1.md)). The
+transfer writes the image into the content cache. Mounting, skill
+activation, Hub publication, and `knolo.lock.json` stay separate host
+actions.
+
+```bash
+knolo exchange serve --config exchange.json
+knolo exchange offer ./knowledge.knolo --to agent-b --config exchange.json
+knolo exchange pull <offer-id> --from agent-a --config exchange.json
+knolo exchange export ./knowledge.knolo --to agent-b --out ./handoff --config exchange.json
+knolo exchange import ./handoff --config exchange.json
+knolo exchange adopt <receipt-id> --store <file> --home ~/.knolo --config exchange.json
+knolo exchange discover <handle> [--registry <url>]
+knolo verify ~/.knolo/cache/sha256/<sha256>.knolo
+knolo exchange inspect <receipt-id> --home ~/.knolo
+```
+
+`serve` binds the address in the config and writes `endpoint.json`. `offer`
+registers a signed offer on that local server. `pull` accepts the offer,
+downloads the bytes, and writes `~/.knolo/cache/sha256/<sha256>.knolo` plus
+a receipt under `~/.knolo/exchange/receipts/`. `export` writes the same signed
+offer and image into a directory. `import` checks that directory without
+opening a socket, then writes the same cache and receipt. Receive policy names
+the allowed senders, the artifact kind (`knowledge-image`), and the size limit.
+Shipped configs keep `adopt` at `deny`. `knolo exchange adopt` opens a local
+store only when that field is `allow`. Pull and import leave the cache
+unmounted. A diverged store is left unchanged. `discover` reads a publisher's
+public endpoint list from Hub and does not download a pack. A
+[capsule](../../spec/KIP-0029-exchange-capsule-v1.md) can name a few objects
+from a verified image. It does not mount a store or adopt the image.
+
+The host adapter is
+[`@knolo/exchange`](../../packages/exchange/README.md). Sync between replicas
+that already share history stays on the V5 sync coordinator. The in-memory
+sync adapter remains a test double
+([host deployment](../V5_HOST_DEPLOYMENT.md)).

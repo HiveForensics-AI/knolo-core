@@ -22,6 +22,11 @@ const npmPackages = [
     expected: ['README.md', 'bin/knolo.mjs'],
   },
   {
+    name: '@knolo/exchange',
+    directory: 'exchange',
+    expected: ['README.md', 'dist/index.js', 'dist/index.d.ts'],
+  },
+  {
     name: '@knolo/langchain',
     directory: 'langchain',
     expected: ['README.md', 'src/index.js'],

@@ -27,7 +27,11 @@ const runtimeExports = [
   'createKnowledgeImageV5', 'mountKnowledgeImageV5', 'verifyKnowledgeImageV5',
   'queryKnowledgeImageV5', 'createKnowledgeQueryIndexV5', 'createKnowledgeQueryHistoryV5',
   'executeKnowledgeAgentRunV1', 'verifyKnowledgeRunAuthorityV5',
-  'exchangeKnowledgeSyncImageOverTransportV5', 'inspectKnowledgeRuntimeV5',
+  'exchangeKnowledgeSyncImageOverTransportV5', 'createKnowledgeExchangeOfferV1',
+  'verifyKnowledgeExchangeOfferV1', 'acceptKnowledgeExchangeTransferV1',
+  'createKnowledgeCapsuleV1', 'verifyKnowledgeCapsuleV1',
+  'knowledgeObjectIdV1', 'knowledgeObjectRootV1', 'knowledgeCommitStateV1',
+  'inspectKnowledgeRuntimeV5',
   'verifyKnowledgeRuntimeDiagnosticsV5', 'inspectKnowledgeStudioManagementV5',
   'verifyKnowledgeStudioManagementV5',
 ];

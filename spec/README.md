@@ -37,6 +37,10 @@ transactions, EQL, authority, or durable agent execution.
 | KIP-0025 | Deterministic runtime diagnostics and health snapshots                                                                                                                                                    |
 | KIP-0026 | Read-only Studio management snapshots and capability panels                                                                                                                                               |
 | KIP-0027 | Draft: VQF-1 physical compression; TypeScript encoder with TypeScript/Rust/Python required object/event reader parity, optional query-index sidecar, and runtime-only lexical postings; format not frozen |
+| KIP-0028 | Signed exchange offer, accept or reject, and receipt for one V5 image. Separate from sync-request. No sockets |
+| KIP-0029 | Exchange capsule: commit, full object-id list, and at most 64 objects. Not a Merkle proof of objectRoot |
 
 The TypeScript and Rust implementations must consume the same vectors under
-`conformance/v5/` and reject malformed input fail-closed.
+`conformance/v5/` and reject malformed input fail-closed. KIP-0028 vectors
+live under `conformance/exchange/v1/` and do not change the V5 image fixtures.
+KIP-0029 vectors live under `conformance/capsule/v1/`.
