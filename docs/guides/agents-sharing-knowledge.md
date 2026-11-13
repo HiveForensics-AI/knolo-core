@@ -43,6 +43,10 @@ does not send a token.
 A `.knolo` knowledge pack is a different catalog. Install one with
 `knolo add`. Skill packs are not published with `knolo publish`.
 
+A research pack is that same kind of image, built from local files and an
+optional verified Cortex trace. See [Research packs](research-packs.md).
+The server does not download it and does not run the research.
+
 Box can turn a host agent's local skills into a pinned image:
 
 ```bash

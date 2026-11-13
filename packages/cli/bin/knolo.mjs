@@ -81,6 +81,7 @@ const SUBCOMMANDS = new Set([
   'skill',
   'setup',
   'exchange',
+  'research',
 ]);
 const ICP_SUBCOMMANDS = new Set([
   'init',
@@ -181,6 +182,7 @@ Commands:
   cortex                  Bounded evidence retrieval with a verifiable trace
   flight                  Pack a flight-events-1 document into a V5 Knowledge Image
   skill                   Create and share a Knolo skill pack
+  research                Package local research files into a V5 Knowledge Image
   setup                   Prepare a local index and print the hub next steps
   exchange                Offer or pull a verified Knowledge Image from a peer
   icp                     Scaffold and operate an ICP-native knowledge canister
@@ -222,6 +224,8 @@ function printCommandHelp(command) {
     compose: 'Usage: knolo compose <create|verify|excerpt|query> [options]\n\nOffline composition of Knowledge Images, packs, KAR sidecars, Domain Packs, and bounded excerpts.\n\n  knolo compose create --members members.json --out composition/ [--host knowledge.knolo] [--availability material|digest] [--policy policy.json]\n  knolo compose verify composition/ [--require-material] [--member alias=path]\n  knolo compose excerpt --image knowledge.knolo --object <id> --out excerpt.json\n  knolo compose query --composition composition/ --eql "FROM chunk SEARCH \\"valve\\"" [--question "..."] [--json]\n\ncompositionRoot does not change a V5 state root or a KAR root. statement used means a query or evaluation ran. It does not mean SATISFIED, and it does not mean a claim is true or false. Hub attested: true is a listing flag and is not an attestation root. The CLI does not fetch Hub.',
     attest: 'Usage: knolo attest <create|verify> [options]\n\n  knolo attest create --composition composition/composition.json --subject composition --statement mount|used|cited --out attestation.json [--sign-key key.json --principal <id> --key-id <id> --issued-at <ms> --expires-at <ms>]\n  knolo attest verify attestation.json [--composition composition.json] [--public-key key.json] [--now <ms>] [--content-only]\n\nstatement used means a query or KAR evaluation ran. It does not mean the claim is true or false. Hub attested: true is unrelated. Signing uses the supplied times. The CLI does not read the clock.',
     cortex: 'Usage: knolo cortex <find|ask|explain|verify> [options]\n\nBounded evidence retrieval. The CLI does not call a model.\n\n  knolo cortex find <image> --question "..." [--top-k 100] --out candidates.json\n  knolo cortex ask <image> --question "..." [--graph file] [--plan plan.json] [--mode find_relevant] --out answer.cortex.json\n  knolo cortex explain answer.cortex.json\n  knolo cortex verify --image <image> --answer answer.cortex.json [--graph file]\n\nVerification recomputes the trace roots. It does not mean the answer is true. A KAR status of SATISFIED means evidence requirements were met. It does not mean a claim is proven.',
+    research:
+      'Usage: knolo research package --question <text> --agent <id> --out <image.knolo> --source <file> [--source <file>] [--cite <image.knolo> --trace <answer.cortex.json>] [--json]\n\nPacks local files into one V5 Knowledge Image. --agent is the host-supplied caller. --cite and --trace are both required or both omitted. A trace is verified against --cite before any write. A failed check writes nothing. The command does not call a model and does not download an image. A packed trace is an integrity check. It does not mean a claim is proven. SATISFIED means the trace evidence requirements were met.',
     flight: 'Usage: knolo flight <ingest|verify-log> [options]\n\n  knolo flight ingest --events <events.json> --log <file> --out <image.knolo> [--json]\n  knolo flight verify-log --image <image.knolo> --log <file> [--json]\n\ningest packs a flight-events-1 document into a V5 Knowledge Image. It hashes --log and writes nothing when the hash or byte length differs. verify-log hashes --log again and compares it with the flight-log object. It writes nothing. A missing flight-log object fails closed. Neither command decodes the log. log.format is ulog, dataflash, or rosbag2. A later KAR status of SATISFIED means evidence requirements were met. It does not mean a flight was safe, legal, or compliant.',
     setup: `Usage: knolo setup [--registry <url>] [--root <dir>] [--agent <id>] [--auto-rebuild] [--reset] [--skills <path>] [--managed-skills <path>] [--memory <path>] [--transcripts <path>]
 
@@ -1937,6 +1941,10 @@ async function main() {
       if (command === 'flight') {
         const { runFlightCli } = await import('./flight.mjs');
         return await runFlightCli(commandArgs);
+      }
+      if (command === 'research') {
+        const { runResearchCli } = await import('./research.mjs');
+        return await runResearchCli(commandArgs);
       }
       if (command === 'skill') {
         const { runSkillCli } = await import('./skill.mjs');
