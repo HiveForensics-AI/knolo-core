@@ -25,6 +25,8 @@ Packs local files into one V5 Knowledge Image. --agent is the host-supplied call
 --cite and --trace are both required or both omitted. --graph is required when the
 trace contains KAR evaluations, and it is the same file knolo cortex verify would use.
 A trace is verified against --cite before any write. A failed check writes nothing.
+When --cite is set, the image stores a digest-bound composition record for that
+image and does not copy its bytes. When --graph is set, the checked graph is stored.
 The command does not call a model and does not download an image.
 A packed trace is an integrity check. It does not mean a claim is proven.
 SATISFIED means the trace evidence requirements were met.`;
@@ -106,13 +108,13 @@ async function packageResearch(flags) {
     const cited = apis.core.mountKnowledgeImageV5(citeBytes);
     const traceBytes = readBounded(tracePath, KAR_CLI_MAX_TEXT_BYTES);
     const parsed = JSON.parse(new TextDecoder().decode(traceBytes));
-    const graph = flags.graph
-      ? JSON.parse(
-          new TextDecoder().decode(
-            readBounded(flags.graph, KAR_CLI_MAX_TEXT_BYTES)
-          )
-        )
+    const graphBytes = flags.graph
+      ? readBounded(flags.graph, KAR_CLI_MAX_TEXT_BYTES)
       : undefined;
+    const graph =
+      graphBytes === undefined
+        ? undefined
+        : JSON.parse(new TextDecoder().decode(graphBytes));
     const verified = await apis.cortex.verifyCortexAnswer({
       image: new Uint8Array(citeBytes),
       question: typeof parsed.question === 'string' ? parsed.question : '',
@@ -120,10 +122,17 @@ async function packageResearch(flags) {
       ...(graph === undefined ? {} : { graph }),
     });
     if (!verified.ok) throw new Error(`${verified.code}: ${verified.message}`);
+    const composition = compositionForCite(apis.composition, {
+      cited,
+      citeBytes,
+      traceRoot: verified.traceRoot,
+    });
     trace = {
       bytes: traceBytes,
       traceRoot: verified.traceRoot,
       citedStateRoot: cited.stateRoot,
+      composition,
+      graphBytes,
     };
   }
 
@@ -149,6 +158,23 @@ async function packageResearch(flags) {
         citedStateRoot: trace.citedStateRoot,
       },
     });
+    objects.push({
+      kind: 'metadata',
+      bytes: Buffer.from(trace.composition.text),
+      meta: {
+        role: 'composition',
+        compositionRoot: trace.composition.compositionRoot,
+        citedStateRoot: trace.citedStateRoot,
+        traceRoot: trace.traceRoot,
+      },
+    });
+    if (trace.graphBytes) {
+      objects.push({
+        kind: 'metadata',
+        bytes: trace.graphBytes,
+        meta: { role: 'kar-graph' },
+      });
+    }
   }
   const image = apis.core.createKnowledgeImageV5({
     actor: ACTOR,
@@ -192,6 +218,37 @@ function writeNewFile(resolved, display, bytes) {
   }
 }
 
+function compositionForCite(composition, input) {
+  let created;
+  try {
+    created = composition.createCompositionRecord({
+      host: { kind: 'none' },
+      availability: 'digest',
+      members: [
+        {
+          alias: 'cite',
+          kind: 'v5-image',
+          stateRoot: input.cited.stateRoot,
+          objectRoot: input.cited.commit.objectRoot,
+          commitDigest: input.cited.commitDigest,
+          sha256: digest(input.citeBytes),
+        },
+      ],
+    });
+  } catch (error) {
+    const code = error && error.code ? error.code : 'COMPOSITION_INVALID';
+    throw new Error(`${code}: ${error.message}`);
+  }
+  const verdict = composition.verifyCompositionRecord(created.record);
+  if (!verdict.ok) {
+    throw new Error(`${verdict.code}: composition check failed.`);
+  }
+  return {
+    compositionRoot: created.compositionRoot,
+    text: JSON.stringify(created.record),
+  };
+}
+
 function digest(bytes) {
   return `sha256-${createHash('sha256').update(bytes).digest('hex')}`;
 }
@@ -213,7 +270,11 @@ async function loadApis() {
     [path.join(dist, 'cortex/index.js'), '@knolo/core/cortex'],
     (loaded) => loaded.verifyCortexAnswer
   );
-  return { core, cortex };
+  const composition = await importFirst(
+    [path.join(dist, 'composition/index.js'), '@knolo/core/composition'],
+    (loaded) => loaded.createCompositionRecord && loaded.verifyCompositionRecord
+  );
+  return { core, cortex, composition };
 }
 
 async function importFirst(candidates, check) {
