@@ -200,7 +200,7 @@ function printCommandHelp(command) {
     init: 'Usage: knolo init',
     add: 'Usage: knolo add <name> <path> | <publisher>/<slug>[@<version>] [--out <path>] [--force] [--json] [--registry <url>]',
     search:
-      'Usage: knolo search <query> [--format V4|V5] [--license <id>] [--official] [--agents] [--json] [--registry <url>]',
+      'Usage: knolo search <query> [--format V4|V5] [--license <id>] [--official] [--agents] [--research] [--json] [--registry <url>]',
     info: 'Usage: knolo info <publisher>/<slug> [--json] [--registry <url>]',
     login:
       'Usage: knolo login [--token kno_…] [--stdin] [--registry <url>]\n\nStores the raw token locally. Hub write calls send Authorization: Bearer kno_….\nMint tokens at https://hub.knolo.dev/dashboard/tokens; login does not call POST /api/v1/tokens.',
