@@ -51,7 +51,10 @@ Checks:
 | `compositions`            | `knolo compose verify`                                                 |
 | `attestations`            | `knolo verify-attestation`                                             |
 | `cortex-traces`           | `knolo cortex verify --image <image> --answer <file> [--graph <file>]` |
+| `flight-logs`             | `knolo flight verify-log --image <image> --log <file>`                 |
 | `diff-pairs`, `diff-base` | `knolo diff` for V4 packs                                              |
 | `kar-graph-diffs`         | `knolo kar graph diff`                                                 |
 
 `knolo v5 health` fails when the process exits non-zero or the JSON `healthy` field is not `true`. Pack verify fails when `verified` is not `true`.
+
+`flight-logs` compares the on-disk log with the `flight-log` object. Each line is `image=log` and does not expand globs. Published `@knolo/cli@6.2.4` does not include `knolo flight verify-log`. Omit `flight-logs` until a later publish. A matching log is an integrity check. It does not mean a flight was safe, legal, or compliant. The check is separate from `knolo cortex verify`.

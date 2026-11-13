@@ -48,6 +48,10 @@ inputs:
     description: Newline-separated image=answer or image=answer=graph tuples for knolo cortex verify.
     required: false
     default: ''
+  flight-logs:
+    description: Newline-separated image=log pairs for knolo flight verify-log. Published CLI 6.2.4 does not include that command.
+    required: false
+    default: ''
   diff-pairs:
     description: Newline-separated left=right V4 pack pairs for knolo diff.
     required: false

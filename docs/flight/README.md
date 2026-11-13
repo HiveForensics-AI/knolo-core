@@ -75,7 +75,15 @@ attestation-args: --content-only
 cortex-traces: dist/flight.knolo=dist/answer.cortex.json
 ```
 
-The action does not hash the external log. Compare the log file with the hash stored in the image before you treat the dossier as bound to those bytes. A log-byte mismatch fails closed at `knolo flight ingest`, which writes nothing. That check is separate from `knolo cortex verify`.
+`knolo flight verify-log --image flight.knolo --log flight.ulg` hashes that log again and compares it with the `flight-log` object. A hash or length mismatch exits non-zero with `FLIGHT_LOG_MISMATCH` and writes nothing. An image with no `flight-log` object fails closed. The command does not decode the log.
+
+The Knolo Verify action runs that command when `flight-logs` is set. Each line is `image=log`. Globs are not expanded.
+
+```yaml
+flight-logs: dist/flight.knolo=dist/flight.ulg
+```
+
+Published `@knolo/cli@6.2.4` does not include `knolo flight verify-log`. Omit `flight-logs` until a later CLI publish. A log-byte mismatch still fails closed at `knolo flight ingest`, which writes nothing. `verify-log` is separate from `knolo cortex verify`. `SATISFIED` means the evidence requirements were met. It does not mean a flight was safe, legal, or compliant.
 
 `@knolo/mcp` can mount the resulting V5 image with the existing read-only tools. This slice does not add a flight tool and it does not call a model.
 

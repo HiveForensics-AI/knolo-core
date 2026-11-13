@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { closeSync, existsSync, ftruncateSync, mkdtempSync, openSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { createKnowledgeImageV5 } from '../../core/dist/index.js';
+import { KAR_CLI_MAX_IMAGE_BYTES } from '../bin/kar-limits.mjs';
 import {
   MAX_FLIGHT_EVENT_BYTES,
   MAX_FLIGHT_EVENTS,
@@ -51,6 +53,7 @@ test('flight help states the evidence limit', () => {
   assert.match(root.stdout, /flight/);
   const help = run(['flight', '--help'], process.cwd());
   assert.equal(help.status, 0, help.stderr);
+  assert.match(help.stdout, /verify-log/);
   assert.match(help.stdout, /does not mean a flight was safe/);
   assert.doesNotMatch(help.stdout, /Claim proven/);
 });
@@ -217,6 +220,57 @@ test('synthetic format fixtures lock their image roots', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  }
+});
+
+test('verify-log matches the sample and refuses a flipped log or a non-flight image', async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'knolo-flight-verify-'));
+  try {
+    writeFileSync(path.join(dir, 'events.json'), readFileSync(path.join(fixture, 'events.json')));
+    writeFileSync(path.join(dir, 'sample.log'), readFileSync(path.join(fixture, 'sample.log')));
+    const ingested = run(['flight', 'ingest', '--events', 'events.json', '--log', 'sample.log', '--out', 'a.knolo', '--json'], dir);
+    assert.equal(ingested.status, 0, ingested.stderr || ingested.stdout);
+    const before = readFileSync(path.join(dir, 'a.knolo'));
+    const verified = run(['flight', 'verify-log', '--image', 'a.knolo', '--log', 'sample.log'], dir);
+    assert.equal(verified.status, 0, verified.stderr || verified.stdout);
+    assert.match(verified.stdout, /FLIGHT LOG VERIFIED/);
+    assert.match(verified.stdout, /not a safety or compliance determination/);
+    const json = run(['flight', 'verify-log', '--image', 'a.knolo', '--log', 'sample.log', '--json'], dir);
+    assert.equal(json.status, 0, json.stderr || json.stdout);
+    const printed = JSON.parse(json.stdout);
+    assert.equal(printed.ok, true);
+    assert.equal(printed.stateRoot, JSON.parse(ingested.stdout).stateRoot);
+    assert.equal(printed.logSha256, JSON.parse(readFileSync(path.join(dir, 'events.json'), 'utf8')).log.sha256);
+    const bad = Buffer.from(readFileSync(path.join(dir, 'sample.log')));
+    bad[0] ^= 1;
+    writeFileSync(path.join(dir, 'bad.log'), bad);
+    const refused = run(['flight', 'verify-log', '--image', 'a.knolo', '--log', 'bad.log'], dir);
+    assert.equal(refused.status, 1);
+    assert.match(refused.stderr, /FLIGHT_LOG_MISMATCH/);
+    assert.equal(Buffer.compare(before, readFileSync(path.join(dir, 'a.knolo'))), 0);
+    const plain = await createKnowledgeImageV5({
+      actor: 'knolo-flight',
+      sequence: 1,
+      objects: [{ kind: 'chunk', bytes: Buffer.from('note'), meta: { source: 'note.txt' } }],
+    });
+    writeFileSync(path.join(dir, 'plain.knolo'), plain.bytes);
+    const missing = run(['flight', 'verify-log', '--image', 'plain.knolo', '--log', 'sample.log'], dir);
+    assert.equal(missing.status, 1);
+    assert.match(missing.stderr, /FLIGHT_EVENTS_INVALID/);
+    assert.match(missing.stderr, /one flight-log object/);
+    const huge = path.join(dir, 'huge.knolo');
+    const fd = openSync(huge, 'w');
+    try {
+      ftruncateSync(fd, KAR_CLI_MAX_IMAGE_BYTES + 1);
+    } finally {
+      closeSync(fd);
+    }
+    const capped = run(['flight', 'verify-log', '--image', 'huge.knolo', '--log', 'sample.log'], dir);
+    assert.equal(capped.status, 1);
+    assert.match(capped.stderr, /KAR_INPUT_TOO_LARGE/);
+    assert.equal(existsSync(path.join(dir, 'a.knolo')), true);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 });
 

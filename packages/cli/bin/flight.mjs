@@ -9,7 +9,7 @@ import { createHash } from 'node:crypto';
 import { createReadStream, existsSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { readBounded } from './kar-limits.mjs';
+import { KAR_CLI_MAX_IMAGE_BYTES, readBounded } from './kar-limits.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -36,11 +36,16 @@ const KIND_FIELDS = {
   'scan-summary': ['phrase'],
 };
 
-const USAGE = `Usage: knolo flight ingest --events <events.json> --log <file> --out <image.knolo> [--json]
+const USAGE = `Usage: knolo flight <ingest|verify-log> [options]
 
-Packs a flight-events-1 document into a V5 Knowledge Image.
-The command hashes --log and refuses the image when the hash or byte length differs.
-It does not decode a flight log. Parsing stays in an external producer.
+  knolo flight ingest --events <events.json> --log <file> --out <image.knolo> [--json]
+  knolo flight verify-log --image <image.knolo> --log <file> [--json]
+
+ingest packs a flight-events-1 document into a V5 Knowledge Image.
+It hashes --log and writes nothing when the hash or byte length differs.
+verify-log hashes --log again and compares it with the flight-log object.
+It writes nothing. A missing flight-log object fails closed.
+Neither command decodes the log. Parsing stays in an external producer.
 A later KAR status of SATISFIED means evidence requirements were met.
 It does not mean a flight was safe, legal, or compliant.`;
 
@@ -51,6 +56,7 @@ export async function runFlightCli(argv) {
     console.log(USAGE);
     return;
   }
+  if (sub === 'verify-log') return verifyFlightLog(flags);
   if (sub !== 'ingest') throw new Error(`Unknown flight command "${sub}".\n${USAGE}`);
   const eventsPath = required(flags, 'events');
   const logPath = required(flags, 'log');
@@ -74,6 +80,57 @@ export async function runFlightCli(argv) {
     return;
   }
   console.log(`FLIGHT IMAGE\nstate root       ${image.stateRoot}\nevents           ${document.events.length}\nwrote            ${outPath}\n\nEvidence requirements are not a safety or compliance determination.`);
+}
+
+async function verifyFlightLog(flags) {
+  const imagePath = required(flags, 'image');
+  const logPath = required(flags, 'log');
+  const stored = await readFlightLogBinding(imagePath);
+  const log = await inspectLog(logPath);
+  if (log.byteLength !== stored.byteLength || log.sha256 !== stored.sha256) {
+    throw new Error('FLIGHT_LOG_MISMATCH: log bytes do not match the flight-log object.');
+  }
+  if (flags.json) {
+    console.log(JSON.stringify({
+      ok: true,
+      stateRoot: stored.stateRoot,
+      logSha256: stored.sha256,
+      byteLength: stored.byteLength,
+    }, null, 2));
+    return;
+  }
+  console.log(`FLIGHT LOG VERIFIED\nstate root       ${stored.stateRoot}\nlog              ${stored.sha256}\nbytes            ${stored.byteLength}\n\nEvidence requirements are not a safety or compliance determination.`);
+}
+
+async function readFlightLogBinding(imagePath) {
+  const bytes = readBounded(imagePath, KAR_CLI_MAX_IMAGE_BYTES);
+  const api = await loadImageApi();
+  if (!api.mountKnowledgeImageV5) throw new Error('Could not load @knolo/core. Build packages/core first.');
+  let image;
+  try {
+    image = api.mountKnowledgeImageV5(bytes);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`FLIGHT_EVENTS_INVALID: ${message}`);
+  }
+  const logs = image.objects.filter((object) => object.meta && object.meta.role === 'flight-log');
+  if (logs.length !== 1) {
+    throw new Error('FLIGHT_EVENTS_INVALID: image must contain one flight-log object.');
+  }
+  const sha256 = logs[0].meta.logSha256;
+  const rawLength = logs[0].meta.byteLength;
+  const byteLength = typeof rawLength === 'number' ? rawLength : Number(rawLength);
+  const lengthText = typeof rawLength === 'string' ? rawLength : String(rawLength);
+  if (
+    typeof sha256 !== 'string' ||
+    !DIGEST.test(sha256) ||
+    !Number.isSafeInteger(byteLength) ||
+    byteLength < 0 ||
+    lengthText !== String(byteLength)
+  ) {
+    throw new Error('FLIGHT_EVENTS_INVALID: flight-log metadata is not a sha256 and byte length.');
+  }
+  return { sha256, byteLength, stateRoot: image.stateRoot };
 }
 
 export function readEvents(file) {

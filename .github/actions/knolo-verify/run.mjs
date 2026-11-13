@@ -91,6 +91,17 @@ collectLiteral('cortex-traces', input['cortex-traces'], (entry) => {
   if (graph) args.push('--graph', graph);
   rows.push(check('cortex verify', label([image, answer]), args, acceptCortex));
 });
+collectLiteral('flight-logs', input['flight-logs'], (entry) => {
+  const [image, log] = pair(entry, 2, 'flight-logs');
+  rows.push(
+    check(
+      'flight verify-log',
+      label([image, log]),
+      ['flight', 'verify-log', '--image', image, '--log', log],
+      acceptMarked('FLIGHT LOG VERIFIED')
+    )
+  );
+});
 collectLiteral('diff-pairs', input['diff-pairs'], (entry) => {
   const [left, right] = pair(entry, 2, 'diff-pairs');
   rows.push(
