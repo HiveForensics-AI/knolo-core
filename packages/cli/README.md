@@ -50,10 +50,12 @@ a model. A receipt is an integrity check. It does not mean a claim is proven.
 
 `knolo research package` writes one V5 image from local files. `--agent` is
 the host-supplied caller. An optional Cortex trace is verified against
-`--cite` before the write. Pass `--graph` when that trace records KAR
-evaluations. The command does not call a model and does not download an
-image. `examples/skills/research-and-cite` and
-`examples/skills/share-findings` install with `knolo skill install`. See
+`--cite` before the write. A cited pack stores a digest-bound composition
+record and does not copy the cited image. Pass `--graph` when that trace
+records KAR evaluations. The checked graph is stored in the image. The
+command does not call a model and does not download an image.
+`examples/skills/research-and-cite` and `examples/skills/share-findings`
+install with `knolo skill install`. See
 [Research packs](../../docs/guides/research-packs.md).
 
 The official CLI for building `.knolo` knowledge packs.

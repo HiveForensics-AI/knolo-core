@@ -879,30 +879,48 @@ function sha256(bytes) {
   return createHash('sha256').update(bytes).digest('hex');
 }
 
+function coreLoadDetail(error) {
+  if (!error) return 'module did not export the Knowledge Image API';
+  const code = error.code ? `${error.code}: ` : '';
+  const cause = error.cause ? `; ${coreLoadDetail(error.cause)}` : '';
+  return `${code}${error.message}${cause}`;
+}
+
+function coreModuleReady(loaded) {
+  return Boolean(
+    loaded?.createKnowledgeImageV5 &&
+      loaded.queryKnowledgeImageV5 &&
+      loaded.mountKnowledgeImageV5 &&
+      loaded.knowledgePolicyRootV5
+  );
+}
+
 async function loadCore() {
-  const candidates = [
-    path.resolve(__dirname, '../../core/dist/index.js'),
-    '@knolo/core',
-  ];
-  for (const candidate of candidates) {
-    try {
-      const href = candidate.startsWith('@')
-        ? candidate
-        : pathToFileURL(candidate).href;
-      const loaded = await import(href);
-      if (
-        loaded.createKnowledgeImageV5 &&
-        loaded.queryKnowledgeImageV5 &&
-        loaded.mountKnowledgeImageV5 &&
-        loaded.knowledgePolicyRootV5
-      ) {
-        return loaded;
+  const fileHref = pathToFileURL(
+    path.resolve(__dirname, '../../core/dist/index.js')
+  ).href;
+  let lastError = null;
+  // A failed ESM import stays cached for that exact URL. A later attempt uses
+  // a new file URL so a transient open does not stick for the process.
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const fileUrl =
+      attempt === 0 ? fileHref : `${fileHref}?knolo-load=${attempt}`;
+    for (const specifier of [fileUrl, '@knolo/core']) {
+      try {
+        const loaded = await import(specifier);
+        if (coreModuleReady(loaded)) return loaded;
+        lastError = new Error('module did not export the Knowledge Image API');
+      } catch (error) {
+        lastError = error;
       }
-    } catch {
-      // Try the next candidate.
+    }
+    if (attempt < 2) {
+      await new Promise((resolve) => setTimeout(resolve, 25 * (attempt + 1)));
     }
   }
-  throw new Error('Could not load @knolo/core. Build packages/core first.');
+  throw new Error(
+    `Could not load @knolo/core. Build packages/core first. (${coreLoadDetail(lastError)})`
+  );
 }
 
 const SKILL_ARCHIVE_FORMAT = 'knolo-skill-archive-v1';
