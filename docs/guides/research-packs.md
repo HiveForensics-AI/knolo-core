@@ -46,7 +46,8 @@ The second agent receives the image file. [Google ADK](../../examples/google_adk
 and [Pydantic AI](../../examples/pydantic_ai/README.md) both mount it with
 the existing read-only server and call `knolo_search`. The server does not
 download the image and does not run the research. Point `mounts[].path` at
-the image, and set `sha256` and `stateRoot` from `knolo verify`.
+the image. Set `stateRoot` from `knolo verify`. Set `sha256` to the SHA-256
+of the file bytes. `commitDigest` is not that pin.
 
 ```bash
 npx -y @knolo/mcp@0.2.3 --config /absolute/knolo-mcp.json
