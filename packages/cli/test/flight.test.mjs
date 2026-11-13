@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { closeSync, existsSync, ftruncateSync, mkdtempSync, openSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { createKnowledgeImageV5 } from '../../core/dist/index.js';
+import { KAR_CLI_MAX_IMAGE_BYTES } from '../bin/kar-limits.mjs';
 import {
   MAX_FLIGHT_EVENT_BYTES,
   MAX_FLIGHT_EVENTS,
@@ -257,6 +258,17 @@ test('verify-log matches the sample and refuses a flipped log or a non-flight im
     assert.equal(missing.status, 1);
     assert.match(missing.stderr, /FLIGHT_EVENTS_INVALID/);
     assert.match(missing.stderr, /one flight-log object/);
+    const huge = path.join(dir, 'huge.knolo');
+    const fd = openSync(huge, 'w');
+    try {
+      ftruncateSync(fd, KAR_CLI_MAX_IMAGE_BYTES + 1);
+    } finally {
+      closeSync(fd);
+    }
+    const capped = run(['flight', 'verify-log', '--image', 'huge.knolo', '--log', 'sample.log'], dir);
+    assert.equal(capped.status, 1);
+    assert.match(capped.stderr, /KAR_INPUT_TOO_LARGE/);
+    assert.equal(existsSync(path.join(dir, 'a.knolo')), true);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

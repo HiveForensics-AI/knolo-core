@@ -6,10 +6,10 @@
  * SATISFIED is not a statement that a flight was safe or compliant.
  */
 import { createHash } from 'node:crypto';
-import { createReadStream, existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { createReadStream, existsSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { readBounded } from './kar-limits.mjs';
+import { KAR_CLI_MAX_IMAGE_BYTES, readBounded } from './kar-limits.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -103,14 +103,12 @@ async function verifyFlightLog(flags) {
 }
 
 async function readFlightLogBinding(imagePath) {
-  const resolved = path.resolve(process.cwd(), imagePath);
-  const stat = statSync(resolved);
-  if (!stat.isFile()) throw new Error(`FLIGHT_EVENTS_INVALID: ${imagePath} is not a file.`);
+  const bytes = readBounded(imagePath, KAR_CLI_MAX_IMAGE_BYTES);
   const api = await loadImageApi();
   if (!api.mountKnowledgeImageV5) throw new Error('Could not load @knolo/core. Build packages/core first.');
   let image;
   try {
-    image = api.mountKnowledgeImageV5(readFileSync(resolved));
+    image = api.mountKnowledgeImageV5(bytes);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`FLIGHT_EVENTS_INVALID: ${message}`);
