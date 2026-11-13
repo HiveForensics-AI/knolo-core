@@ -14,7 +14,7 @@ npm `latest` for `@knolo/box` is `0.1.1`. The workspace binary above runs this t
 grok plugin install HiveForensics-AI/knolo-core#plugins/knolo-box --trust
 ```
 
-The plugin MCP entry is `npx -y @knolo/box@0.1.1 mcp`. That pin matches npm `latest`. Setup from the published CLI is `npx -y @knolo/cli@6.2.4 setup`.
+The plugin MCP entry is `npx -y @knolo/box@0.1.1 mcp`. That pin matches npm `latest`. Setup from the published CLI is `npx -y @knolo/cli@6.2.5 setup`.
 
 ## Scopes
 
