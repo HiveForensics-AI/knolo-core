@@ -18,10 +18,12 @@ each source file. The same inputs write the same bytes. An existing output
 path, a missing source, or a source over the text cap writes nothing.
 
 To pack a Cortex trace, pass the image that produced it and the trace file
-together. The trace is checked with the existing Cortex verification before
-the pack is written. A failed check writes nothing. The packed trace is
-that receipt. It is an integrity check. It does not mean a claim is proven.
-`SATISFIED` means the evidence requirements in the trace were met.
+together. A trace that records KAR evaluations also needs `--graph`, the
+same file `knolo cortex verify` would use. The plan stays inside the trace.
+The trace is checked before the pack is written. A failed check writes
+nothing. The packed trace is that receipt. It is an integrity check. It
+does not mean a claim is proven. `SATISFIED` means the evidence requirements
+in the trace were met.
 
 ```bash
 knolo research package \
@@ -30,6 +32,7 @@ knolo research package \
   --source notes.md \
   --cite cite.knolo \
   --trace answer.cortex.json \
+  --graph knowledge.kar.json \
   --out dist/research.knolo
 ```
 

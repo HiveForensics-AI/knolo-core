@@ -11,7 +11,10 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { createKnowledgeImageV5 } from '../../core/dist/index.js';
+import {
+  createKnowledgeImageV5,
+  mountKnowledgeImageV5,
+} from '../../core/dist/index.js';
 import {
   askCortex,
   createCortexSession,
@@ -38,8 +41,12 @@ test('research help states the evidence limit', () => {
   const help = run(['research', '--help'], process.cwd());
   assert.equal(help.status, 0, help.stderr);
   assert.match(help.stdout, /research package/);
+  assert.match(help.stdout, /--graph/);
   assert.match(help.stdout, /does not mean a claim is proven/);
   assert.doesNotMatch(help.stdout, /Claim proven/);
+  const packageHelp = run(['research', 'package', '--help'], process.cwd());
+  assert.equal(packageHelp.status, 0, packageHelp.stderr);
+  assert.match(packageHelp.stdout, /--graph/);
 });
 
 test('package is byte-identical, refuses overwrite, and the question is searchable', () => {
@@ -192,6 +199,20 @@ test('a tampered trace writes nothing', async () => {
     assert.equal(packed.status, 0, packed.stderr || packed.stdout);
     const printed = JSON.parse(packed.stdout);
     assert.equal(printed.traceRoot, trace.receipt.traceRoot);
+    const mounted = mountKnowledgeImageV5(
+      readFileSync(path.join(dir, 'good.knolo'))
+    );
+    const packedTrace = mounted.objects.find(
+      (object) => object.meta && object.meta.role === 'cortex-trace'
+    );
+    assert.ok(packedTrace);
+    assert.equal(
+      Buffer.compare(
+        Buffer.from(packedTrace.bytes),
+        readFileSync(path.join(dir, 'answer.cortex.json'))
+      ),
+      0
+    );
     const tampered = {
       ...trace,
       answer: { ...trace.answer, text: 'invented' },
@@ -222,6 +243,89 @@ test('a tampered trace writes nothing', async () => {
     assert.equal(refused.status, 1);
     assert.match(refused.stderr, /CORTEX_/);
     assert.equal(existsSync(path.join(dir, 'bad.knolo')), false);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('a KAR trace packages only with the graph that verified it', async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'knolo-research-kar-'));
+  try {
+    const example = path.resolve(
+      path.dirname(fileURLToPath(import.meta.url)),
+      '../../../examples/kar-v6/contracts'
+    );
+    const image = readFileSync(path.join(example, 'knowledge.knolo'));
+    const graph = JSON.parse(
+      readFileSync(path.join(example, 'knowledge.kar.json'), 'utf8')
+    );
+    const plan = JSON.parse(
+      readFileSync(path.join(example, 'plan.json'), 'utf8')
+    );
+    writeFileSync(path.join(dir, 'cite.knolo'), image);
+    writeFileSync(
+      path.join(dir, 'knowledge.kar.json'),
+      readFileSync(path.join(example, 'knowledge.kar.json'))
+    );
+    writeFileSync(
+      path.join(dir, 'notes.md'),
+      'Customer cancellation evidence.\n'
+    );
+    const session = await createCortexSession({ image, graph, plan });
+    const trace = await askCortex(session, {
+      question: 'What evidence bears on customer cancellation?',
+      mode: 'prove_or_abstain',
+    });
+    assert.equal(trace.karEvaluations?.[0]?.status, 'SATISFIED');
+    writeFileSync(
+      path.join(dir, 'answer.cortex.json'),
+      `${JSON.stringify(trace, null, 2)}\n`
+    );
+    const args = [
+      'research',
+      'package',
+      '--question',
+      'What evidence bears on customer cancellation?',
+      '--agent',
+      'reviewer',
+      '--source',
+      'notes.md',
+      '--cite',
+      'cite.knolo',
+      '--trace',
+      'answer.cortex.json',
+    ];
+    const loneGraph = run(
+      [
+        ...args.slice(0, 8),
+        '--graph',
+        'knowledge.kar.json',
+        '--out',
+        'lone.knolo',
+      ],
+      dir
+    );
+    assert.equal(loneGraph.status, 1);
+    assert.match(loneGraph.stderr, /--graph requires --cite and --trace/);
+    assert.equal(existsSync(path.join(dir, 'lone.knolo')), false);
+    const missing = run([...args, '--out', 'out.knolo', '--json'], dir);
+    assert.equal(missing.status, 1, missing.stdout);
+    assert.match(missing.stderr, /CORTEX_/);
+    assert.equal(existsSync(path.join(dir, 'out.knolo')), false);
+    const packed = run(
+      [
+        ...args,
+        '--graph',
+        'knowledge.kar.json',
+        '--out',
+        'out.knolo',
+        '--json',
+      ],
+      dir
+    );
+    assert.equal(packed.status, 0, packed.stderr || packed.stdout);
+    const printed = JSON.parse(packed.stdout);
+    assert.equal(printed.traceRoot, trace.receipt.traceRoot);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

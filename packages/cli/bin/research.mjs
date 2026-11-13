@@ -6,25 +6,25 @@
  * A packed Cortex trace is an integrity check. It does not mean a claim is proven.
  */
 import { createHash } from 'node:crypto';
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   KAR_CLI_MAX_IMAGE_BYTES,
   KAR_CLI_MAX_TEXT_BYTES,
   readBounded,
-  readBoundedJson,
 } from './kar-limits.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ACTOR = 'knolo-research';
 const AGENT = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 
-const USAGE = `Usage: knolo research package --question <text> --agent <id> --out <image.knolo> --source <file> [--source <file>] [--cite <image.knolo> --trace <answer.cortex.json>] [--json]
+const USAGE = `Usage: knolo research package --question <text> --agent <id> --out <image.knolo> --source <file> [--source <file>] [--cite <image.knolo> --trace <answer.cortex.json> [--graph <file>]] [--json]
 
 Packs local files into one V5 Knowledge Image. --agent is the host-supplied caller.
---cite and --trace are both required or both omitted. A trace is verified against
---cite before any write. A failed check writes nothing.
+--cite and --trace are both required or both omitted. --graph is required when the
+trace contains KAR evaluations, and it is the same file knolo cortex verify would use.
+A trace is verified against --cite before any write. A failed check writes nothing.
 The command does not call a model and does not download an image.
 A packed trace is an integrity check. It does not mean a claim is proven.
 SATISFIED means the trace evidence requirements were met.`;
@@ -72,6 +72,11 @@ async function packageResearch(flags) {
   if (Boolean(cite) !== Boolean(tracePath)) {
     throw new Error('RESEARCH_PACK_INVALID: pass --cite and --trace together.');
   }
+  if (flags.graph && !tracePath) {
+    throw new Error(
+      'RESEARCH_PACK_INVALID: --graph requires --cite and --trace.'
+    );
+  }
   const resolvedOut = path.resolve(process.cwd(), outPath);
   if (existsSync(resolvedOut))
     throw new Error(`Refusing to overwrite ${outPath}`);
@@ -100,11 +105,19 @@ async function packageResearch(flags) {
     const citeBytes = readBounded(cite, KAR_CLI_MAX_IMAGE_BYTES);
     const cited = apis.core.mountKnowledgeImageV5(citeBytes);
     const traceBytes = readBounded(tracePath, KAR_CLI_MAX_TEXT_BYTES);
-    const parsed = readBoundedJson(tracePath, KAR_CLI_MAX_TEXT_BYTES);
+    const parsed = JSON.parse(new TextDecoder().decode(traceBytes));
+    const graph = flags.graph
+      ? JSON.parse(
+          new TextDecoder().decode(
+            readBounded(flags.graph, KAR_CLI_MAX_TEXT_BYTES)
+          )
+        )
+      : undefined;
     const verified = await apis.cortex.verifyCortexAnswer({
       image: new Uint8Array(citeBytes),
       question: typeof parsed.question === 'string' ? parsed.question : '',
       result: parsed,
+      ...(graph === undefined ? {} : { graph }),
     });
     if (!verified.ok) throw new Error(`${verified.code}: ${verified.message}`);
     trace = {
@@ -142,9 +155,7 @@ async function packageResearch(flags) {
     sequence: 1,
     objects,
   });
-  if (existsSync(resolvedOut))
-    throw new Error(`Refusing to overwrite ${outPath}`);
-  writeFileSync(resolvedOut, Buffer.from(image.bytes));
+  writeNewFile(resolvedOut, outPath, Buffer.from(image.bytes));
   if (flags.json) {
     console.log(
       JSON.stringify(
@@ -163,6 +174,22 @@ async function packageResearch(flags) {
   console.log(
     `RESEARCH PACK\nstate root       ${image.stateRoot}\nsources          ${sources.length}\ntrace            ${trace ? trace.traceRoot : 'none'}\nwrote            ${outPath}\n\nA packed trace is an integrity check. It does not mean a claim is proven.\nSATISFIED means evidence requirements were met.`
   );
+}
+
+function writeNewFile(resolved, display, bytes) {
+  try {
+    writeFileSync(resolved, bytes, { flag: 'wx' });
+  } catch (error) {
+    if (error && error.code === 'EEXIST') {
+      throw new Error(`Refusing to overwrite ${display}`);
+    }
+    try {
+      unlinkSync(resolved);
+    } catch {
+      // The original write error is the one to surface.
+    }
+    throw error;
+  }
 }
 
 function digest(bytes) {
@@ -230,6 +257,7 @@ function parseFlags(argv) {
     else if (key === 'out') flags.out = value;
     else if (key === 'cite') flags.cite = value;
     else if (key === 'trace') flags.trace = value;
+    else if (key === 'graph') flags.graph = value;
     else throw new Error(`Unknown option --${key}.\n${USAGE}`);
   }
   return flags;
