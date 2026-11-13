@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import {
   existsSync,
@@ -19,11 +20,30 @@ import {
   askCortex,
   createCortexSession,
 } from '../../core/dist/cortex/index.js';
+import { createCompositionRecord } from '../../core/dist/composition/index.js';
 
 const cliPath = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '../bin/knolo.mjs'
 );
+
+function compositionRootFor(citeBytes) {
+  const cited = mountKnowledgeImageV5(citeBytes);
+  return createCompositionRecord({
+    host: { kind: 'none' },
+    availability: 'digest',
+    members: [
+      {
+        alias: 'cite',
+        kind: 'v5-image',
+        stateRoot: cited.stateRoot,
+        objectRoot: cited.commit.objectRoot,
+        commitDigest: cited.commitDigest,
+        sha256: `sha256-${createHash('sha256').update(citeBytes).digest('hex')}`,
+      },
+    ],
+  }).compositionRoot;
+}
 
 function run(args, cwd) {
   const result = spawnSync(process.execPath, [cliPath, ...args], {
@@ -213,6 +233,73 @@ test('a tampered trace writes nothing', async () => {
       ),
       0
     );
+    const composition = mounted.objects.find(
+      (object) => object.meta && object.meta.role === 'composition'
+    );
+    assert.ok(composition);
+    assert.equal(
+      composition.meta.compositionRoot,
+      compositionRootFor(readFileSync(path.join(dir, 'cite.knolo')))
+    );
+    assert.equal(composition.meta.citedStateRoot, cited.stateRoot);
+    assert.equal(composition.meta.traceRoot, trace.receipt.traceRoot);
+    assert.equal(
+      mounted.objects.some(
+        (object) => object.meta && object.meta.role === 'kar-graph'
+      ),
+      false
+    );
+    const repeated = run(
+      [
+        'research',
+        'package',
+        '--question',
+        'What did the inspection find?',
+        '--agent',
+        'reviewer',
+        '--source',
+        'notes.md',
+        '--cite',
+        'cite.knolo',
+        '--trace',
+        'answer.cortex.json',
+        '--out',
+        'again.knolo',
+      ],
+      dir
+    );
+    assert.equal(repeated.status, 0, repeated.stderr || repeated.stdout);
+    assert.equal(
+      Buffer.compare(
+        readFileSync(path.join(dir, 'good.knolo')),
+        readFileSync(path.join(dir, 'again.knolo'))
+      ),
+      0
+    );
+    const flipped = Buffer.from(readFileSync(path.join(dir, 'cite.knolo')));
+    flipped[flipped.length - 1] ^= 0xff;
+    writeFileSync(path.join(dir, 'flipped.knolo'), flipped);
+    const flippedPack = run(
+      [
+        'research',
+        'package',
+        '--question',
+        'What did the inspection find?',
+        '--agent',
+        'reviewer',
+        '--source',
+        'notes.md',
+        '--cite',
+        'flipped.knolo',
+        '--trace',
+        'answer.cortex.json',
+        '--out',
+        'flipped-out.knolo',
+      ],
+      dir
+    );
+    assert.equal(flippedPack.status, 1);
+    assert.equal(existsSync(path.join(dir, 'flipped-out.knolo')), false);
     const tampered = {
       ...trace,
       answer: { ...trace.answer, text: 'invented' },
@@ -326,6 +413,27 @@ test('a KAR trace packages only with the graph that verified it', async () => {
     assert.equal(packed.status, 0, packed.stderr || packed.stdout);
     const printed = JSON.parse(packed.stdout);
     assert.equal(printed.traceRoot, trace.receipt.traceRoot);
+    const mounted = mountKnowledgeImageV5(
+      readFileSync(path.join(dir, 'out.knolo'))
+    );
+    const graphObject = mounted.objects.find(
+      (object) => object.meta && object.meta.role === 'kar-graph'
+    );
+    assert.ok(graphObject);
+    assert.equal(
+      Buffer.compare(
+        Buffer.from(graphObject.bytes),
+        readFileSync(path.join(dir, 'knowledge.kar.json'))
+      ),
+      0
+    );
+    const composition = mounted.objects.find(
+      (object) => object.meta && object.meta.role === 'composition'
+    );
+    assert.equal(
+      composition.meta.compositionRoot,
+      compositionRootFor(readFileSync(path.join(dir, 'cite.knolo')))
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

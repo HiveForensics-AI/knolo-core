@@ -36,9 +36,17 @@ knolo research package \
   --out dist/research.knolo
 ```
 
-The second agent mounts the finished image with the existing read-only
-server. The server does not download the image and does not run the
-research.
+When `--cite` is set, the image also stores a composition record. The record
+cites that image by `stateRoot` and SHA-256. It does not copy the cited
+bytes. The record's `compositionRoot` is checked before the pack is written.
+When `--graph` is set, the checked graph is stored in the same image. The
+command does not write a sibling `.kar.json`.
+
+The second agent receives the image file. [Google ADK](../../examples/google_adk_python/README.md)
+and [Pydantic AI](../../examples/pydantic_ai/README.md) both mount it with
+the existing read-only server and call `knolo_search`. The server does not
+download the image and does not run the research. Point `mounts[].path` at
+the image, and set `sha256` and `stateRoot` from `knolo verify`.
 
 ```bash
 npx -y @knolo/mcp@0.2.3 --config /absolute/knolo-mcp.json
@@ -47,4 +55,12 @@ npx -y @knolo/mcp@0.2.3 --config /absolute/knolo-mcp.json
 `knolo_search` keeps each remaining term as a whole word. This command does
 not add a Hub tool, a publish tool, or a write tool.
 
+An operator who wants the public registry publishes with the existing
+command. This guide does not log in or publish.
+
+```bash
+knolo publish dist/research.knolo --slug research-notes --version 1.0.0 --license Apache-2.0
+```
+
+The offline example is [examples/research-pack](../../examples/research-pack/README.md).
 See [Two agents sharing knowledge](agents-sharing-knowledge.md).
