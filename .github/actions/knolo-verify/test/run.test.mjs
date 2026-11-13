@@ -666,6 +666,51 @@ test('attestation args are not passed through a shell', () => {
   }
 });
 
+test('flight-logs accepts the sample and fails a flipped log', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'knolo-verify-flight-'));
+  try {
+    const source = path.join(repo, 'examples/flight-ops');
+    writeFileSync(
+      path.join(dir, 'events.json'),
+      readFileSync(path.join(source, 'events.json'))
+    );
+    writeFileSync(
+      path.join(dir, 'sample.log'),
+      readFileSync(path.join(source, 'sample.log'))
+    );
+    cliRun(
+      [
+        'flight',
+        'ingest',
+        '--events',
+        'events.json',
+        '--log',
+        'sample.log',
+        '--out',
+        'flight.knolo',
+      ],
+      dir
+    );
+    const good = runRunner(dir, {
+      'flight-logs': 'flight.knolo=sample.log',
+    });
+    assert.equal(good.status, 0, good.stderr || good.stdout);
+    assert.equal(good.results[0].check, 'flight verify-log');
+    assert.equal(good.results[0].status, 'pass');
+    const flipped = Buffer.from(readFileSync(path.join(dir, 'sample.log')));
+    flipped[0] ^= 1;
+    writeFileSync(path.join(dir, 'bad.log'), flipped);
+    const bad = runRunner(dir, {
+      'flight-logs': 'flight.knolo=bad.log',
+    });
+    assert.equal(bad.status, 1);
+    assert.equal(bad.results[0].status, 'fail');
+    assert.match(bad.results[0].detail, /FLIGHT_LOG_MISMATCH/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('an empty selection fails closed', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'knolo-verify-empty-'));
   try {

@@ -23,6 +23,6 @@ The runner checks three evidence requirements:
 
 `SATISFIED` means those requirements were met. The failsafe chunk can still sit in the image while the gap graph leaves it unbound. Unbound text is not selected evidence.
 
-The runner also verifies a Cortex trace, rejects a tampered citation and a different image, writes a composition attestation, and checks it with `knolo verify-attestation`. A flipped flight image fails `knolo compose verify`. A flipped log fails `knolo flight ingest` and writes nothing.
+The runner also verifies a Cortex trace, rejects a tampered citation and a different image, writes a composition attestation, and checks it with `knolo verify-attestation`. A flipped flight image fails `knolo compose verify`. A flipped log fails `knolo flight ingest` and writes nothing. After a good ingest, `knolo flight verify-log` accepts that log and rejects a flipped copy without writing.
 
 `domains/flight-ops` stays `review-required`. Its relation rules are not auto-accepted, so `knolo kar domain test` expects `UNSATISFIED_EVIDENCE_REQUIREMENTS` on the pack fixtures.
