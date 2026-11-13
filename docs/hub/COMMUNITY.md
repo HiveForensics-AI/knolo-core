@@ -26,7 +26,7 @@ Knowledge packs on the hub have a catalog, search, versions, stars, yank, report
 
 Skill packs ship as [Skills](../skills/README.md). `publish` sends the pack to `https://hub.knolo.dev` unless `--hub` names a local directory. The same pin republishes as unchanged. A different pin for the same name is refused, and the catalog row stays. `install <publisher>/<name>` checks the archive pin and the pins inside it, then writes `<dir>/<name>/`. `--dir` defaults to `~/.knolo/skills`. A mismatch writes nothing. Install refuses to replace an existing directory. The site lists skills at `/skills` and `/skills/<publisher>/<name>`.
 
-`@knolo/box` builds pinned images of skills, memory, and transcripts and starts read-only `knolo-mcp`. The default computer is `$GROK_HOME` or `~/.grok`. Output is `~/.knolo/box/`. The Grok plugin is `plugins/knolo-box`. Its MCP command is `npx -y @knolo/box@0.1.1 mcp`. npm `latest` for Box is `0.1.1`. The published CLI release that includes `knolo setup` and `knolo skill` is `npx -y @knolo/cli@6.2.4`. `@knolo/cli` depends on `@knolo/core` and `@knolo/exchange`. It does not depend on Box. npm `latest` for the server is `@knolo/mcp@0.2.3`.
+`@knolo/box` builds pinned images of skills, memory, and transcripts and starts read-only `knolo-mcp`. The default computer is `$GROK_HOME` or `~/.grok`. Output is `~/.knolo/box/`. The Grok plugin is `plugins/knolo-box`. Its MCP command is `npx -y @knolo/box@0.1.1 mcp`. npm `latest` for Box is `0.1.1`. The published CLI release that includes `knolo setup` and `knolo skill` is `npx -y @knolo/cli@6.2.5`. `@knolo/cli` depends on `@knolo/core` and `@knolo/exchange`. It does not depend on Box. npm `latest` for the server is `@knolo/mcp@0.2.3`.
 
 ## Install
 
@@ -88,7 +88,7 @@ New skill images are built with `@knolo/core` `^6.2.0`, the same floor as `@knol
 
 These are the commands that exist in this tree. `knolo setup` runs when `knolo-box` is on `PATH`, then prints the connector command. A custom registry uses `--registry <url>` on `setup`, `login`, `publish`, and `yank`.
 
-1. Install with `npx -y @knolo/cli@6.2.4`. The connector package on npm is `npx -y @knolo/box@0.1.1`.
+1. Install with `npx -y @knolo/cli@6.2.5`. The connector package on npm is `npx -y @knolo/box@0.1.1`.
 2. Build a local index: `knolo setup --root <dir> --agent <id> --auto-rebuild`. `--root` and `--agent` and `--auto-rebuild` are optional. Setup scans `~/.grok` when it exists and does not require it. The printed connector command is `knolo-box mcp --config <path>`. The host then calls `knolo_search`. For a `.knolo` file already on disk, `knolo query` or `knolo verify` is the local check.
 3. Browse skills at `https://hub.knolo.dev/skills`, or run `knolo skill list` or `knolo skill search "refund"`. Knowledge packs: `knolo search "refund policy"`. None of these require login.
 4. Install one skill: `knolo skill install <publisher>/<name>`. That writes `~/.knolo/skills/<name>` unless `--dir` is set, then rebuilds the local index when that folder is configured. This does not require `knolo login`.

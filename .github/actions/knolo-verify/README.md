@@ -57,4 +57,4 @@ Checks:
 
 `knolo v5 health` fails when the process exits non-zero or the JSON `healthy` field is not `true`. Pack verify fails when `verified` is not `true`.
 
-`flight-logs` compares the on-disk log with the `flight-log` object. Each line is `image=log` and does not expand globs. Published `@knolo/cli@6.2.4` does not include `knolo flight verify-log`. Omit `flight-logs` until a later publish. A matching log is an integrity check. It does not mean a flight was safe, legal, or compliant. The check is separate from `knolo cortex verify`.
+`flight-logs` compares the on-disk log with the `flight-log` object. Each line is `image=log` and does not expand globs. Published `@knolo/cli@6.2.5` includes `knolo flight verify-log`, so callers can pass `flight-logs`. A matching log is an integrity check. It does not mean a flight was safe, legal, or compliant. The check is separate from `knolo cortex verify`.

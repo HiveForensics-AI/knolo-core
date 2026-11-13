@@ -83,7 +83,7 @@ The Knolo Verify action runs that command when `flight-logs` is set. Each line i
 flight-logs: dist/flight.knolo=dist/flight.ulg
 ```
 
-Published `@knolo/cli@6.2.4` does not include `knolo flight verify-log`. Omit `flight-logs` until a later CLI publish. A log-byte mismatch still fails closed at `knolo flight ingest`, which writes nothing. `verify-log` is separate from `knolo cortex verify`. `SATISFIED` means the evidence requirements were met. It does not mean a flight was safe, legal, or compliant.
+Published `@knolo/cli@6.2.5` includes `knolo flight verify-log`. Callers can pass `flight-logs`. A log-byte mismatch still fails closed at `knolo flight ingest`, which writes nothing. `verify-log` is separate from `knolo cortex verify`. `SATISFIED` means the evidence requirements were met. It does not mean a flight was safe, legal, or compliant.
 
 `@knolo/mcp` can mount the resulting V5 image with the existing read-only tools. This slice does not add a flight tool and it does not call a model.
 

@@ -21,7 +21,7 @@ directory. Cite `imageId`, `objectId`, and `stateRoot`. A receipt is an
 integrity check. It does not mean a claim is proven.
 
 An operator can verify a fixture image with the workspace CLI or published
-`@knolo/cli@6.2.4`. `v5 query` does not apply the mount policy and does not
+`@knolo/cli@6.2.5`. `v5 query` does not apply the mount policy and does not
 write the audit receipt. It is not a substitute for `knolo_search`.
 
 ```bash
