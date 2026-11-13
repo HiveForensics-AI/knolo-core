@@ -48,6 +48,13 @@ a model. A receipt is an integrity check. It does not mean a claim is proven.
 `SATISFIED` means the evidence requirements were met. See
 [Skills](../../docs/skills/README.md).
 
+`knolo research package` writes one V5 image from local files. `--agent` is
+the host-supplied caller. An optional Cortex trace is verified against
+`--cite` before the write. Pass `--graph` when that trace records KAR
+evaluations. The command does not call a model and does not download an
+image. See
+[Research packs](../../docs/guides/research-packs.md).
+
 The official CLI for building `.knolo` knowledge packs.
 
 It indexes structured content and produces a deterministic, local-first knowledge bundle for use with `@knolo/core`.
