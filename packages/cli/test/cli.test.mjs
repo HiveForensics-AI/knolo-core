@@ -230,6 +230,7 @@ test('hub search maps filters and renders compact pack rows', async () => {
       'Apache-2.0',
       '--official',
       '--agents',
+      '--research',
     ],
     {
       env: { KNOLO_HUB_URL: 'https://fixture.example' },
@@ -251,6 +252,7 @@ test('hub search maps filters and renders compact pack rows', async () => {
   assert.equal(requestUrl.searchParams.get('license'), 'Apache-2.0');
   assert.equal(requestUrl.searchParams.get('official'), 'true');
   assert.equal(requestUrl.searchParams.get('agents'), 'true');
+  assert.equal(requestUrl.searchParams.get('research'), 'true');
   assert.match(
     printed[0],
     /NAME\s+VERSION\s+FORMAT\s+LICENSE\s+PULLS\s+DESCRIPTION/

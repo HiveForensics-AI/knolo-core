@@ -62,6 +62,7 @@ export async function runHubSearch(
     license: flags.license,
     official: flags.official ? 'true' : undefined,
     agents: flags.agents ? 'true' : undefined,
+    research: flags.research ? 'true' : undefined,
   });
   const body = await getJson(url, { fetchImpl });
   validatePacksResponse(body);
@@ -961,7 +962,7 @@ export function parseSearchArgs(args) {
   const flags = {};
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    if (arg === '--json' || arg === '--official' || arg === '--agents') {
+    if (arg === '--json' || arg === '--official' || arg === '--agents' || arg === '--research') {
       flags[arg.slice(2)] = true;
       continue;
     }
@@ -980,7 +981,7 @@ export function parseSearchArgs(args) {
   const query = positional.join(' ').trim();
   if (!query)
     throw new Error(
-      'Usage: knolo search <query> [--format V4|V5] [--license <id>] [--official] [--agents] [--json] [--registry <url>]'
+      'Usage: knolo search <query> [--format V4|V5] [--license <id>] [--official] [--agents] [--research] [--json] [--registry <url>]'
     );
   if (
     flags.format &&

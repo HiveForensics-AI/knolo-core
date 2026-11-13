@@ -47,4 +47,26 @@ npx -y @knolo/mcp@0.2.3 --config /absolute/knolo-mcp.json
 `knolo_search` keeps each remaining term as a whole word. This command does
 not add a Hub tool, a publish tool, or a write tool.
 
+`knolo search <query> --research` asks Hub for packs whose latest image has
+metadata `role: research-pack`. `--agents` stays the agent-definition
+namespace. Pin a result with `knolo add`. Queries still run after mount.
+
+Two skill packs install with the existing skill commands. They tell the host
+to search a pinned image, cite the receipt, package with `knolo research
+package`, and share the digest from `knolo verify`.
+
+```bash
+knolo skill check examples/skills/research-and-cite
+knolo skill check examples/skills/share-findings
+knolo skill pack examples/skills/research-and-cite --out dist/research-and-cite
+knolo skill pack examples/skills/share-findings --out dist/share-findings
+knolo skill publish dist/research-and-cite --hub ./catalog
+knolo skill publish dist/share-findings --hub ./catalog
+knolo skill install research-and-cite --hub ./catalog --dir ./skills
+knolo skill install share-findings --hub ./catalog --dir ./skills
+```
+
+`--hub ./catalog` is a directory on this machine. This guide does not log in
+or publish to the public registry.
+
 See [Two agents sharing knowledge](agents-sharing-knowledge.md).

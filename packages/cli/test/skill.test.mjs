@@ -1143,3 +1143,50 @@ test('skill install prints one line when the hub skill is missing', async () => 
     await new Promise((resolve) => server.close(resolve));
   }
 });
+
+test('research skills check, pack, and install from a local catalog', (t) => {
+  const root = tempDir();
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const repo = path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    '../../..'
+  );
+  for (const name of ['research-and-cite', 'share-findings']) {
+    const source = path.join(repo, 'examples', 'skills', name);
+    const checked = run(['skill', 'check', source, '--json'], root);
+    assert.equal(checked.status, 0, checked.stderr);
+    const report = JSON.parse(checked.stdout);
+    assert.equal(report.name, name);
+    assert.match(report.receiptId, /^sr_/);
+    const packed = run(
+      ['skill', 'pack', source, '--out', name, '--json'],
+      root
+    );
+    assert.equal(packed.status, 0, packed.stderr);
+    const published = run(
+      ['skill', 'publish', name, '--hub', 'catalog'],
+      root
+    );
+    assert.equal(published.status, 0, published.stderr);
+    const installed = run(
+      [
+        'skill',
+        'install',
+        name,
+        '--hub',
+        'catalog',
+        '--dir',
+        path.join(root, 'installed'),
+      ],
+      root
+    );
+    assert.equal(installed.status, 0, installed.stderr);
+    const text = readFileSync(
+      path.join(root, 'installed', name, 'SKILL.md'),
+      'utf8'
+    );
+    assert.match(text, new RegExp(`^name: ${name}$`, 'm'));
+    assert.match(text, /integrity check/);
+    assertNoHostLayout(text);
+  }
+});

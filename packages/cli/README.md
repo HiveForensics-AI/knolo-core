@@ -52,7 +52,8 @@ a model. A receipt is an integrity check. It does not mean a claim is proven.
 the host-supplied caller. An optional Cortex trace is verified against
 `--cite` before the write. Pass `--graph` when that trace records KAR
 evaluations. The command does not call a model and does not download an
-image. See
+image. `examples/skills/research-and-cite` and
+`examples/skills/share-findings` install with `knolo skill install`. See
 [Research packs](../../docs/guides/research-packs.md).
 
 The official CLI for building `.knolo` knowledge packs.
@@ -82,8 +83,12 @@ changing the local pack workflow:
 
 ```bash
 knolo search "refund policy"
+knolo search "refund policy" --research
 knolo info acme/refund-policy
 ```
+
+`--research` asks for packs whose image metadata role is `research-pack`.
+`--agents` remains the agent-definition namespace.
 
 The production registry is `https://hub.knolo.dev`. Use `--registry` for a
 one-off override, or set `KNOLO_HUB_URL` for the current environment:

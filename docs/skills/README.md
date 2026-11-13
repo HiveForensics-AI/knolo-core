@@ -60,3 +60,5 @@ dist/refund-policy.knolo-skill/
 The hub stores the name, description, publisher, and pin. It does not run a model, and it does not answer questions. `--hub` is a directory of skill packs on the machine where you run the command. Use it for an offline catalog. How these commands fit Box, MCP, and the hub is [Community install](../hub/COMMUNITY.md). `knolo setup` prepares a local index when `knolo-box` is on `PATH`. It scans `~/.grok` when that directory exists, plus every `--root`, and it always includes `~/.knolo/skills`. It then prints the connector command.
 
 `knolo search`, `knolo info`, `knolo login`, `knolo publish`, `knolo yank`, and `knolo add` remain the Hub registry for `.knolo` knowledge packs. A skill pack is not a `.knolo` pack and is not published through those commands.
+
+`examples/skills/research-and-cite` and `examples/skills/share-findings` are skill packs for a research image. Check, pack, and install them with the commands above. `knolo search --research` discovers a published research image. It does not install a skill.
