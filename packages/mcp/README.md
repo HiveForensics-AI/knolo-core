@@ -76,10 +76,10 @@ server. The
 [Vercel AI SDK example](../../docs/integrations/ai-sdk.md) calls the same
 service through `@knolo/ai-sdk`. `@knolo/ai-sdk@0.1.0` is published. The
 [Mastra example](../../docs/integrations/mastra.md) calls the same service
-through `@knolo/mastra`. `@knolo/mastra@0.1.0` is not published yet. The
+through `@knolo/mastra`. `@knolo/mastra@0.1.0` is published. The
 [OpenAI Agents native tools](../../docs/integrations/openai-agents.md) call
 the same service through `@knolo/openai-agents`.
-`@knolo/openai-agents@0.1.0` is not published yet. The
+`@knolo/openai-agents@0.1.0` is published. The
 [Anthropic Agent Skill](../../docs/integrations/anthropic-skills.md) registers
 this server from a Claude Code plugin.
 
@@ -199,7 +199,7 @@ VS Code (`.vscode/mcp.json`):
 Cline uses the same stdio server. The file hash, `knolo verify`, and the
 Cline settings block are in [llms-install.md](llms-install.md). The published
 server pin is `@knolo/mcp@0.2.3`. The CLI pin for `stateRoot` is
-`@knolo/cli@6.2.5`. Pins, the policy file, and the audit directory stay in
+`@knolo/cli@6.2.6`. Pins, the policy file, and the audit directory stay in
 the config.
 
 ```json

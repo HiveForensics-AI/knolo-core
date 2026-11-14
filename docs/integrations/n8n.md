@@ -1,7 +1,7 @@
 # n8n
 
 `n8n-nodes-knolo` is an n8n community node for a pinned Knolo V5 Knowledge
-Image. `n8n-nodes-knolo@0.1.0` is not on npm yet. Knolo does not call a model
+Image. `n8n-nodes-knolo@0.1.0` is on npm. Knolo does not call a model
 and does not read an API key.
 
 The node asks for Node.js 22.12 or newer. Synchronous `require()` of the

@@ -44,7 +44,7 @@ snapshot. It does not search the image. Python does not implement KITE.
 The ICP canister methods stay the pack, search, and health calls. The CLI
 template copies the Rust sources so that crate still builds. Those
 runtimes stay 5.5.1. This tree's `@knolo/core` package file is 6.2.3. npm
-`latest` is 6.2.2 until this release is published.
+`latest` is 6.2.3.
 
 From a checkout, after building core:
 
@@ -53,8 +53,8 @@ node examples/kite-policy/run.mjs
 node conformance/kite/v1/run.mjs
 ```
 
-`knolo kite evaluate` and `knolo kite verify` are in this tree's `@knolo/cli`
-package file `6.2.6`. Published `@knolo/cli@6.2.5` does not include them.
+`knolo kite evaluate` and `knolo kite verify` are in npm `latest`
+`@knolo/cli@6.2.6`. Published `@knolo/cli@6.2.5` does not include them.
 The [pre-publish check](PREPUBLISH.md) records the local test run. It is not
 an npm publish.
 

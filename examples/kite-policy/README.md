@@ -12,5 +12,5 @@ Build `@knolo/core` first. From a knolo-core checkout:
 node examples/kite-policy/run.mjs
 ```
 
-`knolo kite` in this tree's `@knolo/cli` package file `6.2.6` evaluates the
+`knolo kite` in npm `latest` `@knolo/cli@6.2.6` evaluates the
 same files. Published `@knolo/cli@6.2.5` does not include that command.

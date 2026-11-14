@@ -1,8 +1,8 @@
 # @knolo/openai-agents
 
 `@knolo/openai-agents` builds OpenAI Agents SDK tools for read-only Knolo
-search, verify, KAR, and Cortex. `@knolo/openai-agents@0.1.0` is not on npm
-yet. It depends on `@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`. The
+search, verify, KAR, and Cortex. `@knolo/openai-agents@0.1.0` is on npm.
+It depends on `@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`. The
 license is Apache-2.0.
 
 The peer dependency is `@openai/agents` `^0.21.0`. Engines ask for Node.js 22

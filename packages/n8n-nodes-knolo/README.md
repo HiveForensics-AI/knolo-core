@@ -1,7 +1,7 @@
 # n8n-nodes-knolo
 
 `n8n-nodes-knolo` is an n8n community node for read-only Knolo search, get,
-and verify. `n8n-nodes-knolo@0.1.0` is not on npm yet. It depends on
+and verify. `n8n-nodes-knolo@0.1.0` is on npm. It depends on
 `@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`. The license is Apache-2.0.
 
 n8n itself is under the Sustainable Use License. This package does not

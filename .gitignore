@@ -92,6 +92,16 @@ Desktop.ini
 LIVE_KBS_MVP.md
 /upcoming feature.md
 
+# Local credentials and private corpora (never part of the public repository)
+.mcpregistry_github_token
+.mcpregistry_registry_token
+/examples/kar-real/
+/research/kar-real-corpus/
+/research/kar-real-corpus-v2/
+/research/kar-real-corpus-v3/
+/research/kar-real-corpus-v4/
+/research/kite-1/
+
 # Local design, planning, and unreleased specification materials
 /docs/v6/
 /docs/v5.5/
