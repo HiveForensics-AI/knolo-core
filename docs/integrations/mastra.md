@@ -1,7 +1,7 @@
 # Mastra
 
 `@knolo/mastra` returns Mastra tools for a pinned Knolo V5 Knowledge Image.
-`@knolo/mastra@0.1.0` is not published yet. Knolo does not call a model and
+`@knolo/mastra@0.1.0` is published. Knolo does not call a model and
 does not read an API key.
 
 The host passes the tools to its own model. The peer dependency is

@@ -39,7 +39,7 @@ Continuous integration starts `packages/mcp/bin/knolo-mcp.mjs` with Node so the 
 
 ## Native tools
 
-`@knolo/openai-agents` wraps `@knolo/tools` with the Agents SDK `tool()` helper. `@knolo/openai-agents@0.1.0` is not on npm yet. It depends on `@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`. The peer dependency is `@openai/agents` `^0.21.0`. The package asks for Node.js 22 or newer. Knolo does not call a model.
+`@knolo/openai-agents` wraps `@knolo/tools` with the Agents SDK `tool()` helper. `@knolo/openai-agents@0.1.0` is on npm. It depends on `@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`. The peer dependency is `@openai/agents` `^0.21.0`. The package asks for Node.js 22 or newer. Knolo does not call a model.
 
 ```js
 import { knoloTools } from '@knolo/openai-agents';

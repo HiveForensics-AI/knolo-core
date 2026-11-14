@@ -1,7 +1,7 @@
 # @knolo/mastra
 
 `@knolo/mastra` builds Mastra tools for read-only Knolo search, verify, KAR,
-and Cortex. `@knolo/mastra@0.1.0` is not published yet. It depends on
+and Cortex. `@knolo/mastra@0.1.0` is published. It depends on
 `@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`. The license is Apache-2.0.
 
 The peer dependency is `@mastra/core` `^1.82.0`. Engines ask for Node.js

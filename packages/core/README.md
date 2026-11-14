@@ -11,8 +11,7 @@ plans. A plan with `textQuery` matches whole words. An EQL `SEARCH` plan
 without `textQuery` still requires every term as a substring, in object id
 order. `6.2.2` adds the direct exchange and capsule helpers used by
 `@knolo/exchange`. `6.2.3` adds the optional `@knolo/core/kite` entry. The
-root entry does not load it. npm `latest` is `6.2.2` until this release is
-published.
+root entry does not load it. npm `latest` is `6.2.3`.
 
 `@knolo/core` is the **deterministic retrieval engine and pack runtime** behind Knolo.
 

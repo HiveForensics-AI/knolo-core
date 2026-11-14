@@ -4,7 +4,7 @@
 owns the model. This smoke does not call one, and it does not read an API
 key.
 
-`@knolo/mastra@0.1.0` is not published yet. It needs Node.js 22.13 or newer.
+`@knolo/mastra@0.1.0` is published. It needs Node.js 22.13 or newer.
 It depends on `@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`. The peer
 dependency is `@mastra/core` `^1.82.0`.
 
