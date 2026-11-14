@@ -40,7 +40,7 @@ export function namedRetrieval(
 export async function discoverObligation(
   mounted: CortexMounted,
   obligation: KiteObligation
-): Promise<{ hitIds: string[]; retrieval: KiteRetrieval }> {
+): Promise<{ hitIds: string[]; sources: string[]; retrieval: KiteRetrieval }> {
   if (!mounted.v5) {
     throw new KiteError(
       'KITE_IMAGE_INVALID',
@@ -55,8 +55,14 @@ export async function discoverObligation(
     undefined
   );
   const hitIds = retrieved.hits.map((hit) => hit.id);
+  const sources = [
+    ...new Set(
+      retrieved.hits.flatMap((hit) => (hit.source ? [hit.source] : []))
+    ),
+  ].sort();
   return {
     hitIds,
+    sources,
     retrieval: namedRetrieval(
       obligation.id,
       obligation.term,

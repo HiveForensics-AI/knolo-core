@@ -4,7 +4,7 @@
 mod closure;
 mod cover;
 mod evaluate;
-mod json;
+pub(crate) mod json;
 mod model;
 mod session;
 

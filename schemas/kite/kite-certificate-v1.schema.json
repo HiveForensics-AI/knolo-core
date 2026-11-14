@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/kite/kite-certificate-v1.schema.json",
+  "title": "KITE certificate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "verdict",
+    "baseWorld",
+    "question",
+    "asOf",
+    "stateRoot",
+    "semanticRoot",
+    "invarianceRoot",
+    "worldsChecked",
+    "agrees",
+    "witness",
+    "variantsChecked",
+    "counterfactualChanges",
+    "met",
+    "unmet",
+    "negativeCollections",
+    "obligationIds",
+    "sourcePartitions"
+  ],
+  "properties": {
+    "format": { "const": "knolo-kite-certificate-1" },
+    "verdict": {
+      "enum": [
+        "WARRANTED_IN_SCOPE",
+        "SUPPORTED_OPEN_WORLD",
+        "REFUTED_IN_SCOPE",
+        "CONFLICTED",
+        "UNDERDETERMINED"
+      ]
+    },
+    "baseWorld": {
+      "enum": [
+        "SUPPORTED_CLOSED",
+        "REFUTED",
+        "SUPPORTED_OPEN_WORLD",
+        "CONFLICTED",
+        "UNDERDETERMINED"
+      ]
+    },
+    "question": { "type": "string", "minLength": 1 },
+    "asOf": { "type": ["string", "null"] },
+    "stateRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+    "semanticRoot": { "type": ["string", "null"] },
+    "invarianceRoot": { "type": "string", "pattern": "^sha256-[0-9a-f]{64}$" },
+    "worldsChecked": { "type": "integer", "minimum": 1 },
+    "agrees": { "type": "boolean" },
+    "witness": {
+      "type": ["array", "null"],
+      "items": { "type": "string" }
+    },
+    "variantsChecked": { "type": "integer", "minimum": 1 },
+    "counterfactualChanges": { "type": "integer", "minimum": 0 },
+    "met": { "type": "array", "items": { "type": "string" } },
+    "unmet": { "type": "array", "items": { "type": "string" } },
+    "negativeCollections": { "type": "array", "items": { "type": "string" } },
+    "obligationIds": { "type": "array", "items": { "type": "string" } },
+    "sourcePartitions": { "type": "array", "items": { "type": "string" } }
+  }
+}

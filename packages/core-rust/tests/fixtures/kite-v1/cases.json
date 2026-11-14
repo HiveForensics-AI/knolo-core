@@ -1,0 +1,1088 @@
+{
+  "format": "kite-replay-v1",
+  "cases": [
+    {
+      "id": "undetermined",
+      "world": {
+        "format": "knolo-kite-world-1",
+        "question": "Can contractor A access production?",
+        "asOf": null,
+        "stateRoot": "sha256-abababababababababababababababababababababababababababababababab",
+        "semanticRoot": null,
+        "obligations": [
+          {
+            "id": "approval",
+            "kind": "evidence",
+            "met": false,
+            "hitIds": [],
+            "sources": []
+          },
+          {
+            "id": "exception",
+            "kind": "qualification",
+            "met": true,
+            "hitIds": [
+              "hit-exception"
+            ],
+            "sources": [
+              "exception.md"
+            ]
+          },
+          {
+            "id": "policy",
+            "kind": "authority",
+            "met": true,
+            "hitIds": [
+              "hit-policy"
+            ],
+            "sources": [
+              "policy.md"
+            ]
+          }
+        ],
+        "rules": {
+          "format": "knolo-kite-rules-1",
+          "proposition": "contractor access",
+          "support": [
+            "exception"
+          ],
+          "oppose": [
+            "policy"
+          ],
+          "require": [
+            "approval"
+          ],
+          "conflicts": [
+            {
+              "left": "exception",
+              "right": "policy"
+            }
+          ],
+          "completeness": [
+            {
+              "id": "register",
+              "collection": "approvals",
+              "obligationId": "approval"
+            }
+          ]
+        },
+        "completeness": {
+          "format": "knolo-kite-completeness-1",
+          "declarations": []
+        },
+        "changes": [],
+        "bounds": {
+          "maxGraphNodes": 5000,
+          "maxVariants": 2048,
+          "maxCounterfactualChanges": 2,
+          "maxRetrievals": 64
+        }
+      },
+      "expected": {
+        "verdict": "UNDERDETERMINED",
+        "baseWorld": "UNDERDETERMINED",
+        "agrees": true,
+        "witness": null,
+        "worldsChecked": 1,
+        "variantsChecked": 1,
+        "counterfactualChanges": 0,
+        "invarianceRoot": "sha256-8b78c4f1ec18fbdb7a6a916148147799c8c7ca9be5e94007ca546f5ccd67dc98",
+        "negativeCollections": [
+          "approvals"
+        ],
+        "obligationIds": [
+          "approval",
+          "exception",
+          "policy"
+        ],
+        "sourcePartitions": [
+          "exception.md",
+          "policy.md"
+        ],
+        "met": [
+          "exception",
+          "policy"
+        ],
+        "unmet": [
+          "approval"
+        ]
+      }
+    },
+    {
+      "id": "explicit-refute",
+      "world": {
+        "format": "knolo-kite-world-1",
+        "question": "Can contractor A access production?",
+        "asOf": null,
+        "stateRoot": "sha256-abababababababababababababababababababababababababababababababab",
+        "semanticRoot": null,
+        "obligations": [
+          {
+            "id": "approval",
+            "kind": "evidence",
+            "met": false,
+            "hitIds": [],
+            "sources": []
+          },
+          {
+            "id": "exception",
+            "kind": "qualification",
+            "met": false,
+            "hitIds": [],
+            "sources": []
+          },
+          {
+            "id": "policy",
+            "kind": "authority",
+            "met": true,
+            "hitIds": [
+              "hit-policy"
+            ],
+            "sources": [
+              "policy.md"
+            ]
+          }
+        ],
+        "rules": {
+          "format": "knolo-kite-rules-1",
+          "proposition": "contractor access",
+          "support": [
+            "exception"
+          ],
+          "oppose": [
+            "policy"
+          ],
+          "require": [
+            "approval"
+          ],
+          "conflicts": [
+            {
+              "left": "exception",
+              "right": "policy"
+            }
+          ],
+          "completeness": [
+            {
+              "id": "register",
+              "collection": "approvals",
+              "obligationId": "approval"
+            }
+          ]
+        },
+        "completeness": {
+          "format": "knolo-kite-completeness-1",
+          "declarations": []
+        },
+        "changes": [],
+        "bounds": {
+          "maxGraphNodes": 5000,
+          "maxVariants": 2048,
+          "maxCounterfactualChanges": 2,
+          "maxRetrievals": 64
+        }
+      },
+      "expected": {
+        "verdict": "REFUTED_IN_SCOPE",
+        "baseWorld": "REFUTED",
+        "agrees": true,
+        "witness": null,
+        "worldsChecked": 1,
+        "variantsChecked": 1,
+        "counterfactualChanges": 0,
+        "invarianceRoot": "sha256-e666f7e450c0ae4cc7318caecbfc3a1d483008f903779f2688e9f07e74099632",
+        "negativeCollections": [
+          "approvals"
+        ],
+        "obligationIds": [
+          "approval",
+          "exception",
+          "policy"
+        ],
+        "sourcePartitions": [
+          "policy.md"
+        ],
+        "met": [
+          "policy"
+        ],
+        "unmet": [
+          "approval",
+          "exception"
+        ]
+      }
+    },
+    {
+      "id": "signed-absence",
+      "world": {
+        "format": "knolo-kite-world-1",
+        "question": "Can contractor A access production?",
+        "asOf": null,
+        "stateRoot": "sha256-abababababababababababababababababababababababababababababababab",
+        "semanticRoot": null,
+        "obligations": [
+          {
+            "id": "approval",
+            "kind": "evidence",
+            "met": false,
+            "hitIds": [],
+            "sources": []
+          },
+          {
+            "id": "exception",
+            "kind": "qualification",
+            "met": false,
+            "hitIds": [],
+            "sources": []
+          },
+          {
+            "id": "policy",
+            "kind": "authority",
+            "met": false,
+            "hitIds": [],
+            "sources": []
+          }
+        ],
+        "rules": {
+          "format": "knolo-kite-rules-1",
+          "proposition": "contractor access",
+          "support": [
+            "exception"
+          ],
+          "oppose": [
+            "policy"
+          ],
+          "require": [
+            "approval"
+          ],
+          "conflicts": [
+            {
+              "left": "exception",
+              "right": "policy"
+            }
+          ],
+          "completeness": [
+            {
+              "id": "register",
+              "collection": "approvals",
+              "obligationId": "approval"
+            }
+          ]
+        },
+        "completeness": {
+          "format": "knolo-kite-completeness-1",
+          "declarations": [
+            {
+              "id": "register",
+              "collection": "approvals",
+              "signed": true
+            }
+          ]
+        },
+        "changes": [],
+        "bounds": {
+          "maxGraphNodes": 5000,
+          "maxVariants": 2048,
+          "maxCounterfactualChanges": 2,
+          "maxRetrievals": 64
+        }
+      },
+      "expected": {
+        "verdict": "REFUTED_IN_SCOPE",
+        "baseWorld": "REFUTED",
+        "agrees": true,
+        "witness": null,
+        "worldsChecked": 1,
+        "variantsChecked": 1,
+        "counterfactualChanges": 0,
+        "invarianceRoot": "sha256-7e2d55a2e6a4a694ac005a21473dadd94556026876bc12aa0db467775ac43f31",
+        "negativeCollections": [
+          "approvals"
+        ],
+        "obligationIds": [
+          "approval",
+          "exception",
+          "policy"
+        ],
+        "sourcePartitions": [],
+        "met": [],
+        "unmet": [
+          "approval",
+          "exception",
+          "policy"
+        ]
+      }
+    },
+    {
+      "id": "unsigned-gap",
+      "world": {
+        "format": "knolo-kite-world-1",
+        "question": "Can contractor A access production?",
+        "asOf": null,
+        "stateRoot": "sha256-abababababababababababababababababababababababababababababababab",
+        "semanticRoot": null,
+        "obligations": [
+          {
+            "id": "approval",
+            "kind": "evidence",
+            "met": false,
+            "hitIds": [],
+            "sources": []
+          },
+          {
+            "id": "exception",
+            "kind": "qualification",
+            "met": false,
+            "hitIds": [],
+            "sources": []
+          },
+          {
+            "id": "policy",
+            "kind": "authority",
+            "met": false,
+            "hitIds": [],
+            "sources": []
+          }
+        ],
+        "rules": {
+          "format": "knolo-kite-rules-1",
+          "proposition": "contractor access",
+          "support": [
+            "exception"
+          ],
+          "oppose": [
+            "policy"
+          ],
+          "require": [
+            "approval"
+          ],
+          "conflicts": [
+            {
+              "left": "exception",
+              "right": "policy"
+            }
+          ],
+          "completeness": [
+            {
+              "id": "register",
+              "collection": "approvals",
+              "obligationId": "approval"
+            }
+          ]
+        },
+        "completeness": {
+          "format": "knolo-kite-completeness-1",
+          "declarations": []
+        },
+        "changes": [],
+        "bounds": {
+          "maxGraphNodes": 5000,
+          "maxVariants": 2048,
+          "maxCounterfactualChanges": 2,
+          "maxRetrievals": 64
+        }
+      },
+      "expected": {
+        "verdict": "UNDERDETERMINED",
+        "baseWorld": "UNDERDETERMINED",
+        "agrees": true,
+        "witness": null,
+        "worldsChecked": 1,
+        "variantsChecked": 1,
+        "counterfactualChanges": 0,
+        "invarianceRoot": "sha256-2ccdaf6879bde02be3874ed38c0987bf12e5b6af28dc2709a5b2cf39e01d183c",
+        "negativeCollections": [
+          "approvals"
+        ],
+        "obligationIds": [
+          "approval",
+          "exception",
+          "policy"
+        ],
+        "sourcePartitions": [],
+        "met": [],
+        "unmet": [
+          "approval",
+          "exception",
+          "policy"
+        ]
+      }
+    },
+    {
+      "id": "warranted",
+      "world": {
+        "format": "knolo-kite-world-1",
+        "question": "Can contractor A access production?",
+        "asOf": null,
+        "stateRoot": "sha256-abababababababababababababababababababababababababababababababab",
+        "semanticRoot": null,
+        "obligations": [
+          {
+            "id": "approval",
+            "kind": "evidence",
+            "met": true,
+            "hitIds": [
+              "hit-approval"
+            ],
+            "sources": [
+              "approval.md"
+            ]
+          },
+          {
+            "id": "exception",
+            "kind": "qualification",
+            "met": true,
+            "hitIds": [
+              "hit-exception"
+            ],
+            "sources": [
+              "exception.md"
+            ]
+          },
+          {
+            "id": "policy",
+            "kind": "authority",
+            "met": false,
+            "hitIds": [],
+            "sources": []
+          }
+        ],
+        "rules": {
+          "format": "knolo-kite-rules-1",
+          "proposition": "contractor access",
+          "support": [
+            "exception"
+          ],
+          "oppose": [
+            "policy"
+          ],
+          "require": [
+            "approval"
+          ],
+          "conflicts": [
+            {
+              "left": "exception",
+              "right": "policy"
+            }
+          ],
+          "completeness": [
+            {
+              "id": "register",
+              "collection": "approvals",
+              "obligationId": "approval"
+            }
+          ]
+        },
+        "completeness": {
+          "format": "knolo-kite-completeness-1",
+          "declarations": [
+            {
+              "id": "register",
+              "collection": "approvals",
+              "signed": true
+            }
+          ]
+        },
+        "changes": [],
+        "bounds": {
+          "maxGraphNodes": 5000,
+          "maxVariants": 2048,
+          "maxCounterfactualChanges": 2,
+          "maxRetrievals": 64
+        }
+      },
+      "expected": {
+        "verdict": "WARRANTED_IN_SCOPE",
+        "baseWorld": "SUPPORTED_CLOSED",
+        "agrees": true,
+        "witness": null,
+        "worldsChecked": 1,
+        "variantsChecked": 1,
+        "counterfactualChanges": 0,
+        "invarianceRoot": "sha256-d6cbb9ee453ff2511e9f26ad8d1a3b6753e7406252e2ff67bebd771901241a3d",
+        "negativeCollections": [
+          "approvals"
+        ],
+        "obligationIds": [
+          "approval",
+          "exception",
+          "policy"
+        ],
+        "sourcePartitions": [
+          "approval.md",
+          "exception.md"
+        ],
+        "met": [
+          "approval",
+          "exception"
+        ],
+        "unmet": [
+          "policy"
+        ]
+      }
+    },
+    {
+      "id": "flip",
+      "world": {
+        "format": "knolo-kite-world-1",
+        "question": "Can contractor A access production?",
+        "asOf": null,
+        "stateRoot": "sha256-abababababababababababababababababababababababababababababababab",
+        "semanticRoot": null,
+        "obligations": [
+          {
+            "id": "approval",
+            "kind": "evidence",
+            "met": true,
+            "hitIds": [
+              "hit-approval"
+            ],
+            "sources": [
+              "approval.md"
+            ]
+          },
+          {
+            "id": "exception",
+            "kind": "qualification",
+            "met": true,
+            "hitIds": [
+              "hit-exception"
+            ],
+            "sources": [
+              "exception.md"
+            ]
+          },
+          {
+            "id": "policy",
+            "kind": "authority",
+            "met": false,
+            "hitIds": [],
+            "sources": []
+          }
+        ],
+        "rules": {
+          "format": "knolo-kite-rules-1",
+          "proposition": "contractor access",
+          "support": [
+            "exception"
+          ],
+          "oppose": [
+            "policy"
+          ],
+          "require": [
+            "approval"
+          ],
+          "conflicts": [
+            {
+              "left": "exception",
+              "right": "policy"
+            }
+          ],
+          "completeness": [
+            {
+              "id": "register",
+              "collection": "approvals",
+              "obligationId": "approval"
+            }
+          ]
+        },
+        "completeness": {
+          "format": "knolo-kite-completeness-1",
+          "declarations": [
+            {
+              "id": "register",
+              "collection": "approvals",
+              "signed": true
+            }
+          ]
+        },
+        "changes": [
+          {
+            "id": "retract-exception",
+            "kind": "retract",
+            "obligationId": "exception"
+          }
+        ],
+        "bounds": {
+          "maxGraphNodes": 5000,
+          "maxVariants": 2048,
+          "maxCounterfactualChanges": 2,
+          "maxRetrievals": 64
+        }
+      },
+      "expected": {
+        "verdict": "SUPPORTED_OPEN_WORLD",
+        "baseWorld": "SUPPORTED_CLOSED",
+        "agrees": false,
+        "witness": [
+          "retract-exception"
+        ],
+        "worldsChecked": 2,
+        "variantsChecked": 2,
+        "counterfactualChanges": 1,
+        "invarianceRoot": "sha256-a4b95f717bcea7bff993f017b9b0a891054ec1c4fd40dafa279b56ed43420acf",
+        "negativeCollections": [
+          "approvals"
+        ],
+        "obligationIds": [
+          "approval",
+          "exception",
+          "policy"
+        ],
+        "sourcePartitions": [
+          "approval.md",
+          "exception.md"
+        ],
+        "met": [
+          "approval",
+          "exception"
+        ],
+        "unmet": [
+          "policy"
+        ]
+      }
+    },
+    {
+      "id": "conflict",
+      "world": {
+        "format": "knolo-kite-world-1",
+        "question": "Can contractor A access production?",
+        "asOf": null,
+        "stateRoot": "sha256-abababababababababababababababababababababababababababababababab",
+        "semanticRoot": null,
+        "obligations": [
+          {
+            "id": "approval",
+            "kind": "evidence",
+            "met": true,
+            "hitIds": [
+              "hit-approval"
+            ],
+            "sources": [
+              "approval.md"
+            ]
+          },
+          {
+            "id": "exception",
+            "kind": "qualification",
+            "met": true,
+            "hitIds": [
+              "hit-exception"
+            ],
+            "sources": [
+              "exception.md"
+            ]
+          },
+          {
+            "id": "policy",
+            "kind": "authority",
+            "met": true,
+            "hitIds": [
+              "hit-policy"
+            ],
+            "sources": [
+              "policy.md"
+            ]
+          }
+        ],
+        "rules": {
+          "format": "knolo-kite-rules-1",
+          "proposition": "contractor access",
+          "support": [
+            "exception"
+          ],
+          "oppose": [
+            "policy"
+          ],
+          "require": [
+            "approval"
+          ],
+          "conflicts": [
+            {
+              "left": "exception",
+              "right": "policy"
+            }
+          ],
+          "completeness": [
+            {
+              "id": "register",
+              "collection": "approvals",
+              "obligationId": "approval"
+            }
+          ]
+        },
+        "completeness": {
+          "format": "knolo-kite-completeness-1",
+          "declarations": [
+            {
+              "id": "register",
+              "collection": "approvals",
+              "signed": true
+            }
+          ]
+        },
+        "changes": [],
+        "bounds": {
+          "maxGraphNodes": 5000,
+          "maxVariants": 2048,
+          "maxCounterfactualChanges": 2,
+          "maxRetrievals": 64
+        }
+      },
+      "expected": {
+        "verdict": "CONFLICTED",
+        "baseWorld": "CONFLICTED",
+        "agrees": true,
+        "witness": null,
+        "worldsChecked": 1,
+        "variantsChecked": 1,
+        "counterfactualChanges": 0,
+        "invarianceRoot": "sha256-5de9fec60009b73e1ff906c94109845035be397dbda60d0ef5e4190535588c63",
+        "negativeCollections": [
+          "approvals"
+        ],
+        "obligationIds": [
+          "approval",
+          "exception",
+          "policy"
+        ],
+        "sourcePartitions": [
+          "approval.md",
+          "exception.md",
+          "policy.md"
+        ],
+        "met": [
+          "approval",
+          "exception",
+          "policy"
+        ],
+        "unmet": []
+      }
+    },
+    {
+      "id": "open-completeness",
+      "world": {
+        "format": "knolo-kite-world-1",
+        "question": "Can contractor A access production?",
+        "asOf": null,
+        "stateRoot": "sha256-abababababababababababababababababababababababababababababababab",
+        "semanticRoot": null,
+        "obligations": [
+          {
+            "id": "approval",
+            "kind": "evidence",
+            "met": true,
+            "hitIds": [
+              "hit-approval"
+            ],
+            "sources": [
+              "approval.md"
+            ]
+          },
+          {
+            "id": "exception",
+            "kind": "qualification",
+            "met": true,
+            "hitIds": [
+              "hit-exception"
+            ],
+            "sources": [
+              "exception.md"
+            ]
+          },
+          {
+            "id": "policy",
+            "kind": "authority",
+            "met": false,
+            "hitIds": [],
+            "sources": []
+          }
+        ],
+        "rules": {
+          "format": "knolo-kite-rules-1",
+          "proposition": "contractor access",
+          "support": [
+            "exception"
+          ],
+          "oppose": [
+            "policy"
+          ],
+          "require": [
+            "approval"
+          ],
+          "conflicts": [
+            {
+              "left": "exception",
+              "right": "policy"
+            }
+          ],
+          "completeness": [
+            {
+              "id": "register",
+              "collection": "approvals",
+              "obligationId": "approval"
+            }
+          ]
+        },
+        "completeness": {
+          "format": "knolo-kite-completeness-1",
+          "declarations": []
+        },
+        "changes": [],
+        "bounds": {
+          "maxGraphNodes": 5000,
+          "maxVariants": 2048,
+          "maxCounterfactualChanges": 2,
+          "maxRetrievals": 64
+        }
+      },
+      "expected": {
+        "verdict": "SUPPORTED_OPEN_WORLD",
+        "baseWorld": "SUPPORTED_OPEN_WORLD",
+        "agrees": true,
+        "witness": null,
+        "worldsChecked": 1,
+        "variantsChecked": 1,
+        "counterfactualChanges": 0,
+        "invarianceRoot": "sha256-784d93f11bd35d7f8f740d4a6897bd1d60447975cdf7fc9e9db2954586b0c9fe",
+        "negativeCollections": [
+          "approvals"
+        ],
+        "obligationIds": [
+          "approval",
+          "exception",
+          "policy"
+        ],
+        "sourcePartitions": [
+          "approval.md",
+          "exception.md"
+        ],
+        "met": [
+          "approval",
+          "exception"
+        ],
+        "unmet": [
+          "policy"
+        ]
+      }
+    },
+    {
+      "id": "bound",
+      "world": {
+        "format": "knolo-kite-world-1",
+        "question": "Can contractor A access production?",
+        "asOf": null,
+        "stateRoot": "sha256-abababababababababababababababababababababababababababababababab",
+        "semanticRoot": null,
+        "obligations": [
+          {
+            "id": "approval",
+            "kind": "evidence",
+            "met": false,
+            "hitIds": [],
+            "sources": []
+          },
+          {
+            "id": "exception",
+            "kind": "qualification",
+            "met": false,
+            "hitIds": [],
+            "sources": []
+          },
+          {
+            "id": "policy",
+            "kind": "authority",
+            "met": true,
+            "hitIds": [
+              "hit-policy"
+            ],
+            "sources": [
+              "policy.md"
+            ]
+          }
+        ],
+        "rules": {
+          "format": "knolo-kite-rules-1",
+          "proposition": "contractor access",
+          "support": [
+            "exception"
+          ],
+          "oppose": [
+            "policy"
+          ],
+          "require": [
+            "approval"
+          ],
+          "conflicts": [
+            {
+              "left": "exception",
+              "right": "policy"
+            }
+          ],
+          "completeness": [
+            {
+              "id": "register",
+              "collection": "approvals",
+              "obligationId": "approval"
+            }
+          ]
+        },
+        "completeness": {
+          "format": "knolo-kite-completeness-1",
+          "declarations": []
+        },
+        "changes": [
+          {
+            "id": "add-approval",
+            "kind": "amend",
+            "obligationId": "approval"
+          },
+          {
+            "id": "drop-policy",
+            "kind": "retract",
+            "obligationId": "policy"
+          }
+        ],
+        "bounds": {
+          "maxGraphNodes": 5000,
+          "maxVariants": 1,
+          "maxCounterfactualChanges": 2,
+          "maxRetrievals": 64
+        }
+      },
+      "expected": {
+        "verdict": "BOUND_EXCEEDED",
+        "baseWorld": null,
+        "agrees": false,
+        "witness": null,
+        "worldsChecked": 0,
+        "variantsChecked": 0,
+        "counterfactualChanges": 0,
+        "invarianceRoot": null,
+        "negativeCollections": [
+          "approvals"
+        ],
+        "obligationIds": [
+          "approval",
+          "exception",
+          "policy"
+        ],
+        "sourcePartitions": [
+          "policy.md"
+        ],
+        "met": [
+          "policy"
+        ],
+        "unmet": [
+          "approval",
+          "exception"
+        ]
+      }
+    },
+    {
+      "id": "dated",
+      "world": {
+        "format": "knolo-kite-world-1",
+        "question": "Can contractor A access production?",
+        "asOf": "2026-11-10",
+        "stateRoot": "sha256-abababababababababababababababababababababababababababababababab",
+        "semanticRoot": "sha256-abababababababababababababababababababababababababababababababab",
+        "obligations": [
+          {
+            "id": "approval",
+            "kind": "evidence",
+            "met": false,
+            "hitIds": [],
+            "sources": []
+          },
+          {
+            "id": "exception",
+            "kind": "qualification",
+            "met": true,
+            "hitIds": [
+              "hit-exception"
+            ],
+            "sources": [
+              "exception.md"
+            ]
+          },
+          {
+            "id": "policy",
+            "kind": "authority",
+            "met": true,
+            "hitIds": [
+              "hit-policy"
+            ],
+            "sources": [
+              "policy.md"
+            ]
+          }
+        ],
+        "rules": {
+          "format": "knolo-kite-rules-1",
+          "proposition": "contractor access",
+          "support": [
+            "exception"
+          ],
+          "oppose": [
+            "policy"
+          ],
+          "require": [
+            "approval"
+          ],
+          "conflicts": [
+            {
+              "left": "exception",
+              "right": "policy"
+            }
+          ],
+          "completeness": [
+            {
+              "id": "register",
+              "collection": "approvals",
+              "obligationId": "approval"
+            }
+          ]
+        },
+        "completeness": {
+          "format": "knolo-kite-completeness-1",
+          "declarations": []
+        },
+        "changes": [],
+        "bounds": {
+          "maxGraphNodes": 5000,
+          "maxVariants": 2048,
+          "maxCounterfactualChanges": 2,
+          "maxRetrievals": 64
+        }
+      },
+      "expected": {
+        "verdict": "UNDERDETERMINED",
+        "baseWorld": "UNDERDETERMINED",
+        "agrees": true,
+        "witness": null,
+        "worldsChecked": 1,
+        "variantsChecked": 1,
+        "counterfactualChanges": 0,
+        "invarianceRoot": "sha256-32cb77bd5600406c51ecde739f1dc27c7fb677d756dd3f8911d8a5c4c3b70616",
+        "negativeCollections": [
+          "approvals"
+        ],
+        "obligationIds": [
+          "approval",
+          "exception",
+          "policy"
+        ],
+        "sourcePartitions": [
+          "exception.md",
+          "policy.md"
+        ],
+        "met": [
+          "exception",
+          "policy"
+        ],
+        "unmet": [
+          "approval"
+        ]
+      }
+    }
+  ]
+}

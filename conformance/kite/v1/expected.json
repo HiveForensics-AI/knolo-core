@@ -1,0 +1,45 @@
+{
+  "format": "kite-conformance-v1",
+  "cases": [
+    {
+      "id": "undetermined",
+      "verdict": "UNDERDETERMINED",
+      "invarianceRoot": "sha256-f86af49c208fbc24cd3d45ff7c90d0c47ff848d74c03281edee34b3defc12353",
+      "unmet": [
+        "approval"
+      ]
+    },
+    {
+      "id": "explicit-refute",
+      "verdict": "REFUTED_IN_SCOPE",
+      "invarianceRoot": "sha256-6103fb9d643d2ea51d4a9cb9a94a4420b60e582ce21e92156f866aca2abb4a64",
+      "unmet": [
+        "exception",
+        "approval"
+      ]
+    },
+    {
+      "id": "warranted",
+      "verdict": "WARRANTED_IN_SCOPE",
+      "invarianceRoot": "sha256-aed88bf258413f3fb4764070ee7ec262fd82e17906d9e474e27ecc64c298da3a",
+      "unmet": [
+        "policy"
+      ]
+    },
+    {
+      "id": "conflict",
+      "verdict": "CONFLICTED",
+      "invarianceRoot": "sha256-0fe25d57040ad3681973908f1b27c2e82e07dd92f5197e232fb5ac7c6c375b16",
+      "unmet": []
+    },
+    {
+      "id": "bound",
+      "verdict": "BOUND_EXCEEDED",
+      "invarianceRoot": null,
+      "unmet": [
+        "exception",
+        "approval"
+      ]
+    }
+  ]
+}
