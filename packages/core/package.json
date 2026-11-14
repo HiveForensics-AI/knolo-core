@@ -79,6 +79,12 @@
       "react-native": "./dist/cortex/index.js",
       "import": "./dist/cortex/index.js",
       "types": "./dist/cortex/index.d.ts"
+    },
+    "./kite": {
+      "browser": "./dist/kite/index.js",
+      "react-native": "./dist/kite/index.js",
+      "import": "./dist/kite/index.js",
+      "types": "./dist/kite/index.d.ts"
     }
   },
   "sideEffects": false,
