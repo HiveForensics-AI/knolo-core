@@ -141,22 +141,34 @@ function writeNew(file, body) {
   }
 }
 
+function hasKite(loaded) {
+  return Boolean(
+    loaded?.createKiteSession &&
+    loaded?.evaluateKiteSession &&
+    loaded?.verifyKiteCertificate
+  );
+}
+
 async function loadKite() {
   const candidate = path.resolve(
     path.dirname(fileURLToPath(import.meta.url)),
     '../../core/dist/kite/index.js'
   );
-  const loaded = await import(pathToFileURL(candidate).href);
-  if (
-    !loaded.createKiteSession ||
-    !loaded.evaluateKiteSession ||
-    !loaded.verifyKiteCertificate
-  ) {
-    throw new Error(
-      'Could not load @knolo/core/kite. Build packages/core first.'
-    );
+  try {
+    const loaded = await import(pathToFileURL(candidate).href);
+    if (hasKite(loaded)) return loaded;
+  } catch {
+    // An installed package does not have the checkout dist path.
   }
-  return loaded;
+  try {
+    const loaded = await import('@knolo/core/kite');
+    if (hasKite(loaded)) return loaded;
+  } catch {
+    // The package fallback is absent until core is installed.
+  }
+  throw new Error(
+    'Could not load @knolo/core/kite. Build packages/core first.'
+  );
 }
 
 function required(value, name) {

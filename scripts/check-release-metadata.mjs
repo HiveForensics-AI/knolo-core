@@ -5,12 +5,13 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const releaseVersion = '6.2.0';
-const coreReleaseVersion = '6.2.2';
-const cliReleaseVersion = '6.2.5';
+const coreReleaseVersion = '6.2.3';
+const cliReleaseVersion = '6.2.6';
 const reflexReleaseVersion = '0.2.0';
 const platformVersion = '5.5.1';
 const coreRange = '^6.0.0';
 const cliCoreRange = '^6.2.0';
+const cliKiteCoreRange = '^6.2.3';
 
 function readJson(relativePath) {
   return JSON.parse(readFileSync(path.join(root, relativePath), 'utf8'));
@@ -78,7 +79,7 @@ for (const relativePath of npmPackages) {
       if (name.startsWith('@knolo/')) {
         const expected =
           relativePath === 'packages/cli/package.json' && name === '@knolo/core'
-            ? cliCoreRange
+            ? cliKiteCoreRange
             : relativePath === 'packages/cli/package.json' &&
                 name === '@knolo/exchange'
               ? '^0.1.0'

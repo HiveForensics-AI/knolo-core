@@ -27,4 +27,6 @@ a customer-corpus review and not a novelty claim.
 A second documentation link check, after this page was added, passed for
 302 Markdown files. GitHub Actions on the pull-request head `9820a44`
 reported 36 successful checks before that merge. This page does not bump a
-version, tag a commit, or publish a package.
+version, tag a commit, or publish a package. A later package-file stamp sets
+`@knolo/core` to `6.2.3` and `@knolo/cli` to `6.2.6`. npm `latest` stays
+`6.2.2` and `6.2.5` until those releases are published.
