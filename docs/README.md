@@ -68,6 +68,9 @@ operational guides for Knolo.
 - [Cortex](cortex/README.md) — bounded evidence retrieval and a verifiable
   trace. Import it from `@knolo/core/cortex`. This is not the root memory
   helper `createCortex`. Verification does not mean an answer is true.
+- [KITE](kite/README.md) — typed obligations, declared changes, and a
+  replayable certificate. Import it from `@knolo/core/kite`. The root
+  entry does not load it. A verdict is not universal truth.
 - [Flight logs](flight/README.md) — offline packing of a `flight-events-1`
   document into a V5 Knowledge Image. A pass means evidence requirements
   were met. It does not mean a flight was safe or compliant.

@@ -1,0 +1,9 @@
+{
+  "format": "knolo-kite-contract-1",
+  "question": "Can contractor A access production?",
+  "obligations": [
+    { "id": "policy", "kind": "authority", "term": "security policy" },
+    { "id": "exception", "kind": "qualification", "term": "contractor exception" },
+    { "id": "approval", "kind": "evidence", "term": "contractor approval" }
+  ]
+}

@@ -5,9 +5,11 @@ read-only Knowledge Image verifier, deterministic migration foundation, and
 VQF-1 required object/event readers. The TypeScript runtime remains the V4
 retrieval reference and canonical VQF encoder; this crate is a read-only V5
 byte-contract implementation. The crate stays `5.5.1`. It evaluates and
-verifies the public KAR V5 conformance vectors. Authoring, coverage reports,
-Cortex, composition, the Python package, and the ICP canister stay outside
-this runtime.
+verifies the public KAR V5 conformance vectors and replays a KITE
+certificate from a world snapshot. Authoring, coverage reports, Cortex,
+composition, the Python package, and the ICP canister stay outside this
+runtime. The KITE replay does not search an image and it does not replace
+`stateRoot` or `KARRoot`.
 
 The shared implementation roadmap is [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
 

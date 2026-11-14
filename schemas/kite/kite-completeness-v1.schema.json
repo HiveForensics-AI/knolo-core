@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knolo.dev/schemas/kite/kite-completeness-v1.schema.json",
+  "title": "KITE completeness declarations",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "declarations"],
+  "properties": {
+    "format": { "const": "knolo-kite-completeness-1" },
+    "declarations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "collection", "signed"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$" },
+          "collection": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$" },
+          "signed": { "const": true }
+        }
+      }
+    }
+  }
+}

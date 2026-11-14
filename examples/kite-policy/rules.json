@@ -1,0 +1,15 @@
+{
+  "format": "knolo-kite-rules-1",
+  "proposition": "contractor access",
+  "support": ["exception"],
+  "oppose": ["policy"],
+  "require": ["approval"],
+  "conflicts": [{ "left": "exception", "right": "policy" }],
+  "completeness": [
+    {
+      "id": "register",
+      "collection": "approvals",
+      "obligationId": "approval"
+    }
+  ]
+}

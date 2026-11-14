@@ -3,6 +3,8 @@ use std::error::Error;
 use std::fmt::{Display, Formatter};
 
 mod kar;
+mod kite;
+pub use kite::{derive_kite_world, verify_kite_certificate, KiteDerivation, KiteVerification};
 pub use kar::{
     create_kar_dossier_v5, evaluate_kar_v5, render_kar_dossier, verify_kar_dossier_v5, verify_kar_v5,
     KarDossier, KarEvaluation, KarRunError, KarVerification,
