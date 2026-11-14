@@ -3,7 +3,8 @@
 This package is `6.2.0`. Generated applications depend on `@knolo/core`
 `^6.0.0` and `@knolo/cli` `^6.0.0`. Those ranges can resolve published
 `@knolo/core` `6.2.2` and `@knolo/cli` `6.2.5`. This tree's CLI package file
-is `6.2.5` and requires `@knolo/core` `^6.2.0` and `@knolo/exchange` `^0.1.0`.
+is `6.2.6` and requires `@knolo/core` `^6.2.3` and `@knolo/exchange` `^0.1.0`.
+This tree's core package file is `6.2.3`.
 Generated applications target the Knolo V4 TypeScript retrieval path, with the
 V5 foundation available beside it. Packs are V4 by default and can be checked
 with `knolo verify`. Python, Rust, and ICP stay `5.5.1` and do not implement
