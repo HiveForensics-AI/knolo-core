@@ -40,8 +40,10 @@ image again and recomputes the derivation. A stored hash that matches a
 stored hash is not verification.
 
 The Rust crate replays the same derivation from a `knolo-kite-world-1`
-snapshot. It does not search the image. Python and ICP do not implement
-KITE. Those runtimes stay 5.5.1. `@knolo/core` stays 6.2.2.
+snapshot. It does not search the image. Python does not implement KITE.
+The ICP canister methods stay the pack, search, and health calls. The CLI
+template copies the Rust sources so that crate still builds. Those
+runtimes stay 5.5.1. `@knolo/core` stays 6.2.2.
 
 From a checkout, after building core:
 
