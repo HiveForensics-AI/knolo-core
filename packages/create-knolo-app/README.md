@@ -59,11 +59,11 @@ my-app/
 
 ## 🧠 What You Get
 
-- Working Next.js playground
-- Deterministic knowledge querying
-- Agent resolution examples
-- Example structured documents
-- Fully local-first setup
+* Working Next.js playground
+* Deterministic knowledge querying
+* Agent resolution examples
+* Example structured documents
+* Fully local-first setup
 
 ---
 
@@ -84,8 +84,8 @@ my-app/
 
 ```ts
 query(pack, {
-  namespace: 'mobile',
-  q: 'react native bridge',
+  namespace: "mobile",
+  q: "react native bridge"
 });
 ```
 
@@ -95,10 +95,10 @@ query(pack, {
 
 Includes example agent definitions with:
 
-- System prompts
-- Tool policies
-- Routing metadata
-- Patch variables
+* System prompts
+* Tool policies
+* Routing metadata
+* Patch variables
 
 You can experiment directly in the playground UI.
 
@@ -106,11 +106,11 @@ You can experiment directly in the playground UI.
 
 ## 🎯 Ideal For
 
-- Building AI apps without vector DBs
-- Mobile-first AI
-- On-device LLM experiments
-- Deterministic AI systems
-- Agent routing research
+* Building AI apps without vector DBs
+* Mobile-first AI
+* On-device LLM experiments
+* Deterministic AI systems
+* Agent routing research
 
 ---
 
