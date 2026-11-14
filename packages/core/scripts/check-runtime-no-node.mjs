@@ -23,6 +23,9 @@ const compositionIndexPath = fileURLToPath(
 const cortexIndexPath = fileURLToPath(
   new URL('../dist/cortex/index.js', import.meta.url)
 );
+const kiteIndexPath = fileURLToPath(
+  new URL('../dist/kite/index.js', import.meta.url)
+);
 const rootSourcePath = fileURLToPath(
   new URL('../src/index.ts', import.meta.url)
 );
@@ -33,6 +36,7 @@ const publicKarBundle = await readFile(publicKarPath, 'utf8');
 const publicAuthoringBundle = await readFile(publicAuthoringPath, 'utf8');
 const compositionBundle = await readFile(compositionIndexPath, 'utf8');
 const cortexBundle = await readFile(cortexIndexPath, 'utf8');
+const kiteBundle = await readFile(kiteIndexPath, 'utf8');
 const rootSource = await readFile(rootSourcePath, 'utf8');
 
 const forbidden = ['node:fs', 'fs/promises', 'node:path'];
@@ -158,6 +162,39 @@ assert.equal(
   rootSource.includes('createCortexSession'),
   false,
   'Root source entry must not export Knolo Cortex'
+);
+for (const token of [
+  'node:fs',
+  'fs/promises',
+  'node:path',
+  'node:crypto',
+  '/authoring',
+]) {
+  assert.equal(
+    kiteBundle.includes(token),
+    false,
+    `KITE entry must not include ${token}`
+  );
+}
+assert.equal(
+  runtimeBundle.includes('evaluateKite'),
+  false,
+  'Root runtime entry must not export KITE'
+);
+assert.equal(
+  runtimeBundle.includes('knolo-kite-contract-1'),
+  false,
+  'Root runtime entry must not name KITE contracts'
+);
+assert.equal(
+  rootSource.includes('evaluateKite'),
+  false,
+  'Root source entry must not export KITE'
+);
+assert.equal(
+  rootSource.includes('knolo-kite-contract-1'),
+  false,
+  'Root source entry must not name KITE contracts'
 );
 assert.equal(
   publicKarBundle.includes('knolo-cortex-trace-1'),
