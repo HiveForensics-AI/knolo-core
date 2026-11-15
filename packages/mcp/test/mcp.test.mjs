@@ -2099,3 +2099,198 @@ test('search and status run a configured rebuild hook', async () => {
     await rm(root, { recursive: true, force: true });
   }
 });
+
+function kiteObjects() {
+  return [
+    {
+      kind: 'chunk',
+      bytes: encoder.encode('The security policy forbids contractor access.\n'),
+      meta: { source: 'policy.md' },
+    },
+    {
+      kind: 'chunk',
+      bytes: encoder.encode(
+        'The contractor exception allows restricted access.\n'
+      ),
+      meta: { source: 'exception.md' },
+    },
+  ];
+}
+
+async function kiteDocs() {
+  const base = new URL('../../../examples/kite-policy/', import.meta.url);
+  const read = async (name) =>
+    JSON.parse(await readFile(new URL(name, base), 'utf8'));
+  return {
+    contract: await read('contract.json'),
+    rules: await read('rules.json'),
+    completeness: await read('completeness.json'),
+  };
+}
+
+test('kite tools evaluate a certificate and fail closed', async () => {
+  const docs = await kiteDocs();
+  const plain = await fixture();
+  const { client: plainClient } = await connected(plain.config);
+  try {
+    const listed = await plainClient.listTools();
+    assert.equal(
+      listed.tools.some((tool) => tool.name.startsWith('knolo_kite_')),
+      false
+    );
+  } finally {
+    await plainClient.close();
+    await rm(plain.root, { recursive: true, force: true });
+  }
+
+  const { config, root, imagePath } = await fixture({ objects: kiteObjects() });
+  config.mounts[0].kite = {};
+  const { client } = await connected(config);
+  try {
+    const listed = await client.listTools();
+    assert.deepEqual(
+      listed.tools.map((tool) => tool.name).sort(),
+      [...toolNames, 'knolo_kite_evaluate', 'knolo_kite_verify'].sort()
+    );
+    for (const tool of listed.tools) {
+      assert.equal(tool.inputSchema.properties?.agentId, undefined);
+    }
+    const evaluateTool = listed.tools.find(
+      (tool) => tool.name === 'knolo_kite_evaluate'
+    );
+    assert.match(
+      evaluateTool.description,
+      /does not describe real-world truth/
+    );
+    assert.match(evaluateTool.description, /SATISFIED is a KAR word/);
+    const verifyTool = listed.tools.find(
+      (tool) => tool.name === 'knolo_kite_verify'
+    );
+    assert.match(verifyTool.description, /does not mean the claim is true/);
+
+    const args = {
+      mountId: 'support-policy',
+      contract: docs.contract,
+      rules: docs.rules,
+      completeness: docs.completeness,
+      asOf: '2026-11-10',
+    };
+    const evaluated = await call(client, 'knolo_kite_evaluate', args);
+    assert.notEqual(evaluated.isError, true, textOf(evaluated));
+    const body = evaluated.structuredContent;
+    assert.equal(body.verdict, 'UNDERDETERMINED');
+    assert.equal(body.certificate.format, 'knolo-kite-certificate-1');
+    assert.match(body.invarianceRoot, /^sha256-[a-f0-9]{64}$/);
+    assert.match(body.receiptId, /^er_/);
+    const receipt = JSON.parse(
+      await readFile(path.join(root, 'audit', `${body.receiptId}.json`), 'utf8')
+    );
+    assert.equal(receipt.tool, 'knolo_kite_evaluate');
+    assert.equal(receipt.graphSha256, null);
+    assert.equal(receipt.caller.agentId, 'mcp');
+    assert.equal(receipt.outcome.status, 'UNDERDETERMINED');
+    assert.equal(receipt.outcome.roots.invarianceRoot, body.invarianceRoot);
+    assert.equal(
+      JSON.stringify(receipt).includes('knolo-kite-certificate-1'),
+      false
+    );
+
+    const verified = await call(client, 'knolo_kite_verify', {
+      ...args,
+      certificate: body.certificate,
+    });
+    assert.notEqual(verified.isError, true, textOf(verified));
+    assert.equal(verified.structuredContent.ok, true);
+    assert.equal(
+      verified.structuredContent.invarianceRoot,
+      body.invarianceRoot
+    );
+
+    const tampered = structuredClone(body.certificate);
+    tampered.invarianceRoot = `sha256-${'ab'.repeat(32)}`;
+    const rejected = await call(client, 'knolo_kite_verify', {
+      ...args,
+      certificate: tampered,
+    });
+    assert.notEqual(rejected.isError, true, textOf(rejected));
+    assert.equal(rejected.structuredContent.ok, false);
+    assert.equal(rejected.structuredContent.code, 'KITE_CERTIFICATE_MISMATCH');
+
+    const raised = await call(client, 'knolo_kite_evaluate', {
+      ...args,
+      bounds: { maxGraphNodes: 5001 },
+    });
+    assert.notEqual(raised.isError, true, textOf(raised));
+    assert.equal(raised.structuredContent.verdict, 'BOUND_EXCEEDED');
+    assert.equal(raised.structuredContent.certificate, null);
+    assert.equal(raised.structuredContent.code, 'BOUND_EXCEEDED');
+    assert.match(raised.structuredContent.receiptId, /^er_/);
+
+    const unfinished = await call(client, 'knolo_kite_evaluate', {
+      ...args,
+      changes: {
+        format: 'knolo-kite-changes-1',
+        changes: [
+          { id: 'add-approval', kind: 'amend', obligationId: 'approval' },
+          { id: 'drop-policy', kind: 'retract', obligationId: 'policy' },
+        ],
+      },
+      bounds: { maxVariants: 1 },
+    });
+    assert.notEqual(unfinished.isError, true, textOf(unfinished));
+    assert.equal(unfinished.structuredContent.verdict, 'BOUND_EXCEEDED');
+    assert.equal(unfinished.structuredContent.certificate, null);
+
+    const huge = {
+      ...docs.contract,
+      obligations: docs.contract.obligations.map((item) => ({
+        ...item,
+        term: 'x'.repeat(70000),
+      })),
+    };
+    const oversized = await call(client, 'knolo_kite_evaluate', {
+      ...args,
+      contract: huge,
+    });
+    assert.equal(oversized.isError, true);
+    assert.match(textOf(oversized), /^QUERY_INVALID: contract exceeds /);
+
+    await writeFile(imagePath, Buffer.from('not the pinned image'));
+    const drifted = await call(client, 'knolo_kite_evaluate', args);
+    assert.equal(drifted.isError, true);
+    assert.match(textOf(drifted), /^IMAGE_INVALID: /);
+  } finally {
+    await client.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('a mount without kite is not a KITE target', async () => {
+  const docs = await kiteDocs();
+  const opted = await fixture({ objects: kiteObjects() });
+  const other = await fixture({ objects: kiteObjects() });
+  const config = {
+    ...opted.config,
+    mounts: [
+      { ...opted.config.mounts[0], kite: {} },
+      { ...other.config.mounts[0], id: 'plain-policy' },
+    ],
+  };
+  const { client } = await connected(config);
+  try {
+    const denied = await call(client, 'knolo_kite_evaluate', {
+      mountId: 'plain-policy',
+      contract: docs.contract,
+      rules: docs.rules,
+    });
+    assert.equal(denied.isError, true);
+    assert.equal(
+      textOf(denied),
+      'IMAGE_UNAVAILABLE: Mount plain-policy has no KITE opt-in.'
+    );
+  } finally {
+    await client.close();
+    await rm(opted.root, { recursive: true, force: true });
+    await rm(other.root, { recursive: true, force: true });
+  }
+});

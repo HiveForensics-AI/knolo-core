@@ -55,6 +55,15 @@ node conformance/kite/v1/run.mjs
 
 `knolo kite evaluate` and `knolo kite verify` are in npm `latest`
 `@knolo/cli@6.2.7`. Published `@knolo/cli@6.2.5` does not include them.
+
+A mount opts in with an empty `kite` object. `@knolo/mcp`, `@knolo/ai-sdk`,
+`@knolo/mastra`, and `@knolo/openai-agents` then expose `knolo_kite_evaluate`
+and `knolo_kite_verify`. The image is the pinned mount. The arguments match
+the CLI: contract, rules, and the optional completeness, changes, bounds,
+graph, question, and `asOf`. Verify also takes the certificate. A caller may
+lower a bound and may not raise one. `BOUND_EXCEEDED` returns no certificate.
+The tools do not call a model. A mount without `kite` keeps the previous tool
+list.
 The [pre-publish check](PREPUBLISH.md) records the local test run. It is not
 an npm publish.
 

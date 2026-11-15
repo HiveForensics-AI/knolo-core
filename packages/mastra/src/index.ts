@@ -1,5 +1,7 @@
 import { KarError } from '@knolo/core/kar';
 import {
+  KNOLO_KITE_EVALUATE_DESCRIPTION,
+  KNOLO_KITE_VERIFY_DESCRIPTION,
   KNOLO_SEARCH_DESCRIPTION,
   KnoloOpenClawService,
   KnoloPluginError,
@@ -39,6 +41,32 @@ function toolFailure(error: unknown): Error {
 
 function callerFrom(config: KnoloMastraConfig) {
   return { agentId: config.agentId };
+}
+
+function kiteRequest(value: {
+  mountId: string;
+  contract: Record<string, unknown>;
+  rules: Record<string, unknown>;
+  completeness?: Record<string, unknown>;
+  changes?: Record<string, unknown>;
+  bounds?: Record<string, unknown>;
+  graph?: Record<string, unknown>;
+  question?: string;
+  asOf?: string;
+}) {
+  return {
+    mountId: value.mountId,
+    contract: value.contract,
+    rules: value.rules,
+    ...(value.completeness === undefined
+      ? {}
+      : { completeness: value.completeness }),
+    ...(value.changes === undefined ? {} : { changes: value.changes }),
+    ...(value.bounds === undefined ? {} : { bounds: value.bounds }),
+    ...(value.graph === undefined ? {} : { graph: value.graph }),
+    ...(value.question === undefined ? {} : { question: value.question }),
+    ...(value.asOf === undefined ? {} : { asOf: value.asOf }),
+  };
 }
 
 async function run<T>(work: () => Promise<T> | T): Promise<T> {
@@ -128,6 +156,40 @@ function knoloToolSet(
         })),
     }),
   };
+
+  if (service.hasKiteMount()) {
+    const jsonObject = z.record(z.string(), z.unknown());
+    const kiteSchema = {
+      mountId: z.string().min(1),
+      contract: jsonObject,
+      rules: jsonObject,
+      completeness: jsonObject.optional(),
+      changes: jsonObject.optional(),
+      bounds: jsonObject.optional(),
+      graph: jsonObject.optional(),
+      question: z.string().min(1).optional(),
+      asOf: z.string().min(1).optional(),
+    };
+    tools.knolo_kite_evaluate = createTool({
+      id: 'knolo_kite_evaluate',
+      description: KNOLO_KITE_EVALUATE_DESCRIPTION,
+      inputSchema: z.object(kiteSchema),
+      execute: async (input) =>
+        run(() => service.evaluateKite(kiteRequest(input), caller)),
+    });
+    tools.knolo_kite_verify = createTool({
+      id: 'knolo_kite_verify',
+      description: KNOLO_KITE_VERIFY_DESCRIPTION,
+      inputSchema: z.object({ ...kiteSchema, certificate: jsonObject }),
+      execute: async (input) =>
+        run(() =>
+          service.verifyKite(
+            { ...kiteRequest(input), certificate: input.certificate },
+            caller
+          )
+        ),
+    });
+  }
 
   if (graphs.size === 0) return tools;
 

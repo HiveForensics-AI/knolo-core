@@ -1,5 +1,7 @@
 import { KarError } from '@knolo/core/kar';
 import {
+  KNOLO_KITE_EVALUATE_DESCRIPTION,
+  KNOLO_KITE_VERIFY_DESCRIPTION,
   KNOLO_SEARCH_DESCRIPTION,
   KnoloOpenClawService,
   KnoloPluginError,
@@ -140,6 +142,59 @@ const karVerifyParameters = {
   required: ['mountId', 'proposition', 'plan'],
 } as const;
 
+const kiteEvaluateParameters = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    mountId: { type: 'string' },
+    contract: { type: 'object', additionalProperties: true },
+    rules: { type: 'object', additionalProperties: true },
+    completeness: { type: ['object', 'null'], additionalProperties: true },
+    changes: { type: ['object', 'null'], additionalProperties: true },
+    bounds: { type: ['object', 'null'], additionalProperties: true },
+    graph: { type: ['object', 'null'], additionalProperties: true },
+    question: { type: ['string', 'null'] },
+    asOf: { type: ['string', 'null'] },
+  },
+  required: ['mountId', 'contract', 'rules'],
+} as const;
+
+const kiteVerifyParameters = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    ...kiteEvaluateParameters.properties,
+    certificate: { type: 'object', additionalProperties: true },
+  },
+  required: ['mountId', 'contract', 'rules', 'certificate'],
+} as const;
+
+function kiteFrom(value: Record<string, unknown>) {
+  const question = omitted(value.question) ? undefined : value.question;
+  const asOf = omitted(value.asOf) ? undefined : value.asOf;
+  return {
+    mountId: requireText(value.mountId, 'mountId'),
+    contract: readRecord(value.contract, 'contract'),
+    rules: readRecord(value.rules, 'rules'),
+    ...(omitted(value.completeness)
+      ? {}
+      : { completeness: readRecord(value.completeness, 'completeness') }),
+    ...(omitted(value.changes)
+      ? {}
+      : { changes: readRecord(value.changes, 'changes') }),
+    ...(omitted(value.bounds)
+      ? {}
+      : { bounds: readRecord(value.bounds, 'bounds') }),
+    ...(omitted(value.graph)
+      ? {}
+      : { graph: readRecord(value.graph, 'graph') }),
+    ...(question === undefined
+      ? {}
+      : { question: requireText(question, 'question') }),
+    ...(asOf === undefined ? {} : { asOf: requireText(asOf, 'asOf') }),
+  };
+}
+
 const cortexVerifyParameters = {
   type: 'object',
   additionalProperties: false,
@@ -223,6 +278,41 @@ function knoloToolSet(
         })),
     }),
   };
+
+  if (service.hasKiteMount()) {
+    tools.knolo_kite_evaluate = tool({
+      name: 'knolo_kite_evaluate',
+      description: KNOLO_KITE_EVALUATE_DESCRIPTION,
+      strict: false,
+      parameters: openParameters(kiteEvaluateParameters),
+      errorFunction: reportToolError,
+      execute: async (input) =>
+        run(() =>
+          service.evaluateKite(
+            kiteFrom(readRecord(input, 'knolo_kite_evaluate')),
+            caller
+          )
+        ),
+    });
+    tools.knolo_kite_verify = tool({
+      name: 'knolo_kite_verify',
+      description: KNOLO_KITE_VERIFY_DESCRIPTION,
+      strict: false,
+      parameters: openParameters(kiteVerifyParameters),
+      errorFunction: reportToolError,
+      execute: async (input) =>
+        run(() => {
+          const value = readRecord(input, 'knolo_kite_verify');
+          return service.verifyKite(
+            {
+              ...kiteFrom(value),
+              certificate: readRecord(value.certificate, 'certificate'),
+            },
+            caller
+          );
+        }),
+    });
+  }
 
   if (graphs.size === 0) return tools;
 

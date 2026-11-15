@@ -75,7 +75,9 @@ Add a stdio server in Cline's MCP settings. The command is `npx`.
 ```
 
 Ask Cline to call `knolo_search`. A mount without a `kar` block exposes
-`knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`. Cite the
+`knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`. An empty
+`kite` block also exposes `knolo_kite_evaluate` and `knolo_kite_verify`. A
+KITE verdict describes the contract, not real-world truth. Cite the
 `imageId`, `objectId`, and `stateRoot` from the result.
 
 A receipt is an integrity check. It does not mean a claim is proven.
