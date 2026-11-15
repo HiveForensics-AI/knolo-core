@@ -5,6 +5,7 @@ import {
   mkdtempSync,
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
   rmSync,
   statSync,
@@ -346,6 +347,92 @@ test('hub info renders the listing and supports json mode', async () => {
   assert.deepEqual(JSON.parse(printed[1]), responseBody);
 });
 
+test('hub info renders a private pack without its Blob URL when the owner token matches', async () => {
+  const { runHubLogin, runHubInfo } = await import(
+    pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href
+  );
+  const homeDir = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-info-private-'));
+  const env = {
+    KNOLO_HUB_URL: 'https://hub.example.test',
+    XDG_CONFIG_HOME: path.join(homeDir, '.config'),
+  };
+  const token = 'kno_InfoPrivateToken012345678901234567';
+  const storedUrl =
+    'https://store.private.blob.vercel-storage.com/sha256/21a9d04ea66f8a7da0b6427c6936e714d9e6b1f7d5c2a0b319f6e3d7a5b87a12.knolo';
+  const responseBody = {
+    name: 'acme/refund-policy',
+    publisher: 'acme',
+    slug: 'refund-policy',
+    description: 'Customer support policy',
+    visibility: 'private',
+    pack: {
+      format: 'V5',
+      version: '1.2.0',
+      license: 'Apache-2.0',
+      visibility: 'private',
+      blobUrl: '',
+    },
+    latest: {
+      version: '1.2.0',
+      sha256:
+        '21a9d04ea66f8a7da0b6427c6936e714d9e6b1f7d5c2a0b319f6e3d7a5b87a12',
+      url: '',
+      visibility: 'private',
+    },
+  };
+  const calls = [];
+  const printed = [];
+  await runHubLogin(['--token', token], { env, homeDir, print: () => {} });
+  await runHubInfo(['acme/refund-policy'], {
+    env,
+    homeDir,
+    fetchImpl: async (url, init = {}) => {
+      calls.push({ url: String(url), init });
+      return jsonResponse(responseBody, 200);
+    },
+    print: (value) => printed.push(value),
+  });
+  assert.equal(
+    calls[0].url,
+    'https://hub.example.test/api/v1/packs/acme/refund-policy'
+  );
+  assert.equal(calls[0].init.headers.Authorization, `Bearer ${token}`);
+  assert.match(printed[0], /visibility\s+private/);
+  assert.equal(/^url\s/m.test(printed[0]), false);
+  assert.equal(printed[0].includes(storedUrl), false);
+  assert.equal(printed[0].includes('blob.vercel-storage.com'), false);
+});
+
+test('hub info without a token reports a private pack as not found', async () => {
+  const { runHubInfo } = await import(
+    pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href
+  );
+  const homeDir = mkdtempSync(
+    path.join(tmpdir(), 'knolo-cli-hub-info-private-anon-')
+  );
+  const calls = [];
+  await assert.rejects(
+    () =>
+      runHubInfo(
+        ['acme/refund-policy', '--registry', 'https://fixture.example'],
+        {
+          homeDir,
+          fetchImpl: async (url, init = {}) => {
+            calls.push({ url: String(url), init });
+            return jsonResponse(
+              { error: 'Pack not found.', code: 'not_found' },
+              404
+            );
+          },
+          print: () => {},
+        }
+      ),
+    /Pack not found/
+  );
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].init.headers.Authorization, undefined);
+});
+
 test('hub pack specs support omitted, exact, and latest versions', async () => {
   const { parsePackSpec } = await import(
     pathToFileURL(path.resolve(process.cwd(), 'bin/registry/specs.mjs')).href
@@ -455,6 +542,7 @@ test('hub commands are registered without loading the core runtime for help', ()
     /Authorization: Bearer kno_/
   );
   assert.match(runCli(['publish', '--help'], cwd), /public Blob URL/);
+  assert.match(runCli(['publish', '--help'], cwd), /--private/);
   assert.match(runCli(['yank', '--help'], cwd), /Authorization: Bearer kno_/);
 });
 
@@ -719,6 +807,266 @@ test('hub publish refuses private Blob upload URLs before sending bytes', async 
       'https://hub.example.test/api/upload/token',
     ]
   );
+});
+
+test('hub publish --private uses a private Blob host and omits the stored URL', async () => {
+  const { runHubLogin, runHubPublish } = await import(
+    pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href
+  );
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-publish-private-'));
+  const homeDir = mkdtempSync(
+    path.join(tmpdir(), 'knolo-cli-hub-publish-private-home-')
+  );
+  const env = {
+    KNOLO_HUB_URL: 'https://hub.example.test',
+    XDG_CONFIG_HOME: path.join(homeDir, '.config'),
+  };
+  const token = 'kno_PrivatePublishToken012345678901234';
+  const bytes = Buffer.from('private knolo artifact');
+  writeFileSync(path.join(cwd, 'tiny.knolo'), bytes);
+  const digest = createHash('sha256').update(bytes).digest('hex');
+  const pathname = `sha256/${digest}.knolo`;
+  const grantUrl = `https://store.private.blob.vercel-storage.com/${pathname}?grant=1`;
+  const blobUrl = `https://store.private.blob.vercel-storage.com/${pathname}`;
+  const calls = [];
+  const printed = [];
+
+  await runHubLogin(['--token', token], { env, homeDir, print: () => {} });
+  const result = await runHubPublish(
+    [
+      './tiny.knolo',
+      '--slug',
+      'tiny',
+      '--version',
+      '1.0.0',
+      '--license',
+      'MIT',
+      '--private',
+    ],
+    {
+      env,
+      cwd,
+      homeDir,
+      pollIntervalMs: 0,
+      sleep: async () => {},
+      print: (value) => printed.push(value),
+      fetchImpl: async (url, init = {}) => {
+        const call = { url: String(url), init };
+        calls.push(call);
+        if (call.url.endsWith('/api/v1/account'))
+          return jsonResponse({ account: { handle: 'acme' } }, 200);
+        if (call.url.endsWith('/api/upload/token')) {
+          assert.equal(init.headers.Authorization, `Bearer ${token}`);
+          assert.deepEqual(JSON.parse(init.body), {
+            sha256: digest,
+            contentLength: bytes.length,
+            visibility: 'private',
+          });
+          return jsonResponse(
+            { upload: { url: grantUrl, pathname }, pathname },
+            201
+          );
+        }
+        if (call.url === grantUrl) {
+          assert.equal(init.method, 'PUT');
+          assert.equal(init.headers.Authorization, undefined);
+          assert.deepEqual(Buffer.from(init.body), bytes);
+          return jsonResponse({ url: blobUrl, pathname }, 200);
+        }
+        if (call.url.endsWith('/api/upload/complete')) {
+          assert.deepEqual(JSON.parse(init.body), {
+            sha256: digest,
+            url: blobUrl,
+            sizeBytes: bytes.length,
+            pathname,
+            visibility: 'private',
+          });
+          return jsonResponse({ reused: false }, 200);
+        }
+        if (call.url.endsWith('/api/v1/publish/verify')) {
+          return jsonResponse({ jobId: 'job-private' }, 200);
+        }
+        if (call.url.endsWith('/api/v1/publish/jobs/job-private')) {
+          return jsonResponse({ status: 'passed' }, 200);
+        }
+        if (call.url.endsWith('/api/v1/publish/drafts')) {
+          assert.deepEqual(JSON.parse(init.body), {
+            sha256: digest,
+            slug: 'tiny',
+            version: '1.0.0',
+            license: 'MIT',
+            attested: true,
+            visibility: 'private',
+          });
+          return jsonResponse({ id: 'draft-private' }, 200);
+        }
+        if (
+          call.url.endsWith('/api/v1/publish/drafts/draft-private/release')
+        ) {
+          return jsonResponse({ released: true }, 200);
+        }
+        throw new Error(`Unexpected Hub request: ${call.url}`);
+      },
+    }
+  );
+
+  assert.equal(result.visibility, 'private');
+  assert.equal(Object.hasOwn(result, 'url'), false);
+  assert.equal(JSON.stringify(result).includes(blobUrl), false);
+  assert.equal(printed.join('\n').includes(blobUrl), false);
+  assert.equal(printed.join('\n').includes(token), false);
+  assert.match(printed.join('\n'), /visibility private/);
+  assert.equal(
+    calls.some(
+      ({ url, init }) => url === grantUrl && init.headers?.Authorization
+    ),
+    false
+  );
+});
+
+test('hub publish --private can complete a reused private artifact without a Blob URL', async () => {
+  const { runHubLogin, runHubPublish } = await import(
+    pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href
+  );
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-publish-reuse-'));
+  const homeDir = mkdtempSync(
+    path.join(tmpdir(), 'knolo-cli-hub-publish-reuse-home-')
+  );
+  const env = {
+    KNOLO_HUB_URL: 'https://hub.example.test',
+    XDG_CONFIG_HOME: path.join(homeDir, '.config'),
+  };
+  const token = 'kno_PrivateReuseToken0123456789012345';
+  const bytes = Buffer.from('reused private artifact');
+  writeFileSync(path.join(cwd, 'tiny.knolo'), bytes);
+  const digest = createHash('sha256').update(bytes).digest('hex');
+  const pathname = `sha256/${digest}.knolo`;
+  const calls = [];
+  await runHubLogin(['--token', token], { env, homeDir, print: () => {} });
+  const result = await runHubPublish(
+    [
+      './tiny.knolo',
+      '--slug',
+      'tiny',
+      '--version',
+      '1.0.0',
+      '--license',
+      'MIT',
+      '--private',
+      '--json',
+    ],
+    {
+      env,
+      cwd,
+      homeDir,
+      pollIntervalMs: 0,
+      sleep: async () => {},
+      print: () => {},
+      fetchImpl: async (url, init = {}) => {
+        calls.push({ url: String(url), init });
+        if (String(url).endsWith('/api/v1/account'))
+          return jsonResponse({ account: { handle: 'acme' } }, 200);
+        if (String(url).endsWith('/api/upload/token')) {
+          return jsonResponse(
+            {
+              reused: true,
+              pathname,
+              visibility: 'private',
+              artifact: {
+                sha256: digest,
+                sizeBytes: bytes.length,
+                visibility: 'private',
+              },
+            },
+            200
+          );
+        }
+        if (String(url).endsWith('/api/upload/complete')) {
+          assert.deepEqual(JSON.parse(init.body), {
+            sha256: digest,
+            sizeBytes: bytes.length,
+            pathname,
+            visibility: 'private',
+          });
+          return jsonResponse({ reused: true }, 200);
+        }
+        if (String(url).endsWith('/api/v1/publish/verify'))
+          return jsonResponse({ jobId: 'job-reuse' }, 200);
+        if (String(url).endsWith('/api/v1/publish/jobs/job-reuse'))
+          return jsonResponse({ status: 'passed' }, 200);
+        if (String(url).endsWith('/api/v1/publish/drafts'))
+          return jsonResponse({ id: 'draft-reuse' }, 200);
+        if (String(url).endsWith('/api/v1/publish/drafts/draft-reuse/release'))
+          return jsonResponse({ released: true }, 200);
+        throw new Error(`Unexpected Hub request: ${url}`);
+      },
+    }
+  );
+  assert.equal(result.visibility, 'private');
+  assert.equal(Object.hasOwn(result, 'url'), false);
+  assert.equal(
+    calls.some(({ url }) => url.includes('blob.vercel-storage.com')),
+    false
+  );
+});
+
+test('hub publish --private prints the plan limit and writes nothing', async () => {
+  const { runHubLogin, runHubPublish } = await import(
+    pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href
+  );
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-publish-402-'));
+  const homeDir = mkdtempSync(
+    path.join(tmpdir(), 'knolo-cli-hub-publish-402-home-')
+  );
+  const env = {
+    KNOLO_HUB_URL: 'https://hub.example.test',
+    XDG_CONFIG_HOME: path.join(homeDir, '.config'),
+  };
+  const token = 'kno_PlanLimitToken012345678901234567';
+  writeFileSync(path.join(cwd, 'tiny.knolo'), Buffer.from('plan limit'));
+  const before = readdirSync(cwd).sort();
+  await runHubLogin(['--token', token], { env, homeDir, print: () => {} });
+  await assert.rejects(
+    () =>
+      runHubPublish(
+        [
+          './tiny.knolo',
+          '--slug',
+          'tiny',
+          '--version',
+          '1.0.0',
+          '--license',
+          'MIT',
+          '--private',
+        ],
+        {
+          env,
+          cwd,
+          homeDir,
+          fetchImpl: async (url) => {
+            if (String(url).endsWith('/api/v1/account'))
+              return jsonResponse({ account: { handle: 'acme' } }, 200);
+            if (String(url).endsWith('/api/upload/token')) {
+              return jsonResponse(
+                {
+                  error: 'Private packs require Business.',
+                  code: 'plan_limit',
+                  plan: 'free',
+                  limit: 0,
+                  used: 0,
+                  upgradeUrl: 'https://hub.knolo.dev/dashboard/billing',
+                },
+                402
+              );
+            }
+            throw new Error(`Unexpected Hub request: ${url}`);
+          },
+          print: () => {},
+        }
+      ),
+    /Private packs require Business[\s\S]*dashboard\/billing/
+  );
+  assert.deepEqual(readdirSync(cwd).sort(), before);
 });
 
 test('hub publish requires the public Blob pathname to match the artifact digest', async () => {
@@ -1048,6 +1396,141 @@ test('hub add fetches the manifest then Blob, verifies bytes, caches, and locks 
   assert.equal(calls[1].init.headers, undefined);
   assert.match(printed.join('\n'), /added acme\/refund-policy@1\.2\.0/);
   assert.equal(warnings.length, 0);
+});
+
+test('hub add downloads a private pack through a signed URL and omits that URL', async () => {
+  const { runHubLogin, runHubAdd } = await import(
+    pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href
+  );
+  const core = await import(
+    pathToFileURL(path.resolve(process.cwd(), '../core/dist/index.js')).href
+  );
+  const bytes = await core.buildPack([
+    {
+      id: 'refund.md',
+      text: '# Refund policy\n\nCustomers may request a refund.',
+    },
+  ]);
+  const digest = createHash('sha256').update(bytes).digest('hex');
+  const manifest = {
+    name: 'acme/refund-policy',
+    version: '1.2.0',
+    sha256: digest,
+    url: '',
+    license: 'Apache-2.0',
+    sizeBytes: bytes.length,
+    yanked: false,
+    format: 'V4',
+    visibility: 'private',
+  };
+  const signedUrl = `https://store.private.blob.vercel-storage.com/sha256/${digest}.knolo?vercel-blob-signature=test`;
+  const token = 'kno_AddPrivateToken012345678901234567';
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-add-private-'));
+  const homeDir = mkdtempSync(
+    path.join(tmpdir(), 'knolo-cli-hub-add-private-home-')
+  );
+  const env = {
+    KNOLO_HUB_URL: 'https://hub.example.test',
+    XDG_CONFIG_HOME: path.join(homeDir, '.config'),
+  };
+  const calls = [];
+  const printed = [];
+  await runHubLogin(['--token', token], { env, homeDir, print: () => {} });
+  const result = await runHubAdd(['acme/refund-policy@1.2.0'], {
+      env,
+      core,
+      cwd,
+      homeDir,
+      fetchImpl: async (url, init = {}) => {
+        const call = { url: String(url), init };
+        calls.push(call);
+        if (call.url.endsWith('/download')) {
+          assert.equal(init.headers.Authorization, `Bearer ${token}`);
+          return jsonResponse(
+            {
+              url: signedUrl,
+              expiresAt: '2026-11-15T00:05:00.000Z',
+            },
+            200
+          );
+        }
+        if (call.url === signedUrl) {
+          assert.equal(init.headers?.Authorization, undefined);
+          return {
+            ok: true,
+            status: 200,
+            url: signedUrl,
+            headers: new Headers({ 'content-length': String(bytes.length) }),
+            arrayBuffer: async () =>
+              bytes.buffer.slice(
+                bytes.byteOffset,
+                bytes.byteOffset + bytes.byteLength
+              ),
+          };
+        }
+        assert.equal(init.headers.Authorization, `Bearer ${token}`);
+        return jsonResponse(manifest, 200);
+      },
+      print: (value) => printed.push(value),
+    }
+  );
+  const lockfile = JSON.parse(
+    readFileSync(path.join(cwd, 'knolo.lock.json'), 'utf8')
+  );
+  assert.equal(result.sha256, digest);
+  assert.equal(result.visibility, 'private');
+  assert.equal(Object.hasOwn(result, 'url'), false);
+  assert.deepEqual(lockfile.packs['acme/refund-policy'], {
+    version: '1.2.0',
+    sha256: digest,
+    license: 'Apache-2.0',
+  });
+  assert.equal(calls.length, 3);
+  assert.match(calls[1].url, /\/download$/);
+  assert.equal(calls[2].url, signedUrl);
+  assert.equal(printed.join('\n').includes(signedUrl), false);
+  assert.match(printed.join('\n'), /visibility private/);
+});
+
+test('hub add refuses a private pack before download when no token is stored', async () => {
+  const { runHubAdd } = await import(
+    pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href
+  );
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-add-private-anon-'));
+  const homeDir = mkdtempSync(
+    path.join(tmpdir(), 'knolo-cli-hub-add-private-anon-home-')
+  );
+  const calls = [];
+  await assert.rejects(
+    () =>
+      runHubAdd(['acme/refund-policy@1.2.0', '--registry', 'https://hub.example.test'], {
+        cwd,
+        homeDir,
+        core: {},
+        fetchImpl: async (url, init = {}) => {
+          calls.push({ url: String(url), init });
+          return jsonResponse(
+            {
+              name: 'acme/refund-policy',
+              version: '1.2.0',
+              sha256: 'a'.repeat(64),
+              url: '',
+              license: 'Apache-2.0',
+              sizeBytes: 1,
+              yanked: false,
+              format: 'V4',
+              visibility: 'private',
+            },
+            200
+          );
+        },
+        print: () => {},
+      }),
+    /Private packs require a Hub token/
+  );
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url.endsWith('/download'), false);
+  assert.equal(existsSync(path.join(cwd, 'knolo.lock.json')), false);
 });
 
 test('hub add validates and locks a V5 Knowledge Image', async () => {

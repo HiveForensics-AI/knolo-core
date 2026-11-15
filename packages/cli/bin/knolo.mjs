@@ -209,7 +209,7 @@ function printCommandHelp(command) {
     whoami: 'Usage: knolo whoami',
     logout: 'Usage: knolo logout',
     publish:
-      'Usage: knolo publish <pack.knolo> --slug <slug> --version <version> --license <SPDX> [--publisher <handle>] [--readme <text>] [--sources <text>] [--intended-use <text>] [--json] [--registry <url>]\n\nUses the stored dashboard token as Authorization: Bearer kno_…. Hub issues a public Blob PUT grant; the CLI never needs PACKS_READ_WRITE_TOKEN.\nUploads go to the grant URL without the kno_ token. Complete sends the public Blob URL, then Hub verifies before release.',
+      'Usage: knolo publish <pack.knolo> --slug <slug> --version <version> --license <SPDX> [--publisher <handle>] [--readme <text>] [--sources <text>] [--intended-use <text>] [--private] [--json] [--registry <url>]\n\nUses the stored dashboard token as Authorization: Bearer kno_…. Hub issues a public Blob PUT grant; the CLI never needs PACKS_READ_WRITE_TOKEN.\nUploads go to the grant URL without the kno_ token. Complete sends the public Blob URL, then Hub verifies before release.\n--private releases an owner-only pack on a Business or Enterprise plan. The success text omits the Blob URL.',
     yank: 'Usage: knolo yank <publisher>/<slug>@<version> [--json] [--registry <url>]\n\nUses the stored token as Authorization: Bearer kno_…. Yank is owner-only and leaves the public Blob in place.',
     build: 'Usage: knolo build',
     query:

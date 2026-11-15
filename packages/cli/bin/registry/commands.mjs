@@ -75,13 +75,19 @@ export async function runHubSearch(
 
 export async function runHubInfo(
   args,
-  { env = process.env, fetchImpl = globalThis.fetch, print = console.log } = {}
+  {
+    env = process.env,
+    fetchImpl = globalThis.fetch,
+    homeDir,
+    print = console.log,
+  } = {}
 ) {
   const { positional, flags } = parseInfoArgs(args);
   const pack = parsePackName(positional[0]);
   const registry = resolveRegistryUrl({ value: flags.registry, env });
   const url = registryApiUrl(registry, ['packs', pack.publisher, pack.slug]);
-  const body = await getJson(url, { fetchImpl });
+  const headers = await optionalPublishHeaders(registry, { env, homeDir });
+  const body = await getHubJson(url, { fetchImpl, headers });
   validatePackInfoResponse(body);
 
   if (flags.json) print(JSON.stringify(body, null, 2));
@@ -115,12 +121,17 @@ export async function runHubAdd(
 
   let manifest;
   let yanked = false;
+  let rawBody;
+  const manifestHeaders = await optionalPublishHeaders(registry, {
+    env,
+    homeDir,
+  });
   try {
-    const body = await getJson(manifestUrl, { fetchImpl });
-    manifest = validatePackManifest(body, {
-      expectedName: spec.name,
-      requestedVersion: spec.version,
+    rawBody = await getHubJson(manifestUrl, {
+      fetchImpl,
+      headers: manifestHeaders,
     });
+    manifest = packManifestFromBody(rawBody, spec);
   } catch (error) {
     if (
       error instanceof RegistryError &&
@@ -132,10 +143,8 @@ export async function runHubAdd(
       error instanceof RegistryError &&
       (error.status === 410 || error.code === 'yanked')
     ) {
-      manifest = validatePackManifest(error.body, {
-        expectedName: spec.name,
-        requestedVersion: spec.version,
-      });
+      rawBody = error.body;
+      manifest = packManifestFromBody(error.body, spec);
       yanked = true;
     } else {
       throw error;
@@ -149,6 +158,26 @@ export async function runHubAdd(
     warn(
       `warning: downloading yanked version ${manifest.name}@${manifest.version}`
     );
+  if (manifest.visibility === 'private') {
+    const credentials = await requirePrivateCredentials(registry, {
+      env,
+      homeDir,
+    });
+    const signed = await getHubJson(
+      registryApiUrl(registry, [
+        'packs',
+        spec.publisher,
+        spec.slug,
+        spec.version,
+        'download',
+      ]),
+      { fetchImpl, headers: authorizationHeaders(credentials.token) }
+    );
+    manifest.url = assertSignedDownloadUrl(
+      signed?.url,
+      typeof rawBody?.url === 'string' ? rawBody.url : ''
+    );
+  }
   if (!manifest.url) throw new Error('artifact bytes are not stored yet');
   if (!PACK_SHA256_PATTERN.test(manifest.sha256))
     throw new Error('manifest sha256 is invalid');
@@ -218,8 +247,14 @@ export async function runHubAdd(
     await commitStagedFiles(stagedFiles);
     const lock = { path: stagedLock.path, entry: stagedLock.entry };
     const result = { ...manifest, path: outputPath, lockfile: lock.path };
+    if (result.visibility === 'private') delete result.url;
     if (flags.json) print(JSON.stringify(result, null, 2));
-    else {
+    else if (manifest.visibility === 'private') {
+      print(`added ${manifest.name}@${manifest.version}`);
+      print(`sha256 ${manifest.sha256}`);
+      print('visibility private');
+      print(`path   ${outputPath}`);
+    } else {
       print(`added ${manifest.name}@${manifest.version}`);
       print(`sha256 ${manifest.sha256}`);
       print(`url    ${manifest.url}`);
@@ -328,17 +363,26 @@ export async function runHubPublish(
   const sha256 = createSha256(bytes);
   const pathname = `sha256/${sha256}.knolo`;
 
-  const grant = await postJson(
+  const grant = await postHubJson(
     hubApiUrl(registry, ['upload', 'token']),
-    { sha256, contentLength: bytes.length },
+    {
+      sha256,
+      contentLength: bytes.length,
+      ...(flags.private ? { visibility: 'private' } : {}),
+    },
     { fetchImpl, headers: authHeaders }
   );
-  const upload = resolveUploadGrant(grant, sha256);
+  const upload = resolveUploadGrant(grant, sha256, { privatePack: Boolean(flags.private) });
   let blobUrl;
-  if (upload.reused) {
-    blobUrl = assertPublicPackBlobUrl(upload.url, 'reused artifact').toString();
+  if (upload.reused && !upload.url && flags.private) {
+    blobUrl = undefined;
+  } else if (upload.reused) {
+    blobUrl = (flags.private ? assertPrivatePackBlobUrl : assertPublicPackBlobUrl)(
+      upload.url,
+      'reused artifact'
+    ).toString();
   } else {
-    assertGrantPutUrl(upload.putUrl, 'upload grant');
+    assertGrantPutUrl(upload.putUrl, 'upload grant', { allowPrivate: Boolean(flags.private) });
     const uploaded = await putBytes(upload.putUrl, bytes, {
       fetchImpl,
       headers: {
@@ -349,27 +393,28 @@ export async function runHubPublish(
     });
     if (uploaded.pathname !== undefined && uploaded.pathname !== pathname) {
       throw new Error(
-        `Public Blob upload pathname is not locked to ${pathname}.`
+        `${flags.private ? 'Private' : 'Public'} Blob upload pathname is not locked to ${pathname}.`
       );
     }
-    blobUrl = assertPublicPackBlobUrl(
+    blobUrl = (flags.private ? assertPrivatePackBlobUrl : assertPublicPackBlobUrl)(
       uploaded.url,
       'uploaded artifact'
     ).toString();
   }
 
-  await postJson(
+  await postHubJson(
     hubApiUrl(registry, ['upload', 'complete']),
     {
       sha256,
-      url: blobUrl,
+      ...(blobUrl ? { url: blobUrl } : {}),
       sizeBytes: bytes.length,
       pathname,
+      ...(flags.private ? { visibility: 'private' } : {}),
     },
     { fetchImpl, headers: authHeaders }
   );
 
-  const verifyResponse = await postJson(
+  const verifyResponse = await postHubJson(
     registryApiUrl(registry, ['publish', 'verify']),
     { sha256 },
     {
@@ -394,13 +439,14 @@ export async function runHubPublish(
     version: flags.version,
     license: flags.license,
     attested: true,
+    ...(flags.private ? { visibility: 'private' } : {}),
     ...(flags.readme !== undefined ? { readme: flags.readme } : {}),
     ...(flags.sources !== undefined ? { sources: flags.sources } : {}),
     ...(flags.intendedUse !== undefined
       ? { intendedUse: flags.intendedUse }
       : {}),
   };
-  const draftResponse = await postJson(
+  const draftResponse = await postHubJson(
     registryApiUrl(registry, ['publish', 'drafts']),
     draftPayload,
     {
@@ -412,7 +458,7 @@ export async function runHubPublish(
   if (!draftId)
     throw new Error('Hub draft response did not include a draft id.');
 
-  const releaseResponse = await postJson(
+  const releaseResponse = await postHubJson(
     registryApiUrl(registry, ['publish', 'drafts', draftId, 'release']),
     undefined,
     {
@@ -430,7 +476,7 @@ export async function runHubPublish(
     sha256,
     sizeBytes: bytes.length,
     pathname,
-    url: blobUrl,
+    ...(flags.private ? { visibility: 'private' } : { url: blobUrl }),
     jobId: String(jobId),
     draftId: String(draftId),
     verification: job,
@@ -438,7 +484,12 @@ export async function runHubPublish(
   };
 
   if (flags.json) print(JSON.stringify(result, null, 2));
-  else {
+  else if (flags.private) {
+    print(`published ${name}@${flags.version}`);
+    print(`sha256     ${sha256}`);
+    print('visibility private');
+    print(`job        ${jobId}`);
+  } else {
     print(`published ${name}@${flags.version}`);
     print(`sha256    ${sha256}`);
     print(`url       ${blobUrl}`);
@@ -506,6 +557,10 @@ export function parsePublishArgs(args) {
       flags.json = true;
       continue;
     }
+    if (arg === '--private') {
+      flags.private = true;
+      continue;
+    }
     if (valueFlags.has(arg)) {
       const value = args[++i];
       if (value === undefined || value.startsWith('--'))
@@ -525,7 +580,7 @@ export function parsePublishArgs(args) {
     !flags.license
   ) {
     throw new Error(
-      'Usage: knolo publish <pack.knolo> --slug <slug> --version <version> --license <SPDX> [--publisher <handle>] [--readme <text>] [--sources <text>] [--intended-use <text>] [--json] [--registry <url>]'
+      'Usage: knolo publish <pack.knolo> --slug <slug> --version <version> --license <SPDX> [--publisher <handle>] [--readme <text>] [--sources <text>] [--intended-use <text>] [--private] [--json] [--registry <url>]'
     );
   }
   if (!/^[a-z0-9-]+$/.test(flags.slug))
@@ -577,6 +632,87 @@ function authorizationHeaders(token) {
   return { Authorization: `Bearer ${token}` };
 }
 
+function planLimitError(error) {
+  if (
+    !(error instanceof RegistryError) ||
+    error.status !== 402 ||
+    error.code !== 'plan_limit'
+  ) {
+    return error;
+  }
+  const message =
+    typeof error.body?.error === 'string' && error.body.error.trim()
+      ? error.body.error.trim()
+      : error.message;
+  const upgrade =
+    typeof error.body?.upgradeUrl === 'string'
+      ? error.body.upgradeUrl.trim()
+      : '';
+  return new Error(upgrade ? `${message}\n${upgrade}` : message);
+}
+
+async function postHubJson(url, body, options) {
+  try {
+    return await postJson(url, body, options);
+  } catch (error) {
+    throw planLimitError(error);
+  }
+}
+
+async function getHubJson(url, options) {
+  try {
+    return await getJson(url, options);
+  } catch (error) {
+    throw planLimitError(error);
+  }
+}
+
+async function optionalPublishHeaders(registry, { env, homeDir } = {}) {
+  const credentials = await readMatchingCredentials(registry, { env, homeDir });
+  return credentials ? authorizationHeaders(credentials.token) : {};
+}
+
+async function readMatchingCredentials(registry, { env, homeDir } = {}) {
+  try {
+    const credentials = await loadCredentials({ env, homeDir });
+    if (
+      normalizeRegistryUrl(credentials.registry) !==
+      normalizeRegistryUrl(registry)
+    ) {
+      return undefined;
+    }
+    return credentials;
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Not logged in')) {
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+async function requirePrivateCredentials(registry, { env, homeDir } = {}) {
+  let credentials;
+  try {
+    credentials = await loadCredentials({ env, homeDir });
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('Not logged in')) {
+      throw new Error('Private packs require a Hub token. Run knolo login.');
+    }
+    throw error;
+  }
+  resolveCredentialRegistry(registry, credentials.registry);
+  return credentials;
+}
+
+function packManifestFromBody(body, spec) {
+  const manifest = validatePackManifest(body, {
+    expectedName: spec.name,
+    requestedVersion: spec.version,
+  });
+  if (body?.visibility === 'private') manifest.visibility = 'private';
+  return manifest;
+}
+
 function resolveCredentialRegistry(requestedRegistry, storedRegistry) {
   const stored = normalizeRegistryUrl(storedRegistry);
   if (!requestedRegistry) return stored;
@@ -599,7 +735,7 @@ function createSha256(bytes) {
   return createHash('sha256').update(bytes).digest('hex');
 }
 
-function resolveUploadGrant(body, sha256) {
+function resolveUploadGrant(body, sha256, { privatePack = false } = {}) {
   const pathname = body?.pathname || body?.upload?.pathname;
   const expectedPathname = `sha256/${sha256}.knolo`;
   if (typeof pathname !== 'string' || pathname !== expectedPathname) {
@@ -611,6 +747,9 @@ function resolveUploadGrant(body, sha256) {
     body?.artifact?.url;
   if (typeof reusedUrl === 'string' && reusedUrl) {
     return { reused: true, pathname, url: reusedUrl };
+  }
+  if (body?.reused === true && privatePack) {
+    return { reused: true, pathname };
   }
 
   const upload = body?.upload && typeof body.upload === 'object' ? body.upload : body;
@@ -631,7 +770,7 @@ function resolveUploadGrant(body, sha256) {
   };
 }
 
-function assertGrantPutUrl(value, label) {
+function assertGrantPutUrl(value, label, { allowPrivate = false } = {}) {
   let url;
   try {
     url = new URL(value);
@@ -642,8 +781,8 @@ function assertGrantPutUrl(value, label) {
     throw new Error(`Hub ${label} URL must use HTTPS.`);
   const hostname = url.hostname.toLowerCase();
   if (
-    hostname.includes('.private.') ||
-    hostname.startsWith('private.') ||
+    (!allowPrivate &&
+      (hostname.includes('.private.') || hostname.startsWith('private.'))) ||
     isPrivateOrLocalIp(hostname) ||
     isLocalOnlyHostname(hostname)
   ) {
@@ -652,6 +791,34 @@ function assertGrantPutUrl(value, label) {
     );
   }
   return url;
+}
+
+function assertSignedDownloadUrl(value, storedUrl) {
+  if (typeof value !== 'string' || !value) {
+    throw new Error('Hub did not return a signed download URL.');
+  }
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error('Hub signed download URL is invalid.');
+  }
+  if (url.protocol !== 'https:')
+    throw new Error('Hub signed download URL must use HTTPS.');
+  const hostname = url.hostname.toLowerCase();
+  if (isPrivateOrLocalIp(hostname) || isLocalOnlyHostname(hostname)) {
+    throw new Error('Hub signed download URL must not be local.');
+  }
+  if (storedUrl && value === storedUrl) {
+    throw new Error('Refusing the stored private Blob URL.');
+  }
+  if (
+    (hostname.includes('.private.') || hostname.startsWith('private.')) &&
+    !url.search
+  ) {
+    throw new Error('Refusing the stored private Blob URL.');
+  }
+  return url.toString();
 }
 
 function extractPublisherHandle(account) {
@@ -716,6 +883,32 @@ function assertPublicPackBlobUrl(value, label) {
     throw new Error(
       `Hub ${label} URL must be a public Vercel Blob pack URL (not a signed grant URL).`
     );
+  }
+  return url;
+}
+
+function assertPrivatePackBlobUrl(value, label) {
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error(`Hub ${label} URL is invalid.`);
+  }
+  if (url.protocol !== 'https:')
+    throw new Error(`Hub ${label} URL must use HTTPS.`);
+  const hostname = url.hostname.toLowerCase();
+  if (isPrivateOrLocalIp(hostname) || isLocalOnlyHostname(hostname)) {
+    throw new Error(
+      `Refusing local-only Blob URL for ${label}; a private pack uses a private Blob host.`
+    );
+  }
+  const blobHost =
+    hostname === 'blob.vercel-storage.com' ||
+    hostname.endsWith('.blob.vercel-storage.com');
+  const privateHost =
+    hostname.includes('.private.') || hostname.startsWith('private.');
+  if (!blobHost || !privateHost) {
+    throw new Error(`Hub ${label} URL must be a private Vercel Blob pack URL.`);
   }
   return url;
 }
@@ -852,7 +1045,7 @@ async function waitForPublishJob(
 
   for (let attempt = 0; attempt < maxPollAttempts; attempt++) {
     if (attempt > 0 && pollIntervalMs > 0) await sleepImpl(pollIntervalMs);
-    const body = await getJson(
+    const body = await getHubJson(
       registryApiUrl(registry, ['publish', 'jobs', jobId]),
       { fetchImpl, headers }
     );
@@ -1204,8 +1397,16 @@ export function renderPackInfo(body) {
     `topics      ${Array.isArray(pack.topics) ? pack.topics.join(', ') : ''}`,
     `latest      ${latest.version || ''}`,
     `sha256      ${latest.sha256 || pack.sha256 || ''}`,
-    `url         ${latest.url || pack.blobUrl || ''}`,
   ];
+  const privatePack =
+    body.visibility === 'private' ||
+    pack.visibility === 'private' ||
+    latest.visibility === 'private';
+  lines.push(
+    privatePack
+      ? 'visibility  private'
+      : `url         ${latest.url || pack.blobUrl || ''}`
+  );
   return lines.join('\n');
 }
 
