@@ -9,7 +9,8 @@ The host owns the model. This skill does not call one.
 
 1. Run `knolo verify` on the research pack before sharing it.
 2. Share the file, the SHA-256 of those file bytes, and the state root printed by `knolo verify`. `commitDigest` is not the artifact pin.
-3. The other agent pins the file with `knolo add` and verifies it before mounting. A published pack is pinned as `publisher/slug@version`.
-4. Include the receipt id when a search of the mounted image is used.
-5. A receipt is an integrity check. It does not mean a claim is proven. SATISFIED means the evidence requirements were met.
-6. Do not skip the pin. Discover research packs with `knolo search "<query>" --research`. That filter is separate from `knolo search --agents`.
+3. The receiver runs `knolo research verify <image>`. Pass `--cited <file>` for each cited image they hold. Pass `--require-material` when those bytes must be checked. A failed check is non-zero.
+4. The other agent pins the file with `knolo add` and verifies it before mounting. A published pack is pinned as `publisher/slug@version`.
+5. Include the receipt id when a search of the mounted image is used.
+6. A receipt is an integrity check. It does not mean a claim is proven. SATISFIED means the evidence requirements were met.
+7. Do not skip the pin. Discover research packs with `knolo search "<query>" --research`. That filter is separate from `knolo search --agents`.

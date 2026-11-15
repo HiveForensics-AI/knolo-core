@@ -55,6 +55,9 @@ the host-supplied caller. An optional Cortex trace is verified against
 record and does not copy the cited image. Pass `--graph` when that trace
 records KAR evaluations. The checked graph is stored in the image. The
 command does not call a model and does not download an image.
+`knolo research verify <image>` re-checks those stored records.
+`--cited` supplies the cited bytes. Without them, digest mode says the
+bytes were not supplied. `--require-material` fails when they are missing.
 `examples/skills/research-and-cite` and `examples/skills/share-findings`
 install with `knolo skill install`. See
 [Research packs](../../docs/guides/research-packs.md).

@@ -61,6 +61,7 @@ test('research help states the evidence limit', () => {
   const help = run(['research', '--help'], process.cwd());
   assert.equal(help.status, 0, help.stderr);
   assert.match(help.stdout, /research package/);
+  assert.match(help.stdout, /research verify/);
   assert.match(help.stdout, /--graph/);
   assert.match(help.stdout, /does not mean a claim is proven/);
   assert.doesNotMatch(help.stdout, /Claim proven/);
@@ -434,6 +435,170 @@ test('a KAR trace packages only with the graph that verified it', async () => {
       composition.meta.compositionRoot,
       compositionRootFor(readFileSync(path.join(dir, 'cite.knolo')))
     );
+    const checked = run(
+      ['research', 'verify', 'out.knolo', '--cited', 'cite.knolo', '--json'],
+      dir
+    );
+    assert.equal(checked.status, 0, checked.stderr || checked.stdout);
+    const receipt = JSON.parse(checked.stdout);
+    assert.equal(receipt.ok, true);
+    assert.equal(receipt.traceChecked, true);
+    assert.equal(receipt.graphChecked, true);
+    assert.equal(receipt.traceStatuses[0], 'SATISFIED');
+    assert.equal(receipt.members[0].status, 'material');
+    assert.equal(receipt.sha256.startsWith('sha256-'), true);
+    assert.equal(JSON.stringify(receipt).includes('commitDigest'), false);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('research verify reports digest mode and fails closed', async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'knolo-research-verify-'));
+  try {
+    writeFileSync(
+      path.join(dir, 'notes.md'),
+      'Alpha inspection of the valve passed on Monday.\n'
+    );
+    const cited = createKnowledgeImageV5({
+      actor: 'knolo-research',
+      sequence: 1,
+      objects: [
+        {
+          kind: 'chunk',
+          bytes: Buffer.from(
+            'Alpha inspection of the valve passed on Monday.\n'
+          ),
+          meta: { source: 'notes.md' },
+        },
+      ],
+    });
+    writeFileSync(path.join(dir, 'cite.knolo'), cited.bytes);
+    const session = await createCortexSession({ image: cited.bytes });
+    const trace = await askCortex(session, {
+      question: 'valve inspection',
+      mode: 'find_relevant',
+    });
+    writeFileSync(
+      path.join(dir, 'answer.cortex.json'),
+      `${JSON.stringify(trace, null, 2)}\n`
+    );
+    const packed = run(
+      [
+        'research',
+        'package',
+        '--question',
+        'What did the inspection find?',
+        '--agent',
+        'reviewer',
+        '--source',
+        'notes.md',
+        '--cite',
+        'cite.knolo',
+        '--trace',
+        'answer.cortex.json',
+        '--out',
+        'good.knolo',
+        '--json',
+      ],
+      dir
+    );
+    assert.equal(packed.status, 0, packed.stderr || packed.stdout);
+    const digestMode = run(['research', 'verify', 'good.knolo'], dir);
+    assert.equal(digestMode.status, 0, digestMode.stderr || digestMode.stdout);
+    assert.match(digestMode.stdout, /Cited bytes were not supplied/);
+    assert.match(digestMode.stdout, /not re-checked/);
+    assert.doesNotMatch(digestMode.stdout, /commitDigest/);
+    const material = run(
+      [
+        'research',
+        'verify',
+        'good.knolo',
+        '--require-material',
+        '--json',
+      ],
+      dir
+    );
+    assert.equal(material.status, 1);
+    assert.match(material.stderr, /COMPOSITION_MEMBER_MISSING/);
+    const wrong = createKnowledgeImageV5({
+      actor: 'knolo-research',
+      sequence: 1,
+      objects: [
+        {
+          kind: 'chunk',
+          bytes: Buffer.from('A different source.\n'),
+          meta: { source: 'other.md' },
+        },
+      ],
+    });
+    writeFileSync(path.join(dir, 'other.knolo'), wrong.bytes);
+    const mismatch = run(
+      ['research', 'verify', 'good.knolo', '--cited', 'other.knolo'],
+      dir
+    );
+    assert.equal(mismatch.status, 1);
+    assert.match(mismatch.stderr, /COMPOSITION_DIGEST_MISMATCH/);
+    const created = createCompositionRecord({
+      host: { kind: 'none' },
+      availability: 'digest',
+      members: [
+        {
+          alias: 'cite',
+          kind: 'v5-image',
+          stateRoot: cited.stateRoot,
+          objectRoot: cited.commit.objectRoot,
+          commitDigest: cited.commitDigest,
+          sha256: `sha256-${createHash('sha256').update(cited.bytes).digest('hex')}`,
+        },
+      ],
+    });
+    const badRoot = `sha256-${'11'.repeat(32)}`;
+    const bad = createKnowledgeImageV5({
+      actor: 'knolo-research',
+      sequence: 1,
+      objects: [
+        {
+          kind: 'metadata',
+          bytes: Buffer.from('What did the inspection find?'),
+          meta: { role: 'research-pack', agent: 'reviewer' },
+        },
+        {
+          kind: 'metadata',
+          bytes: Buffer.from(
+            JSON.stringify({ ...created.record, compositionRoot: badRoot })
+          ),
+          meta: {
+            role: 'composition',
+            compositionRoot: badRoot,
+            citedStateRoot: cited.stateRoot,
+            traceRoot: trace.receipt.traceRoot,
+          },
+        },
+        {
+          kind: 'metadata',
+          bytes: readFileSync(path.join(dir, 'answer.cortex.json')),
+          meta: {
+            role: 'cortex-trace',
+            traceRoot: trace.receipt.traceRoot,
+            citedStateRoot: cited.stateRoot,
+          },
+        },
+      ],
+    });
+    writeFileSync(path.join(dir, 'bad-root.knolo'), bad.bytes);
+    const roots = run(['research', 'verify', 'bad-root.knolo', '--json'], dir);
+    assert.equal(roots.status, 1);
+    assert.match(roots.stderr, /COMPOSITION_ROOT_MISMATCH/);
+    const matched = run(
+      ['research', 'verify', 'good.knolo', '--cited', 'cite.knolo', '--json'],
+      dir
+    );
+    assert.equal(matched.status, 0, matched.stderr || matched.stdout);
+    const receipt = JSON.parse(matched.stdout);
+    assert.equal(receipt.traceChecked, true);
+    assert.equal(receipt.members[0].status, 'material');
+    assert.equal(receipt.agent, 'reviewer');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

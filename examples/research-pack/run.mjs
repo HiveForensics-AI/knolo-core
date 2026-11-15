@@ -156,6 +156,22 @@ try {
   const verified = JSON.parse(run(['verify', 'cited.knolo'], dir));
   if (verified.verified !== true)
     throw new Error('knolo verify did not accept the pack.');
+  const research = JSON.parse(
+    run(
+      ['research', 'verify', 'cited.knolo', '--cited', 'cite.knolo', '--json'],
+      dir
+    )
+  );
+  if (research.ok !== true || research.traceChecked !== true || research.graphChecked !== true) {
+    throw new Error('knolo research verify did not re-check the citation.');
+  }
+  if (research.sha256 !== sha256(packed)) {
+    throw new Error('The research pin is not the file SHA-256.');
+  }
+  const plain = JSON.parse(run(['research', 'verify', 'plain.knolo', '--json'], dir));
+  if (plain.ok !== true || plain.agent !== 'reviewer' || plain.traceChecked !== false) {
+    throw new Error('knolo research verify did not accept the plain pack.');
+  }
   if (existsSync(path.join(dir, 'knolo.lock.json'))) {
     throw new Error('The example wrote knolo.lock.json.');
   }
