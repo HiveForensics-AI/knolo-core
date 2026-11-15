@@ -54,7 +54,7 @@ node conformance/kite/v1/run.mjs
 ```
 
 `knolo kite evaluate` and `knolo kite verify` are in npm `latest`
-`@knolo/cli@6.2.6`. Published `@knolo/cli@6.2.5` does not include them.
+`@knolo/cli@6.2.7`. Published `@knolo/cli@6.2.5` does not include them.
 The [pre-publish check](PREPUBLISH.md) records the local test run. It is not
 an npm publish.
 

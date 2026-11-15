@@ -166,8 +166,8 @@ Knolo Cortex. Published `@knolo/core` is `6.2.3`. This tree's core package
 file is `6.2.3`. `@knolo/tools` `0.2.1`
 depends on `@knolo/core` `^6.2.1`. This tree's `@knolo/mcp` is `0.2.3`.
 npm `latest` for MCP is `0.2.3`. This tree's
-`@knolo/cli` package file is `6.2.6` and depends on `@knolo/core` `^6.2.3` and `@knolo/exchange` `^0.1.0`.
-npm `latest` for the CLI is `6.2.6` and includes `knolo kite`. `@knolo/cli@6.2.5` does not. npm `latest` for `@knolo/exchange` is `0.1.0`. `@knolo/langchain`, `@knolo/llamaindex`,
+`@knolo/cli` package file is `6.2.7` and depends on `@knolo/core` `^6.2.3` and `@knolo/exchange` `^0.1.0`.
+npm `latest` for the CLI is `6.2.7` and includes `knolo kite`. `@knolo/cli@6.2.5` does not. npm `latest` for `@knolo/exchange` is `0.1.0`. `@knolo/langchain`, `@knolo/llamaindex`,
 `@knolo/semantic-ollama`, `create-knolo-app`, and `@knolo/reflex` stay on
 `@knolo/core` `^6.0.0`. `@knolo/ai-sdk@0.1.0` stays on `@knolo/core` `^6.2.0`
 and `@knolo/tools` `^0.2.0`. `@knolo/mastra` `0.1.0` is published and
