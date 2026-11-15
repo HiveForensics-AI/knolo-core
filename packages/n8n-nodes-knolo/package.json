@@ -1,7 +1,7 @@
 {
   "name": "n8n-nodes-knolo",
   "version": "0.1.0",
-  "description": "n8n node for read-only Knolo search, get, and verify.",
+  "description": "n8n node for read-only Knolo search, get, verify, status, KAR, and Cortex.",
   "license": "Apache-2.0",
   "keywords": [
     "n8n-community-node-package",
