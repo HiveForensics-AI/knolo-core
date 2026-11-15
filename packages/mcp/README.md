@@ -6,7 +6,8 @@ V5 Knowledge Image. It exposes `knolo_search`, `knolo_get`, `knolo_verify`,
 and `knolo_status`, the same four tools as `@knolo/openclaw`. Pins, policy
 checks, and query receipts come from `@knolo/tools`. When at least one mount
 includes a `kar` block, the server also exposes `knolo_kar_evaluate`,
-`knolo_kar_verify`, and `knolo_cortex_verify`.
+`knolo_kar_verify`, and `knolo_cortex_verify`. A mount with an empty `kite`
+block also exposes `knolo_kite_evaluate` and `knolo_kite_verify`.
 
 The server speaks stdio only. It does not download images, open a runtime
 network connection, write or compile knowledge, or expose MCP resources or
@@ -148,6 +149,19 @@ one of `result` or `dossier`. `knolo_cortex_verify` takes `mountId`, an
 `answer` trace, and an optional `question`. It uses the pinned graph when the
 trace references KAR. These tools do not call a model and do not run
 `askCortex`.
+
+`kite` is an empty object. It does not pin a file. `knolo_kite_evaluate`
+takes `mountId`, an inline `knolo-kite-contract-1` contract, and inline
+rules, plus optional completeness, changes, bounds, graph, question, and
+`asOf`. `knolo_kite_verify` takes those same fields and a certificate. The
+image is the pinned mount. Each JSON argument is at most 65536 UTF-8 bytes.
+A caller may lower a KITE bound and may not raise one. `BOUND_EXCEEDED`
+returns no certificate. A verdict describes that contract. It does not
+describe real-world truth. `SATISFIED` is a KAR word. A matching certificate
+is an integrity check. It does not mean the claim is true. A mount without
+`kite` is rejected when another mount enabled the tools. The receipt is the
+same `knolo-mcp-evidence-receipt-v1` record, with `graphSha256` set only when
+a graph was supplied.
 
 Query receipts stay `openclaw-knolo-query-v1`. KAR and Cortex tools write
 `knolo-mcp-evidence-receipt-v1` in `auditDir` before they return a result. An

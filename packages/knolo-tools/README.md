@@ -38,5 +38,11 @@ order. The stopword list is `KNOLO_SEARCH_STOPWORDS`.
 The package requires Node 20 or newer and `@knolo/core` `^6.2.1`. It does not
 download images, open a network connection, or import KAR, Cortex, coverage,
 or composition. `@knolo/openclaw@0.1.0` stays on `@knolo/tools` `^0.1.0`.
+
+`evaluateKite` and `verifyKite` re-read the pinned image and load
+`@knolo/core/kite` for that call. The host sets `kite: true` on a mount when
+its config has an empty `kite` object. The caller argument is the same
+host-supplied identity. A verdict describes the contract, not real-world
+truth. `BOUND_EXCEEDED` returns no certificate.
 A clean install resolves that range to the published 0.1.0 package, because
 `0.2.1` does not satisfy it. `@knolo/tools@0.2.1` is published.

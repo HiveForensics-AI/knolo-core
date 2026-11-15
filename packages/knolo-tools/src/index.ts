@@ -30,6 +30,11 @@ import {
 export const OPENCLAW_KNOLO_RECEIPT_VERSION = 'openclaw-knolo-query-v1';
 export const KNOLO_SEARCH_DESCRIPTION =
   'Search approved Knolo Knowledge Images. Lowercase the query. A quoted phrase is one contiguous whole phrase. Unquoted OR selects any remaining term. Unquoted stopwords and terms shorter than 3 characters are dropped. A query that drops every term matches nothing. Each kept term must appear as a whole word. match is all when every term hits, any for OR, partial when every-term misses but one term hits, and none when nothing hits. Hits with more matched terms come first, then matches in the path final segment and the first line, then matches in the rest of the text, then object id.';
+export const KNOLO_KITE_EVALUATE_DESCRIPTION =
+  'Evaluate a KITE contract against a pinned Knowledge Image. A verdict describes that contract. It does not describe real-world truth. SATISFIED is a KAR word and is not a KITE verdict. BOUND_EXCEEDED means the search did not finish and is not a certificate.';
+export const KNOLO_KITE_VERIFY_DESCRIPTION =
+  'Recompute a KITE certificate against the pinned Knowledge Image. A match is an integrity check. It does not mean the claim is true.';
+export const KNOLO_KITE_ARGUMENT_BYTES = 65536;
 export const KNOLO_SEARCH_STOPWORDS = [
   'a',
   'about',
@@ -128,6 +133,7 @@ export type KnoloMountConfig = {
   policyPath: string;
   agents: string[];
   principal: string;
+  kite?: true;
   builtAt?: string;
   sourceDigest?: string;
   sourceRoots?: string[];
@@ -240,7 +246,47 @@ export type KnoloQueryReceiptV1 = {
 };
 
 export type KnoloEvidenceTool =
-  'knolo_kar_evaluate' | 'knolo_kar_verify' | 'knolo_cortex_verify';
+  | 'knolo_kar_evaluate'
+  | 'knolo_kar_verify'
+  | 'knolo_cortex_verify'
+  | 'knolo_kite_evaluate'
+  | 'knolo_kite_verify';
+
+export type KnoloKiteRequest = {
+  mountId: string;
+  contract: unknown;
+  rules: unknown;
+  completeness?: unknown;
+  changes?: unknown;
+  bounds?: unknown;
+  graph?: unknown;
+  question?: string;
+  asOf?: string | null;
+};
+
+export type KnoloKiteVerifyRequest = KnoloKiteRequest & {
+  certificate: unknown;
+};
+
+export type KnoloKiteEvaluation = {
+  verdict: string | null;
+  met: unknown[];
+  unmet: unknown[];
+  invarianceRoot: string | null;
+  certificate: unknown;
+  receiptId: string;
+  code?: string;
+  message?: string;
+};
+
+export type KnoloKiteVerification = {
+  ok: boolean;
+  receiptId: string;
+  code?: string;
+  message?: string;
+  verdict?: string;
+  invarianceRoot?: string;
+};
 
 export type KnoloEvidenceOutcome = {
   status?: string;
@@ -316,6 +362,8 @@ const EVIDENCE_TOOLS = new Set<KnoloEvidenceTool>([
   'knolo_kar_evaluate',
   'knolo_kar_verify',
   'knolo_cortex_verify',
+  'knolo_kite_evaluate',
+  'knolo_kite_verify',
 ]);
 const ID_PATTERN = /^[a-zA-Z0-9_.-]+$/;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/;
@@ -776,6 +824,166 @@ export class KnoloOpenClawService {
     };
   }
 
+  hasKiteMount(): boolean {
+    return this.#config.mounts.some((mount) => mount.kite === true);
+  }
+
+  async evaluateKite(
+    request: KnoloKiteRequest,
+    caller: KnoloCaller
+  ): Promise<KnoloKiteEvaluation> {
+    const prepared = await this.prepareKite(request, caller);
+    const api = await loadKite();
+    let evaluation: Omit<KnoloKiteEvaluation, 'receiptId'>;
+    let outcome: KnoloEvidenceOutcome;
+    try {
+      const result = await api.evaluateKiteSession(
+        api.createKiteSession(kiteSessionInput(prepared.bytes, request)),
+        kiteOptions(request)
+      );
+      const invarianceRoot = invarianceOf(result.certificate);
+      evaluation = {
+        verdict: result.verdict,
+        met: asList(result.met),
+        unmet: asList(result.unmet),
+        invarianceRoot,
+        certificate: result.certificate ?? null,
+        ...(result.verdict === 'BOUND_EXCEEDED'
+          ? { code: 'BOUND_EXCEEDED' }
+          : {}),
+      };
+      outcome = {
+        status: result.verdict,
+        ...(invarianceRoot ? { roots: { invarianceRoot } } : {}),
+        ...(result.verdict === 'BOUND_EXCEEDED'
+          ? { code: 'BOUND_EXCEEDED' }
+          : {}),
+      };
+    } catch (error) {
+      const failure = kiteFailure(error);
+      if (!failure) throw error;
+      evaluation = {
+        verdict: failure.code === 'BOUND_EXCEEDED' ? 'BOUND_EXCEEDED' : null,
+        met: [],
+        unmet: [],
+        invarianceRoot: null,
+        certificate: null,
+        code: failure.code,
+        message: failure.message,
+      };
+      outcome = { ok: false, code: failure.code };
+    }
+    const receipt = await this.writeKiteReceipt(
+      prepared,
+      caller,
+      'knolo_kite_evaluate',
+      outcome
+    );
+    return { ...evaluation, receiptId: receipt.receiptId };
+  }
+
+  async verifyKite(
+    request: KnoloKiteVerifyRequest,
+    caller: KnoloCaller
+  ): Promise<KnoloKiteVerification> {
+    assertKiteJsonSize('certificate', request.certificate);
+    const prepared = await this.prepareKite(request, caller);
+    const api = await loadKite();
+    let verification: Omit<KnoloKiteVerification, 'receiptId'>;
+    let outcome: KnoloEvidenceOutcome;
+    try {
+      const verified = await api.verifyKiteCertificate({
+        ...kiteSessionInput(prepared.bytes, request),
+        ...kiteOptions(request),
+        certificate: request.certificate,
+      });
+      if (verified.ok) {
+        verification = {
+          ok: true,
+          verdict: verified.verdict,
+          invarianceRoot: verified.invarianceRoot,
+        };
+        outcome = {
+          ok: true,
+          ...(verified.verdict ? { status: verified.verdict } : {}),
+          roots: { invarianceRoot: verified.invarianceRoot },
+        };
+      } else {
+        verification = {
+          ok: false,
+          code: verified.code,
+          message: verified.message,
+        };
+        outcome = { ok: false, code: verified.code };
+      }
+    } catch (error) {
+      const failure = kiteFailure(error);
+      if (!failure) throw error;
+      verification = {
+        ok: false,
+        code: failure.code,
+        message: failure.message,
+      };
+      outcome = { ok: false, code: failure.code };
+    }
+    const receipt = await this.writeKiteReceipt(
+      prepared,
+      caller,
+      'knolo_kite_verify',
+      outcome
+    );
+    return { ...verification, receiptId: receipt.receiptId };
+  }
+
+  private async prepareKite(
+    request: KnoloKiteRequest,
+    caller: KnoloCaller
+  ): Promise<PreparedKite> {
+    for (const name of [
+      'contract',
+      'rules',
+      'completeness',
+      'changes',
+      'bounds',
+      'graph',
+    ] as const) {
+      if (request[name] !== undefined) assertKiteJsonSize(name, request[name]);
+    }
+    if (request.question !== undefined) {
+      assertKiteTextSize('question', request.question);
+    }
+    if (typeof request.asOf === 'string')
+      assertKiteTextSize('asOf', request.asOf);
+    const authorized = this.readAuthorizedMount(request.mountId, caller);
+    const mount = this.requireMount(request.mountId, caller);
+    if (mount.config.kite !== true) {
+      throw new KnoloPluginError(
+        'IMAGE_UNAVAILABLE',
+        `Mount ${authorized.id} has no KITE opt-in.`
+      );
+    }
+    const graphSha256 = kiteGraphSha256(request.graph);
+    const bytes = await readPinnedImage(mount, this.#config.maxImageBytes);
+    return { mount, bytes, graphSha256 };
+  }
+
+  private async writeKiteReceipt(
+    prepared: PreparedKite,
+    caller: KnoloCaller,
+    tool: 'knolo_kite_evaluate' | 'knolo_kite_verify',
+    outcome: KnoloEvidenceOutcome
+  ): Promise<KnoloEvidenceReceiptV1> {
+    return this.writeEvidenceReceipt({
+      imageId: prepared.mount.config.id,
+      byteSha256: prepared.mount.byteSha256,
+      stateRoot: prepared.mount.image.stateRoot,
+      caller,
+      tool,
+      graphSha256: prepared.graphSha256,
+      outcome,
+    });
+  }
+
   async writeEvidenceReceipt(
     input: {
       imageId: string;
@@ -985,6 +1193,12 @@ function normalizeConfig(config: KnoloPluginConfig): NormalizedConfig {
       throw new KnoloPluginError(
         'IMAGE_INVALID',
         `Knolo mount ${mount.id} requires a principal.`
+      );
+    }
+    if (mount.kite !== undefined && mount.kite !== true) {
+      throw new KnoloPluginError(
+        'IMAGE_INVALID',
+        `Knolo mount ${mount.id} has an invalid KITE opt-in.`
       );
     }
     if (
@@ -1472,6 +1686,190 @@ function tokenizeSearch(query: string): KnowledgeTextQueryTermV1[] {
 
 function sha256(bytes: Uint8Array): string {
   return createHash('sha256').update(bytes).digest('hex');
+}
+
+type PreparedKite = {
+  mount: MountSnapshot;
+  bytes: Uint8Array;
+  graphSha256: string | null;
+};
+
+type KiteSessionResult = {
+  verdict: string;
+  met: unknown;
+  unmet: unknown;
+  certificate: unknown;
+};
+
+type KiteVerificationResult =
+  | { ok: true; invarianceRoot: string; verdict?: string }
+  | { ok: false; code: string; message: string };
+
+type KiteModule = {
+  createKiteSession: (input: {
+    image: Uint8Array;
+    contract: unknown;
+    rules: unknown;
+    completeness?: unknown;
+    changes?: unknown;
+    bounds?: unknown;
+    graph?: unknown;
+  }) => unknown;
+  evaluateKiteSession: (
+    session: unknown,
+    options: { question?: string; asOf?: string | null }
+  ) => Promise<KiteSessionResult>;
+  verifyKiteCertificate: (input: {
+    image: Uint8Array;
+    contract: unknown;
+    rules: unknown;
+    certificate: unknown;
+    completeness?: unknown;
+    changes?: unknown;
+    bounds?: unknown;
+    graph?: unknown;
+    question?: string;
+    asOf?: string | null;
+  }) => Promise<KiteVerificationResult>;
+};
+
+async function loadKite(): Promise<KiteModule> {
+  // This package resolves modules as CommonJS-style Node. A literal
+  // import() of the kite export is rejected by that setting, and a
+  // top-level import would load KITE for hosts that never call it.
+  const specifier = '@knolo/core/kite';
+  const loaded = (await import(specifier)) as Partial<KiteModule>;
+  if (
+    !loaded.createKiteSession ||
+    !loaded.evaluateKiteSession ||
+    !loaded.verifyKiteCertificate
+  ) {
+    throw new KnoloPluginError(
+      'IMAGE_UNAVAILABLE',
+      'Could not load @knolo/core/kite.'
+    );
+  }
+  return loaded as KiteModule;
+}
+
+function kiteSessionInput(bytes: Uint8Array, request: KnoloKiteRequest) {
+  return {
+    image: bytes,
+    contract: request.contract,
+    rules: request.rules,
+    ...(present(request.completeness)
+      ? { completeness: request.completeness }
+      : {}),
+    ...(present(request.changes) ? { changes: request.changes } : {}),
+    ...(present(request.bounds) ? { bounds: request.bounds } : {}),
+    ...(present(request.graph) ? { graph: request.graph } : {}),
+  };
+}
+
+function kiteOptions(request: KnoloKiteRequest): {
+  question?: string;
+  asOf?: string | null;
+} {
+  return {
+    ...(typeof request.question === 'string'
+      ? { question: request.question }
+      : {}),
+    ...(typeof request.asOf === 'string' || request.asOf === null
+      ? { asOf: request.asOf }
+      : {}),
+  };
+}
+
+function present(value: unknown): boolean {
+  return value !== undefined && value !== null;
+}
+
+function asList(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function invarianceOf(certificate: unknown): string | null {
+  if (!certificate || typeof certificate !== 'object') return null;
+  const root = (certificate as { invarianceRoot?: unknown }).invarianceRoot;
+  return typeof root === 'string' ? root : null;
+}
+
+function kiteFailure(error: unknown): { code: string; message: string } | null {
+  if (!error || typeof error !== 'object') return null;
+  const record = error as { name?: unknown; code?: unknown; message?: unknown };
+  if (record.name !== 'KiteError' || typeof record.code !== 'string') {
+    return null;
+  }
+  return {
+    code: record.code,
+    message: typeof record.message === 'string' ? record.message : record.code,
+  };
+}
+
+function assertKiteJsonSize(name: string, value: unknown): void {
+  let encoded: string;
+  try {
+    const serialized = JSON.stringify(value);
+    if (typeof serialized !== 'string') throw new Error('not json');
+    encoded = serialized;
+  } catch {
+    throw new KnoloPluginError(
+      'QUERY_INVALID',
+      `${name} must be a JSON value.`
+    );
+  }
+  if (new TextEncoder().encode(encoded).length > KNOLO_KITE_ARGUMENT_BYTES) {
+    throw new KnoloPluginError(
+      'QUERY_INVALID',
+      `${name} exceeds ${KNOLO_KITE_ARGUMENT_BYTES} UTF-8 bytes.`
+    );
+  }
+}
+
+function assertKiteTextSize(name: string, value: string): void {
+  if (new TextEncoder().encode(value).length > KNOLO_KITE_ARGUMENT_BYTES) {
+    throw new KnoloPluginError(
+      'QUERY_INVALID',
+      `${name} exceeds ${KNOLO_KITE_ARGUMENT_BYTES} UTF-8 bytes.`
+    );
+  }
+}
+
+function kiteGraphSha256(graph: unknown): string | null {
+  if (!present(graph)) return null;
+  try {
+    return sha256(canonicalCbor(graph as never));
+  } catch {
+    throw new KnoloPluginError('QUERY_INVALID', 'graph must be a JSON object.');
+  }
+}
+
+async function readPinnedImage(
+  mount: MountSnapshot,
+  maxImageBytes: number
+): Promise<Uint8Array> {
+  let bytes: Uint8Array;
+  try {
+    const metadata = await stat(mount.config.path, { bigint: true });
+    if (!metadata.isFile() || metadata.size > BigInt(maxImageBytes)) {
+      throw new Error(
+        `image must be a file no larger than ${maxImageBytes} bytes`
+      );
+    }
+    bytes = new Uint8Array(await readFile(mount.config.path));
+  } catch (error) {
+    throw new KnoloPluginError(
+      'IMAGE_UNAVAILABLE',
+      `Could not read image ${mount.config.id}: ${safeErrorMessage(error)}`
+    );
+  }
+  if (sha256(bytes) !== mount.byteSha256) {
+    throw new KnoloPluginError(
+      'IMAGE_INVALID',
+      `Image ${mount.config.id} does not match its SHA-256 pin.`
+    );
+  }
+  return bytes;
 }
 
 function receiptDigest(

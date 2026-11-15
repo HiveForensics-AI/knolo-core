@@ -29,7 +29,10 @@ reloads changed files.
 
 Without a `kar` block the tools are `knolo_search`, `knolo_get`,
 `knolo_verify`, and `knolo_status`. A mount with a `kar` block also adds
-`knolo_kar_evaluate`, `knolo_kar_verify`, and `knolo_cortex_verify`.
+`knolo_kar_evaluate`, `knolo_kar_verify`, and `knolo_cortex_verify`. An empty
+`kite` block adds `knolo_kite_evaluate` and `knolo_kite_verify`. A KITE
+verdict describes that contract, not real-world truth. `SATISFIED` stays a
+KAR word. A matching certificate is an integrity check.
 
 Caller identity is `agentId` in the config, default `mcp`. Tool arguments
 cannot set it. This adapter does not add a session id.

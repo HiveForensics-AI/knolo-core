@@ -6,6 +6,7 @@ import { type McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
 import type { PinnedKarGraph } from './graphs.js';
 import { registerKarTools } from './kar-tools.js';
+import { registerKiteTools } from './kite-tools.js';
 import type { ImageRefresh } from './refresh.js';
 import { callerFrom, failure, success } from './tool-response.js';
 
@@ -158,6 +159,14 @@ export function registerKnoloTools(
       ...(sessionId === undefined ? {} : { sessionId }),
       graphs,
       refresh,
+    });
+  }
+  if (service.hasKiteMount()) {
+    registerKiteTools(server, {
+      service,
+      agentId,
+      ...(sessionId === undefined ? {} : { sessionId }),
+      prepare,
     });
   }
 }

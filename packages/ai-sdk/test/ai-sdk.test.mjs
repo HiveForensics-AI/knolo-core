@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import http from 'node:http';
 import https from 'node:https';
-import { mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -790,4 +790,67 @@ test('the package source does not call a model', async () => {
   assert.equal(source.includes('streamText'), false);
   assert.equal(evidence.includes('generateText'), false);
   assert.equal(networkCalls, 0);
+});
+
+function kiteObjects() {
+  return [
+    {
+      kind: 'chunk',
+      bytes: encoder.encode('The security policy forbids contractor access.\n'),
+      meta: { source: 'policy.md' },
+    },
+    {
+      kind: 'chunk',
+      bytes: encoder.encode(
+        'The contractor exception allows restricted access.\n'
+      ),
+      meta: { source: 'exception.md' },
+    },
+  ];
+}
+
+async function kiteDocs() {
+  const base = new URL('../../../examples/kite-policy/', import.meta.url);
+  const read = async (name) =>
+    JSON.parse(await readFile(new URL(name, base), 'utf8'));
+  return {
+    contract: await read('contract.json'),
+    rules: await read('rules.json'),
+    completeness: await read('completeness.json'),
+  };
+}
+
+test('kite tools appear only when a mount opts in', async () => {
+  const docs = await kiteDocs();
+  const built = await fixture({ objects: kiteObjects() });
+  built.config.mounts[0].kite = {};
+  const tools = await knoloTools(built.config);
+  try {
+    assert.equal(typeof tools.knolo_kite_evaluate, 'object');
+    assert.equal(typeof tools.knolo_kite_verify, 'object');
+    assert.match(
+      tools.knolo_kite_evaluate.description,
+      /does not describe real-world truth/
+    );
+    const evaluated = await tools.knolo_kite_evaluate.execute(
+      {
+        mountId: 'support-policy',
+        contract: docs.contract,
+        rules: docs.rules,
+        completeness: docs.completeness,
+        asOf: '2026-11-10',
+      },
+      executeOptions
+    );
+    assert.equal(evaluated.verdict, 'UNDERDETERMINED');
+    assert.match(evaluated.invarianceRoot, /^sha256-[a-f0-9]{64}$/);
+    assert.notEqual(evaluated.certificate, null);
+    const plain = await fixture();
+    const plainTools = await knoloTools(plain.config);
+    assert.equal(plainTools.knolo_kite_evaluate, undefined);
+    assert.equal(plainTools.knolo_kite_verify, undefined);
+    await rm(plain.root, { recursive: true, force: true });
+  } finally {
+    await rm(built.root, { recursive: true, force: true });
+  }
 });
