@@ -7,6 +7,6 @@ npm run build --workspace @knolo/core
 node examples/research-pack/run.mjs
 ```
 
-Run it from the repository root. The script writes a temporary image, checks the composition record and the stored graph, searches the question, and runs `knolo verify`. It does not write `knolo.lock.json`.
+Run it from the repository root. The script writes a temporary image, checks the composition record and the stored graph, searches the question, and runs `knolo verify` and `knolo research verify`. It does not write `knolo.lock.json`.
 
 The image file is the handoff. A second agent mounts that file with the read-only MCP server. See [Research packs](../../docs/guides/research-packs.md).

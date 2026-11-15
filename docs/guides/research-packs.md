@@ -42,7 +42,20 @@ bytes. The record's `compositionRoot` is checked before the pack is written.
 When `--graph` is set, the checked graph is stored in the same image. The
 command does not write a sibling `.kar.json`.
 
-The second agent receives the image file. [Google ADK](../../examples/google_adk_python/README.md)
+The second agent receives the image file. `knolo research verify` checks
+the image roots the same way `knolo verify` does, then re-checks a stored
+composition record, Cortex trace, and KAR graph. Pass `--cited` for each
+cited file, in member order, to check those bytes. Without `--cited`, digest
+mode succeeds and says the cited bytes were not supplied. `--require-material`
+fails when a member has no bytes. A failed check exits non-zero with the
+existing error code. The command does not call a model and does not download
+an image.
+
+```bash
+knolo research verify dist/research.knolo --cited cite.knolo --json
+```
+
+[Google ADK](../../examples/google_adk_python/README.md)
 and [Pydantic AI](../../examples/pydantic_ai/README.md) both mount it with
 the existing read-only server and call `knolo_search`. The server does not
 download the image and does not run the research. Point `mounts[].path` at

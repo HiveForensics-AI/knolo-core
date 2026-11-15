@@ -19,7 +19,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ACTOR = 'knolo-research';
 const AGENT = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 
-const USAGE = `Usage: knolo research package --question <text> --agent <id> --out <image.knolo> --source <file> [--source <file>] [--cite <image.knolo> --trace <answer.cortex.json> [--graph <file>]] [--json]
+const PACKAGE_USAGE = `Usage: knolo research package --question <text> --agent <id> --out <image.knolo> --source <file> [--source <file>] [--cite <image.knolo> --trace <answer.cortex.json> [--graph <file>]] [--json]
 
 Packs local files into one V5 Knowledge Image. --agent is the host-supplied caller.
 --cite and --trace are both required or both omitted. --graph is required when the
@@ -31,6 +31,17 @@ The command does not call a model and does not download an image.
 A packed trace is an integrity check. It does not mean a claim is proven.
 SATISFIED means the trace evidence requirements were met.`;
 
+const VERIFY_USAGE = `Usage: knolo research verify <image.knolo> [--cited <file>]... [--require-material] [--json]
+
+Verifies the image roots, then re-checks a stored composition record, Cortex trace,
+and KAR graph with the existing verifiers. --cited supplies member bytes in member
+order. Without those bytes, digest mode succeeds and says the cited bytes were not
+supplied. --require-material fails when a member has no bytes. The command does not
+call a model and does not download an image. A verified trace is an integrity check.
+It does not mean a claim is proven. SATISFIED means evidence requirements were met.`;
+
+const USAGE = `${PACKAGE_USAGE}\n\n${VERIFY_USAGE}`;
+
 export async function runResearchCli(argv) {
   if (
     argv.length === 0 ||
@@ -41,15 +52,25 @@ export async function runResearchCli(argv) {
     console.log(USAGE);
     return;
   }
-  if (argv[0] !== 'package') {
-    throw new Error(`Unknown research command "${argv[0]}".\n${USAGE}`);
-  }
-  const flags = parseFlags(argv.slice(1));
-  if (flags.help) {
-    console.log(USAGE);
+  if (argv[0] === 'package') {
+    const flags = parseFlags(argv.slice(1));
+    if (flags.help) {
+      console.log(PACKAGE_USAGE);
+      return;
+    }
+    await packageResearch(flags);
     return;
   }
-  await packageResearch(flags);
+  if (argv[0] === 'verify') {
+    const flags = parseVerifyFlags(argv.slice(1));
+    if (flags.help) {
+      console.log(VERIFY_USAGE);
+      return;
+    }
+    await verifyResearch(flags);
+    return;
+  }
+  throw new Error(`Unknown research command "${argv[0]}".\n${USAGE}`);
 }
 
 async function packageResearch(flags) {
@@ -202,6 +223,211 @@ async function packageResearch(flags) {
   );
 }
 
+async function verifyResearch(flags) {
+  if (!flags.image) {
+    throw new Error(`RESEARCH_PACK_INVALID: pass the research image.\n${VERIFY_USAGE}`);
+  }
+  const bytes = readBounded(flags.image, KAR_CLI_MAX_IMAGE_BYTES);
+  const apis = await loadApis();
+  let verification;
+  try {
+    verification = apis.core.verifyKnowledgeImageV5(bytes);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`KNOWLEDGE_IMAGE_INVALID: ${message}`);
+  }
+  if (!verification.valid) {
+    throw new Error('KNOWLEDGE_IMAGE_INVALID: Image roots do not verify.');
+  }
+  const image = apis.core.mountKnowledgeImageV5(bytes);
+  const packs = byRole(image, 'research-pack');
+  const traces = byRole(image, 'cortex-trace');
+  const compositions = byRole(image, 'composition');
+  const graphs = byRole(image, 'kar-graph');
+  if (packs.length !== 1) {
+    throw new Error('RESEARCH_PACK_INVALID: the image needs one research-pack object.');
+  }
+  const agent = packs[0].meta.agent;
+  if (typeof agent !== 'string' || !AGENT.test(agent)) {
+    throw new Error('RESEARCH_PACK_INVALID: the research pack has no caller.');
+  }
+  if (traces.length > 1 || compositions.length > 1 || graphs.length > 1) {
+    throw new Error('RESEARCH_PACK_INVALID: a research role is repeated.');
+  }
+  if (Boolean(traces.length) !== Boolean(compositions.length) || (graphs.length && !traces.length)) {
+    throw new Error('RESEARCH_PACK_INVALID: the citation, trace, and graph do not belong together.');
+  }
+
+  let members = [];
+  let citedBytesSupplied = false;
+  let compositionRoot = null;
+  const supplied = new Map();
+  if (compositions.length === 1) {
+    const record = parseJson(compositions[0].bytes, 'COMPOSITION_INVALID');
+    let parsed;
+    try {
+      parsed = apis.composition.parseCompositionRecord(record);
+    } catch (error) {
+      throw coded(error, 'COMPOSITION_INVALID');
+    }
+    if (compositions[0].meta.compositionRoot !== parsed.compositionRoot) {
+      throw new Error('COMPOSITION_ROOT_MISMATCH: Stored compositionRoot does not match the record.');
+    }
+    if (flags.cited.length > parsed.members.length) {
+      throw new Error('RESEARCH_PACK_INVALID: more --cited files than composition members.');
+    }
+    const material = {};
+    for (let index = 0; index < flags.cited.length; index += 1) {
+      const member = parsed.members[index];
+      const citedBytes = new Uint8Array(readBounded(flags.cited[index], KAR_CLI_MAX_IMAGE_BYTES));
+      material[member.alias] = { bytes: citedBytes };
+      supplied.set(member.alias, citedBytes);
+    }
+    citedBytesSupplied = flags.cited.length > 0;
+    const verdict = apis.composition.verifyCompositionRecord(record, {
+      members: material,
+      requireMaterial: flags.requireMaterial,
+    });
+    if (!verdict.ok) {
+      throw new Error(`${verdict.code}: composition check failed.`);
+    }
+    compositionRoot = verdict.compositionRoot;
+    members = verdict.members.map((status) => {
+      const member = parsed.members.find((item) => item.alias === status.alias);
+      return {
+        alias: status.alias,
+        status: status.status,
+        stateRoot: member && member.stateRoot ? member.stateRoot : null,
+        sha256: member && member.sha256 ? member.sha256 : null,
+      };
+    });
+    const cite = members.find((member) => member.alias === 'cite');
+    if (cite && compositions[0].meta.citedStateRoot !== cite.stateRoot) {
+      throw new Error('COMPOSITION_DIGEST_MISMATCH: Stored citedStateRoot does not match the record.');
+    }
+  } else if (flags.requireMaterial && flags.cited.length > 0) {
+    throw new Error('RESEARCH_PACK_INVALID: --cited was passed and the image has no composition record.');
+  } else if (flags.cited.length > 0) {
+    throw new Error('RESEARCH_PACK_INVALID: --cited was passed and the image has no composition record.');
+  }
+
+  let traceRoot = null;
+  let traceChecked = false;
+  let traceStatuses = [];
+  const citeBytes = supplied.get('cite');
+  if (traces.length === 1) {
+    const trace = parseJson(traces[0].bytes, 'CORTEX_TRACE_INVALID');
+    traceStatuses = Array.isArray(trace.karEvaluations)
+      ? trace.karEvaluations.map((item) => item && item.status).filter((status) => typeof status === 'string')
+      : [];
+    if (citeBytes) {
+      const graph = graphs.length === 1 ? parseJson(graphs[0].bytes, 'KAR_SIDECAR_INVALID') : undefined;
+      if (graph !== undefined) {
+        const kar = await loadKar();
+        try {
+          kar.createKarSession({ image: citeBytes, graph });
+        } catch (error) {
+          throw coded(error, 'KAR_GRAPH_INVALID');
+        }
+      }
+      const verified = await apis.cortex.verifyCortexAnswer({
+        image: citeBytes,
+        question: typeof trace.question === 'string' ? trace.question : '',
+        result: trace,
+        ...(graph === undefined ? {} : { graph }),
+      });
+      if (!verified.ok) throw new Error(`${verified.code}: ${verified.message}`);
+      if (traces[0].meta.traceRoot !== verified.traceRoot) {
+        throw new Error('CORTEX_ROOT_MISMATCH: Stored traceRoot does not match the trace.');
+      }
+      traceRoot = verified.traceRoot;
+      traceChecked = true;
+    } else {
+      traceRoot = typeof traces[0].meta.traceRoot === 'string' ? traces[0].meta.traceRoot : null;
+    }
+  }
+
+  let graphChecked = false;
+  if (graphs.length === 1) {
+    const graph = parseJson(graphs[0].bytes, 'KAR_SIDECAR_INVALID');
+    const kar = await loadKar();
+    if (citeBytes) {
+      if (!traceChecked) {
+        try {
+          kar.createKarSession({ image: citeBytes, graph });
+        } catch (error) {
+          throw coded(error, 'KAR_GRAPH_INVALID');
+        }
+      }
+      graphChecked = true;
+    } else {
+      const sidecar = kar.validateKarSidecar(graph);
+      if (!sidecar.ok) {
+        const issue = sidecar.errors[0];
+        throw new Error(`${issue.code}: ${issue.message}`);
+      }
+    }
+  }
+
+  const summary = {
+    ok: true,
+    stateRoot: verification.stateRoot,
+    sha256: digest(bytes),
+    agent,
+    compositionRoot,
+    citedBytesSupplied,
+    members,
+    traceRoot,
+    traceChecked,
+    traceStatuses,
+    graphChecked,
+    graphPresent: graphs.length === 1,
+  };
+  if (flags.json) {
+    console.log(JSON.stringify(summary, null, 2));
+    return;
+  }
+  const citedLines = members.length
+    ? members
+        .map((member) => `${member.alias} ${member.status} ${member.sha256} ${member.stateRoot}`)
+        .join('\n                 ')
+    : 'none';
+  const traceLine = !traces.length
+    ? 'none'
+    : traceChecked
+      ? `${traceRoot}${traceStatuses.length ? ` ${traceStatuses.join(',')}` : ''}`
+      : `${traceRoot ?? 'stored'} not re-checked`;
+  const graphLine = !graphs.length ? 'none' : graphChecked ? 'checked' : 'present, cited bytes were not supplied';
+  const digestNote =
+    compositions.length === 1 && !citedBytesSupplied
+      ? '\nCited bytes were not supplied.\n'
+      : '\n';
+  console.log(
+    `RESEARCH VERIFY\nstate root       ${summary.stateRoot}\nfile sha256      ${summary.sha256}\nagent            ${agent}\ncited            ${citedLines}\ntrace            ${traceLine}\ngraph            ${graphLine}\n${digestNote}A verified trace is an integrity check. It does not mean a claim is proven.\nSATISFIED means evidence requirements were met.`
+  );
+}
+
+function byRole(image, role) {
+  return image.objects.filter((object) => object.meta && object.meta.role === role);
+}
+
+function parseJson(bytes, code) {
+  try {
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } catch {
+    throw new Error(`${code}: stored JSON is not valid.`);
+  }
+}
+
+function coded(error, fallback) {
+  if (error && typeof error.code === 'string' && error.code.length > 0) {
+    return new Error(`${error.code}: ${error.message}`);
+  }
+  if (error instanceof Error && /^[A-Z0-9_]+:/.test(error.message)) return error;
+  const message = error instanceof Error ? error.message : String(error);
+  return new Error(`${fallback}: ${message}`);
+}
+
 function writeNewFile(resolved, display, bytes) {
   try {
     writeFileSync(resolved, bytes, { flag: 'wx' });
@@ -260,6 +486,14 @@ function required(value, flag) {
   return value;
 }
 
+async function loadKar() {
+  const dist = path.resolve(__dirname, '../../core/dist');
+  return importFirst(
+    [path.join(dist, 'experimental/kar/index.js'), '@knolo/core/experimental/kar'],
+    (loaded) => loaded.createKarSession && loaded.validateKarSidecar
+  );
+}
+
 async function loadApis() {
   const dist = path.resolve(__dirname, '../../core/dist');
   const core = await importFirst(
@@ -290,6 +524,40 @@ async function importFirst(candidates, check) {
     }
   }
   throw new Error('Could not load @knolo/core. Build packages/core first.');
+}
+
+function parseVerifyFlags(argv) {
+  const flags = { cited: [], help: false, json: false, requireMaterial: false, image: '' };
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (arg === '--help' || arg === '-h') {
+      flags.help = true;
+      continue;
+    }
+    if (arg === '--json') {
+      flags.json = true;
+      continue;
+    }
+    if (arg === '--require-material') {
+      flags.requireMaterial = true;
+      continue;
+    }
+    if (arg === '--cited') {
+      const value = argv[index + 1];
+      if (value === undefined || value.startsWith('--')) {
+        throw new Error('Missing value for --cited');
+      }
+      flags.cited.push(value);
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--')) {
+      throw new Error(`Unknown option ${arg}.\n${VERIFY_USAGE}`);
+    }
+    if (flags.image) throw new Error(`Unexpected argument "${arg}".\n${VERIFY_USAGE}`);
+    flags.image = arg;
+  }
+  return flags;
 }
 
 function parseFlags(argv) {
