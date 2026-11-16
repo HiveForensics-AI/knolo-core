@@ -4,17 +4,32 @@ import {
   importExchangeDirectory,
   inspectExchangeReceipt,
   loadExchangeConfig,
+  loadRelayConfig,
   publishExchangeOffer,
   pullExchangeOffer,
+  startExchangeRelay,
   startExchangeServer,
 } from '@knolo/exchange';
 import { registryApiUrl, resolveRegistryUrl } from './registry/config.mjs';
 
 export async function runExchangeCli(argv) {
   const { command, flags, positional } = parse(argv);
+  if (command === 'relay') {
+    if (!flags.config)
+      throw new Error('Usage: knolo exchange relay --config <relay.json>');
+    const relayConfig = loadRelayConfig(flags.config);
+    const server = await startExchangeRelay(relayConfig);
+    console.log(server.url);
+    await new Promise((resolve) => {
+      process.once('SIGINT', resolve);
+      process.once('SIGTERM', resolve);
+    });
+    await server.close();
+    return;
+  }
   if (!flags.config && command !== 'inspect' && command !== 'discover')
     throw new Error(
-      'Usage: knolo exchange <serve|offer|pull|export|import|adopt|discover|inspect> --config <exchange.json>'
+      'Usage: knolo exchange <serve|offer|pull|export|import|adopt|discover|inspect|relay> --config <exchange.json>'
     );
   const config = flags.config ? loadExchangeConfig(flags.config) : undefined;
   const now = flags.now === undefined ? Date.now() : Number(flags.now);
@@ -39,13 +54,14 @@ export async function runExchangeCli(argv) {
     const imagePath = positional[0];
     if (!imagePath || !flags.to)
       throw new Error(
-        'Usage: knolo exchange offer <image.knolo> --to <peer> --config <exchange.json>'
+        'Usage: knolo exchange offer <image.knolo> --to <peer> [--via <https-url>] --config <exchange.json>'
       );
     const published = await publishExchangeOffer(config, {
       imagePath,
       to: flags.to,
       now,
       ...(flags.ttl === undefined ? {} : { ttlMs: Number(flags.ttl) }),
+      ...(flags.via === undefined ? {} : { via: flags.via }),
     });
     console.log(published.offerId);
     return;
@@ -54,7 +70,7 @@ export async function runExchangeCli(argv) {
     const offerId = positional[0];
     if (!offerId || !flags.from)
       throw new Error(
-        'Usage: knolo exchange pull <offer-id> --from <peer> --config <exchange.json>'
+        'Usage: knolo exchange pull <offer-id> --from <peer-or-https-url> --config <exchange.json>'
       );
     const pulled = await pullExchangeOffer(config, {
       offerId,
@@ -168,7 +184,7 @@ export async function runExchangeCli(argv) {
     return;
   }
   throw new Error(
-    'Usage: knolo exchange <serve|offer|pull|export|import|adopt|discover|inspect>'
+    'Usage: knolo exchange <serve|offer|pull|export|import|adopt|discover|inspect|relay>'
   );
 }
 
@@ -195,7 +211,8 @@ function parse(argv) {
       arg === '--now' ||
       arg === '--out' ||
       arg === '--store' ||
-      arg === '--registry'
+      arg === '--registry' ||
+      arg === '--via'
     ) {
       flags[arg.slice(2)] = argv[++i];
     } else if (arg.startsWith('--')) {

@@ -20,3 +20,9 @@ export type { ExchangeAdoptResult } from './adopt.js';
 export { buildExchangeAgentCard, readExchangeOfferRef } from './a2a.js';
 export type { ExchangeAgentCard } from './a2a.js';
 export { attachExchangeCapsule } from './capsule.js';
+export {
+  loadRelayConfig,
+  startExchangeRelay,
+  sweepRelay,
+} from './relay.js';
+export type { RelayConfig, RelayServer } from './relay.js';

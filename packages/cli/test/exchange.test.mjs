@@ -26,6 +26,8 @@ test('exchange help lists the peer commands', async () => {
   const help = await runCli(['exchange', '--help']);
   assert.match(help.stdout, /knolo exchange serve/);
   assert.match(help.stdout, /knolo exchange pull/);
+  assert.match(help.stdout, /knolo exchange relay/);
+  assert.match(help.stdout, /--via/);
   assert.match(help.stdout, /knolo exchange export/);
   assert.match(help.stdout, /knolo exchange import/);
   assert.match(help.stdout, /knolo.lock.json/);

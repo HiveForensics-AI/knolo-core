@@ -71,6 +71,7 @@ export async function publishExchangeOffer(
     now: number;
     ttlMs?: number;
     namespace?: string;
+    via?: string;
   }
 ): Promise<{ offerId: string }> {
   const identity = await loadExchangeIdentity(config);
@@ -99,8 +100,29 @@ export async function publishExchangeOffer(
     identity.privateKey,
     globalThis.crypto
   );
-  await writeBytesAtomic(blobPath(config.storePath, offer.sha256), imageBytes);
   const wire = encodeKnowledgeExchangeOfferV1(offer);
+  if (input.via !== undefined) {
+    const via = requireHttpsBase(
+      input.via,
+      'V5 exchange relay url must be https.'
+    );
+    const put = await httpsJson(`${via}/v1/blobs/${offer.sha256}`, {
+      method: 'PUT',
+      body: imageBytes,
+      headers: { 'content-type': 'application/octet-stream' },
+      caPath: config.tls.caPath,
+    });
+    if (put.status !== 201) throw httpFailure(put.status, put.body);
+    const posted = await httpsJson(`${via}/v1/offers`, {
+      method: 'POST',
+      body: wire,
+      headers: { 'content-type': 'application/cbor' },
+      caPath: config.tls.caPath,
+    });
+    if (posted.status !== 201) throw httpFailure(posted.status, posted.body);
+    return { offerId: offer.offerId };
+  }
+  await writeBytesAtomic(blobPath(config.storePath, offer.sha256), imageBytes);
   await writeBytesAtomic(offerPath(config.storePath, offer.offerId), wire);
   const endpoint = await readEndpoint(config.storePath);
   const posted = await httpsJson(`${endpoint}/v1/offers`, {
@@ -130,11 +152,11 @@ export async function pullExchangeOffer(
 ): Promise<ExchangePullResult> {
   const identity = await loadExchangeIdentity(config);
   const homeDir = input.homeDir ?? knoloHome();
-  const peer = peerByName(config, input.from);
+  const peerUrl = resolvePeerUrl(config, input.from);
   await assertOfferUnused(homeDir, input.offerId);
   try {
     const fetched = await httpsJson(
-      `${peer.url}/v1/offers/${encodeURIComponent(input.offerId)}`,
+      `${peerUrl}/v1/offers/${encodeURIComponent(input.offerId)}`,
       { method: 'GET', caPath: config.tls.caPath }
     );
     if (fetched.status !== 200) throw httpFailure(fetched.status, fetched.body);
@@ -154,14 +176,14 @@ export async function pullExchangeOffer(
       config,
       identity,
       offer,
-      peer.url,
+      peerUrl,
       input.now,
       input.ttlMs ?? 300_000
     );
     const cached = await readMatchingCache(homeDir, offer);
     const imageBytes =
       cached ??
-      (await downloadBlob(config, peer.url, offer, decision, homeDir));
+      (await downloadBlob(config, peerUrl, offer, decision, homeDir));
     const image = await acceptKnowledgeExchangeTransferWithEd25519(
       offer,
       imageBytes,
@@ -617,6 +639,24 @@ function pidAlive(pid: number): boolean {
   } catch (error) {
     return isErrorCode(error, 'EPERM');
   }
+}
+
+function resolvePeerUrl(config: ExchangeConfig, from: string): string {
+  if (from.includes('://')) {
+    return requireHttpsBase(from, 'V5 exchange peer url must be https.');
+  }
+  return peerByName(config, from).url;
+}
+
+function requireHttpsBase(value: string, message: string): string {
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    throw new Error(message);
+  }
+  if (parsed.protocol !== 'https:') throw new Error(message);
+  return value.replace(/\/$/, '');
 }
 
 function httpFailure(status: number, body: Uint8Array): Error {
