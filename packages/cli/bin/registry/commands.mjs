@@ -22,6 +22,7 @@ import {
   readArtifact,
   stageCachedArtifact,
 } from './artifacts.mjs';
+import { normalizeCategories } from './categories.mjs';
 import { RegistryError } from './errors.mjs';
 import { getJson, postJson, putBytes } from './http.mjs';
 import {
@@ -445,6 +446,7 @@ export async function runHubPublish(
     ...(flags.intendedUse !== undefined
       ? { intendedUse: flags.intendedUse }
       : {}),
+    ...(flags.categories ? { categories: flags.categories } : {}),
   };
   const draftResponse = await postHubJson(
     registryApiUrl(registry, ['publish', 'drafts']),
@@ -561,6 +563,14 @@ export function parsePublishArgs(args) {
       flags.private = true;
       continue;
     }
+    if (arg === '--category') {
+      const value = args[++i];
+      if (value === undefined || value.startsWith('--')) {
+        throw new Error('Missing value for --category');
+      }
+      flags.categories = [...(flags.categories ?? []), value];
+      continue;
+    }
     if (valueFlags.has(arg)) {
       const value = args[++i];
       if (value === undefined || value.startsWith('--'))
@@ -580,7 +590,7 @@ export function parsePublishArgs(args) {
     !flags.license
   ) {
     throw new Error(
-      'Usage: knolo publish <pack.knolo> --slug <slug> --version <version> --license <SPDX> [--publisher <handle>] [--readme <text>] [--sources <text>] [--intended-use <text>] [--private] [--json] [--registry <url>]'
+      'Usage: knolo publish <pack.knolo> --slug <slug> --version <version> --license <SPDX> [--publisher <handle>] [--readme <text>] [--sources <text>] [--intended-use <text>] [--category <id>] [--private] [--json] [--registry <url>]'
     );
   }
   if (!/^[a-z0-9-]+$/.test(flags.slug))
@@ -594,6 +604,9 @@ export function parsePublishArgs(args) {
     throw new Error(
       'Publish publisher must contain lowercase letters, numbers, and hyphens.'
     );
+  if (flags.categories) {
+    flags.categories = normalizeCategories(flags.categories, { min: 1, max: 3 });
+  }
   return { packPath: positional[0], flags };
 }
 

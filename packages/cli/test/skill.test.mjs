@@ -638,6 +638,9 @@ test('registry publish and install write only after the pin matches', async (t) 
     }
     if (href.endsWith('/api/v1/skills') && method === 'POST') {
       const body = JSON.parse(init.body);
+      if (!Array.isArray(body.categories) || body.categories.length < 1) {
+        return jsonResponse(400, { error: 'categories', code: 'invalid_body' });
+      }
       const bytes = blobs.get(body.url);
       if (
         !bytes ||
@@ -702,6 +705,7 @@ test('registry publish and install write only after the pin matches', async (t) 
     fetchImpl,
     registry,
     token: 'kno_test',
+    categories: ['coding'],
   });
   assert.equal(published.ok, true);
   assert.equal(published.name, 'acme/refund-policy');
@@ -710,6 +714,7 @@ test('registry publish and install write only after the pin matches', async (t) 
     fetchImpl,
     registry,
     token: 'kno_test',
+    categories: ['coding'],
   });
   assert.equal(again.unchanged, true);
   assert.equal(puts.length, 1);

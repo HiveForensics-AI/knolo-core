@@ -22,6 +22,7 @@ import {
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { normalizeCategories } from './registry/categories.mjs';
 import {
   normalizeRegistryUrl,
   registryApiUrl,
@@ -44,7 +45,7 @@ const USAGE = `Usage: knolo skill <init|check|pack|publish|install|search|info|l
   knolo skill init <name> [--dir <parent>]
   knolo skill check [<dir>] [--query <text>] [--json]
   knolo skill pack [<dir>] [--out <dir>] [--json]
-  knolo skill publish <pack> [--registry <url>] [--json]
+  knolo skill publish <pack> [--category <id>] [--registry <url>] [--json]
   knolo skill publish <pack> --hub <dir> [--json]
   knolo skill install <publisher>/<name> [--dir <path>] [--registry <url>] [--json]
   knolo skill install <name> --hub <dir> [--dir <path>] [--json]
@@ -216,6 +217,14 @@ async function packSkill(dirArg, flags) {
 
 async function publishSkill(packArg, flags) {
   if (!packArg) throw new Error('SKILL_HUB: pass the pack directory.');
+  const categories = flags.category
+    ? normalizeCategories(flags.category, { min: 1, max: 3 })
+    : null;
+  if (!flags.hub && !categories) {
+    throw new Error(
+      'Pass --category at least once. Choose 1 to 3 of coding, math, science, news, business, security, writing, general.'
+    );
+  }
   if (flags.hub) {
     if (flags.registry) {
       throw new Error(
@@ -228,7 +237,7 @@ async function publishSkill(packArg, flags) {
   const registry = resolveSkillRegistry(flags.registry, credentials.registry);
   const summary = await publishSkillToRegistry(
     path.resolve(process.cwd(), packArg),
-    { registry, token: credentials.token }
+    { registry, token: credentials.token, categories }
   );
   if (flags.json) console.log(JSON.stringify(summary));
   else if (summary.unchanged) console.log(`unchanged        ${summary.name}`);
@@ -982,8 +991,14 @@ export function decodeSkillArchive(bytes) {
 
 export async function publishSkillToRegistry(
   packDir,
-  { fetchImpl = globalThis.fetch, registry, token }
+  { fetchImpl = globalThis.fetch, registry, token, categories }
 ) {
+  const shelf = normalizeCategories(categories, { min: 1, max: 3 });
+  if (!shelf) {
+    throw new Error(
+      'Pass --category at least once. Choose 1 to 3 of coding, math, science, news, business, security, writing, general.'
+    );
+  }
   const pack = await readVerifiedPack(packDir);
   const archive = encodeSkillArchive(pack);
   const archiveSha256 = sha256(archive);
@@ -1016,7 +1031,7 @@ export async function publishSkillToRegistry(
   try {
     listed = await postJson(
       registryApiUrl(registry, ['skills']),
-      { archiveSha256, url: blobUrl, sizeBytes: archive.length },
+      { archiveSha256, url: blobUrl, sizeBytes: archive.length, categories: shelf },
       { fetchImpl, headers: auth }
     );
   } catch (error) {
@@ -1360,7 +1375,15 @@ function parseArgs(argv) {
     const arg = argv[index];
     if (arg === '--json') flags.json = true;
     else if (arg === '--help' || arg === '-h') flags.help = true;
-    else if (arg.startsWith('--')) {
+    else if (arg === '--category') {
+      const value = argv[index + 1];
+      if (value === undefined || value.startsWith('--')) {
+        throw new Error('Missing value for --category');
+      }
+      const current = Array.isArray(flags.category) ? flags.category : [];
+      flags.category = [...current, value];
+      index += 1;
+    } else if (arg.startsWith('--')) {
       const key = arg.slice(2);
       const value = argv[index + 1];
       if (value === undefined || value.startsWith('--')) {
