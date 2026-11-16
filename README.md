@@ -204,7 +204,15 @@ npm install -g @knolo/cli
 knolo search "refund policy"
 knolo info acme/refund-policy
 knolo add acme/refund-policy@1.2.0
+knolo ask "what is the refund window?" --model llama3.2
 ```
+
+`knolo ask` grounds that model in Hub excerpts. The model is the engine you
+already run: Ollama by default at `http://127.0.0.1:11434/v1`, or any
+OpenAI-compatible endpoint in `KNOLO_MODEL_BASE_URL` (a cloud gateway such as
+`https://api.x.ai/v1` included). The model key stays in `KNOLO_MODEL_API_KEY`
+and is not sent to Hub. `--evidence` prints the cited excerpts and skips the
+model.
 
 Installs are content-addressed and recorded in `knolo.lock.json`. Use
 `KNOLO_HUB_URL` or `--registry` when testing a local or partner Hub.

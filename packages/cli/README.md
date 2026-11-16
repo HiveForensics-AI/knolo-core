@@ -91,7 +91,17 @@ changing the local pack workflow:
 knolo search "refund policy"
 knolo search "refund policy" --research
 knolo info acme/refund-policy
+knolo ask "what is the refund window?" --model llama3.2
 ```
+
+`knolo ask` posts the question to `POST /api/v1/knowledge/query`, checks each
+excerpt sha256, and sends the verified excerpts to an OpenAI-compatible chat
+endpoint. The default is Ollama at `http://127.0.0.1:11434/v1`. Set
+`KNOLO_MODEL_BASE_URL` and `KNOLO_MODEL` for another local server or a cloud
+gateway such as `https://api.x.ai/v1`. `KNOLO_MODEL_API_KEY` is sent only to
+that endpoint. Hub does not receive the key or the answer. `--evidence`
+prints the excerpts and does not call a model. With no remaining evidence the
+command exits 1 and does not call the model.
 
 `--research` asks for packs whose image metadata role is `research-pack`.
 `--agents` remains the agent-definition namespace.

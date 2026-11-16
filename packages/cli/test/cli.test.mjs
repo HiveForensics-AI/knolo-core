@@ -535,6 +535,8 @@ test('hub 401 errors explain the Bearer header instead of blaming CLI tokens', a
 test('hub commands are registered without loading the core runtime for help', () => {
   const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-hub-help-'));
   assert.match(runCli(['search', '--help'], cwd), /Usage: knolo search/);
+  assert.match(runCli(['ask', '--help'], cwd), /Usage: knolo ask/);
+  assert.match(runCli(['ask', '--help'], cwd), /KNOLO_MODEL_API_KEY/);
   assert.match(runCli(['info', '--help'], cwd), /Usage: knolo info/);
   assert.match(runCli(['login', '--help'], cwd), /Usage: knolo login/);
   assert.match(
