@@ -1,6 +1,6 @@
 {
   "name": "@knolo/mcp",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "mcpName": "io.github.HiveForensics-AI/knolo",
   "type": "module",
   "description": "Read-only MCP tools an agent uses on a pinned Knowledge Image.",
@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "@knolo/core": "^6.2.1",
-    "@knolo/tools": "^0.2.1",
+    "@knolo/tools": "^0.2.2",
     "@modelcontextprotocol/server": "^2.3.1",
     "zod": "^4.2.0"
   },

@@ -1,6 +1,6 @@
 {
   "name": "@knolo/ai-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Vercel AI SDK tools for read-only Knolo search, verify, KAR, and Cortex.",
   "license": "Apache-2.0",
@@ -37,8 +37,8 @@
     "prepublishOnly": "npm test"
   },
   "dependencies": {
-    "@knolo/core": "^6.2.0",
-    "@knolo/tools": "^0.2.0",
+    "@knolo/core": "^6.2.3",
+    "@knolo/tools": "^0.2.2",
     "zod": "^4.2.0"
   },
   "peerDependencies": {

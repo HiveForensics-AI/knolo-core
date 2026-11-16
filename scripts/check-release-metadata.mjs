@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const releaseVersion = '6.2.0';
 const coreReleaseVersion = '6.2.3';
-const cliReleaseVersion = '6.2.7';
+const cliReleaseVersion = '6.2.8';
 const reflexReleaseVersion = '0.2.0';
 const platformVersion = '5.5.1';
 const coreRange = '^6.0.0';
@@ -82,7 +82,7 @@ for (const relativePath of npmPackages) {
             ? cliKiteCoreRange
             : relativePath === 'packages/cli/package.json' &&
                 name === '@knolo/exchange'
-              ? '^0.1.0'
+              ? '^0.1.1'
               : coreRange;
         assert.equal(
           range,
@@ -130,9 +130,10 @@ assert.match(
   /V5 Knowledge Image verification/i
 );
 
-const toolsVersion = '0.2.1';
+const toolsVersion = '0.2.2';
 const toolsCoreRange = '^6.2.1';
-const mcpVersion = '0.2.3';
+const toolsKiteCoreRange = '^6.2.3';
+const mcpVersion = '0.2.4';
 const openclawVersion = '0.1.0';
 const toolsPackage = readJson('packages/knolo-tools/package.json');
 assert.equal(toolsPackage.name, '@knolo/tools');
@@ -141,7 +142,7 @@ assert.equal(toolsPackage.license, 'Apache-2.0');
 assert.notEqual(toolsPackage.private, true);
 assert.equal(toolsPackage.publishConfig?.access, 'public');
 assert.equal(toolsPackage.engines?.node, '>=20');
-assert.equal(toolsPackage.dependencies?.['@knolo/core'], toolsCoreRange);
+assert.equal(toolsPackage.dependencies?.['@knolo/core'], toolsKiteCoreRange);
 
 const mcpPackage = readJson('packages/mcp/package.json');
 assert.equal(mcpPackage.name, '@knolo/mcp');
@@ -152,7 +153,7 @@ assert.equal(mcpPackage.publishConfig?.access, 'public');
 assert.equal(mcpPackage.engines?.node, '>=20');
 assert.equal(mcpPackage.mcpName, 'io.github.HiveForensics-AI/knolo');
 assert.equal(mcpPackage.dependencies?.['@knolo/core'], toolsCoreRange);
-assert.equal(mcpPackage.dependencies?.['@knolo/tools'], '^0.2.1');
+assert.equal(mcpPackage.dependencies?.['@knolo/tools'], '^0.2.2');
 assert.equal(mcpPackage.dependencies?.['@knolo/openclaw'], undefined);
 const mcpServer = readJson('packages/mcp/server.json');
 assert.equal(mcpServer.name, mcpPackage.mcpName);
@@ -165,7 +166,7 @@ const mcpIndex = readFileSync(
   path.join(root, 'packages/mcp/src/index.ts'),
   'utf8'
 );
-assert.match(mcpIndex, /name: 'knolo', version: '0\.2\.3'/);
+assert.match(mcpIndex, /name: 'knolo', version: '0\.2\.4'/);
 
 const boxPackage = readJson('packages/box/package.json');
 assert.equal(boxPackage.name, '@knolo/box');
@@ -175,7 +176,7 @@ assert.equal(boxPackage.dependencies?.['@knolo/core'], toolsCoreRange);
 assert.equal(boxPackage.dependencies?.['@knolo/mcp'], '^0.2.3');
 assert.equal(boxPackage.devDependencies?.['@knolo/tools'], '^0.2.1');
 
-const aiSdkVersion = '0.1.0';
+const aiSdkVersion = '0.1.1';
 const aiSdkPackage = readJson('packages/ai-sdk/package.json');
 assert.equal(aiSdkPackage.name, '@knolo/ai-sdk');
 assert.equal(aiSdkPackage.version, aiSdkVersion);
@@ -183,13 +184,13 @@ assert.equal(aiSdkPackage.license, 'Apache-2.0');
 assert.notEqual(aiSdkPackage.private, true);
 assert.equal(aiSdkPackage.publishConfig?.access, 'public');
 assert.equal(aiSdkPackage.engines?.node, '>=22');
-assert.equal(aiSdkPackage.dependencies?.['@knolo/core'], cliCoreRange);
-assert.equal(aiSdkPackage.dependencies?.['@knolo/tools'], '^0.2.0');
+assert.equal(aiSdkPackage.dependencies?.['@knolo/core'], toolsKiteCoreRange);
+assert.equal(aiSdkPackage.dependencies?.['@knolo/tools'], '^0.2.2');
 assert.equal(aiSdkPackage.peerDependencies?.ai, '^7.0.0');
 assert.equal(aiSdkPackage.dependencies?.ai, undefined);
 assert.equal(aiSdkPackage.devDependencies?.ai, '7.0.166');
 
-const mastraVersion = '0.1.0';
+const mastraVersion = '0.1.1';
 const mastraPackage = readJson('packages/mastra/package.json');
 assert.equal(mastraPackage.name, '@knolo/mastra');
 assert.equal(mastraPackage.version, mastraVersion);
@@ -197,14 +198,14 @@ assert.equal(mastraPackage.license, 'Apache-2.0');
 assert.notEqual(mastraPackage.private, true);
 assert.equal(mastraPackage.publishConfig?.access, 'public');
 assert.equal(mastraPackage.engines?.node, '>=22.13.0');
-assert.equal(mastraPackage.dependencies?.['@knolo/core'], toolsCoreRange);
-assert.equal(mastraPackage.dependencies?.['@knolo/tools'], '^0.2.1');
+assert.equal(mastraPackage.dependencies?.['@knolo/core'], toolsKiteCoreRange);
+assert.equal(mastraPackage.dependencies?.['@knolo/tools'], '^0.2.2');
 assert.equal(mastraPackage.peerDependencies?.['@mastra/core'], '^1.82.0');
 assert.equal(mastraPackage.dependencies?.['@mastra/core'], undefined);
 assert.equal(mastraPackage.devDependencies?.['@mastra/core'], '1.82.0');
-assert.equal(mastraPackage.devDependencies?.['@knolo/mcp'], '^0.2.3');
+assert.equal(mastraPackage.devDependencies?.['@knolo/mcp'], '^0.2.4');
 
-const openaiAgentsVersion = '0.1.0';
+const openaiAgentsVersion = '0.1.1';
 const openaiAgentsPackage = readJson('packages/openai-agents/package.json');
 assert.equal(openaiAgentsPackage.name, '@knolo/openai-agents');
 assert.equal(openaiAgentsPackage.version, openaiAgentsVersion);
@@ -212,8 +213,11 @@ assert.equal(openaiAgentsPackage.license, 'Apache-2.0');
 assert.notEqual(openaiAgentsPackage.private, true);
 assert.equal(openaiAgentsPackage.publishConfig?.access, 'public');
 assert.equal(openaiAgentsPackage.engines?.node, '>=22');
-assert.equal(openaiAgentsPackage.dependencies?.['@knolo/core'], toolsCoreRange);
-assert.equal(openaiAgentsPackage.dependencies?.['@knolo/tools'], '^0.2.1');
+assert.equal(
+  openaiAgentsPackage.dependencies?.['@knolo/core'],
+  toolsKiteCoreRange
+);
+assert.equal(openaiAgentsPackage.dependencies?.['@knolo/tools'], '^0.2.2');
 assert.equal(
   openaiAgentsPackage.peerDependencies?.['@openai/agents'],
   '^0.21.0'
@@ -221,7 +225,7 @@ assert.equal(
 assert.equal(openaiAgentsPackage.dependencies?.['@openai/agents'], undefined);
 assert.equal(openaiAgentsPackage.devDependencies?.['@openai/agents'], '0.21.0');
 
-const n8nNodesVersion = '0.1.0';
+const n8nNodesVersion = '0.1.1';
 const n8nNodesPackage = readJson('packages/n8n-nodes-knolo/package.json');
 assert.equal(n8nNodesPackage.name, 'n8n-nodes-knolo');
 assert.equal(n8nNodesPackage.version, n8nNodesVersion);
@@ -246,6 +250,11 @@ assert.equal(
   n8nNodesPackage.keywords?.includes('n8n-community-node-package'),
   true
 );
+
+const exchangePackage = readJson('packages/exchange/package.json');
+assert.equal(exchangePackage.name, '@knolo/exchange');
+assert.equal(exchangePackage.version, '0.1.1');
+assert.equal(exchangePackage.dependencies?.['@knolo/core'], '^6.2.2');
 
 const openclawPackage = readJson('packages/openclaw/package.json');
 assert.equal(openclawPackage.name, '@knolo/openclaw');
