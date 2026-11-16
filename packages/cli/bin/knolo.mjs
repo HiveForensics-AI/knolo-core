@@ -31,6 +31,7 @@ import {
   runHubWhoami,
   runHubYank,
 } from './registry/commands.mjs';
+import { runHubAsk } from './registry/ask.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -63,6 +64,7 @@ const SUBCOMMANDS = new Set([
   'dev',
   'v5',
   'search',
+  'ask',
   'info',
   'login',
   'whoami',
@@ -162,6 +164,7 @@ Commands:
   init                    Initialize knolo.config.json and starter docs
   add <name> <path>       Add or update a local source entry, or install a Hub pack
   search <query>          Search the Knolo Hub registry
+  ask "<question>"        Answer from Hub excerpts with your model
   info <publisher>/<slug> Show a Hub registry pack
   login                   Store a Hub token locally
   whoami                  Show the stored Hub token prefix
@@ -203,6 +206,8 @@ function printCommandHelp(command) {
     add: 'Usage: knolo add <name> <path> | <publisher>/<slug>[@<version>] [--out <path>] [--force] [--json] [--registry <url>]',
     search:
       'Usage: knolo search <query> [--format V4|V5] [--license <id>] [--official] [--agents] [--research] [--json] [--registry <url>]',
+    ask:
+      'Usage: knolo ask "<question>" [--model <name>] [--base-url <url>] [--limit <n>] [--evidence] [--hub <url>]\n\nPosts the question to Hub and sends the verified excerpts to an OpenAI-compatible chat endpoint. The default base URL is http://127.0.0.1:11434/v1 (Ollama). Set KNOLO_MODEL_BASE_URL and KNOLO_MODEL for another engine, including a cloud gateway such as https://api.x.ai/v1. KNOLO_MODEL_API_KEY is sent only to that endpoint.\n--evidence prints the excerpts and does not call a model. --hub is the same registry override as --registry.',
     info: 'Usage: knolo info <publisher>/<slug> [--json] [--registry <url>]',
     login:
       'Usage: knolo login [--token kno_…] [--stdin] [--registry <url>]\n\nStores the raw token locally. Hub write calls send Authorization: Bearer kno_….\nMint tokens at https://hub.knolo.dev/dashboard/tokens; login does not call POST /api/v1/tokens.',
@@ -1971,6 +1976,11 @@ async function main() {
       if (command === 'init') return await cmdInit();
       if (command === 'add') return await cmdAdd(commandArgs);
       if (command === 'search') return await runHubSearch(commandArgs);
+      if (command === 'ask') {
+        const result = await runHubAsk(commandArgs);
+        if (result.exitCode) process.exit(result.exitCode);
+        return;
+      }
       if (command === 'info') return await runHubInfo(commandArgs);
       if (command === 'login') return await runHubLogin(commandArgs);
       if (command === 'whoami') return await runHubWhoami(commandArgs);
