@@ -63,7 +63,7 @@ the image. Set `stateRoot` from `knolo verify`. Set `sha256` to the SHA-256
 of the file bytes. `commitDigest` is not that pin.
 
 ```bash
-npx -y @knolo/mcp@0.2.3 --config /absolute/knolo-mcp.json
+npx -y @knolo/mcp@0.2.4 --config /absolute/knolo-mcp.json
 ```
 
 `knolo_search` keeps each remaining term as a whole word. This command does

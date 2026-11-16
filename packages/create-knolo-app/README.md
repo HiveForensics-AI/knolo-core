@@ -2,8 +2,8 @@
 
 This package is `6.2.0`. Generated applications depend on `@knolo/core`
 `^6.0.0` and `@knolo/cli` `^6.0.0`. Those ranges can resolve published
-`@knolo/core` `6.2.3` and `@knolo/cli` `6.2.7`. This tree's CLI package file
-is `6.2.7` and requires `@knolo/core` `^6.2.3` and `@knolo/exchange` `^0.1.0`.
+`@knolo/core` `6.2.3` and `@knolo/cli` `6.2.8`. This tree's CLI package file
+is `6.2.8` and requires `@knolo/core` `^6.2.3` and `@knolo/exchange` `^0.1.1`. `@knolo/cli@6.2.7` does not include `knolo research verify` or `knolo exchange relay`.
 npm `latest` for the CLI includes `knolo kite`. `@knolo/cli@6.2.5` does not.
 This tree's core package file is `6.2.3`, which is npm `latest`.
 Generated applications target the Knolo V4 TypeScript retrieval path, with the

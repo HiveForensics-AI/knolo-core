@@ -4,8 +4,8 @@
 owns the model. This smoke does not call one, and it does not read an API
 key.
 
-`@knolo/mastra@0.1.0` is published. It needs Node.js 22.13 or newer.
-It depends on `@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`. The peer
+`@knolo/mastra@0.1.1` is published. It needs Node.js 22.13 or newer.
+It depends on `@knolo/core` `^6.2.3` and `@knolo/tools` `^0.2.2`. The peer
 dependency is `@mastra/core` `^1.82.0`.
 
 Search keeps each remaining term as a whole word. Unquoted stopwords and
@@ -16,7 +16,7 @@ were met.
 A host that already speaks MCP can use the published server instead:
 
 ```bash
-npx -y @knolo/mcp@0.2.3 --config /absolute/knolo-mcp.json
+npx -y @knolo/mcp@0.2.4 --config /absolute/knolo-mcp.json
 ```
 
 Mastra's `MCPClient` from `@mastra/mcp` runs that command on stdio. This

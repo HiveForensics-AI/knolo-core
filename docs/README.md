@@ -53,7 +53,7 @@ operational guides for Knolo.
 - [`@knolo/ai-sdk`](../packages/ai-sdk/README.md) — Vercel AI SDK tools over
   [`@knolo/tools`](../packages/knolo-tools/README.md). Knolo does not call a
   model. A search returns a query receipt. `SATISFIED` means evidence
-  requirements were met. `@knolo/ai-sdk@0.1.0` is published.
+  requirements were met. `@knolo/ai-sdk@0.1.1` is published. `@knolo/ai-sdk@0.1.0` does not include the KITE host tools.
 - [Knolo Verify action](../.github/actions/knolo-verify/README.md) — composite
   GitHub Action that runs a pinned `@knolo/cli` over committed packs, images,
   KAR artifacts, attestations, and Cortex traces. It does not add verification
@@ -87,45 +87,45 @@ operational guides for Knolo.
   Build plugin that retrieves structure before full chunks. The published
   `@knolo/code` check is recorded on that page. npm `latest` is `0.1.1`.
 - [Google ADK](integrations/google-adk.md) — Python and TypeScript agents
-  that call published `@knolo/mcp@0.2.3` over stdio. A search returns a query
+  that call published `@knolo/mcp@0.2.4` over stdio. A search returns a query
   receipt. Verification checks the image. `SATISFIED` means evidence
   requirements were met.
 - [OpenAI Agents SDK](integrations/openai-agents.md) — a TypeScript smoke
-  that calls published `@knolo/mcp@0.2.3` over stdio, and native
+  that calls published `@knolo/mcp@0.2.4` over stdio, and native
   `@knolo/openai-agents` tools. Knolo does not call a model. A search returns
   a query receipt. `SATISFIED` means evidence requirements were met.
-  `@knolo/openai-agents@0.1.0` is published.
+  `@knolo/openai-agents@0.1.1` is published. `@knolo/openai-agents@0.1.0` does not include the KITE host tools.
 - [Anthropic Agent Skill](integrations/anthropic-skills.md) — a Claude Code
-  plugin that loads a Knolo skill and registers `@knolo/mcp@0.2.3` over
+  plugin that loads a Knolo skill and registers `@knolo/mcp@0.2.4` over
   stdio. The skill answers through the mounted tools and cites `imageId`,
   `objectId`, and `stateRoot`. A receipt is an integrity check. `SATISFIED`
   means evidence requirements were met. The upstream skills listing is
   separate.
 - [Pydantic AI](integrations/pydantic-ai.md) — a Python smoke that calls
-  published `@knolo/mcp@0.2.3` over stdio. Knolo does not call a model. A
+  published `@knolo/mcp@0.2.4` over stdio. Knolo does not call a model. A
   search returns a query receipt. `SATISFIED` means evidence requirements
   were met.
 - [Agno](integrations/agno.md) — a Python smoke that calls published
-  `@knolo/mcp@0.2.3` over stdio through Agno `MCPTools`. Knolo does not call
+  `@knolo/mcp@0.2.4` over stdio through Agno `MCPTools`. Knolo does not call
   a model. A search returns a query receipt. `SATISFIED` means evidence
   requirements were met.
 - [CrewAI](integrations/crewai.md) — a Python smoke that calls published
-  `@knolo/mcp@0.2.3` over stdio through CrewAI `MCPServerAdapter`. Knolo does
+  `@knolo/mcp@0.2.4` over stdio through CrewAI `MCPServerAdapter`. Knolo does
   not call a model. A search returns a query receipt. `SATISFIED` means
   evidence requirements were met.
 - [Haystack](integrations/haystack.md) — a Python smoke that calls published
-  `@knolo/mcp@0.2.3` over stdio through Haystack `MCPToolset`. Knolo does not
+  `@knolo/mcp@0.2.4` over stdio through Haystack `MCPToolset`. Knolo does not
   call a model. A search returns a query receipt. `SATISFIED` means evidence
   requirements were met.
 - [smolagents](integrations/smolagents.md) — a Python smoke that calls
-  published `@knolo/mcp@0.2.3` over stdio through `ToolCollection.from_mcp`.
+  published `@knolo/mcp@0.2.4` over stdio through `ToolCollection.from_mcp`.
   Knolo does not call a model. A search returns a query receipt. `SATISFIED`
   means evidence requirements were met.
 - [Langflow](integrations/langflow.md) — a Python smoke that calls published
-  `@knolo/mcp@0.2.3` over stdio. Knolo does not call a model. A search
+  `@knolo/mcp@0.2.4` over stdio. Knolo does not call a model. A search
   returns a query receipt. `SATISFIED` means evidence requirements were met.
 - [Dify](integrations/dify.md) — Dify 1.19.0 registers an MCP server by
-  an http or https URL. A Python smoke calls published `@knolo/mcp@0.2.3`
+  an http or https URL. A Python smoke calls published `@knolo/mcp@0.2.4`
   over stdio. Knolo does not call a model. A search returns a query
   receipt. `SATISFIED` means evidence requirements were met.
 - [Docker](integrations/docker.md) — a stdio image of `@knolo/mcp` built
@@ -133,20 +133,20 @@ operational guides for Knolo.
   the server accepts a tool call. An unwritable audit directory returns no
   hits. The image is not on Docker Hub. The catalog pull request is separate.
 - [Goose](integrations/goose.md) — a stdio extension draft for Goose. The
-  server does not listen on a port. `@knolo/mcp@0.2.3` is the published
+  server does not listen on a port. `@knolo/mcp@0.2.4` is the published
   command Goose launches. The directory pull request is separate.
 - [Vercel AI SDK](integrations/ai-sdk.md) — `@knolo/ai-sdk` tools over
   `@knolo/tools`. Knolo does not call a model. A search returns a query
   receipt. `SATISFIED` means evidence requirements were met.
-  `@knolo/ai-sdk@0.1.0` is published.
+  `@knolo/ai-sdk@0.1.1` is published. `@knolo/ai-sdk@0.1.0` does not include the KITE host tools.
 - [Mastra](integrations/mastra.md) — `@knolo/mastra` tools over
   `@knolo/tools`. Knolo does not call a model. A search returns a query
   receipt. `SATISFIED` means evidence requirements were met.
-  `@knolo/mastra@0.1.0` is published.
-- [n8n](integrations/n8n.md) — `n8n-nodes-knolo` search, get, and verify
-  for a pinned Knowledge Image. Knolo does not call a model. A search
+  `@knolo/mastra@0.1.1` is published. `@knolo/mastra@0.1.0` does not include the KITE host tools.
+- [n8n](integrations/n8n.md) — `n8n-nodes-knolo` search, get, verify,
+  status, KAR, and Cortex for a pinned Knowledge Image. Knolo does not call a model. A search
   returns a query receipt. A receipt is an integrity check. `SATISFIED`
-  is not a search result. `n8n-nodes-knolo@0.1.0` is on npm.
+  is not a search result. `n8n-nodes-knolo@0.1.1` is on npm. `n8n-nodes-knolo@0.1.0` is search, get, and verify.
 - [Box](box/README.md) — pinned V5 images of skills, opted-in notes, private
   memory, and capped session text on a Grok Bot computer. `@knolo/box` starts
   the existing read-only MCP server in one process. npm `latest` is `0.1.1`.
@@ -163,17 +163,17 @@ the V5 Knowledge Image: deterministic images, verification, migration,
 bounded runtime features, diagnostics, and a read-only Studio management
 snapshot remain. 6.1.0 adds offline composition and attestation. 6.2.0 adds
 Knolo Cortex. Published `@knolo/core` is `6.2.3`. This tree's core package
-file is `6.2.3`. `@knolo/tools` `0.2.1`
-depends on `@knolo/core` `^6.2.1`. This tree's `@knolo/mcp` is `0.2.3`.
-npm `latest` for MCP is `0.2.3`. This tree's
-`@knolo/cli` package file is `6.2.7` and depends on `@knolo/core` `^6.2.3` and `@knolo/exchange` `^0.1.0`.
-npm `latest` for the CLI is `6.2.7` and includes `knolo kite`. `@knolo/cli@6.2.5` does not. npm `latest` for `@knolo/exchange` is `0.1.0`. `@knolo/langchain`, `@knolo/llamaindex`,
+file is `6.2.3`. `@knolo/tools` `0.2.2`
+depends on `@knolo/core` `^6.2.3`. `@knolo/tools@0.2.1` has no KITE evaluate or verify tools. This tree's `@knolo/mcp` is `0.2.4`.
+npm `latest` for MCP is `0.2.4`. `@knolo/mcp@0.2.3` has no KITE tools. This tree's
+`@knolo/cli` package file is `6.2.8` and depends on `@knolo/core` `^6.2.3` and `@knolo/exchange` `^0.1.1`.
+npm `latest` for the CLI is `6.2.8` and includes `knolo kite`, `knolo research verify`, and `knolo exchange relay`. `@knolo/cli@6.2.7` does not include research verify or the relay. `@knolo/cli@6.2.5` does not include `knolo kite`. npm `latest` for `@knolo/exchange` is `0.1.1`. `@knolo/exchange@0.1.0` has no relay. `@knolo/langchain`, `@knolo/llamaindex`,
 `@knolo/semantic-ollama`, `create-knolo-app`, and `@knolo/reflex` stay on
-`@knolo/core` `^6.0.0`. `@knolo/ai-sdk@0.1.0` stays on `@knolo/core` `^6.2.0`
-and `@knolo/tools` `^0.2.0`. `@knolo/mastra` `0.1.0` is published and
-depends on `@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`.
-`@knolo/openai-agents` `0.1.0` is published and depends on
-`@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`. V4 retrieval
+`@knolo/core` `^6.0.0`. `@knolo/ai-sdk@0.1.1` depends on `@knolo/core` `^6.2.3`
+and `@knolo/tools` `^0.2.2`. `@knolo/mastra` `0.1.1` is published and
+depends on `@knolo/core` `^6.2.3` and `@knolo/tools` `^0.2.2`.
+`@knolo/openai-agents` `0.1.1` is published and depends on
+`@knolo/core` `^6.2.3` and `@knolo/tools` `^0.2.2`. V4 retrieval
 APIs remain compatible. Rust, Python,
 and ICP stay 5.5.1 and do not implement KAR, composition, or Cortex.
 Bundled Domain Packs are `review-required`. Networking,

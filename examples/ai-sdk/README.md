@@ -4,7 +4,7 @@
 owns the model. This smoke does not call one, and it does not read an API
 key.
 
-`@knolo/ai-sdk@0.1.0` is published. It needs Node.js 22 or newer and does not
+`@knolo/ai-sdk@0.1.1` is published. It needs Node.js 22 or newer and does not
 run on the edge runtime.
 
 Search keeps each remaining term as a whole word. Unquoted stopwords and terms shorter than 3 characters are dropped. A receipt is an
@@ -14,7 +14,7 @@ evidence requirements were met.
 A host that already speaks MCP can use the published server instead:
 
 ```bash
-npx -y @knolo/mcp@0.2.3 --config /absolute/knolo-mcp.json
+npx -y @knolo/mcp@0.2.4 --config /absolute/knolo-mcp.json
 ```
 
 ## Run the smoke

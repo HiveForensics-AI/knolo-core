@@ -8,7 +8,7 @@
 import path from 'node:path';
 import { MCPServerStdio } from '@openai/agents';
 
-export const PUBLISHED_PACKAGE = '@knolo/mcp@0.2.3';
+export const PUBLISHED_PACKAGE = '@knolo/mcp@0.2.4';
 
 export function mcpConfigPath(): string | undefined {
   const raw = (process.env.KNOLO_MCP_CONFIG ?? '').trim();

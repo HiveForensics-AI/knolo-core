@@ -2,7 +2,8 @@
 
 Host transport for a KIP-0028 offer. `@knolo/core` verifies the signed offer
 and the V5 image. This package opens TLS, checks receive policy, and writes
-the verified bytes into the content-addressed cache.
+the verified bytes into the content-addressed cache. npm `latest` is
+`@knolo/exchange@0.1.1`. `@knolo/exchange@0.1.0` has no relay.
 
 Pull and import do not adopt the image into a store, write `knolo.lock.json`,
 or call Knolo Hub.

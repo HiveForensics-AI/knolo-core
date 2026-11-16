@@ -12,7 +12,7 @@ from pathlib import Path
 
 from mcp import StdioServerParameters
 
-PUBLISHED_PACKAGE = "@knolo/mcp@0.2.3"
+PUBLISHED_PACKAGE = "@knolo/mcp@0.2.4"
 
 
 def mcp_config_path() -> Path | None:

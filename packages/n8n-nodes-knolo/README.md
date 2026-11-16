@@ -1,9 +1,9 @@
 # n8n-nodes-knolo
 
 `n8n-nodes-knolo` is an n8n community node for read-only Knolo search, get,
-verify, status, KAR, and Cortex. `n8n-nodes-knolo@0.1.0` is on npm and
-includes search, get, and verify. This checkout adds status, KAR, and Cortex
-without a version bump. It depends on `@knolo/core` `^6.2.1` and
+verify, status, KAR, and Cortex. `n8n-nodes-knolo@0.1.1` is on npm and
+includes status, KAR, and Cortex. `n8n-nodes-knolo@0.1.0` is search, get,
+and verify. It depends on `@knolo/core` `^6.2.1` and
 `@knolo/tools` `^0.2.1`. The license is Apache-2.0.
 
 n8n itself is under the Sustainable Use License. This package does not

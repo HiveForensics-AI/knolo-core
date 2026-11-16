@@ -35,7 +35,7 @@ not replay the clock. Receipts written before those fields still verify.
 set it. EQL plans with no `textQuery` stay substring matches in object id
 order. The stopword list is `KNOLO_SEARCH_STOPWORDS`.
 
-The package requires Node 20 or newer and `@knolo/core` `^6.2.1`. It does not
+The package requires Node 20 or newer and `@knolo/core` `^6.2.3`. It does not
 download images, open a network connection, or import KAR, Cortex, coverage,
 or composition. `@knolo/openclaw@0.1.0` stays on `@knolo/tools` `^0.1.0`.
 
@@ -45,4 +45,4 @@ its config has an empty `kite` object. The caller argument is the same
 host-supplied identity. A verdict describes the contract, not real-world
 truth. `BOUND_EXCEEDED` returns no certificate.
 A clean install resolves that range to the published 0.1.0 package, because
-`0.2.1` does not satisfy it. `@knolo/tools@0.2.1` is published.
+`0.2.2` does not satisfy it. `@knolo/tools@0.2.2` is published. `@knolo/tools@0.2.1` has no KITE evaluate or verify tools.

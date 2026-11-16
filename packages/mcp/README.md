@@ -55,8 +55,8 @@ image. A config file that cannot be read fails that call. `agentId`,
 `sessionId`, and `maxHits` stay at the values from process start. KAR graphs
 are authorized with that same startup `agentId`.
 
-npm `latest` is `@knolo/mcp@0.2.3`. This tree sets `server.json` and the MCP
-server version to `0.2.3`. The published `0.2.1` tarball still reports
+npm `latest` is `@knolo/mcp@0.2.4`. This tree sets `server.json` and the MCP
+server version to `0.2.4`. `@knolo/mcp@0.2.3` has no KITE evaluate or verify tools. The published `0.2.1` tarball still reports
 `0.2.0` in those two fields. A mount without a `kar` block exposes
 the four tools above. A mount with a `kar` block also exposes
 `knolo_kar_evaluate`, `knolo_kar_verify`, and `knolo_cortex_verify`. The
@@ -75,12 +75,12 @@ same server. The
 [CrewAI example](../../docs/integrations/crewai.md) use the same
 server. The
 [Vercel AI SDK example](../../docs/integrations/ai-sdk.md) calls the same
-service through `@knolo/ai-sdk`. `@knolo/ai-sdk@0.1.0` is published. The
+service through `@knolo/ai-sdk`. `@knolo/ai-sdk@0.1.1` is published. The
 [Mastra example](../../docs/integrations/mastra.md) calls the same service
-through `@knolo/mastra`. `@knolo/mastra@0.1.0` is published. The
+through `@knolo/mastra`. `@knolo/mastra@0.1.1` is published. The
 [OpenAI Agents native tools](../../docs/integrations/openai-agents.md) call
 the same service through `@knolo/openai-agents`.
-`@knolo/openai-agents@0.1.0` is published. The
+`@knolo/openai-agents@0.1.1` is published. The
 [Anthropic Agent Skill](../../docs/integrations/anthropic-skills.md) registers
 this server from a Claude Code plugin.
 
@@ -102,7 +102,7 @@ extension is a separate pull request.
 
 The [awesome-mcp-servers](listings/awesome-mcp-servers.md) line belongs under
 Knowledge & Memory. It names this package as a local TypeScript server and
-pins `@knolo/mcp@0.2.3`. There is no badge, because Knolo is not listed there
+pins `@knolo/mcp@0.2.4`. There is no badge, because Knolo is not listed there
 yet. Submitting the line is a separate pull request.
 
 ## Config
@@ -212,8 +212,8 @@ VS Code (`.vscode/mcp.json`):
 
 Cline uses the same stdio server. The file hash, `knolo verify`, and the
 Cline settings block are in [llms-install.md](llms-install.md). The published
-server pin is `@knolo/mcp@0.2.3`. The CLI pin for `stateRoot` is
-`@knolo/cli@6.2.7`. Pins, the policy file, and the audit directory stay in
+server pin is `@knolo/mcp@0.2.4`. The CLI pin for `stateRoot` is
+`@knolo/cli@6.2.8`. Pins, the policy file, and the audit directory stay in
 the config.
 
 ```json
@@ -221,7 +221,7 @@ the config.
   "mcpServers": {
     "knolo": {
       "command": "npx",
-      "args": ["-y", "@knolo/mcp@0.2.3", "--config", "/absolute/knolo-mcp.json"]
+      "args": ["-y", "@knolo/mcp@0.2.4", "--config", "/absolute/knolo-mcp.json"]
     }
   }
 }

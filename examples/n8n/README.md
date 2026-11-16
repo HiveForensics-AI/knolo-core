@@ -14,5 +14,5 @@ graph pin are node parameters. Replace the placeholder paths before running
 it. An item field named `agentId` does not change the caller.
 
 Load the node from a checkout of `n8n-nodes-knolo` with
-`N8N_CUSTOM_EXTENSIONS`. npm `n8n-nodes-knolo@0.1.0` does not include KAR
-yet. See [n8n](../../docs/integrations/n8n.md).
+`N8N_CUSTOM_EXTENSIONS`. npm `n8n-nodes-knolo@0.1.0` does not include KAR,
+status, or Cortex. npm `n8n-nodes-knolo@0.1.1` does. See [n8n](../../docs/integrations/n8n.md).
