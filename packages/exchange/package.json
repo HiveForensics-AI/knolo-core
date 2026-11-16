@@ -1,6 +1,6 @@
 {
   "name": "@knolo/exchange",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Authenticated host transport for Knolo Exchange offers. Core verifies the image. This package moves the bytes.",
   "license": "Apache-2.0",

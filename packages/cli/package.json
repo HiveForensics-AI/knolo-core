@@ -1,6 +1,6 @@
 {
   "name": "@knolo/cli",
-  "version": "6.2.7",
+  "version": "6.2.8",
   "type": "module",
   "bin": {
     "knolo": "bin/knolo.mjs"
@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@knolo/core": "^6.2.3",
-    "@knolo/exchange": "^0.1.0"
+    "@knolo/exchange": "^0.1.1"
   },
   "private": false
 }
