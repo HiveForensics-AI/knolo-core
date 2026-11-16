@@ -1,8 +1,8 @@
 # @knolo/openai-agents
 
 `@knolo/openai-agents` builds OpenAI Agents SDK tools for read-only Knolo
-search, verify, KAR, and Cortex. `@knolo/openai-agents@0.1.0` is on npm.
-It depends on `@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`. The
+search, verify, KAR, and Cortex. `@knolo/openai-agents@0.1.1` is on npm.
+It depends on `@knolo/core` `^6.2.3` and `@knolo/tools` `^0.2.2`. `@knolo/openai-agents@0.1.0` does not include the KITE host tools. The
 license is Apache-2.0.
 
 The peer dependency is `@openai/agents` `^0.21.0`. Engines ask for Node.js 22
@@ -66,7 +66,7 @@ Other closed failures use `IMAGE_INVALID`, `IMAGE_UNAVAILABLE`, `NOT_FOUND`,
 A host that already has an MCP client can launch the published server:
 
 ```bash
-npx -y @knolo/mcp@0.2.3 --config /absolute/knolo-mcp.json
+npx -y @knolo/mcp@0.2.4 --config /absolute/knolo-mcp.json
 ```
 
 That command is stdio. This package does not start it and does not open a

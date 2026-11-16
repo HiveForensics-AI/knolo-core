@@ -54,7 +54,7 @@ node conformance/kite/v1/run.mjs
 ```
 
 `knolo kite evaluate` and `knolo kite verify` are in npm `latest`
-`@knolo/cli@6.2.7`. Published `@knolo/cli@6.2.5` does not include them.
+`@knolo/cli@6.2.8`. Published `@knolo/cli@6.2.5` does not include them.
 
 A mount opts in with an empty `kite` object. `@knolo/mcp`, `@knolo/ai-sdk`,
 `@knolo/mastra`, and `@knolo/openai-agents` then expose `knolo_kite_evaluate`

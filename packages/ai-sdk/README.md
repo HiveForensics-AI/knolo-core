@@ -1,8 +1,8 @@
 # @knolo/ai-sdk
 
 `@knolo/ai-sdk` builds Vercel AI SDK tools for read-only Knolo search, verify,
-KAR, and Cortex. `@knolo/ai-sdk@0.1.0` is published. It depends on
-`@knolo/core` `^6.2.0` and `@knolo/tools` `^0.2.0`. The license is Apache-2.0.
+KAR, and Cortex. `@knolo/ai-sdk@0.1.1` is published. It depends on
+`@knolo/core` `^6.2.3` and `@knolo/tools` `^0.2.2`. `@knolo/ai-sdk@0.1.0` does not include the KITE host tools. The license is Apache-2.0.
 
 The peer dependency is `ai` `^7.0.0`. Engines ask for Node.js 22 or newer,
 matching that package. Knolo does not run these tools on the edge runtime,
@@ -62,7 +62,7 @@ MCP tool returns for that input and image.
 A host that already has an MCP client can launch the published server:
 
 ```bash
-npx -y @knolo/mcp@0.2.3 --config /absolute/knolo-mcp.json
+npx -y @knolo/mcp@0.2.4 --config /absolute/knolo-mcp.json
 ```
 
 That command is stdio. This package does not start it and does not open a

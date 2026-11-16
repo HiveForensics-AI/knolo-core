@@ -1,8 +1,8 @@
 # @knolo/mastra
 
 `@knolo/mastra` builds Mastra tools for read-only Knolo search, verify, KAR,
-and Cortex. `@knolo/mastra@0.1.0` is published. It depends on
-`@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`. The license is Apache-2.0.
+and Cortex. `@knolo/mastra@0.1.1` is published. It depends on
+`@knolo/core` `^6.2.3` and `@knolo/tools` `^0.2.2`. `@knolo/mastra@0.1.0` does not include the KITE host tools. The license is Apache-2.0.
 
 The peer dependency is `@mastra/core` `^1.82.0`. Engines ask for Node.js
 22.13 or newer, matching that package. Knolo does not call a model. The host
@@ -69,7 +69,7 @@ const mcp = new MCPClient({
   servers: {
     knolo: {
       command: 'npx',
-      args: ['-y', '@knolo/mcp@0.2.3', '--config', '/absolute/knolo-mcp.json'],
+      args: ['-y', '@knolo/mcp@0.2.4', '--config', '/absolute/knolo-mcp.json'],
     },
   },
 });

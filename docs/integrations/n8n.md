@@ -1,8 +1,8 @@
 # n8n
 
 `n8n-nodes-knolo` is an n8n community node for a pinned Knolo V5 Knowledge
-Image. `n8n-nodes-knolo@0.1.0` is on npm and includes search, get, and
-verify. This checkout also runs status, KAR evaluate, KAR verify, and Cortex
+Image. `n8n-nodes-knolo@0.1.1` is on npm and includes status, KAR evaluate,
+KAR verify, and Cortex verify. `n8n-nodes-knolo@0.1.0` is search, get, and
 verify. Knolo does not call a model and does not read an API key.
 
 The node asks for Node.js 22.12 or newer. Synchronous `require()` of the
@@ -13,7 +13,7 @@ Apache-2.0. n8n itself is under the Sustainable Use License. This package
 does not include n8n source. The only peer dependency is `n8n-workflow`.
 
 This node does not start a server and does not open a port. npm `0.1.0` does
-not include status, KAR, or Cortex yet. Build this checkout and point
+not include status, KAR, or Cortex. npm `0.1.1` does. Build this checkout and point
 `N8N_CUSTOM_EXTENSIONS` at the package directory:
 
 ```bash

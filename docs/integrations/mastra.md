@@ -1,12 +1,13 @@
 # Mastra
 
 `@knolo/mastra` returns Mastra tools for a pinned Knolo V5 Knowledge Image.
-`@knolo/mastra@0.1.0` is published. Knolo does not call a model and
+`@knolo/mastra@0.1.1` is published. `@knolo/mastra@0.1.0` does not include
+the KITE host tools. Knolo does not call a model and
 does not read an API key.
 
 The host passes the tools to its own model. The peer dependency is
 `@mastra/core` `^1.82.0`. The package asks for Node.js 22.13 or newer. It
-depends on `@knolo/core` `^6.2.1` and `@knolo/tools` `^0.2.1`.
+depends on `@knolo/core` `^6.2.3` and `@knolo/tools` `^0.2.2`.
 
 `knoloMastraTools(config)` reads the same object as `knolo-mcp.json`. It does
 not watch files. After a pin change, the host calls `knoloMastraTools` again.
@@ -22,7 +23,7 @@ const mcp = new MCPClient({
   servers: {
     knolo: {
       command: 'npx',
-      args: ['-y', '@knolo/mcp@0.2.3', '--config', '/absolute/knolo-mcp.json'],
+      args: ['-y', '@knolo/mcp@0.2.4', '--config', '/absolute/knolo-mcp.json'],
     },
   },
 });

@@ -88,14 +88,14 @@ The usual path is MCP. The image is already on disk. The server does not
 download it.
 
 ```bash
-npx -y @knolo/mcp@0.2.3 --config /absolute/knolo-mcp.json
+npx -y @knolo/mcp@0.2.4 --config /absolute/knolo-mcp.json
 ```
 
 The server speaks stdio. It does not open a port. The caller is `agentId`
 in the config file. Tool arguments cannot set it. That id must be listed in
 the mount's `agents` array.
 
-`@knolo/mcp@0.2.3` is the published server. Pins, policy checks, and
+`@knolo/mcp@0.2.4` is the published server. Pins, policy checks, and
 receipts come from `@knolo/tools`. Details are in the
 [MCP README](../../packages/mcp/README.md). Box starts that same server
 after a build. See the [Box README](../../packages/box/README.md).
