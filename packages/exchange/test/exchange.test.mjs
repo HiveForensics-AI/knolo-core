@@ -22,14 +22,18 @@ import {
 import { httpsJson, requestHostname } from '../dist/http.js';
 import {
   adoptExchangeReceipt,
+  contentCachePath,
   evaluateReceivePolicy,
   exportExchangeDirectory,
   importExchangeDirectory,
   inspectExchangeReceipt,
   loadExchangeConfig,
+  loadRelayConfig,
   publishExchangeOffer,
   pullExchangeOffer,
+  startExchangeRelay,
   startExchangeServer,
+  sweepRelay,
 } from '../dist/index.js';
 
 const NOW = 1_700_000_000_000;
@@ -897,6 +901,244 @@ test('a sender receipt failure stays on the response and can be retried', async 
   }
 });
 
+test('a relay pull matches a direct pull after the sender is offline', async () => {
+  const dir = path.join(fixture.root, 'relay-same');
+  mkdirSync(dir, { recursive: true });
+  const sender = writeAgent(dir, 'sender', 'agent-a', 'agent-b');
+  const recipient = writeAgent(dir, 'recipient', 'agent-b', 'agent-a');
+  const relay = await startRelay(dir, 'relay', ['agent-a-1']);
+  let direct;
+  try {
+    const bytes = imageBytes('relay-same');
+    const imagePath = path.join(dir, 'image.knolo');
+    writeFileSync(imagePath, bytes);
+    const described = describeKnowledgeExchangeArtifactV1(bytes);
+    const published = await publishExchangeOffer(sender.config, {
+      imagePath,
+      to: 'agent-b',
+      now: NOW,
+      via: relay.url,
+    });
+    assert.equal(existsSync(path.join(sender.store, 'endpoint.json')), false);
+    assert.equal(existsSync(path.join(sender.store, 'offers')), false);
+    assert.equal(existsSync(path.join(sender.store, 'blobs')), false);
+
+    direct = await serveCopiedOffer(
+      dir,
+      relay.store,
+      published.offerId,
+      described.sha256
+    );
+    const directHome = path.join(dir, 'direct-home');
+    mkdirSync(directHome, { recursive: true });
+    const directPull = await pullExchangeOffer(recipient.config, {
+      offerId: published.offerId,
+      from: direct.server.url,
+      now: NOW,
+      homeDir: directHome,
+    });
+    await direct.server.close();
+    direct.server = undefined;
+
+    const laterHome = path.join(dir, 'later-home');
+    mkdirSync(laterHome, { recursive: true });
+    const laterPull = await pullExchangeOffer(recipient.config, {
+      offerId: published.offerId,
+      from: relay.url,
+      now: NOW,
+      homeDir: laterHome,
+    });
+    const directReceipt = await inspectExchangeReceipt(
+      directHome,
+      directPull.receiptId,
+      direct.config,
+      NOW
+    );
+    const laterReceipt = await inspectExchangeReceipt(
+      laterHome,
+      laterPull.receiptId,
+      direct.config,
+      NOW
+    );
+    assert.equal(laterReceipt.offerId, directReceipt.offerId);
+    assert.equal(laterReceipt.sha256, directReceipt.sha256);
+    assert.equal(laterReceipt.stateRoot, directReceipt.stateRoot);
+    assert.equal(laterReceipt.role, 'recipient');
+    assert.equal(laterReceipt.role, directReceipt.role);
+    assert.equal(laterReceipt.verification, 'verified');
+    assert.equal(laterReceipt.verification, directReceipt.verification);
+    assert.equal(laterReceipt.policy, 'receive');
+    assert.equal(laterReceipt.policy, directReceipt.policy);
+    assert.equal(laterReceipt.decision, 'accept');
+    assert.equal(laterReceipt.decision, directReceipt.decision);
+    assert.notEqual(laterReceipt.receiptId, directReceipt.receiptId);
+    assert.equal(existsSync(path.join(relay.store, 'served')), false);
+    assert.deepEqual(readFileSync(laterPull.cachePath), Buffer.from(bytes));
+  } finally {
+    await relay.close();
+    if (direct?.server) await direct.server.close();
+  }
+});
+
+test('a blob changed on the relay is refused and the cache file stays', async () => {
+  const dir = path.join(fixture.root, 'relay-tamper');
+  mkdirSync(dir, { recursive: true });
+  const sender = writeAgent(dir, 'sender', 'agent-a', 'agent-b');
+  const recipient = writeAgent(dir, 'recipient', 'agent-b', 'agent-a');
+  const relay = await startRelay(dir, 'relay', ['agent-a-1']);
+  try {
+    const bytes = imageBytes('relay-tamper');
+    const imagePath = path.join(dir, 'image.knolo');
+    writeFileSync(imagePath, bytes);
+    const described = describeKnowledgeExchangeArtifactV1(bytes);
+    const published = await publishExchangeOffer(sender.config, {
+      imagePath,
+      to: 'agent-b',
+      now: NOW,
+      via: relay.url,
+    });
+    const blobFile = path.join(relay.store, 'blobs', `${described.sha256}.knolo`);
+    const tampered = readFileSync(blobFile);
+    tampered[tampered.length - 1] ^= 0xff;
+    writeFileSync(blobFile, tampered);
+    const home = path.join(dir, 'home');
+    const cache = contentCachePath(home, described.sha256);
+    const sentinel = Buffer.from('sentinel-cache-bytes');
+    mkdirSync(path.dirname(cache), { recursive: true });
+    writeFileSync(cache, sentinel);
+    await assert.rejects(
+      () =>
+        pullExchangeOffer(recipient.config, {
+          offerId: published.offerId,
+          from: relay.url,
+          now: NOW,
+          homeDir: home,
+        }),
+      /V5 exchange artifact digest mismatch\./
+    );
+    assert.deepEqual(readFileSync(cache), sentinel);
+    assert.equal(
+      existsSync(path.join(home, 'exchange', 'partial', `${published.offerId}.part`)),
+      false
+    );
+    const decisionName = readdirSync(path.join(relay.store, 'decisions'))[0];
+    const decision = readFileSync(path.join(relay.store, 'decisions', decisionName));
+    const served = await httpsGet(`${relay.url}/v1/blobs/${described.sha256}`, {
+      ca: readFileSync(fixture.cert),
+      headers: { 'knolo-decision': decision.toString('base64url') },
+    });
+    assert.equal(served.status, 200);
+    assert.deepEqual(served.body, tampered);
+  } finally {
+    await relay.close();
+  }
+});
+
+test('the retention sweep drops an expired offer and an unreferenced blob', async () => {
+  const dir = path.join(fixture.root, 'relay-expire');
+  mkdirSync(dir, { recursive: true });
+  const sender = writeAgent(dir, 'sender', 'agent-a', 'agent-b');
+  let now = NOW;
+  const relay = await startRelay(dir, 'relay', ['agent-a-1'], {
+    retentionMs: 1_000,
+    now: () => now,
+  });
+  try {
+    const shared = imageBytes('relay-shared');
+    const only = imageBytes('relay-only');
+    const sharedPath = path.join(dir, 'shared.knolo');
+    const onlyPath = path.join(dir, 'only.knolo');
+    writeFileSync(sharedPath, shared);
+    writeFileSync(onlyPath, only);
+    const sharedDigest = describeKnowledgeExchangeArtifactV1(shared).sha256;
+    const onlyDigest = describeKnowledgeExchangeArtifactV1(only).sha256;
+    const shortOnly = await publishExchangeOffer(sender.config, {
+      imagePath: onlyPath,
+      to: 'agent-b',
+      now: NOW,
+      ttlMs: 10_000,
+      via: relay.url,
+    });
+    const shortShared = await publishExchangeOffer(sender.config, {
+      imagePath: sharedPath,
+      to: 'agent-b',
+      now: NOW,
+      ttlMs: 10_000,
+      via: relay.url,
+    });
+    const longShared = await publishExchangeOffer(sender.config, {
+      imagePath: sharedPath,
+      to: 'agent-b',
+      now: NOW,
+      ttlMs: 1_000_000,
+      via: relay.url,
+    });
+    now = NOW + 10_000 + 1_000;
+    await sweepRelay(relay.config, now);
+    assert.equal(
+      existsSync(path.join(relay.store, 'offers', `${shortOnly.offerId}.cbor`)),
+      false
+    );
+    assert.equal(
+      existsSync(path.join(relay.store, 'blobs', `${onlyDigest}.knolo`)),
+      false
+    );
+    assert.equal(
+      existsSync(path.join(relay.store, 'offers', `${shortShared.offerId}.cbor`)),
+      false
+    );
+    assert.equal(
+      existsSync(path.join(relay.store, 'offers', `${longShared.offerId}.cbor`)),
+      true
+    );
+    assert.equal(
+      existsSync(path.join(relay.store, 'blobs', `${sharedDigest}.knolo`)),
+      true
+    );
+    now = NOW + 1_000_000 + 1_000;
+    await sweepRelay(relay.config, now);
+    assert.equal(
+      existsSync(path.join(relay.store, 'offers', `${longShared.offerId}.cbor`)),
+      false
+    );
+    assert.equal(
+      existsSync(path.join(relay.store, 'blobs', `${sharedDigest}.knolo`)),
+      false
+    );
+    const gone = await httpsJson(
+      `${relay.url}/v1/offers/${shortOnly.offerId}`,
+      { method: 'GET', caPath: fixture.cert }
+    );
+    assert.equal(gone.status, 404);
+  } finally {
+    await relay.close();
+  }
+});
+
+test('a sender key outside the relay allow-list cannot upload', async () => {
+  const dir = path.join(fixture.root, 'relay-deny');
+  mkdirSync(dir, { recursive: true });
+  const outsider = writeAgent(dir, 'outsider', 'agent-c', 'agent-b');
+  const relay = await startRelay(dir, 'relay', ['agent-a-1']);
+  try {
+    const imagePath = path.join(dir, 'image.knolo');
+    writeFileSync(imagePath, imageBytes('relay-deny'));
+    await assert.rejects(
+      () =>
+        publishExchangeOffer(outsider.config, {
+          imagePath,
+          to: 'agent-b',
+          now: NOW,
+          via: relay.url,
+        }),
+      /V5 exchange relay sender is not allowed\./
+    );
+    assert.equal(existsSync(path.join(relay.store, 'offers')), false);
+  } finally {
+    await relay.close();
+  }
+});
+
 async function createFixture() {
   const root = mkdtempSync(path.join(tmpdir(), 'knolo-exchange-'));
   const cert = path.join(root, 'tls.crt');
@@ -1219,6 +1461,87 @@ function httpsGet(url, { ca, headers }) {
     req.on('error', reject);
     req.end();
   });
+}
+
+function writeAgent(dir, name, principal, peerName) {
+  const store = path.join(dir, `${name}-store`);
+  mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, `${name}.json`);
+  writeFileSync(
+    file,
+    JSON.stringify(
+      hostConfig({
+        principal,
+        peerName,
+        peerUrl: 'https://127.0.0.1:9',
+        store,
+        senders: [peerName],
+        maxBytes: 10_000_000,
+      })
+    )
+  );
+  return { file, config: loadExchangeConfig(file), store };
+}
+
+async function startRelay(dir, name, senders, options = {}) {
+  const store = path.join(dir, `${name}-store`);
+  mkdirSync(store, { recursive: true });
+  const file = path.join(dir, `${name}.json`);
+  writeFileSync(
+    file,
+    JSON.stringify({
+      listen: '127.0.0.1:0',
+      tls: { cert: fixture.cert, key: fixture.key },
+      store,
+      maxBytes: options.maxBytes ?? 10_000_000,
+      retentionMs: options.retentionMs ?? 60_000,
+      senders,
+    })
+  );
+  const config = loadRelayConfig(file);
+  const server = await startExchangeRelay(config, {
+    now: options.now ?? (() => NOW),
+  });
+  return {
+    config,
+    store,
+    url: server.url,
+    close: () => server.close(),
+  };
+}
+
+async function serveCopiedOffer(dir, relayStore, offerId, sha256) {
+  const store = path.join(dir, 'direct-store');
+  mkdirSync(path.join(store, 'offers'), { recursive: true });
+  mkdirSync(path.join(store, 'blobs'), { recursive: true });
+  cpSync(
+    path.join(relayStore, 'offers', `${offerId}.cbor`),
+    path.join(store, 'offers', `${offerId}.cbor`)
+  );
+  cpSync(
+    path.join(relayStore, 'blobs', `${sha256}.knolo`),
+    path.join(store, 'blobs', `${sha256}.knolo`)
+  );
+  const file = path.join(dir, 'direct.json');
+  writeFileSync(
+    file,
+    JSON.stringify(
+      hostConfig({
+        principal: 'agent-a',
+        peerName: 'agent-b',
+        peerUrl: 'https://127.0.0.1:9',
+        store,
+        senders: ['agent-b'],
+        maxBytes: 10_000_000,
+      })
+    )
+  );
+  const config = loadExchangeConfig(file);
+  const server = await startExchangeServer(config, {
+    homeDir: path.join(dir, 'direct-sender-home'),
+    now: () => NOW,
+  });
+  return { server, config, store };
 }
 
 async function waitForFiles(dir, suffix, count) {
