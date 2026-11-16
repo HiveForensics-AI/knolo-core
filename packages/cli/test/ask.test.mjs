@@ -51,7 +51,7 @@ test('ask sends the excerpt to the model and prints the citation', async () => {
   const excerpt = 'Customers may request a refund within 30 days.';
   const calls = [];
   const printed = [];
-  const result = await runHubAsk(['what is the refund window?', '--model', 'llama3.2'], {
+  const result = await runHubAsk(['what is the refund window?', '--all', '--model', 'llama3.2'], {
     env: {
       KNOLO_HUB_URL: 'https://fixture.example',
       KNOLO_MODEL_API_KEY: 'model-secret',
@@ -73,7 +73,9 @@ test('ask sends the excerpt to the model and prints the citation', async () => {
   const hub = calls[0];
   const model = calls[1];
   assert.equal(new URL(hub.url).pathname, '/api/v1/knowledge/query');
-  assert.equal(JSON.parse(hub.options.body).q, 'what is the refund window?');
+  const hubBody = JSON.parse(hub.options.body);
+  assert.equal(hubBody.q, 'what is the refund window?');
+  assert.equal(hubBody.categories, undefined);
   assert.equal(hub.options.headers.Authorization, undefined);
   assert.equal(JSON.stringify(hub.options.headers).includes('model-secret'), false);
   assert.equal(model.url, 'http://127.0.0.1:11434/v1/chat/completions');
@@ -92,7 +94,7 @@ test('a mismatched excerpt hash is dropped and the model is not called', async (
   const calls = [];
   const errors = [];
   const bad = hit('Thirty days.', { excerptSha256: 'a'.repeat(64) });
-  const result = await runHubAsk(['refunds'], {
+  const result = await runHubAsk(['refunds', '--all'], {
     env: { KNOLO_HUB_URL: 'https://fixture.example', KNOLO_MODEL: 'llama3.2' },
     fetchImpl: async (url, options) => {
       calls.push(String(url));
@@ -109,7 +111,7 @@ test('a mismatched excerpt hash is dropped and the model is not called', async (
 test('an empty hit list does not call the model', async () => {
   const { runHubAsk } = await loadAsk();
   let calls = 0;
-  const result = await runHubAsk(['refunds', '--model', 'llama3.2', '--hub', 'https://fixture.example'], {
+  const result = await runHubAsk(['refunds', '--all', '--model', 'llama3.2', '--hub', 'https://fixture.example'], {
     env: {},
     fetchImpl: async () => {
       calls += 1;
@@ -126,7 +128,7 @@ test('--evidence prints the bundle and does not call the model', async () => {
   const excerpt = 'Damaged items are replaced within 14 days.';
   const printed = [];
   let calls = 0;
-  const result = await runHubAsk(['damage', '--evidence', '--limit', '3'], {
+  const result = await runHubAsk(['damage', '--all', '--evidence', '--limit', '3'], {
     env: { KNOLO_HUB_URL: 'https://fixture.example', KNOLO_MODEL: 'llama3.2' },
     fetchImpl: async (url, options) => {
       calls += 1;
@@ -148,7 +150,7 @@ test('a refused model connection prints the excerpts and exits 2', async () => {
   const excerpt = 'Start a return from the order page.';
   const printed = [];
   const errors = [];
-  const result = await runHubAsk(['returns'], {
+  const result = await runHubAsk(['returns', '--all'], {
     env: {
       KNOLO_HUB_URL: 'https://fixture.example',
       KNOLO_MODEL: 'llama3.2',
@@ -178,7 +180,7 @@ test('a logged-in user sends the stored token only to Hub', async () => {
     env: {},
   });
   const calls = [];
-  await runHubAsk(['refunds', '--model', 'llama3.2', '--registry', 'https://fixture.example'], {
+  await runHubAsk(['refunds', '--all', '--model', 'llama3.2', '--registry', 'https://fixture.example'], {
     env: { KNOLO_MODEL_API_KEY: 'model-secret' },
     homeDir,
     fetchImpl: async (url, options = {}) => {
@@ -202,6 +204,7 @@ test('knolo ask exits 1 when Hub returns no evidence', async () => {
         cliPath,
         'ask',
         'refunds',
+        '--all',
         '--model',
         'llama3.2',
         '--hub',
@@ -224,6 +227,123 @@ test('knolo ask exits 1 when Hub returns no evidence', async () => {
   } finally {
     server.close();
   }
+});
+
+test('ask without a category or --all does not call the network', async () => {
+  const { runHubAsk } = await loadAsk();
+  let calls = 0;
+  await assert.rejects(
+    () => runHubAsk(['refunds', '--model', 'llama3.2'], {
+      env: { KNOLO_HUB_URL: 'https://fixture.example' },
+      fetchImpl: async () => {
+        calls += 1;
+        return jsonResponse({ hits: [] });
+      },
+    }),
+    /Pick one category/,
+  );
+  assert.equal(calls, 0);
+});
+
+test('--category and --all together is a usage error', async () => {
+  const { runHubAsk } = await loadAsk();
+  await assert.rejects(
+    () => runHubAsk(['refunds', '--all', '--category', 'coding', '--evidence'], {
+      fetchImpl: async () => {
+        throw new Error('network');
+      },
+    }),
+    /not both/,
+  );
+});
+
+test('--category is sent and a 402 does not call the model', async () => {
+  const { runHubAsk } = await loadAsk();
+  const calls = [];
+  const errors = [];
+  const result = await runHubAsk(
+    ['refunds', '--category', 'coding', '--category', 'math', '--model', 'llama3.2'],
+    {
+      env: { KNOLO_HUB_URL: 'https://fixture.example', KNOLO_MODEL_API_KEY: 'model-secret' },
+      fetchImpl: async (url, options = {}) => {
+        calls.push(String(url));
+        assert.deepEqual(JSON.parse(options.body).categories, ['coding', 'math']);
+        assert.equal(JSON.stringify(options.headers).includes('model-secret'), false);
+        return jsonResponse({
+          error: 'Free plan searches 1 category.',
+          code: 'plan_limit',
+        }, 402);
+      },
+      printError: (value) => errors.push(value),
+    },
+  );
+  assert.equal(result.exitCode, 1);
+  assert.deepEqual(calls, ['https://fixture.example/api/v1/knowledge/query']);
+  assert.match(errors[0], /1 category/);
+});
+
+test('a skill is sent to the model when no knowledge excerpt remains', async () => {
+  const { runHubAsk } = await loadAsk();
+  const excerpt = 'Do not move a borrowed value.';
+  const calls = [];
+  const printed = [];
+  const result = await runHubAsk(['borrow', '--category', 'coding', '--model', 'llama3.2'], {
+    env: { KNOLO_HUB_URL: 'https://fixture.example' },
+    fetchImpl: async (url, options = {}) => {
+      calls.push({ url: String(url), body: options.body });
+      if (String(url).includes('knowledge/query')) {
+        return jsonResponse({
+          hits: [],
+          skills: [{
+            publisher: 'hive',
+            name: 'rust-borrow',
+            categories: ['coding'],
+            description: 'Explain borrowing.',
+            excerpt,
+            excerptSha256: digest(excerpt),
+            skillSha256: 'ab'.repeat(32),
+            url: 'https://example.public.blob.vercel-storage.com/secret',
+          }],
+        });
+      }
+      return jsonResponse({ choices: [{ message: { content: 'Borrow, do not move.' } }] });
+    },
+    print: (value) => printed.push(value),
+  });
+  assert.equal(result.exitCode, 0);
+  assert.equal(calls.length, 2);
+  const modelBody = JSON.parse(calls[1].body);
+  assert.match(modelBody.messages[1].content, /Do not move a borrowed value/);
+  assert.match(modelBody.messages[1].content, /hive\/rust-borrow/);
+  assert.equal(modelBody.messages[1].content.includes('blob'), false);
+  assert.equal(printed.at(-1), 'hive/rust-borrow');
+});
+
+test('--evidence prints a skill before a knowledge hit', async () => {
+  const { runHubAsk } = await loadAsk();
+  const fact = 'Ownership is a compile-time rule.';
+  const procedure = 'Check the borrow before moving.';
+  const printed = [];
+  const result = await runHubAsk(['ownership', '--category', 'coding', '--evidence'], {
+    env: { KNOLO_HUB_URL: 'https://fixture.example' },
+    fetchImpl: async () => jsonResponse({
+      hits: [hit(fact)],
+      skills: [{
+        publisher: 'hive',
+        name: 'rust-borrow',
+        description: 'Explain borrowing.',
+        excerpt: procedure,
+        excerptSha256: digest(procedure),
+        skillSha256: 'cd'.repeat(32),
+      }],
+    }),
+    print: (value) => printed.push(value),
+  });
+  assert.equal(result.exitCode, 0);
+  const text = printed.join('\n');
+  assert.ok(text.indexOf('hive/rust-borrow') < text.indexOf('hive/refunds@1.0.0'));
+  assert.match(text, /Check the borrow before moving/);
+  assert.match(text, /Ownership is a compile-time rule/);
 });
 
 function listenJson(body) {

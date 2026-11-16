@@ -4,13 +4,14 @@ import {
   registryApiUrl,
   resolveRegistryUrl,
 } from './config.mjs';
+import { normalizeCategories } from './categories.mjs';
 import { loadCredentials } from './credentials.mjs';
 import { RegistryError, RegistryNetworkError } from './errors.mjs';
 import { postJson } from './http.mjs';
 
 export const DEFAULT_MODEL_BASE_URL = 'http://127.0.0.1:11434/v1';
 export const ASK_SYSTEM_PROMPT =
-  'Answer only from the excerpts. Cite each claim with publisher/slug@version and the object id. Do not use outside knowledge.';
+  'Answer only from the excerpts and any skill instructions in the prompt. Cite each knowledge claim with publisher/slug@version and the object id. Cite a skill as publisher/name. Do not use outside knowledge.';
 
 const SHA256_HEX = /^[0-9a-f]{64}$/;
 
@@ -57,6 +58,18 @@ export function parseAskArgs(args) {
       flags.evidence = true;
       continue;
     }
+    if (arg === '--all') {
+      flags.all = true;
+      continue;
+    }
+    if (arg === '--category') {
+      const value = args[++i];
+      if (value === undefined || value.startsWith('--')) {
+        throw new Error('Missing value for --category');
+      }
+      flags.categories = [...(flags.categories ?? []), value];
+      continue;
+    }
     if (['--model', '--base-url', '--limit', '--hub', '--registry'].includes(arg)) {
       const value = args[++i];
       if (value === undefined || value.startsWith('--')) {
@@ -73,8 +86,17 @@ export function parseAskArgs(args) {
   const question = positional.join(' ').trim();
   if (!question) {
     throw new Error(
-      'Usage: knolo ask "<question>" [--model <name>] [--base-url <url>] [--limit <n>] [--evidence] [--hub <url>]'
+      'Usage: knolo ask "<question>" [--category <id>] [--all] [--model <name>] [--base-url <url>] [--limit <n>] [--evidence] [--hub <url>]'
     );
+  }
+  if (flags.all && flags.categories) {
+    throw new Error('Use either --all or --category, not both.');
+  }
+  if (!flags.all && !flags.categories) {
+    throw new Error('Pick one category with --category, or pass --all to search the entire hub.');
+  }
+  if (flags.categories) {
+    flags.categories = normalizeCategories(flags.categories, { min: 1, max: 8 });
   }
   if (flags.limit !== undefined) {
     if (!/^[1-9]\d*$/.test(flags.limit)) {
@@ -143,7 +165,42 @@ export function verifiedHits(hits) {
   return hits.map(asHit).filter((hit) => hit !== null);
 }
 
-function printEvidence(hits, print) {
+function asSkill(value) {
+  if (!value || typeof value !== 'object') return null;
+  const skill = value;
+  if (typeof skill.publisher !== 'string' || !skill.publisher.trim()) return null;
+  if (typeof skill.name !== 'string' || !skill.name.trim()) return null;
+  if (typeof skill.excerpt !== 'string' || !skill.excerpt) return null;
+  if (typeof skill.excerptSha256 !== 'string' || !SHA256_HEX.test(skill.excerptSha256.toLowerCase())) {
+    return null;
+  }
+  if (excerptDigest(skill.excerpt) !== skill.excerptSha256.toLowerCase()) return null;
+  if (typeof skill.skillSha256 !== 'string' || !SHA256_HEX.test(skill.skillSha256.toLowerCase())) {
+    return null;
+  }
+  return {
+    publisher: skill.publisher,
+    name: skill.name,
+    description: typeof skill.description === 'string' ? skill.description : '',
+    excerpt: skill.excerpt,
+    excerptSha256: skill.excerptSha256.toLowerCase(),
+    skillSha256: skill.skillSha256.toLowerCase(),
+  };
+}
+
+export function verifiedSkills(skills) {
+  if (!Array.isArray(skills)) return [];
+  return skills.map(asSkill).filter((skill) => skill !== null);
+}
+
+function printEvidence(skills, hits, print) {
+  for (const skill of skills) {
+    print(`${skill.publisher}/${skill.name}`);
+    if (skill.description) print(skill.description);
+    print(skill.excerpt);
+    print(skill.excerptSha256);
+    print('');
+  }
   for (const hit of hits) {
     print(citation(hit));
     if (hit.heading) print(hit.heading);
@@ -186,11 +243,13 @@ export async function runHubAsk(
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
   const body = { q: question };
   if (flags.limit !== undefined) body.limit = flags.limit;
+  if (flags.categories) body.categories = flags.categories;
 
   let response;
   try {
     response = await postJson(url, body, { fetchImpl, headers });
   } catch (error) {
+    // A 402 plan_limit is a RegistryError. Do not call the model.
     const message = error instanceof RegistryNetworkError || error instanceof RegistryError
       ? error.message
       : 'Could not query Hub.';
@@ -199,14 +258,15 @@ export async function runHubAsk(
   }
 
   const hits = verifiedHits(response?.hits);
-  if (!hits.length) {
+  const skills = verifiedSkills(response?.skills);
+  if (!hits.length && !skills.length) {
     printError('Hub has no matching evidence.');
     return { exitCode: 1, registry, calls: 1 };
   }
 
   if (flags.evidence) {
-    printEvidence(hits, print);
-    return { exitCode: 0, registry, hits, calls: 1 };
+    printEvidence(skills, hits, print);
+    return { exitCode: 0, registry, hits, skills, calls: 1 };
   }
 
   const baseUrl = modelBase(flags, env);
@@ -214,12 +274,21 @@ export async function runHubAsk(
   const apiKey = typeof env.KNOLO_MODEL_API_KEY === 'string' ? env.KNOLO_MODEL_API_KEY.trim() : '';
   const modelHeaders = { 'content-type': 'application/json' };
   if (apiKey) modelHeaders.authorization = `Bearer ${apiKey}`;
-  const prompt = [
-    `Question: ${question}`,
-    '',
-    'Excerpts:',
-    ...hits.map((hit) => `Source: ${citation(hit)}\nHeading: ${hit.heading}\n${hit.excerpt}`),
-  ].join('\n');
+  const promptParts = [`Question: ${question}`, ''];
+  if (skills.length) {
+    promptParts.push(
+      'Skills:',
+      ...skills.map((skill) => `Skill: ${skill.publisher}/${skill.name}\n${skill.description}\n${skill.excerpt}`),
+      ''
+    );
+  }
+  if (hits.length) {
+    promptParts.push(
+      'Excerpts:',
+      ...hits.map((hit) => `Source: ${citation(hit)}\nHeading: ${hit.heading}\n${hit.excerpt}`)
+    );
+  }
+  const prompt = promptParts.join('\n');
 
   let modelResponse;
   try {
@@ -236,8 +305,8 @@ export async function runHubAsk(
     });
   } catch {
     printError('Model endpoint is unavailable. Excerpts follow.');
-    printEvidence(hits, print);
-    return { exitCode: 2, registry, hits, calls: 2 };
+    printEvidence(skills, hits, print);
+    return { exitCode: 2, registry, hits, skills, calls: 2 };
   }
 
   let modelBody;
@@ -252,13 +321,14 @@ export async function runHubAsk(
   if (!answer) {
     const status = typeof modelResponse?.status === 'number' ? modelResponse.status : 'error';
     printError(`Model endpoint returned HTTP ${status}. Excerpts follow.`);
-    printEvidence(hits, print);
-    return { exitCode: 2, registry, hits, calls: 2 };
+    printEvidence(skills, hits, print);
+    return { exitCode: 2, registry, hits, skills, calls: 2 };
   }
 
   print(answer);
   print('');
   print('Citations:');
+  for (const skill of skills) print(`${skill.publisher}/${skill.name}`);
   for (const hit of hits) print(citation(hit));
-  return { exitCode: 0, registry, hits, calls: 2 };
+  return { exitCode: 0, registry, hits, skills, calls: 2 };
 }

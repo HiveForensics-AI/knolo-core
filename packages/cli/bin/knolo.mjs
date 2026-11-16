@@ -207,14 +207,14 @@ function printCommandHelp(command) {
     search:
       'Usage: knolo search <query> [--format V4|V5] [--license <id>] [--official] [--agents] [--research] [--json] [--registry <url>]',
     ask:
-      'Usage: knolo ask "<question>" [--model <name>] [--base-url <url>] [--limit <n>] [--evidence] [--hub <url>]\n\nPosts the question to Hub and sends the verified excerpts to an OpenAI-compatible chat endpoint. The default base URL is http://127.0.0.1:11434/v1 (Ollama). Set KNOLO_MODEL_BASE_URL and KNOLO_MODEL for another engine, including a cloud gateway such as https://api.x.ai/v1. KNOLO_MODEL_API_KEY is sent only to that endpoint.\n--evidence prints the excerpts and does not call a model. --hub is the same registry override as --registry.',
+      'Usage: knolo ask "<question>" [--category <id>] [--all] [--model <name>] [--base-url <url>] [--limit <n>] [--evidence] [--hub <url>]\n\nPosts the question to Hub and sends the verified excerpts and skill instructions to an OpenAI-compatible chat endpoint. The default base URL is http://127.0.0.1:11434/v1 (Ollama). Set KNOLO_MODEL_BASE_URL and KNOLO_MODEL for another engine, including a cloud gateway such as https://api.x.ai/v1. KNOLO_MODEL_API_KEY is sent only to that endpoint.\nPass --category one or more times, or pass --all to search the entire hub. With neither, ask exits before the network call. --evidence prints skills first, then excerpts, and does not call a model. A plan limit does not call a model. --hub is the same registry override as --registry.',
     info: 'Usage: knolo info <publisher>/<slug> [--json] [--registry <url>]',
     login:
       'Usage: knolo login [--token kno_…] [--stdin] [--registry <url>]\n\nStores the raw token locally. Hub write calls send Authorization: Bearer kno_….\nMint tokens at https://hub.knolo.dev/dashboard/tokens; login does not call POST /api/v1/tokens.',
     whoami: 'Usage: knolo whoami',
     logout: 'Usage: knolo logout',
     publish:
-      'Usage: knolo publish <pack.knolo> --slug <slug> --version <version> --license <SPDX> [--publisher <handle>] [--readme <text>] [--sources <text>] [--intended-use <text>] [--private] [--json] [--registry <url>]\n\nUses the stored dashboard token as Authorization: Bearer kno_…. Hub issues a public Blob PUT grant; the CLI never needs PACKS_READ_WRITE_TOKEN.\nUploads go to the grant URL without the kno_ token. Complete sends the public Blob URL, then Hub verifies before release.\n--private releases an owner-only pack on a Business or Enterprise plan. The success text omits the Blob URL.',
+      'Usage: knolo publish <pack.knolo> --slug <slug> --version <version> --license <SPDX> [--publisher <handle>] [--readme <text>] [--sources <text>] [--intended-use <text>] [--category <id>] [--private] [--json] [--registry <url>]\n\nUses the stored dashboard token as Authorization: Bearer kno_…. Hub issues a public Blob PUT grant; the CLI never needs PACKS_READ_WRITE_TOKEN.\nUploads go to the grant URL without the kno_ token. Complete sends the public Blob URL, then Hub verifies before release.\n--category is repeatable, from 1 to 3 of coding, math, science, news, business, security, writing, general. A new pack needs at least one. --private releases an owner-only pack on a Business or Enterprise plan. The success text omits the Blob URL.',
     yank: 'Usage: knolo yank <publisher>/<slug>@<version> [--json] [--registry <url>]\n\nUses the stored token as Authorization: Bearer kno_…. Yank is owner-only and leaves the public Blob in place.',
     build: 'Usage: knolo build',
     query:
@@ -274,7 +274,7 @@ and it is not Knolo Hub. offer --via uploads to that relay instead of serve.`,
   knolo skill init <name> [--dir <parent>]
   knolo skill check [<dir>] [--query <text>] [--json]
   knolo skill pack [<dir>] [--out <dir>] [--json]
-  knolo skill publish <pack> [--registry <url>] [--json]
+  knolo skill publish <pack> [--category <id>] [--registry <url>] [--json]
   knolo skill publish <pack> --hub <dir> [--json]
   knolo skill install <publisher>/<name> [--dir <path>] [--registry <url>] [--json]
   knolo skill install <name> --hub <dir> [--dir <path>] [--json]
