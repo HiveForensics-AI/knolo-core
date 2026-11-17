@@ -166,8 +166,8 @@ Knolo Cortex. Published `@knolo/core` is `6.2.3`. This tree's core package
 file is `6.2.3`. `@knolo/tools` `0.2.2`
 depends on `@knolo/core` `^6.2.3`. `@knolo/tools@0.2.1` has no KITE evaluate or verify tools. This tree's `@knolo/mcp` is `0.2.4`.
 npm `latest` for MCP is `0.2.4`. `@knolo/mcp@0.2.3` has no KITE tools. This tree's
-`@knolo/cli` package file is `6.2.8` and depends on `@knolo/core` `^6.2.3` and `@knolo/exchange` `^0.1.1`.
-npm `latest` for the CLI is `6.2.8` and includes `knolo kite`, `knolo research verify`, and `knolo exchange relay`. `@knolo/cli@6.2.7` does not include research verify or the relay. `@knolo/cli@6.2.5` does not include `knolo kite`. npm `latest` for `@knolo/exchange` is `0.1.1`. `@knolo/exchange@0.1.0` has no relay. `@knolo/langchain`, `@knolo/llamaindex`,
+`@knolo/cli` package file is `6.2.9` and depends on `@knolo/core` `^6.2.3` and `@knolo/exchange` `^0.1.1`.
+npm `latest` for the CLI is `6.2.9` and includes `knolo ask` and `--category`. `@knolo/cli@6.2.8` has no `ask.mjs` and no `--category`. It includes `knolo kite`, `knolo research verify`, and `knolo exchange relay`. `@knolo/cli@6.2.7` does not include research verify or the relay. `@knolo/cli@6.2.5` does not include `knolo kite`. npm `latest` for `@knolo/exchange` is `0.1.1`. `@knolo/exchange@0.1.0` has no relay. `@knolo/langchain`, `@knolo/llamaindex`,
 `@knolo/semantic-ollama`, `create-knolo-app`, and `@knolo/reflex` stay on
 `@knolo/core` `^6.0.0`. `@knolo/ai-sdk@0.1.1` depends on `@knolo/core` `^6.2.3`
 and `@knolo/tools` `^0.2.2`. `@knolo/mastra` `0.1.1` is published and
