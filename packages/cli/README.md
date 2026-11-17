@@ -19,9 +19,9 @@ reader.
 
 `knolo compose`, `knolo attest`, and `knolo verify-attestation` cite local
 Knowledge Images and write an attestation sidecar. This tree's `@knolo/cli`
-package file is `6.2.8` and depends on `@knolo/core` `^6.2.3` and
-`@knolo/exchange` `^0.1.1`. npm `latest` is `6.2.8`. `knolo kite`, `knolo research verify`, and `knolo exchange relay` are in this
-package and in that release. It is not in published `@knolo/cli@6.2.5`. `knolo exchange` hands
+package file is `6.2.9` and depends on `@knolo/core` `^6.2.3` and
+`@knolo/exchange` `^0.1.1`. npm `latest` is `6.2.9` and includes `knolo ask` and `--category`. `@knolo/cli@6.2.8` has no `ask.mjs` and no `--category`. `knolo kite`, `knolo research verify`, and `knolo exchange relay` are in this
+package and in `@knolo/cli@6.2.8`. `knolo kite` is not in published `@knolo/cli@6.2.5`. `knolo exchange` hands
 a verified V5 image to another agent. Shipped configs keep `adopt: deny`.
 Discover reads a public advertisement and does not download a pack. They do
 not fetch Hub for that handoff. Verification
@@ -410,7 +410,7 @@ This ensures:
 ## 🗺 Roadmap
 
 The active roadmap is maintained in [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
-The published npm release is `6.2.8`. This tree's package file is `6.2.8` and adds `knolo research verify` and `knolo exchange relay`. `@knolo/cli@6.2.7` does not include those commands. `@knolo/cli@6.2.5` does not include `knolo kite`. The published release preserves the V4 CLI, keeps V5 verification,
+The published npm release is `6.2.9`. This tree's package file is `6.2.9` and adds `knolo ask` and `--category`. `@knolo/cli@6.2.8` has no `ask.mjs` and no `--category`. `@knolo/cli@6.2.7` does not include `knolo research verify` or `knolo exchange relay`. `@knolo/cli@6.2.5` does not include `knolo kite`. The published release preserves the V4 CLI, keeps V5 verification,
 migration, diagnostics, and read-only Studio management, and adds offline
 composition, attestation, and `knolo cortex`. Cortex verification does not
 mean an answer is true.
