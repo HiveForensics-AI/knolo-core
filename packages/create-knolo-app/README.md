@@ -8,8 +8,10 @@ npm `latest` for the CLI includes `knolo kite`. `@knolo/cli@6.2.5` does not.
 This tree's core package file is `6.2.3`, which is npm `latest`.
 Generated applications target the Knolo V4 TypeScript retrieval path, with the
 V5 foundation available beside it. Packs are V4 by default and can be checked
-with `knolo verify`. Python, Rust, and ICP stay `5.5.1` and do not implement
-KAR, composition, or Cortex.
+with `knolo verify`. Rust and ICP stay `5.5.1`. Rust evaluates public KAR V5
+and replays a KITE certificate. Python is `5.6.0` and does the same. Neither
+implements composition or Cortex. ICP does not implement KAR, composition, or
+Cortex.
 
 V5 Knowledge Image inspection is available after generation with
 `knolo v5 info`, `knolo v5 health`, and `knolo v5 studio`. See the

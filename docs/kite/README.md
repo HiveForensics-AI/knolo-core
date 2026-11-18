@@ -39,11 +39,11 @@ declarations, and declared changes. `verifyKiteCertificate` mounts the
 image again and recomputes the derivation. A stored hash that matches a
 stored hash is not verification.
 
-The Rust crate replays the same derivation from a `knolo-kite-world-1`
-snapshot. It does not search the image. Python does not implement KITE.
-The ICP canister methods stay the pack, search, and health calls. The CLI
-template copies the Rust sources so that crate still builds. Those
-runtimes stay 5.5.1. This tree's `@knolo/core` package file is 6.2.3. npm
+The Rust crate and the Python package replay the same derivation from a
+`knolo-kite-world-1` snapshot. They do not search the image. The ICP canister
+methods stay the pack, search, and health calls. The CLI template copies the
+Rust sources so that crate still builds. Rust and the ICP canister stay
+5.5.1. Python is 5.6.0. This tree's `@knolo/core` package file is 6.2.3. npm
 `latest` is 6.2.3.
 
 From a checkout, after building core:

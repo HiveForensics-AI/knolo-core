@@ -1,5 +1,7 @@
 # Release Checklist
 
+The package in this tree is `5.6.0`. The notes below record the `5.5.1` publish gap.
+
 npm `@knolo/core` and `@knolo/cli` were published as `5.5.1` from tag `v5.5.1`.
 PyPI has `knolo==5.5.0`. The Python package in this tree is `5.5.1`. The
 `v5.5.1` release built `5.5.0` from that tag and PyPI rejected the duplicate
