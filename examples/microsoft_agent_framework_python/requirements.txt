@@ -1,0 +1,3 @@
+agent-framework-core==1.26.0
+mcp==2.3.0
+tenacity==9.2.1
