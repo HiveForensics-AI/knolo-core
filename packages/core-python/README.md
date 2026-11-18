@@ -4,8 +4,12 @@
 lexical object queries, and read-only VQF-1 required object/event decoding,
 with the existing V1–V3 `.knolo` reader/query APIs preserved for compatibility.
 Python does not implement V5 mutation, coordination, Studio, network
-transport, or model execution. This package stays `5.5.1`. It does not
-implement KAR, coverage, or composition.
+transport, or model execution. This package is `5.6.0`. It evaluates and
+verifies public KAR V5 results and replays a KITE certificate from a
+`knolo-kite-world-1` snapshot. It does not search an image while replaying
+that certificate. It does not implement a pack builder, coverage reports,
+Cortex, or composition. `SATISFIED` means the evidence requirements were met.
+A receipt or a KITE certificate checks integrity. Neither means a claim is proven.
 
 The staged cross-runtime plan is [`../../docs/ROADMAP.md`](../../docs/ROADMAP.md).
 
@@ -144,10 +148,20 @@ The public package exports:
 - `InvalidKnowledgeImageError`
 - `tokenize()`
 - `normalize()`
+- `evaluate_kar_v5(image, sidecar_json, proposition, plan_json)`
+- `verify_kar_v5(image, sidecar_json, proposition, plan_json, claimed_json)`
+- `replay_kite_certificate(world_json, certificate_json)`
 - `__version__`
+
+`evaluate_kar_v5` returns `SATISFIED` when the declared evidence requirements
+were met. `UNSATISFIED_EVIDENCE_REQUIREMENTS` is a completed evaluation.
+`replay_kite_certificate` recomputes the derivation from the snapshot. A
+`BOUND_EXCEEDED` result has no certificate.
 
 ## Current Scope
 
+- Public KAR V5 evaluate and verify
+- KITE certificate replay from a declared world snapshot
 - No Python pack builder or V5 writer
 - No semantic reranking
 - No embeddings or vector database integration on the default path

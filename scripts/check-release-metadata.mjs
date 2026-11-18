@@ -9,6 +9,7 @@ const coreReleaseVersion = '6.2.3';
 const cliReleaseVersion = '6.2.9';
 const reflexReleaseVersion = '0.2.0';
 const platformVersion = '5.5.1';
+const pythonVersion = '5.6.0';
 const coreRange = '^6.0.0';
 const cliCoreRange = '^6.2.0';
 const cliKiteCoreRange = '^6.2.3';
@@ -123,8 +124,8 @@ const pythonInit = readFileSync(
   path.join(root, 'packages/core-python/src/knolo/__init__.py'),
   'utf8'
 );
-assert.match(pythonProject, new RegExp(`version = "${platformVersion}"`));
-assert.match(pythonInit, new RegExp(`__version__ = "${platformVersion}"`));
+assert.match(pythonProject, new RegExp(`version = "${pythonVersion}"`));
+assert.match(pythonInit, new RegExp(`__version__ = "${pythonVersion}"`));
 assert.match(
   readFileSync(path.join(root, 'packages/core-python/README.md'), 'utf8'),
   /V5 Knowledge Image verification/i
@@ -264,5 +265,5 @@ assert.equal(openclawPackage.dependencies?.['@knolo/tools'], '^0.1.0');
 assert.equal(openclawPackage.engines?.node, '>=24.16.0');
 
 console.log(
-  `Release metadata passed for npm ${releaseVersion} with core ${coreReleaseVersion} and CLI ${cliReleaseVersion}. Rust and Python stay ${platformVersion}. @knolo/tools is ${toolsVersion}. @knolo/mcp is ${mcpVersion}. @knolo/ai-sdk is ${aiSdkVersion}. @knolo/mastra is ${mastraVersion} and is not published. @knolo/openai-agents is ${openaiAgentsVersion} and is not published. n8n-nodes-knolo is ${n8nNodesVersion} and is not published. @knolo/openclaw stays ${openclawVersion}. @knolo/box is 0.1.1.`
+  `Release metadata passed for npm ${releaseVersion} with core ${coreReleaseVersion} and CLI ${cliReleaseVersion}. Rust and ICP stay ${platformVersion}. Python is ${pythonVersion}. @knolo/tools is ${toolsVersion}. @knolo/mcp is ${mcpVersion}. @knolo/ai-sdk is ${aiSdkVersion}. @knolo/mastra is ${mastraVersion} and is not published. @knolo/openai-agents is ${openaiAgentsVersion} and is not published. n8n-nodes-knolo is ${n8nNodesVersion} and is not published. @knolo/openclaw stays ${openclawVersion}. @knolo/box is 0.1.1.`
 );

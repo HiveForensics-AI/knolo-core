@@ -11,3 +11,11 @@ class InvalidPackError(KnoloError):
 
 class InvalidKnowledgeImageError(KnoloError):
     """Raised when a V5 Knowledge Image cannot be parsed or verified."""
+
+
+class KarRunError(KnoloError):
+    """Raised when a KAR session cannot be opened."""
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code

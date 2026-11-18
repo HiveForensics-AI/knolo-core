@@ -45,6 +45,6 @@ Continuous integration starts `packages/mcp/bin/knolo-mcp.mjs` with Node so the 
 
 The smoke uses `Client` with `StdioServerParameters` from `mcp` 2.3.0. `list_tools` lists the tools, and `call_tool` runs `knolo_search`. The smoke does not import Dify.
 
-This repository does not publish a Dify tool plugin. PyPI `knolo` 5.5.1 has no KAR.
+This repository does not publish a Dify tool plugin. PyPI `knolo` 5.5.1 has no KAR. This tree's `knolo` package is 5.6.0. It evaluates public KAR V5 and replays a KITE certificate.
 
 Server configuration is documented in the [`@knolo/mcp` README](../../packages/mcp/README.md).

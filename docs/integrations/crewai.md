@@ -39,6 +39,6 @@ Continuous integration starts `packages/mcp/bin/knolo-mcp.mjs` with Node so the 
 
 `MCPServerAdapter` takes `StdioServerParameters`, so the config path is one argument. The adapter sends `null` for an optional argument it omits. `knolo_search`, `knolo_get`, `knolo_verify`, `knolo_kar_verify`, and `knolo_cortex_verify` treat that `null` as an omitted field. `knolo_kar_verify` still requires exactly one of `result` or `dossier`. The smoke calls the `knolo_search` tool's `run` method. It does not construct an agent, a task, or a crew. Importing the example sets `CREWAI_DISABLE_TELEMETRY` to `true` and `CREWAI_TRACING_ENABLED` to `false` when those variables are unset. The smoke uses `MCPServerAdapter` only.
 
-This repository does not publish a CrewAI toolkit. CrewAI talks to the MCP server directly. PyPI `knolo` 5.5.1 has no KAR.
+This repository does not publish a CrewAI toolkit. CrewAI talks to the MCP server directly. PyPI `knolo` 5.5.1 has no KAR. This tree's `knolo` package is 5.6.0. It evaluates public KAR V5 and replays a KITE certificate.
 
 Server configuration is documented in the [`@knolo/mcp` README](../../packages/mcp/README.md).

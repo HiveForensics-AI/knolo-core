@@ -6,7 +6,7 @@ Knolo Cortex is reasoned evidence retrieval over a mounted V4 pack or a V5 Knowl
 
 The host owns any model. Core does not call a network, does not embed a model, and does not decide that an answer is true. `verifyCortexAnswer` recomputes `traceRoot`, `answerRoot`, and `evidenceRoot`, checks evidence identity, replays the retrieval receipt, and recomputes KAR references. `evidenceRoot` commits the source label. Evidence must be selected by a replayed round. A dossier must match the trace body. A passing verification means the trace matches the declared evidence. It does not mean the claim is proven.
 
-Rust, Python, and ICP do not implement Cortex. They stay on 5.5.1.
+Rust and ICP stay on 5.5.1 and do not implement Cortex. Python is 5.6.0 and does not implement Cortex.
 
 ## Loop
 

@@ -59,7 +59,7 @@ The native package does not start a server and does not open a port. The MCP exa
 
 ## Python
 
-`openai-agents-python` can start the same published server. This repository does not ship a Python example or a Python smoke for that SDK. PyPI `knolo` 5.5.1 has no KAR.
+`openai-agents-python` can start the same published server. This repository does not ship a Python example or a Python smoke for that SDK. PyPI `knolo` 5.5.1 has no KAR. This tree's `knolo` package is 5.6.0. It evaluates public KAR V5 and replays a KITE certificate.
 
 ```python
 from agents.mcp import MCPServerStdio

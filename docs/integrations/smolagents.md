@@ -41,6 +41,6 @@ Continuous integration starts `packages/mcp/bin/knolo-mcp.mjs` with Node so the 
 
 `structured_output` is false so the tool returns the receipt text. The smoke does not construct a model agent.
 
-This repository does not publish a smolagents package. smolagents talks to the MCP server directly. PyPI `knolo` 5.5.1 has no KAR.
+This repository does not publish a smolagents package. smolagents talks to the MCP server directly. PyPI `knolo` 5.5.1 has no KAR. This tree's `knolo` package is 5.6.0. It evaluates public KAR V5 and replays a KITE certificate.
 
 Server configuration is documented in the [`@knolo/mcp` README](../../packages/mcp/README.md).

@@ -178,8 +178,10 @@ and `@knolo/tools` `^0.2.2`. `@knolo/mastra` `0.1.1` is published and
 depends on `@knolo/core` `^6.2.3` and `@knolo/tools` `^0.2.2`.
 `@knolo/openai-agents` `0.1.1` is published and depends on
 `@knolo/core` `^6.2.3` and `@knolo/tools` `^0.2.2`. V4 retrieval
-APIs remain compatible. Rust, Python,
-and ICP stay 5.5.1 and do not implement KAR, composition, or Cortex.
+APIs remain compatible. Rust and ICP stay 5.5.1. Rust evaluates public KAR V5
+and replays a KITE certificate. Python is 5.6.0 and does the same. Neither
+implements Cortex or composition. ICP does not implement KAR, Cortex, or
+composition.
 Bundled Domain Packs are `review-required`. Networking,
 credentials, model execution, external side effects, and UI presentation
 remain host responsibilities.

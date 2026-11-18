@@ -41,6 +41,6 @@ Continuous integration starts `packages/mcp/bin/knolo-mcp.mjs` with Node so the 
 
 `MCPToolset` takes `StdioServerInfo` with `eager_connect` true, so the listed tools are the Knolo tools. The smoke calls `invoke` on `knolo_search`. It does not build a pipeline. It stops the MCP session after the search so the process can exit.
 
-This repository does not publish a Haystack integration package. Haystack talks to the MCP server through published `mcp-haystack`. PyPI `knolo` 5.5.1 has no KAR. A catalog draft is [haystack-catalog-page.md](haystack-catalog-page.md). This repository does not submit it.
+This repository does not publish a Haystack integration package. Haystack talks to the MCP server through published `mcp-haystack`. PyPI `knolo` 5.5.1 has no KAR. This tree's `knolo` package is 5.6.0. It evaluates public KAR V5 and replays a KITE certificate. A catalog draft is [haystack-catalog-page.md](haystack-catalog-page.md). This repository does not submit it.
 
 Server configuration is documented in the [`@knolo/mcp` README](../../packages/mcp/README.md).

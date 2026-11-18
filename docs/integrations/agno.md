@@ -39,6 +39,6 @@ Continuous integration starts `packages/mcp/bin/knolo-mcp.mjs` with Node so the 
 
 `MCPTools` takes `StdioServerParameters`, so the config path is one argument. The smoke calls `functions["knolo_search"]`. It does not construct an agent. Importing the example sets `AGNO_TELEMETRY` to `false` when that variable is unset. The smoke uses `MCPTools` only.
 
-This repository does not publish an Agno toolkit. Agno talks to the MCP server directly. PyPI `knolo` 5.5.1 has no KAR.
+This repository does not publish an Agno toolkit. Agno talks to the MCP server directly. PyPI `knolo` 5.5.1 has no KAR. This tree's `knolo` package is 5.6.0. It evaluates public KAR V5 and replays a KITE certificate.
 
 Server configuration is documented in the [`@knolo/mcp` README](../../packages/mcp/README.md).
