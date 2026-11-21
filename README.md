@@ -11,7 +11,7 @@ It is an integrity check. It does not mean a claim is proven. The next
 agent checks the mounted image against its pin. Knolo does not call a
 model, and it does not run the agent. The short guide is
 [two agents sharing knowledge](docs/guides/agents-sharing-knowledge.md).
-
+withknolo verify to with knolo verify.
 > **Knowledge should be an asset you can inspect, verify, migrate, and run—not opaque context trapped inside an application.**
 
 **V6 · KAR · V5 Knowledge Images · V4 compatible · Local-first · Deterministic · Verifiable**
