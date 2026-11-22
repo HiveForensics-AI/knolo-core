@@ -241,6 +241,16 @@ The marketplace
 submission is
 [cline/mcp-marketplace#3696](https://github.com/cline/mcp-marketplace/issues/3696).
 
+Codex CLI installs this server from the repository marketplace:
+
+```sh
+codex plugin marketplace add HiveForensics-AI/knolo-core
+```
+
+The plugin is `codex-knolo`. It starts
+`npx -y @knolo/mcp@0.2.4 --config ${KNOLO_MCP_CONFIG}`. A missing
+`KNOLO_MCP_CONFIG` fails closed. The server does not listen on a port.
+
 The package requires Node 20 or newer, `@knolo/core` `^6.2.1`, and
 `@knolo/tools` `^0.2.1`. Coverage, composition, and authoring stay outside
 this server. Verification checks integrity. It does not decide that a claim

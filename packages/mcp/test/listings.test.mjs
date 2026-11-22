@@ -38,6 +38,62 @@ test('cline logo is a 400 by 400 png', () => {
   assert.equal(bytes.readUInt32BE(20), 400);
 });
 
+test('codex plugin starts the published stdio server', () => {
+  const repoRoot = path.resolve(packageRoot, '../..');
+  const plugin = JSON.parse(
+    readFileSync(
+      path.join(repoRoot, 'plugins/codex-knolo/plugin.json'),
+      'utf8'
+    )
+  );
+  assert.equal(plugin.name, 'codex-knolo');
+  assert.equal(plugin.version, '0.1.0');
+  const mcp = JSON.parse(
+    readFileSync(path.join(repoRoot, 'plugins/codex-knolo/.mcp.json'), 'utf8')
+  );
+  assert.deepEqual(mcp.mcpServers.knolo, {
+    command: 'npx',
+    args: ['-y', '@knolo/mcp@0.2.4', '--config', '${KNOLO_MCP_CONFIG}'],
+  });
+  const encoded = JSON.stringify(mcp);
+  assert.equal(encoded.includes('http'), false);
+  assert.equal(encoded.includes('port'), false);
+  const skill = readFileSync(
+    path.join(repoRoot, 'plugins/codex-knolo/skills/knolo/SKILL.md'),
+    'utf8'
+  );
+  assert.match(skill, /Tool arguments cannot set the caller/);
+  assert.match(
+    skill,
+    /`SATISFIED` means evidence requirements were met\. It does not mean a claim is proven\./
+  );
+  assert.match(
+    skill,
+    /A receipt is an integrity check\. It does not mean a claim is proven\./
+  );
+  const marketplace = JSON.parse(
+    readFileSync(
+      path.join(repoRoot, '.agents/plugins/marketplace.json'),
+      'utf8'
+    )
+  );
+  assert.equal(marketplace.name, 'knolo');
+  assert.equal(marketplace.plugins.length, 1);
+  assert.equal(marketplace.plugins[0].name, 'codex-knolo');
+  assert.deepEqual(marketplace.plugins[0].source, {
+    source: 'local',
+    path: './plugins/codex-knolo',
+  });
+  assert.equal(marketplace.plugins[0].policy.installation, 'AVAILABLE');
+  assert.equal(marketplace.plugins[0].policy.authentication, 'ON_INSTALL');
+  assert.equal(marketplace.plugins[0].category, 'Developer Tools');
+  assert.match(
+    readme,
+    /codex plugin marketplace add HiveForensics-AI\/knolo-core/
+  );
+  assert.match(readme, /A missing\n`KNOLO_MCP_CONFIG` fails closed\./);
+});
+
 test('awesome-mcp-servers entry matches the directory line', () => {
   const text = readFileSync(
     path.join(packageRoot, 'listings/awesome-mcp-servers.md'),
