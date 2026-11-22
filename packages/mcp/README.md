@@ -61,7 +61,13 @@ server version to `0.2.4`. `@knolo/mcp@0.2.3` has no KITE evaluate or verify too
 the four tools above. A mount with a `kar` block also exposes
 `knolo_kar_evaluate`, `knolo_kar_verify`, and `knolo_cortex_verify`. The
 registry name in `server.json` is `io.github.HiveForensics-AI/knolo`.
-Published `@knolo/mcp@0.1.0` remains the four-tool server.
+The official MCP Registry serves that name at `0.2.4`, marked latest, with
+npm package `@knolo/mcp@0.2.4`:
+[io.github.HiveForensics-AI/knolo](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.HiveForensics-AI%2Fknolo&version=latest).
+Published `@knolo/mcp@0.1.0` remains the four-tool server and stays in the
+Registry as the older version.
+When a later `@knolo/mcp` npm publish changes `server.json`, publish that
+same file to the official MCP Registry in the same change.
 
 The [Google ADK examples](../../docs/integrations/google-adk.md) start this
 server over stdio and run one search. The
