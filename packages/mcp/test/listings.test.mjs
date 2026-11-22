@@ -41,10 +41,7 @@ test('cline logo is a 400 by 400 png', () => {
 test('codex plugin starts the published stdio server', () => {
   const repoRoot = path.resolve(packageRoot, '../..');
   const plugin = JSON.parse(
-    readFileSync(
-      path.join(repoRoot, 'plugins/codex-knolo/plugin.json'),
-      'utf8'
-    )
+    readFileSync(path.join(repoRoot, 'plugins/codex-knolo/plugin.json'), 'utf8')
   );
   assert.equal(plugin.name, 'codex-knolo');
   assert.equal(plugin.version, '0.1.0');
