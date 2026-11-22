@@ -1,0 +1,20 @@
+{
+  "name": "knolo",
+  "interface": {
+    "displayName": "Knolo"
+  },
+  "plugins": [
+    {
+      "name": "codex-knolo",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex-knolo"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

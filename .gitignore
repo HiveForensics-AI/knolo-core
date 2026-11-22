@@ -70,7 +70,10 @@ env/
 .env
 .env.local
 .env.*.local
-.agents/
+.agents/*
+!.agents/plugins/
+.agents/plugins/*
+!.agents/plugins/marketplace.json
 .DS_Store
 Thumbs.db
 
