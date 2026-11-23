@@ -295,6 +295,15 @@ path of `knolo-mcp.json`. A missing or invalid config fails closed. The
 server does not listen on a port. The CLI, VS Code, and JetBrains clients
 read that same file.
 
+OpenHands loads this server from `mcpServers.knolo` in `mcp_config`. Agent
+Canvas uses the same command under Customize > MCP Servers. The example is
+[`examples/openhands/mcp_config.json`](../../examples/openhands/mcp_config.json).
+The integration note is [OpenHands](../../docs/integrations/openhands.md).
+Replace `/absolute/knolo-mcp.json` with the absolute path of
+`knolo-mcp.json`. The path and the pinned image must be readable inside the
+sandbox. A missing or invalid config fails closed. The server does not
+listen on a port.
+
 The package requires Node 20 or newer, `@knolo/core` `^6.2.1`, and
 `@knolo/tools` `^0.2.1`. Coverage, composition, and authoring stay outside
 this server. Verification checks integrity. It does not decide that a claim
