@@ -1,0 +1,15 @@
+id: knolo
+name: Knolo
+description: Read-only search, get, verify, and status for a pinned local Knolo Knowledge Image.
+author: HiveForensics-AI
+url: https://github.com/HiveForensics-AI/knolo-core
+category: search
+content:
+  - name: NPX
+    content: |
+      {
+        "command": "npx",
+        "args": ["-y", "@knolo/mcp@0.2.4", "--config", "/absolute/knolo-mcp.json"]
+      }
+    prerequisites:
+      - Node.js
