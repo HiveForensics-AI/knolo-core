@@ -139,6 +139,10 @@ operational guides for Knolo.
 - [Goose](integrations/goose.md) — a stdio extension draft for Goose. The
   server does not listen on a port. `@knolo/mcp@0.2.4` is the published
   command Goose launches. The directory pull request is separate.
+- [Continue](integrations/continue.md) — a stdio block for Continue agent
+  mode. The server does not listen on a port. `@knolo/mcp@0.2.4` is the
+  published command. Publishing the block to Continue Hub is a separate
+  account step.
 - [Vercel AI SDK](integrations/ai-sdk.md) — `@knolo/ai-sdk` tools over
   `@knolo/tools`. Knolo does not call a model. A search returns a query
   receipt. `SATISFIED` means evidence requirements were met.

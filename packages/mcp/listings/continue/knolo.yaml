@@ -1,0 +1,15 @@
+# Draft Continue Hub block. Publishing to hub.continue.dev is a separate
+# account step. The 400x400 logo is listings/cline/logo.png in this package.
+# Knolo has no API key. The server is stdio and does not listen.
+name: Knolo
+version: 0.0.1
+schema: v1
+mcpServers:
+  - name: Knolo
+    type: stdio
+    command: npx
+    args:
+      - "-y"
+      - "@knolo/mcp@0.2.4"
+      - "--config"
+      - /absolute/knolo-mcp.json

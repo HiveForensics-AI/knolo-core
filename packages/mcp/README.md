@@ -251,6 +251,30 @@ The plugin is `codex-knolo`. It starts
 `npx -y @knolo/mcp@0.2.4 --config ${KNOLO_MCP_CONFIG}`. A missing
 `KNOLO_MCP_CONFIG` fails closed. The server does not listen on a port.
 
+Continue loads this server from `.continue/mcpServers/knolo.yaml` or from
+`~/.continue/config.yaml`. The draft block is
+[`listings/continue/knolo.yaml`](listings/continue/knolo.yaml). The
+integration note is [Continue](../../docs/integrations/continue.md). MCP tools
+load only in Continue agent mode. Replace `/absolute/knolo-mcp.json` with the
+absolute path of `knolo-mcp.json`. A missing or invalid config fails closed.
+The server does not listen on a port. Publishing the block to Continue Hub is
+a separate account step.
+
+```yaml
+name: Knolo
+version: 0.0.1
+schema: v1
+mcpServers:
+  - name: Knolo
+    type: stdio
+    command: npx
+    args:
+      - '-y'
+      - '@knolo/mcp@0.2.4'
+      - '--config'
+      - /absolute/knolo-mcp.json
+```
+
 The package requires Node 20 or newer, `@knolo/core` `^6.2.1`, and
 `@knolo/tools` `^0.2.1`. Coverage, composition, and authoring stay outside
 this server. Verification checks integrity. It does not decide that a claim
