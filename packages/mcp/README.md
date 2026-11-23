@@ -275,6 +275,18 @@ mcpServers:
       - /absolute/knolo-mcp.json
 ```
 
+OpenCode loads this server from `mcp.servers.knolo` in `opencode.json`. The
+example is
+[`examples/opencode/opencode.json`](../../examples/opencode/opencode.json).
+The integration note is [OpenCode](../../docs/integrations/opencode.md).
+`codemode` is `false`. Replace `/absolute/knolo-mcp.json` with the absolute
+path of `knolo-mcp.json`. A missing or invalid config fails closed. The
+server does not listen on a port.
+
+```sh
+opencode mcp add knolo -- npx -y @knolo/mcp@0.2.4 --config /absolute/knolo-mcp.json
+```
+
 The package requires Node 20 or newer, `@knolo/core` `^6.2.1`, and
 `@knolo/tools` `^0.2.1`. Coverage, composition, and authoring stay outside
 this server. Verification checks integrity. It does not decide that a claim
