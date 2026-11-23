@@ -171,6 +171,119 @@ test('cline install docs keep the published pins', () => {
   );
 });
 
+test('opencode config starts the published stdio server', async () => {
+  const repoRoot = path.resolve(packageRoot, '../..');
+  const example = JSON.parse(
+    readFileSync(path.join(repoRoot, 'examples/opencode/opencode.json'), 'utf8')
+  );
+  const server = example.mcp.servers.knolo;
+  assert.equal(server.type, 'local');
+  assert.equal(server.codemode, false);
+  assert.deepEqual(server.command.slice(0, 4), [
+    'npx',
+    '-y',
+    published,
+    '--config',
+  ]);
+  assert.equal(server.command[4], '/absolute/knolo-mcp.json');
+  const encoded = JSON.stringify(example);
+  assert.doesNotMatch(encoded, /https?:\/\//);
+  assert.doesNotMatch(encoded, /"url"/);
+  assert.doesNotMatch(encoded, /\bport\b/i);
+  assert.match(readme, /opencode mcp add knolo -- npx -y @knolo\/mcp@0\.2\.4/);
+  assert.match(readme, /A missing or invalid config fails closed\./);
+
+  const destination = await mkdtemp(path.join(os.tmpdir(), 'knolo-opencode-'));
+  try {
+    const prepared = await run(
+      process.execPath,
+      [
+        path.join(repoRoot, 'examples/google_adk_python/prepare-fixture.mjs'),
+        destination,
+      ],
+      repoRoot
+    );
+    assert.equal(prepared.code, 0, prepared.stderr);
+    const configPath = prepared.stdout.trim().split('\n').at(-1);
+    const command = server.command.slice();
+    command[4] = configPath;
+    const child = spawn(command[0], command.slice(1), {
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    child.stdout.setEncoding('utf8');
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk;
+    });
+    const send = (message) => {
+      child.stdin.write(`${JSON.stringify(message)}\n`);
+    };
+    try {
+      send({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2025-11-25',
+          capabilities: {},
+          clientInfo: { name: 'opencode-install', version: '0.0.0' },
+        },
+      });
+      const initialized = await waitFor(
+        () => jsonLines(stdout),
+        (message) => message.id === 1,
+        90000
+      );
+      assert.equal(initialized.result.serverInfo.name, 'knolo');
+      send({ jsonrpc: '2.0', method: 'notifications/initialized' });
+      send({ jsonrpc: '2.0', id: 2, method: 'tools/list' });
+      const listed = await waitFor(
+        () => jsonLines(stdout),
+        (message) => message.id === 2,
+        20000
+      );
+      const names = listed.result.tools.map((tool) => tool.name);
+      for (const name of [
+        'knolo_search',
+        'knolo_get',
+        'knolo_verify',
+        'knolo_status',
+      ]) {
+        assert.equal(names.includes(name), true, name);
+      }
+      send({
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: {
+          name: 'knolo_search',
+          arguments: { query: 'refunds' },
+        },
+      });
+      const searched = await waitFor(
+        () => jsonLines(stdout),
+        (message) => message.id === 3,
+        20000
+      );
+      assert.notEqual(searched.result.isError, true);
+      const body = searched.result.structuredContent;
+      assert.match(body.hits[0].excerpt, /Annual enterprise refunds/);
+      assert.match(body.receipts[0].receiptId, /^qr_/);
+    } finally {
+      child.stdin.end();
+      await stop(child);
+    }
+
+    const missing = path.join(destination, 'missing-knolo-mcp.json');
+    const failed = await run(command[0], command.slice(1, 4).concat(missing));
+    assert.notEqual(failed.code, 0);
+    assert.equal(failed.stdout, '');
+    assert.match(failed.stderr, /IMAGE_UNAVAILABLE/);
+  } finally {
+    await rm(destination, { recursive: true, force: true });
+  }
+});
+
 test('documented pin commands search the fixture', async () => {
   const repoRoot = path.resolve(packageRoot, '../..');
   const destination = await mkdtemp(path.join(os.tmpdir(), 'knolo-cline-'));
@@ -295,9 +408,9 @@ function jsonLines(stdout) {
     .map((line) => JSON.parse(line));
 }
 
-async function waitFor(read, predicate) {
+async function waitFor(read, predicate, timeoutMs = 20000) {
   const started = Date.now();
-  while (Date.now() - started < 20000) {
+  while (Date.now() - started < timeoutMs) {
     try {
       const found = read().find(predicate);
       if (found) return found;
