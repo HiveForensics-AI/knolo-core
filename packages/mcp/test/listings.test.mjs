@@ -30,6 +30,24 @@ test('goose extension is a stdio npx draft', () => {
   assert.doesNotMatch(text, /:\/\//);
 });
 
+test('continue block is a stdio npx draft', () => {
+  const text = readFileSync(
+    path.join(packageRoot, 'listings/continue/knolo.yaml'),
+    'utf8'
+  );
+  assert.match(text, /^ {4}type: stdio$/m);
+  assert.match(text, /^ {4}command: npx$/m);
+  assert.match(
+    text,
+    new RegExp(published.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  );
+  assert.match(text, /--config/);
+  assert.doesNotMatch(text, /:\/\//);
+  assert.doesNotMatch(text, /\bport\b/i);
+  assert.match(readme, /MCP tools\nload only in Continue agent mode\./);
+  assert.match(readme, /A missing or invalid config fails closed\./);
+});
+
 test('cline logo is a 400 by 400 png', () => {
   const bytes = readFileSync(path.join(packageRoot, 'listings/cline/logo.png'));
   assert.equal(bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
