@@ -287,6 +287,14 @@ server does not listen on a port.
 opencode mcp add knolo -- npx -y @knolo/mcp@0.2.4 --config /absolute/knolo-mcp.json
 ```
 
+Kilo Code loads this server from `mcp.servers.knolo` in `kilo.jsonc`. The
+example is [`examples/kilo/kilo.jsonc`](../../examples/kilo/kilo.jsonc). The
+integration note is [Kilo Code](../../docs/integrations/kilo-code.md).
+`codemode` is `false`. Replace `/absolute/knolo-mcp.json` with the absolute
+path of `knolo-mcp.json`. A missing or invalid config fails closed. The
+server does not listen on a port. The CLI, VS Code, and JetBrains clients
+read that same file.
+
 The package requires Node 20 or newer, `@knolo/core` `^6.2.1`, and
 `@knolo/tools` `^0.2.1`. Coverage, composition, and authoring stay outside
 this server. Verification checks integrity. It does not decide that a claim
