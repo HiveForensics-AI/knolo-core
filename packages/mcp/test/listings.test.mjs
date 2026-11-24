@@ -656,6 +656,128 @@ test('gemini and antigravity configs start the published stdio server', async ()
   }
 });
 
+test('zed settings start the published stdio server', async () => {
+  const repoRoot = path.resolve(packageRoot, '../..');
+  const settings = JSON.parse(
+    readFileSync(path.join(repoRoot, 'examples/zed/settings.json'), 'utf8')
+  );
+  const server = settings.context_servers.knolo;
+  assert.equal(server.command, 'npx');
+  assert.deepEqual(server.args.slice(0, 3), ['-y', published, '--config']);
+  assert.equal(server.args[3], '/absolute/knolo-mcp.json');
+  const encoded = JSON.stringify(settings);
+  assert.doesNotMatch(encoded, /https?:\/\//);
+  assert.doesNotMatch(encoded, /"url"/);
+  assert.doesNotMatch(encoded, /\bport\b/i);
+  assert.match(readme, /examples\/zed\/settings\.json/);
+  assert.match(readme, /A missing or invalid config fails closed\./);
+  const note = readFileSync(
+    path.join(repoRoot, 'docs/integrations/zed.md'),
+    'utf8'
+  );
+  assert.match(note, /There is no remote URL\./);
+  assert.match(note, /A receipt is an integrity check\./);
+  assert.match(note, /A missing or invalid config fails closed\./);
+  const extension = readFileSync(
+    path.join(repoRoot, 'packages/zed-extension/src/lib.rs'),
+    'utf8'
+  );
+  assert.match(extension, /@knolo\/mcp@0\.2\.4/);
+  assert.match(extension, /config_path/);
+  assert.doesNotMatch(extension, /npm_package_latest_version/);
+  assert.doesNotMatch(extension, /npm_install_package/);
+
+  const destination = await mkdtemp(path.join(os.tmpdir(), 'knolo-zed-'));
+  try {
+    const prepared = await run(
+      process.execPath,
+      [
+        path.join(repoRoot, 'examples/google_adk_python/prepare-fixture.mjs'),
+        destination,
+      ],
+      repoRoot
+    );
+    assert.equal(prepared.code, 0, prepared.stderr);
+    const configPath = prepared.stdout.trim().split('\n').at(-1);
+    const args = server.args.slice();
+    args[3] = configPath;
+    const child = spawn(server.command, args, {
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    child.stdout.setEncoding('utf8');
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk;
+    });
+    const send = (message) => {
+      child.stdin.write(`${JSON.stringify(message)}\n`);
+    };
+    try {
+      send({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2025-11-25',
+          capabilities: {},
+          clientInfo: { name: 'zed-install', version: '0.0.0' },
+        },
+      });
+      const initialized = await waitFor(
+        () => jsonLines(stdout),
+        (message) => message.id === 1,
+        90000
+      );
+      assert.equal(initialized.result.serverInfo.name, 'knolo');
+      send({ jsonrpc: '2.0', method: 'notifications/initialized' });
+      send({ jsonrpc: '2.0', id: 2, method: 'tools/list' });
+      const listed = await waitFor(
+        () => jsonLines(stdout),
+        (message) => message.id === 2,
+        20000
+      );
+      const names = listed.result.tools.map((tool) => tool.name);
+      for (const name of [
+        'knolo_search',
+        'knolo_get',
+        'knolo_verify',
+        'knolo_status',
+      ]) {
+        assert.equal(names.includes(name), true, name);
+      }
+      send({
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: {
+          name: 'knolo_search',
+          arguments: { query: 'refunds' },
+        },
+      });
+      const searched = await waitFor(
+        () => jsonLines(stdout),
+        (message) => message.id === 3,
+        20000
+      );
+      assert.notEqual(searched.result.isError, true);
+      const body = searched.result.structuredContent;
+      assert.match(body.hits[0].excerpt, /Annual enterprise refunds/);
+      assert.match(body.receipts[0].receiptId, /^qr_/);
+    } finally {
+      child.stdin.end();
+      await stop(child);
+    }
+
+    const missing = path.join(destination, 'missing-knolo-mcp.json');
+    const failed = await run(server.command, args.slice(0, 3).concat(missing));
+    assert.notEqual(failed.code, 0);
+    assert.equal(failed.stdout, '');
+    assert.match(failed.stderr, /IMAGE_UNAVAILABLE/);
+  } finally {
+    await rm(destination, { recursive: true, force: true });
+  }
+});
+
 test('documented pin commands search the fixture', async () => {
   const repoRoot = path.resolve(packageRoot, '../..');
   const destination = await mkdtemp(path.join(os.tmpdir(), 'knolo-cline-'));

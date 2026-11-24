@@ -1,0 +1,10 @@
+id = "knolo"
+name = "Knolo"
+description = "stdio Model Context Protocol server for a pinned Knolo Knowledge Image"
+version = "0.0.1"
+schema_version = 1
+authors = ["Hive Forensics AI"]
+repository = "https://github.com/HiveForensics-AI/knolo-core"
+
+[context_servers.knolo]
+name = "Knolo"

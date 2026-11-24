@@ -1,0 +1,17 @@
+[package]
+name = "knolo-zed-extension"
+version = "0.0.1"
+edition = "2021"
+publish = false
+license = "Apache-2.0"
+description = "Zed context server extension for the pinned Knolo MCP server"
+repository = "https://github.com/HiveForensics-AI/knolo-core"
+
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[dependencies]
+schemars = "0.8"
+serde = { version = "1.0", features = ["derive"] }
+zed_extension_api = "0.7.0"

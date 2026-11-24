@@ -1,0 +1,25 @@
+name: zed-extension
+
+on:
+  push:
+    paths:
+      - 'packages/zed-extension/**'
+      - '.github/workflows/zed-extension.yml'
+  pull_request:
+    paths:
+      - 'packages/zed-extension/**'
+      - '.github/workflows/zed-extension.yml'
+
+jobs:
+  wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip2
+
+      - name: Build Zed extension
+        run: cargo build --target wasm32-wasip2 --release --manifest-path packages/zed-extension/Cargo.toml
