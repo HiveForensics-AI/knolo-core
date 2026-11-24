@@ -82,6 +82,7 @@ const SUBCOMMANDS = new Set([
   'kite',
   'flight',
   'skill',
+  'persona',
   'setup',
   'exchange',
   'research',
@@ -187,6 +188,7 @@ Commands:
   kite                    Check a typed contract and replay its certificate
   flight                  Pack a flight-events-1 document into a V5 Knowledge Image
   skill                   Create and share a Knolo skill pack
+  persona                 Build a signed persona pack and check its boundaries
   research                Package local research files into a V5 Knowledge Image
   setup                   Prepare a local index and print the hub next steps
   exchange                Offer or pull a verified Knowledge Image from a peer or relay
@@ -291,6 +293,21 @@ local directory. install checks the pin before it writes. It writes into
 --dir, or into ~/.knolo/skills when --dir is omitted. A pin mismatch
 writes nothing. list prints every publisher/name from the public catalog.
 The hub stores packs and does not answer questions.`,
+    persona: `Usage: knolo persona <init|build|verify|eval>
+
+  knolo persona init <name> [--dir <parent>]
+  knolo persona build <dir> [--out <file>] [--json]
+  knolo persona verify <image> [--withdrawn <id>] [--json]
+  knolo persona eval <image> --fixtures <file> [--json]
+
+Builds a persona pack on the current V5 image.
+Knolo core does not call a model. The host owns the model.
+A receipt is an integrity check. It does not mean a claim is proven.
+SATISFIED means the evidence requirements were met.
+A KITE verdict describes the contract. It does not mean the claim is true.
+verify fails when a withdrawn source id is still in the image.
+An opt-out rebuild drops that file and produces a new pin.
+The example adapter is examples/persona-chat.`,
     'verify-attestation': 'Usage: knolo verify-attestation <attestation.json> [--composition composition.json] [--public-key key.json] [--keyring keyring.json] [--now <ms>] [--content-only]\n\nSame check as knolo attest verify. A bad signature exits 1 even when the content root matches. --content-only checks the content root and ignores the envelope. statement used is not a truth verdict. Hub attested: true is unrelated.',
     icp: 'Usage: knolo icp <command> [options]',
     'semantic:index':
@@ -1964,6 +1981,10 @@ async function main() {
       if (command === 'skill') {
         const { runSkillCli } = await import('./skill.mjs');
         return await runSkillCli(commandArgs);
+      }
+      if (command === 'persona') {
+        const { runPersonaCli } = await import('./persona.mjs');
+        return await runPersonaCli(commandArgs);
       }
       if (command === 'exchange') {
         const { runExchangeCli } = await import('./exchange.mjs');
