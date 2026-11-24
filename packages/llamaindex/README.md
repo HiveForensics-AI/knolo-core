@@ -22,7 +22,7 @@ API. V5 Knowledge Image inspection, verification, migration, and runtime
 management are exposed by [`@knolo/core`](https://www.npmjs.com/package/@knolo/core)
 and [`@knolo/cli`](https://www.npmjs.com/package/@knolo/cli). Composition is
 `@knolo/core/composition`. Cortex is `@knolo/core/cortex`. Published `@knolo/cli` is `6.2.9` and depends on `@knolo/core`
-`^6.2.3` and `@knolo/exchange` `^0.1.1`. This tree's CLI package file is `6.2.9`. npm `latest` is `6.2.9` and includes `knolo ask` and `--category`. `@knolo/cli@6.2.8` has no `ask.mjs` and no `--category`. It includes `knolo kite`, `knolo research verify`, and `knolo exchange relay`. `@knolo/cli@6.2.7` does not include research verify or the relay. `@knolo/cli@6.2.5` does not include `knolo kite`.
+`^6.2.3` and `@knolo/exchange` `^0.1.1`. This tree's CLI package file is `6.2.10`. npm `latest` is `6.2.9` and includes `knolo ask` and `--category`. `@knolo/cli@6.2.8` has no `ask.mjs` and no `--category`. It includes `knolo kite`, `knolo research verify`, and `knolo exchange relay`. `@knolo/cli@6.2.7` does not include research verify or the relay. `@knolo/cli@6.2.5` does not include `knolo kite`.
 
 For a mounted V5 image, pass `image` (or a Node `imagePath`) to the retriever.
 The adapter uses bounded V5 EQL search and includes the image state root, query
