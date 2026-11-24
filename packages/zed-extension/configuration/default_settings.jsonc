@@ -1,0 +1,4 @@
+{
+  // Absolute path of a Knolo MCP config. An empty value fails closed.
+  "config_path": "/absolute/knolo-mcp.json"
+}

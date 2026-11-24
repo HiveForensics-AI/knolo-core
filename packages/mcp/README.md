@@ -315,6 +315,13 @@ Replace `/absolute/knolo-mcp.json` with the absolute path of
 `knolo-mcp.json`. A missing or invalid config fails closed. The server does
 not listen on a port.
 
+Zed loads this server from `context_servers.knolo` in
+[`examples/zed/settings.json`](../../examples/zed/settings.json). The
+integration note is [Zed](../../docs/integrations/zed.md). The `args` array
+is required. Replace `/absolute/knolo-mcp.json` with the absolute path of
+`knolo-mcp.json`. A missing or invalid config fails closed. The server does
+not listen on a port.
+
 The package requires Node 20 or newer, `@knolo/core` `^6.2.1`, and
 `@knolo/tools` `^0.2.1`. Coverage, composition, and authoring stay outside
 this server. Verification checks integrity. It does not decide that a claim
