@@ -1,0 +1,10 @@
+{
+  "name": "knolo",
+  "version": "0.2.4",
+  "mcpServers": {
+    "knolo": {
+      "command": "npx",
+      "args": ["-y", "@knolo/mcp@0.2.4", "--config", "/absolute/knolo-mcp.json"]
+    }
+  }
+}

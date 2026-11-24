@@ -152,6 +152,10 @@ operational guides for Knolo.
 - [OpenHands](integrations/openhands.md) — a local stdio server for OpenHands.
   The server does not listen on a port. `@knolo/mcp@0.2.4` is the published
   command. The config and the pinned image must be readable inside the sandbox.
+- [Gemini CLI and Antigravity CLI](integrations/gemini-cli.md) — a local stdio
+  server for Gemini CLI and Antigravity CLI. The server does not listen on a
+  port. `@knolo/mcp@0.2.4` is the published command. A missing config fails
+  closed.
 - [Vercel AI SDK](integrations/ai-sdk.md) — `@knolo/ai-sdk` tools over
   `@knolo/tools`. Knolo does not call a model. A search returns a query
   receipt. `SATISFIED` means evidence requirements were met.

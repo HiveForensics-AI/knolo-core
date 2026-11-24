@@ -304,6 +304,17 @@ Replace `/absolute/knolo-mcp.json` with the absolute path of
 sandbox. A missing or invalid config fails closed. The server does not
 listen on a port.
 
+Gemini CLI loads this server from `mcpServers.knolo` in
+[`examples/gemini/gemini-extension.json`](../../examples/gemini/gemini-extension.json).
+Antigravity CLI, the Antigravity App, and the Antigravity IDE load the same
+command from `mcpServers.knolo` in
+[`examples/antigravity/mcp_config.json`](../../examples/antigravity/mcp_config.json).
+The integration note is
+[Gemini CLI and Antigravity CLI](../../docs/integrations/gemini-cli.md).
+Replace `/absolute/knolo-mcp.json` with the absolute path of
+`knolo-mcp.json`. A missing or invalid config fails closed. The server does
+not listen on a port.
+
 The package requires Node 20 or newer, `@knolo/core` `^6.2.1`, and
 `@knolo/tools` `^0.2.1`. Coverage, composition, and authoring stay outside
 this server. Verification checks integrity. It does not decide that a claim
