@@ -240,7 +240,9 @@ export async function loadKnoloMcpConfigFile(
   }
   let parsed: unknown;
   try {
-    parsed = JSON.parse(text);
+    // Windows editors and PowerShell save UTF-8 with a byte order mark, which
+    // readFile keeps and JSON.parse rejects.
+    parsed = JSON.parse(text.replace(/^﻿/, ''));
   } catch {
     throw new KnoloPluginError(
       'IMAGE_INVALID',

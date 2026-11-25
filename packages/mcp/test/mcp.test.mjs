@@ -1040,6 +1040,32 @@ test('an invalid config fails that call and the next matching call is served', a
   }
 });
 
+test('a config file saved with a UTF-8 byte order mark is served', async () => {
+  const { config, root } = await fixture();
+  const configPath = path.join(root, 'knolo-mcp-bom.json');
+  await writeFile(configPath, `﻿${JSON.stringify(config, null, 2)}\r\n`);
+  const opened = await openKnoloMcp(configPath);
+  const client = new Client({ name: 'knolo-mcp-test', version: '0.0.0' });
+  const [clientTransport, serverTransport] =
+    InMemoryTransport.createLinkedPair();
+  await Promise.all([
+    client.connect(clientTransport),
+    opened.server.connect(serverTransport),
+  ]);
+  try {
+    const search = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+    });
+    assert.notEqual(search.isError, true);
+    assert.match(
+      search.structuredContent.hits[0].excerpt,
+      /Annual enterprise refunds/
+    );
+  } finally {
+    await client.close();
+  }
+});
+
 test('a service created without a config path keeps the startup image', async () => {
   const { config, imagePath } = await fixture();
   const { client } = await connected(config);
