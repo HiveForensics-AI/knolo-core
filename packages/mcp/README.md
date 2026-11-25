@@ -113,6 +113,12 @@ Knowledge & Memory. It names this package as a local TypeScript server and
 pins `@knolo/mcp@0.2.4`. There is no badge, because Knolo is not listed there
 yet. Submitting the line is a separate pull request.
 
+Smithery, Glama, PulseMCP, and mcp.so drafts are in
+[`listings/directories.md`](listings/directories.md). Each submission is a
+separate account step. PulseMCP reads the official MCP Registry, so it may
+list this server without a submission. Live listing URLs are recorded in
+that file.
+
 ## Config
 
 Paths are absolute. `sha256` is 64 lowercase hex characters. `stateRoot` is
@@ -323,6 +329,6 @@ is required. Replace `/absolute/knolo-mcp.json` with the absolute path of
 not listen on a port.
 
 The package requires Node 20 or newer, `@knolo/core` `^6.2.1`, and
-`@knolo/tools` `^0.2.1`. Coverage, composition, and authoring stay outside
+`@knolo/tools` `^0.2.2`. Coverage, composition, and authoring stay outside
 this server. Verification checks integrity. It does not decide that a claim
 or an answer is true.
