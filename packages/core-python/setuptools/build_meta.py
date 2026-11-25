@@ -181,6 +181,13 @@ def _wheel_files() -> list[Path]:
         Path("src/knolo/tokenize.py"),
         Path("src/knolo/v5.py"),
         Path("src/knolo/py.typed"),
+        Path("src/knolo/jsoncanon.py"),
+        Path("src/knolo/kite.py"),
+        Path("src/knolo/kar_model.py"),
+        Path("src/knolo/kar_session.py"),
+        Path("src/knolo/kar_cover.py"),
+        Path("src/knolo/kar_eval.py"),
+        Path("src/knolo/kar_closure.py"),
     ]
 
 
