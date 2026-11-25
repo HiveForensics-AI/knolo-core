@@ -1,3 +1,14 @@
+import {
+  bytesToDigest,
+  canonicalCbor,
+  compareUtf8,
+  decodeCanonicalCbor,
+  decodeCbor,
+  digestBytes,
+  digestDomain,
+  type CborValue,
+  type Digest,
+} from './cbor.js';
 import { mountPackFromBuffer } from './pack.runtime.js';
 import { inspectPackV4 } from './pack.v4.js';
 import { sha256Hex } from './utils/sha256.js';
@@ -10,17 +21,27 @@ import {
   VQF_QUERY_INDEX_CODEC_KIND,
 } from './compression/vqf1/envelope.js';
 import {
+  KNOWLEDGE_IMAGE_V5_SEGMENT_HEADER_SIZE,
+  V5_OPTIONAL_SEGMENT_VQF_QUERY_INDEX,
+} from './knowledge_image_format.js';
+import {
   createKnowledgeQueryIndexV5,
   queryIndexFromKnowledgeImageV5,
   serializeKnowledgeQueryIndexV1,
   type KnowledgeQueryIndexV1,
-} from './knowledge_query_index_v5.js';
+} from './knowledge_query_index_logic.js';
+
+export { canonicalCbor, decodeCanonicalCbor, digestBytes, digestDomain };
+export type { CborValue, Digest };
 
 export const KNOWLEDGE_IMAGE_V5_MAGIC = 'KNLOV5\0\0';
 export const KNOWLEDGE_IMAGE_V5_VERSION = 5;
 export const KNOWLEDGE_IMAGE_V5_HEADER_SIZE = 16;
 export const KNOWLEDGE_IMAGE_V5_SUPERBLOCK_SIZE = 128;
-export const KNOWLEDGE_IMAGE_V5_SEGMENT_HEADER_SIZE = 48;
+export {
+  KNOWLEDGE_IMAGE_V5_SEGMENT_HEADER_SIZE,
+  V5_OPTIONAL_SEGMENT_VQF_QUERY_INDEX,
+};
 export const V5_SEGMENT_FLAG_VQF1 = 0x0001;
 
 const SUPERBLOCK_MAGIC = 'KNLOSB1\0';
@@ -31,10 +52,6 @@ const COMMIT_SEGMENT = 3;
 const OPTIONAL_SEGMENT_MIN = 128;
 const MAX_SEGMENT_SIZE = 512 * 1024 * 1024;
 const MAX_SEGMENTS = 1024;
-const SHA256_PREFIX = 'sha256-';
-
-export type Digest = string;
-
 export type KnowledgeObjectV1 = {
   id: Digest;
   kind: 'source' | 'chunk' | 'claims' | 'agents' | 'metadata';
@@ -130,11 +147,6 @@ export type KnowledgeImageSegment = {
   digest: Digest;
 };
 
-type CborPrimitive = null | boolean | number | bigint | string | Uint8Array;
-type CborValue = CborPrimitive | CborValue[] | { [key: string]: CborValue };
-
-export const V5_OPTIONAL_SEGMENT_VQF_QUERY_INDEX = 129;
-
 export type VqfCompressionMode = 'fast' | 'balanced' | 'max';
 
 export type CompressKnowledgeImageV5Options = {
@@ -225,33 +237,6 @@ export type KnowledgeImageVerification = {
   activeSuperblock: 'A' | 'B';
   segments: KnowledgeImageSegment[];
 };
-
-export function canonicalCbor(value: CborValue): Uint8Array {
-  const out: number[] = [];
-  encodeCbor(value, out);
-  return Uint8Array.from(out);
-}
-
-export function digestDomain(domain: string, payload: Uint8Array): Digest {
-  return `${SHA256_PREFIX}${sha256Hex(concat(getTextEncoder().encode(`knolo:${domain}:v1\0`), payload))}`;
-}
-
-export function digestBytes(digest: Digest): Uint8Array {
-  if (
-    !digest.startsWith(SHA256_PREFIX) ||
-    digest.length !== SHA256_PREFIX.length + 64
-  ) {
-    throw new Error(`Invalid digest: ${digest}`);
-  }
-  const hex = digest.slice(SHA256_PREFIX.length);
-  const out = new Uint8Array(32);
-  for (let i = 0; i < out.length; i++) {
-    const byte = Number.parseInt(hex.slice(i * 2, i * 2 + 2), 16);
-    if (!Number.isInteger(byte)) throw new Error(`Invalid digest: ${digest}`);
-    out[i] = byte;
-  }
-  return out;
-}
 
 export function isKnowledgeImageV5(
   input: ArrayBufferLike | Uint8Array
@@ -1245,184 +1230,6 @@ function commitToCbor(commit: KnowledgeCommitV1): CborValue {
   };
 }
 
-function encodeCbor(value: CborValue, out: number[]): void {
-  if (value === null) {
-    out.push(0xf6);
-    return;
-  }
-  if (typeof value === 'boolean') {
-    out.push(value ? 0xf5 : 0xf4);
-    return;
-  }
-  if (typeof value === 'string') {
-    const bytes = getTextEncoder().encode(value);
-    encodeLength(3, bytes.length, out);
-    out.push(...bytes);
-    return;
-  }
-  if (value instanceof Uint8Array) {
-    encodeLength(2, value.length, out);
-    out.push(...value);
-    return;
-  }
-  if (typeof value === 'number' || typeof value === 'bigint') {
-    if (typeof value === 'number' && !Number.isSafeInteger(value))
-      throw new Error('V5 CBOR numbers must be safe integers.');
-    const n = typeof value === 'number' ? BigInt(value) : value;
-    if (n >= 0n) encodeLength(0, n, out);
-    else encodeLength(1, -1n - n, out);
-    return;
-  }
-  if (Array.isArray(value)) {
-    encodeLength(4, value.length, out);
-    for (const item of value) encodeCbor(item, out);
-    return;
-  }
-  const entries = Object.entries(value).sort(([a], [b]) => compareUtf8(a, b));
-  encodeLength(5, entries.length, out);
-  for (const [key, item] of entries) {
-    encodeCbor(key, out);
-    encodeCbor(item, out);
-  }
-}
-
-function encodeLength(
-  major: number,
-  length: number | bigint,
-  out: number[]
-): void {
-  const n = BigInt(length);
-  if (n < 24n) {
-    out.push((major << 5) | Number(n));
-  } else if (n <= 0xffn) {
-    out.push((major << 5) | 24, Number(n));
-  } else if (n <= 0xffffn) {
-    out.push((major << 5) | 25, Number(n >> 8n), Number(n & 0xffn));
-  } else if (n <= 0xffffffffn) {
-    out.push(
-      (major << 5) | 26,
-      Number((n >> 24n) & 0xffn),
-      Number((n >> 16n) & 0xffn),
-      Number((n >> 8n) & 0xffn),
-      Number(n & 0xffn)
-    );
-  } else {
-    out.push((major << 5) | 27);
-    for (let shift = 56n; shift >= 0n; shift -= 8n)
-      out.push(Number((n >> shift) & 0xffn));
-  }
-}
-function compareUtf8(a: string, b: string): number {
-  const aa = getTextEncoder().encode(a),
-    bb = getTextEncoder().encode(b);
-  for (let i = 0; i < Math.min(aa.length, bb.length); i++)
-    if (aa[i] !== bb[i]) return aa[i] - bb[i];
-  return aa.length - bb.length;
-}
-
-export function decodeCanonicalCbor(bytes: Uint8Array): CborValue {
-  const reader = new CborReader(bytes);
-  const value = reader.read();
-  if (!reader.done) throw new Error('Trailing bytes in V5 CBOR payload.');
-  if (!bytesEqual(canonicalCbor(value), bytes))
-    throw new Error('Non-canonical V5 CBOR payload.');
-  return value;
-}
-function decodeCbor(bytes: Uint8Array): CborValue {
-  return decodeCanonicalCbor(bytes);
-}
-class CborReader {
-  private offset = 0;
-  constructor(private readonly bytes: Uint8Array) {}
-  get done(): boolean {
-    return this.offset === this.bytes.length;
-  }
-  read(): CborValue {
-    const initial = this.readByte();
-    const major = initial >> 5;
-    const ai = initial & 31;
-    if (major === 0) return this.readLength(ai);
-    if (major === 1) return -1n - this.readLength(ai);
-    if (major === 2) return this.readBytes(this.readLength(ai));
-    if (major === 3)
-      return getTextDecoder().decode(this.readBytes(this.readLength(ai)));
-    if (major === 4) {
-      const length = this.readCollectionLength(ai, 1);
-      const out: CborValue[] = [];
-      for (let i = 0; i < length; i++) out.push(this.read());
-      return out;
-    }
-    if (major === 5) {
-      const length = this.readCollectionLength(ai, 2);
-      const out: Record<string, CborValue> = {};
-      for (let i = 0; i < length; i++) {
-        const key = this.read();
-        if (typeof key !== 'string')
-          throw new Error('V5 CBOR map key must be text.');
-        if (Object.prototype.hasOwnProperty.call(out, key))
-          throw new Error('Duplicate V5 CBOR map key.');
-        Object.defineProperty(out, key, {
-          value: this.read(),
-          enumerable: true,
-          writable: true,
-          configurable: true,
-        });
-      }
-      return out;
-    }
-    if (major === 7 && ai === 20) return false;
-    if (major === 7 && ai === 21) return true;
-    if (major === 7 && ai === 22) return null;
-    throw new Error('Unsupported V5 CBOR value.');
-  }
-  private readCollectionLength(
-    ai: number,
-    minimumBytesPerEntry: number
-  ): number {
-    const length = this.readLength(ai);
-    if (
-      length >
-      BigInt(
-        Math.floor((this.bytes.length - this.offset) / minimumBytesPerEntry)
-      )
-    )
-      throw new Error('Truncated V5 CBOR collection.');
-    return Number(length);
-  }
-  private readByte(): number {
-    if (this.offset >= this.bytes.length)
-      throw new Error('Truncated V5 CBOR value.');
-    return this.bytes[this.offset++];
-  }
-  private readLength(ai: number): bigint {
-    if (ai < 24) return BigInt(ai);
-    if (ai === 24) return BigInt(this.readByte());
-    if (ai === 25) return BigInt(this.readByte() * 256 + this.readByte());
-    if (ai === 26)
-      return BigInt(
-        this.readByte() * 0x1000000 +
-          this.readByte() * 0x10000 +
-          this.readByte() * 0x100 +
-          this.readByte()
-      );
-    if (ai === 27) {
-      let value = 0n;
-      for (let i = 0; i < 8; i++)
-        value = (value << 8n) | BigInt(this.readByte());
-      return value;
-    }
-    throw new Error('Indefinite-length V5 CBOR is not allowed.');
-  }
-  private readBytes(length: bigint): Uint8Array {
-    if (length > BigInt(this.bytes.length - this.offset))
-      throw new Error('Truncated V5 CBOR byte string.');
-    const n = Number(length);
-    const out = this.bytes.slice(this.offset, this.offset + n);
-    this.offset += n;
-    return out;
-  }
-}
-
 function asRecord(value: CborValue): Record<string, CborValue> {
   if (
     !value ||
@@ -1469,9 +1276,6 @@ function asDigestRecord(value: CborValue | undefined): Record<string, Digest> {
     Object.entries(record).map(([key, item]) => [key, asDigest(item)])
   );
 }
-function bytesToDigest(bytes: Uint8Array): Digest {
-  return `${SHA256_PREFIX}${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
-}
 function asBytes(input: ArrayBufferLike | Uint8Array): Uint8Array {
   return input instanceof Uint8Array ? input : new Uint8Array(input);
 }
@@ -1481,14 +1285,3 @@ function isV4Artifact(bytes: Uint8Array): boolean {
     getTextDecoder().decode(bytes.slice(0, 8)) === 'KNLOV4\0\0'
   );
 }
-function concat(a: Uint8Array, b: Uint8Array): Uint8Array {
-  const out = new Uint8Array(a.length + b.length);
-  out.set(a);
-  out.set(b, a.length);
-  return out;
-}
-function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
-  return a.length === b.length && a.every((byte, index) => byte === b[index]);
-}
-
-export type { CborValue };

@@ -8,7 +8,8 @@
 import { createHash } from 'node:crypto';
 import { existsSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import { loadCoreModule } from './load-core.mjs';
 import {
   KAR_CLI_MAX_IMAGE_BYTES,
   KAR_CLI_MAX_TEXT_BYTES,
@@ -512,18 +513,12 @@ async function loadApis() {
 }
 
 async function importFirst(candidates, check) {
-  for (const candidate of candidates) {
-    try {
-      const href = candidate.startsWith('@')
-        ? candidate
-        : pathToFileURL(candidate).href;
-      const loaded = await import(href);
-      if (check(loaded)) return loaded;
-    } catch {
-      // Try the next candidate.
-    }
+  try {
+    return await loadCoreModule(candidates, check);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Could not load @knolo/core. Build packages/core first. (${detail})`);
   }
-  throw new Error('Could not load @knolo/core. Build packages/core first.');
 }
 
 function parseVerifyFlags(argv) {

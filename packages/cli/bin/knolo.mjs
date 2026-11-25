@@ -19,6 +19,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { loadCoreModule } from './load-core.mjs';
 import { createRequire } from 'node:module';
 import {
   isHubAddInvocation,
@@ -122,24 +123,28 @@ async function tryImport(filePath) {
   return null;
 }
 
-async function loadCore() {
-  const candidates = [
-    path.resolve(__dirname, '../../core/dist/index.js'),
-    '@knolo/core',
-  ];
-  for (const candidate of candidates) {
-    const mod = await tryImport(candidate);
-    if (mod?.buildPack && mod?.mountPack && mod?.query) return mod;
-    if (
-      mod?.default?.buildPack &&
-      mod?.default?.mountPack &&
-      mod?.default?.query
-    )
-      return mod.default;
-  }
-  throw createError(
-    'Could not load @knolo/core. Build packages/core first (npm run build --workspace @knolo/core).'
+function coreNamespaceReady(mod) {
+  return Boolean(
+    (mod?.buildPack && mod?.mountPack && mod?.query) ||
+      (mod?.default?.buildPack && mod?.default?.mountPack && mod?.default?.query)
   );
+}
+
+async function loadCore() {
+  let mod;
+  try {
+    mod = await loadCoreModule(
+      [path.resolve(__dirname, '../../core/dist/index.js'), '@knolo/core'],
+      coreNamespaceReady
+    );
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw createError(
+      `Could not load @knolo/core. Build packages/core first (npm run build --workspace @knolo/core). (${detail})`
+    );
+  }
+  if (mod?.buildPack && mod?.mountPack && mod?.query) return mod;
+  return mod.default;
 }
 
 function printVersion() {

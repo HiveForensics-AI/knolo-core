@@ -9,6 +9,7 @@ import crypto from 'node:crypto';
 import { lstat, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { loadCoreModule } from './load-core.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -942,26 +943,18 @@ function coreReady(loaded) {
   );
 }
 
-async function loadCore() {
-  const fileHref = pathToFileURL(path.resolve(__dirname, '../../core/dist/index.js')).href;
-  let lastError = null;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const fileUrl = attempt === 0 ? fileHref : `${fileHref}?knolo-load=${attempt}`;
-    for (const specifier of [fileUrl, '@knolo/core']) {
-      try {
-        const loaded = await import(specifier);
-        if (coreReady(loaded)) return loaded;
-        lastError = new Error('module did not export the Knowledge Image API');
-      } catch (error) {
-        lastError = error;
-      }
-    }
-    if (attempt < 2) {
-      await new Promise((resolve) => setTimeout(resolve, 25 * (attempt + 1)));
-    }
-  }
-  const detail = lastError instanceof Error ? lastError.message : 'module did not export the Knowledge Image API';
-  throw new Error(`Could not load @knolo/core. Build packages/core first. (${detail})`);
+let corePromise;
+
+function loadCore() {
+  corePromise ??= loadCoreModule(
+    [path.resolve(__dirname, '../../core/dist/index.js'), '@knolo/core'],
+    coreReady
+  ).catch((error) => {
+    corePromise = undefined;
+    const detail = error instanceof Error ? error.message : 'module did not export the Knowledge Image API';
+    throw new Error(`Could not load @knolo/core. Build packages/core first. (${detail})`);
+  });
+  return corePromise;
 }
 
 function kiteReady(loaded) {
