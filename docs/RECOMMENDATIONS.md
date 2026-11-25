@@ -44,14 +44,29 @@ already need newer versions: `@knolo/ai-sdk` and `@knolo/openai-agents` need
 Done when CI is green on 22 and 24 and no published package claims a Node
 range that CI does not test.
 
+Status: the CI part is done. The `test` job runs on Node 22 and 24, and the
+other jobs moved from 20 to 22. The `engines` changes are a release decision
+and remain open.
+
 ### 1.2 Fix the high-severity `npm audit` finding (P0, S)
 
 `n8n-nodes-knolo` pulls `zod <4.6.6` through `n8n-workflow` and
-`@n8n/expression-runtime`. Add a root `overrides` entry for `zod` (the repo
-already overrides `isolated-vm`), or move to an `n8n-workflow` release that
-fixes it. Then run `npm audit --audit-level=high` in CI.
+`@n8n/expression-runtime`, which pin `zod@3.25.76` exactly.
 
-Done when `npm audit --audit-level=high` exits 0.
+What was checked:
+
+- No patched zod 3.x exists. The latest `@n8n/expression-runtime` (0.40.4)
+  still pins `zod@3.25.76`, so updating n8n does not help yet.
+- A scoped `overrides` entry that forces zod 4 into the n8n packages clears
+  the audit but breaks `n8n-workflow` at load time
+  (`z.string().ip is not a function`). Do not use it.
+- `n8n-workflow` is only a devDependency of `n8n-nodes-knolo`. At run time the
+  n8n host supplies its own copy. `npm audit --omit=dev` reports 0
+  vulnerabilities.
+
+Status: CI now runs `npm audit --omit=dev --audit-level=high`, so a
+high-severity issue in a dependency that users install fails the build. The
+dev-only finding stays open until n8n ships a fixed `@n8n/expression-runtime`.
 
 ### 1.3 Suggest a command when the user mistypes one (P0, S)
 
@@ -62,6 +77,10 @@ help. When the first argument is not a file and is close to a known command
 "search"?` and exit 2. Leave direct mode alone when the file exists.
 
 Done when a CLI test covers a typo, a real file, and an unknown word.
+
+Status: done. Bare words that are not files get the suggestion and exit 2.
+Arguments that look like paths (`missing.json`, `./nope`) keep the original
+file error and exit 1. Covered by `packages/cli/test/unknown-command.test.mjs`.
 
 ### 1.4 Bring the CLI under the formatting gate (P0, S)
 
