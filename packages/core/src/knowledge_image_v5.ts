@@ -21,11 +21,15 @@ import {
   VQF_QUERY_INDEX_CODEC_KIND,
 } from './compression/vqf1/envelope.js';
 import {
+  KNOWLEDGE_IMAGE_V5_SEGMENT_HEADER_SIZE,
+  V5_OPTIONAL_SEGMENT_VQF_QUERY_INDEX,
+} from './knowledge_image_format.js';
+import {
   createKnowledgeQueryIndexV5,
   queryIndexFromKnowledgeImageV5,
   serializeKnowledgeQueryIndexV1,
   type KnowledgeQueryIndexV1,
-} from './knowledge_query_index_v5.js';
+} from './knowledge_query_index_logic.js';
 
 export { canonicalCbor, decodeCanonicalCbor, digestBytes, digestDomain };
 export type { CborValue, Digest };
@@ -34,7 +38,10 @@ export const KNOWLEDGE_IMAGE_V5_MAGIC = 'KNLOV5\0\0';
 export const KNOWLEDGE_IMAGE_V5_VERSION = 5;
 export const KNOWLEDGE_IMAGE_V5_HEADER_SIZE = 16;
 export const KNOWLEDGE_IMAGE_V5_SUPERBLOCK_SIZE = 128;
-export const KNOWLEDGE_IMAGE_V5_SEGMENT_HEADER_SIZE = 48;
+export {
+  KNOWLEDGE_IMAGE_V5_SEGMENT_HEADER_SIZE,
+  V5_OPTIONAL_SEGMENT_VQF_QUERY_INDEX,
+};
 export const V5_SEGMENT_FLAG_VQF1 = 0x0001;
 
 const SUPERBLOCK_MAGIC = 'KNLOSB1\0';
@@ -139,8 +146,6 @@ export type KnowledgeImageSegment = {
   payloadLength: number;
   digest: Digest;
 };
-
-export const V5_OPTIONAL_SEGMENT_VQF_QUERY_INDEX = 129;
 
 export type VqfCompressionMode = 'fast' | 'balanced' | 'max';
 
