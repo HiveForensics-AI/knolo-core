@@ -59,6 +59,46 @@ the server can write. A hash, state-root, or policy mismatch exits before the
 server accepts a connection. An unwritable audit directory returns
 `AUDIT_UNAVAILABLE` and no hits.
 
+## Add a KAR graph (optional)
+
+A mount with a `kar` block also exposes `knolo_kar_evaluate`,
+`knolo_kar_verify`, and `knolo_cortex_verify`. Skip this section when the
+image has no `.kar.json` graph. The graph must be built for this exact image.
+
+Check that the graph is bound to the image. `ok` must be true. Stop when it
+exits non-zero:
+
+```sh
+npx -y @knolo/cli@6.2.9 kar graph validate --image /absolute/image.v5 --graph /absolute/image.kar.json --json
+```
+
+Hash the graph file with the same command used for the image, passing
+`/absolute/image.kar.json` instead. `graphSha256` is that raw file hash, 64
+lowercase hex characters, without a `sha256-` prefix.
+
+Add the block to the mount. `graphPath` is absolute:
+
+```json
+{
+  "id": "handbook",
+  "path": "/absolute/image.v5",
+  "sha256": "<64 hex from the file hash>",
+  "stateRoot": "sha256-<64 hex from verify>",
+  "policyPath": "/absolute/policy.json",
+  "agents": ["mcp"],
+  "principal": "mcp:reader",
+  "kar": {
+    "graphPath": "/absolute/image.kar.json",
+    "graphSha256": "<64 hex from the graph file hash>"
+  }
+}
+```
+
+A graph hash mismatch, a graph that is not JSON, or a graph bound to a
+different image exits with `IMAGE_INVALID` before the server accepts a
+connection. Rebuilding the image means rebuilding the graph and updating all
+three pins.
+
 ## Register Cline
 
 Add a stdio server in Cline's MCP settings. The command is `npx`.
@@ -75,7 +115,9 @@ Add a stdio server in Cline's MCP settings. The command is `npx`.
 ```
 
 Ask Cline to call `knolo_search`. A mount without a `kar` block exposes
-`knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`. An empty
+`knolo_search`, `knolo_get`, `knolo_verify`, and `knolo_status`. A `kar`
+block also exposes `knolo_kar_evaluate`, `knolo_kar_verify`, and
+`knolo_cortex_verify`. An empty
 `kite` block also exposes `knolo_kite_evaluate` and `knolo_kite_verify`. A
 KITE verdict describes the contract, not real-world truth. Cite the
 `imageId`, `objectId`, and `stateRoot` from the result.
