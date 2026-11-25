@@ -684,3 +684,25 @@ test('Cortex verify checks a trace and rejects a tampered trace', async () => {
   assert.equal(tamperedOutput[0].json.receipt.outcome.ok, false);
   assert.match(tamperedOutput[0].json.receiptId, /^er_[a-f0-9]{24}$/u);
 });
+
+test('Cortex verify uses the pinned graph for a trace from a bound session', async () => {
+  const loaded = await karFixture();
+  loaded.parameters.operation = 'cortexVerify';
+  // A bound graph puts knowledgeRoot in the trace image identity, even
+  // when the mode runs no KAR evaluation.
+  const session = await createCortexSession({
+    image: loaded.image.bytes,
+    graph: loaded.graph,
+  });
+  const found = await askCortex(session, {
+    question: loaded.proposition,
+    mode: 'find_relevant',
+  });
+  assert.equal(found.karEvaluations, undefined);
+  const incoming = item({ answer: found });
+  const [output] = await execute(loaded.parameters, [incoming.data]);
+  const verified = output[0].json;
+  assert.equal(verified.ok, true, JSON.stringify(verified));
+  assert.equal(verified.traceRoot, found.receipt.traceRoot);
+  assert.equal(verified.receipt.graphSha256, loaded.parameters.karGraphSha256);
+});

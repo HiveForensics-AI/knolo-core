@@ -762,7 +762,7 @@ async function verifyCortexOperation(
   }
   const question = questionOf(trace, textInput(tools, index, 'question'));
   const mount = service.readAuthorizedMount(settings.mountId, caller);
-  const usedGraph = referencesKar(trace) ? pinned : undefined;
+  const usedGraph = bindsGraph(trace) ? pinned : undefined;
   const verdict = await cortexApi.verifyCortexAnswer({
     image: mount.image.bytes,
     question,
@@ -816,10 +816,15 @@ function requirePinned(
   return pinned;
 }
 
-function referencesKar(answer: unknown): boolean {
+// A trace from a session with a bound graph has knowledgeRoot in its image
+// identity, even when no KAR evaluation ran. It verifies only with the graph.
+function bindsGraph(answer: unknown): boolean {
   if (!isRecord(answer)) return false;
   const evaluations = answer.karEvaluations;
-  return Array.isArray(evaluations) && evaluations.length > 0;
+  if (Array.isArray(evaluations) && evaluations.length > 0) return true;
+  return (
+    isRecord(answer.image) && typeof answer.image.knowledgeRoot === 'string'
+  );
 }
 
 function questionOf(answer: unknown, supplied: string): string {

@@ -53,11 +53,17 @@ export function requireGraph(
   return pinned;
 }
 
-function referencesKar(answer: unknown): boolean {
+// A trace from a session with a bound graph has knowledgeRoot in its image
+// identity, even when no KAR evaluation ran. It verifies only with the graph.
+function bindsGraph(answer: unknown): boolean {
   if (!answer || typeof answer !== 'object' || Array.isArray(answer))
     return false;
-  const evaluations = (answer as { karEvaluations?: unknown }).karEvaluations;
-  return Array.isArray(evaluations) && evaluations.length > 0;
+  const { karEvaluations, image } = answer as {
+    karEvaluations?: unknown;
+    image?: { knowledgeRoot?: unknown } | null;
+  };
+  if (Array.isArray(karEvaluations) && karEvaluations.length > 0) return true;
+  return typeof image?.knowledgeRoot === 'string';
 }
 
 function questionOf(answer: unknown, supplied: string | undefined): string {
@@ -189,7 +195,7 @@ export async function verifyCortexEvidence(input: {
 }) {
   const mount = input.service.readAuthorizedMount(input.mountId, input.caller);
   const pinned = input.graphs.get(input.mountId);
-  const usedGraph = referencesKar(input.answer) ? pinned : undefined;
+  const usedGraph = bindsGraph(input.answer) ? pinned : undefined;
   const verdict = await verifyCortexAnswer({
     image: mount.image.bytes,
     question: questionOf(input.answer, input.question),

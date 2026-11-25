@@ -731,6 +731,31 @@ test('KAR and Cortex tools match MCP', async () => {
     assert.equal(cortex.traceRoot, found.receipt.traceRoot);
     assert.match(cortex.statement, /does not mean the answer is true/);
 
+    // A bound graph puts knowledgeRoot in the trace image identity, even
+    // when the mode runs no KAR evaluation. The pinned graph must be used.
+    const boundSession = await createCortexSession({
+      image: workspace.supportImage.bytes,
+      graph: workspace.graph,
+    });
+    const bound = await askCortex(boundSession, {
+      question: workspace.proposition,
+      mode: 'find_relevant',
+    });
+    assert.equal(bound.karEvaluations, undefined);
+    const boundArgs = { mountId: 'support', answer: bound };
+    const mcpBound = await call(
+      mcpClient.client,
+      'knolo_cortex_verify',
+      boundArgs
+    );
+    const boundVerdict = await tools.knolo_cortex_verify.execute(
+      boundArgs,
+      executeOptions
+    );
+    assertSameBody(boundVerdict, mcpBound.structuredContent);
+    assert.equal(boundVerdict.ok, true, JSON.stringify(boundVerdict));
+    assert.equal(boundVerdict.traceRoot, bound.receipt.traceRoot);
+
     const before = (await readdir(workspace.config.auditDir)).filter((name) =>
       name.startsWith('er_')
     ).length;

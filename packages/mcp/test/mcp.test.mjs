@@ -716,6 +716,50 @@ test('pinned graphs add read-only KAR and Cortex tools', async () => {
     assert.equal(cortexTamper.structuredContent.ok, false);
     assert.ok(cortexTamper.structuredContent.receiptId);
 
+    // A bound graph puts knowledgeRoot in the trace image identity, even
+    // when the mode runs no KAR evaluation. The pinned graph must be used.
+    const boundSession = await createCortexSession({
+      image: support.image.bytes,
+      graph: support.graph,
+    });
+    const bound = await askCortex(boundSession, {
+      question: support.proposition,
+      mode: 'find_relevant',
+    });
+    assert.equal(bound.karEvaluations, undefined);
+    assert.equal(typeof bound.image.knowledgeRoot, 'string');
+    const boundVerdict = await call(client, 'knolo_cortex_verify', {
+      mountId: 'support',
+      answer: bound,
+    });
+    assert.equal(
+      boundVerdict.structuredContent.ok,
+      true,
+      JSON.stringify(boundVerdict.structuredContent)
+    );
+    assert.equal(
+      boundVerdict.structuredContent.traceRoot,
+      bound.receipt.traceRoot
+    );
+
+    // A trace without a graph still verifies on a mount that pins one.
+    const unboundSession = await createCortexSession({
+      image: support.image.bytes,
+    });
+    const unbound = await askCortex(unboundSession, {
+      question: support.proposition,
+      mode: 'find_relevant',
+    });
+    const unboundVerdict = await call(client, 'knolo_cortex_verify', {
+      mountId: 'support',
+      answer: unbound,
+    });
+    assert.equal(
+      unboundVerdict.structuredContent.ok,
+      true,
+      JSON.stringify(unboundVerdict.structuredContent)
+    );
+
     const before = (await readdir(path.join(root, 'audit'))).filter((name) =>
       name.startsWith('er_')
     ).length;
