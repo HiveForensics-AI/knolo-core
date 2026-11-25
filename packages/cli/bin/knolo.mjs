@@ -185,10 +185,14 @@ Commands:
   explain <receipt>       Verify and explain a query receipt
   diff <pack-a> <pack-b>  Compare pack identities and source/chunk counts
   dev                     Watch config/sources and rebuild on change
+  semantic:index          Build an embedding sidecar for a V4 pack via an Ollama endpoint
+  semantic:inspect        Print a semantic sidecar summary
+  semantic:validate       Check a semantic sidecar against its V4 pack and model
   v5                      Inspect, compress, decompress, and health-check a V5 Knowledge Image
   kar                     KAR evidence-set retrieval over a Committed Evidence Graph
   compose                 Compose Knowledge Images, packs, and attestations offline
   attest                  Create or verify a composition attestation
+  verify-attestation      Same check as "knolo attest verify"
   cortex                  Bounded evidence retrieval with a verifiable trace
   kite                    Check a typed contract and replay its certificate
   flight                  Pack a flight-events-1 document into a V5 Knowledge Image
