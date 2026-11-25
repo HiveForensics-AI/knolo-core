@@ -2,10 +2,17 @@
   "name": "knolo",
   "version": "0.2.4",
   "description": "Read-only search over a pinned local Knolo Knowledge Image.",
+  "settings": [
+    {
+      "name": "Knolo MCP config",
+      "description": "Absolute path of knolo-mcp.json. A missing file fails closed.",
+      "envVar": "KNOLO_MCP_CONFIG"
+    }
+  ],
   "mcpServers": {
     "knolo": {
       "command": "npx",
-      "args": ["-y", "@knolo/mcp@0.2.4", "--config", "/absolute/knolo-mcp.json"]
+      "args": ["-y", "@knolo/mcp@0.2.4"]
     }
   }
 }

@@ -546,17 +546,36 @@ test('gemini and antigravity configs start the published stdio server', async ()
     readFileSync(path.join(repoRoot, 'gemini-extension.json'), 'utf8')
   );
   assert.deepEqual(gallery, gemini);
-  for (const example of [gemini, antigravity]) {
-    const server = example.mcpServers.knolo;
-    assert.equal(server.command, 'npx');
-    assert.deepEqual(server.args.slice(0, 3), ['-y', published, '--config']);
-    assert.equal(server.args[3], '/absolute/knolo-mcp.json');
-    assert.equal(server.serverUrl, undefined);
-    const encoded = JSON.stringify(example);
-    assert.doesNotMatch(encoded, /https?:\/\//);
-    assert.doesNotMatch(encoded, /"url"/);
-    assert.doesNotMatch(encoded, /\bport\b/i);
-  }
+  const geminiServer = gemini.mcpServers.knolo;
+  assert.equal(geminiServer.command, 'npx');
+  assert.deepEqual(geminiServer.args, ['-y', published]);
+  assert.equal(geminiServer.serverUrl, undefined);
+  assert.deepEqual(gemini.settings, [
+    {
+      name: 'Knolo MCP config',
+      description:
+        'Absolute path of knolo-mcp.json. A missing file fails closed.',
+      envVar: 'KNOLO_MCP_CONFIG',
+    },
+  ]);
+  const geminiEncoded = JSON.stringify(gemini);
+  assert.doesNotMatch(geminiEncoded, /https?:\/\//);
+  assert.doesNotMatch(geminiEncoded, /"url"/);
+  assert.doesNotMatch(geminiEncoded, /\bport\b/i);
+  assert.doesNotMatch(geminiEncoded, /\/absolute\/knolo-mcp\.json/);
+  const antigravityServer = antigravity.mcpServers.knolo;
+  assert.equal(antigravityServer.command, 'npx');
+  assert.deepEqual(antigravityServer.args.slice(0, 3), [
+    '-y',
+    published,
+    '--config',
+  ]);
+  assert.equal(antigravityServer.args[3], '/absolute/knolo-mcp.json');
+  assert.equal(antigravityServer.serverUrl, undefined);
+  const antigravityEncoded = JSON.stringify(antigravity);
+  assert.doesNotMatch(antigravityEncoded, /https?:\/\//);
+  assert.doesNotMatch(antigravityEncoded, /"url"/);
+  assert.doesNotMatch(antigravityEncoded, /\bport\b/i);
   assert.match(readme, /examples\/gemini\/gemini-extension\.json/);
   assert.match(readme, /examples\/antigravity\/mcp_config\.json/);
   assert.match(readme, /A missing or invalid config fails closed\./);
