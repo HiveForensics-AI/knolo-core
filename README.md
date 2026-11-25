@@ -434,7 +434,7 @@ docs/cortex/         Knolo Cortex reasoned evidence retrieval
 
 Knolo 6.2.0 is the product line in this repository. V5 Knowledge Images remain the evidence container. V4 retrieval remains the compatibility path for ordinary search. KAR semantics stay `kar-1-research-1`. Composition cites those artifacts and does not change their roots. Cortex retrieves over them and does not change their roots. Domain Packs stay review-required until a person validates them.
 
-Before opening a change, run the relevant package tests and `npm run release:check`. Changes to byte formats, digest domains, identity rules, or required sections must include updated specification text and cross-runtime fixtures.
+Before opening a change, read [CONTRIBUTING.md](CONTRIBUTING.md), then run the relevant package tests and `npm run release:check`. Changes to byte formats, digest domains, identity rules, or required sections must include updated specification text and cross-runtime fixtures.
 
 ## License
 
