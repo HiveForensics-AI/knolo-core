@@ -15,6 +15,9 @@ operational guides for Knolo.
   is in this tree and is not in that published release.
 - [V5 roadmap](ROADMAP.md) — delivered foundation, release hardening, and the
   next implementation waves.
+- [Recommended features and improvements](RECOMMENDATIONS.md) — a prioritized
+  list of fixes, engineering work, and features, with the baseline it was
+  measured from.
 - [Release guide](RELEASE.md) — preflight checks and publication commands for
   npm and crates.io, plus legacy runtime boundaries.
 - [V5 host deployment boundary](V5_HOST_DEPLOYMENT.md) — adapter ownership,
