@@ -1,5 +1,6 @@
-import { closeSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { closeSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { writeFileDurablySync } from './durable_write.node.js';
 import { canonicalCbor, type CborValue } from './knowledge_image_v5.js';
 import {
   checkpointKnowledgeRunV1,
@@ -84,20 +85,7 @@ export class DurableKnowledgeRunStoreV5 {
   }
 
   private persist(run: KnowledgeRunV1): void {
-    const tempPath = `${this.filePath}.${process.pid}.${Date.now()}.tmp`;
-    const dir = dirname(this.filePath);
-    mkdirSync(dir, { recursive: true });
-    try {
-      writeFileSync(tempPath, serializeKnowledgeRunV1(run));
-      const fd = openSync(tempPath, 'r');
-      try { fsyncSync(fd); } finally { closeSync(fd); }
-      renameSync(tempPath, this.filePath);
-      const dirFd = openSync(dir, 'r');
-      try { fsyncSync(dirFd); } finally { closeSync(dirFd); }
-    } catch (error) {
-      rmSync(tempPath, { force: true });
-      throw error;
-    }
+    writeFileDurablySync(this.filePath, serializeKnowledgeRunV1(run));
   }
 
   private assertOpen(): void { if (this.closed) throw new Error('V5 durable run store is closed.'); }

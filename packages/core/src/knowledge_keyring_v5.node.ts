@@ -1,5 +1,6 @@
-import { closeSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { closeSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { writeFileDurablySync } from './durable_write.node.js';
 import {
   applyKnowledgeKeyRotationV5,
   applyKnowledgeKeyRotationV5Async,
@@ -84,20 +85,7 @@ export class DurableAuthorityKeyringStoreV5 {
   }
 
   private persist(keyring: KnowledgeAuthorityKeyringV1 = this.current): void {
-    const tempPath = `${this.filePath}.${process.pid}.${Date.now()}.tmp`;
-    const dir = dirname(this.filePath);
-    mkdirSync(dir, { recursive: true });
-    try {
-      writeFileSync(tempPath, serializeAuthorityKeyringV1(keyring));
-      const fd = openSync(tempPath, 'r');
-      try { fsyncSync(fd); } finally { closeSync(fd); }
-      renameSync(tempPath, this.filePath);
-      const dirFd = openSync(dir, 'r');
-      try { fsyncSync(dirFd); } finally { closeSync(dirFd); }
-    } catch (error) {
-      rmSync(tempPath, { force: true });
-      throw error;
-    }
+    writeFileDurablySync(this.filePath, serializeAuthorityKeyringV1(keyring));
   }
 
   private assertOpen(): void {

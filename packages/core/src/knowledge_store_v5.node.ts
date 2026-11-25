@@ -1,14 +1,13 @@
 import {
   closeSync,
-  fsyncSync,
   mkdirSync,
   openSync,
   readFileSync,
-  renameSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
 import { dirname } from 'node:path';
+import { writeFileDurablySync } from './durable_write.node.js';
 import {
   KnowledgeImageStoreV5,
   KnowledgeTransactionV5,
@@ -184,28 +183,7 @@ export class DurableKnowledgeImageStoreV5 {
   }
 
   private persist(image: KnowledgeSnapshotV5): void {
-    const tempPath = `${this.filePath}.${process.pid}.${Date.now()}.tmp`;
-    const dir = dirname(this.filePath);
-    mkdirSync(dir, { recursive: true });
-    try {
-      writeFileSync(tempPath, image.bytes);
-      const fd = openSync(tempPath, 'r');
-      try {
-        fsyncSync(fd);
-      } finally {
-        closeSync(fd);
-      }
-      renameSync(tempPath, this.filePath);
-      const dirFd = openSync(dir, 'r');
-      try {
-        fsyncSync(dirFd);
-      } finally {
-        closeSync(dirFd);
-      }
-    } catch (error) {
-      rmSync(tempPath, { force: true });
-      throw error;
-    }
+    writeFileDurablySync(this.filePath, image.bytes);
   }
 
   private assertOpen(): void {
