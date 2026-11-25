@@ -379,8 +379,8 @@ Error codes:
 
 | Code                  | Cause                                                                                                      |
 | --------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `IMAGE_INVALID`       | Invalid config, or the image does not match its `sha256` or `stateRoot` pin, or the policy root mismatches |
-| `IMAGE_UNAVAILABLE`   | The config, image, or policy file cannot be read, or the requested image is not mounted                    |
+| `IMAGE_INVALID`       | Invalid config, the image does not match its `sha256` or `stateRoot` pin, or the policy file cannot be read or its root mismatches |
+| `IMAGE_UNAVAILABLE`   | The config or image file cannot be read, or the requested image is not mounted                                                       |
 | `ACCESS_DENIED`       | `agentId` is not in the mount's `agents`, or the policy denies the mount's `principal`                     |
 | `AUDIT_UNAVAILABLE`   | `auditDir` is not writable. No hits are returned                                                           |
 | `STATE_ROOT_MISMATCH` | The image is no longer mounted at the requested or recorded state root                                     |
