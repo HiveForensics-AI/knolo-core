@@ -2003,9 +2003,92 @@ fn map_strings(map: &[(String, CborValue)], key: &str) -> Result<Vec<String>, Kn
 
 fn decode_cbor_exact(bytes: &[u8]) -> Result<CborValue, KnoloError> { let mut cursor = 0; let value = decode_cbor(bytes, &mut cursor)?; if cursor != bytes.len() { return Err(KnoloError::InvalidPack("trailing V5 CBOR bytes".into())); } Ok(value) }
 fn decode_cbor(bytes: &[u8], cursor: &mut usize) -> Result<CborValue, KnoloError> {
-    let initial = *bytes.get(*cursor).ok_or_else(|| KnoloError::InvalidPack("truncated V5 CBOR".into()))?; *cursor += 1; let major = initial >> 5; let ai = initial & 31;
+    let initial = *bytes.get(*cursor)
+        .ok_or_else(|| KnoloError::InvalidPack("truncated V5 CBOR".into()))?;
+    *cursor += 1;
+
+    let major = initial >> 5;
+    let ai = initial & 31;
     let length = |cursor: &mut usize| read_cbor_length(bytes, cursor, ai);
-    match major { 0 => Ok(CborValue::UInt(length(cursor)?)), 1 => { let value = length(cursor)?; if value > i64::MAX as u64 { return Err(KnoloError::InvalidPack("V5 negative integer overflow".into())); } Ok(CborValue::NInt(-1 - value as i64)) }, 2 => { let len = usize::try_from(length(cursor)?).map_err(|_| KnoloError::InvalidPack("V5 bytes length overflow".into()))?; Ok(CborValue::Bytes(read_slice(bytes, cursor, len)?.to_vec())) }, 3 => { let len = usize::try_from(length(cursor)?).map_err(|_| KnoloError::InvalidPack("V5 text length overflow".into()))?; let value = std::str::from_utf8(read_slice(bytes, cursor, len)?).map_err(|_| KnoloError::InvalidPack("V5 text is not UTF-8".into()))?; Ok(CborValue::Text(value.to_string())) }, 4 => { let len = usize::try_from(length(cursor)?).map_err(|_| KnoloError::InvalidPack("V5 array length overflow".into()))?; let mut values = Vec::with_capacity(len); for _ in 0..len { values.push(decode_cbor(bytes, cursor)?); } Ok(CborValue::Array(values)) }, 5 => { let len = usize::try_from(length(cursor)?).map_err(|_| KnoloError::InvalidPack("V5 map length overflow".into()))?; let mut values = Vec::with_capacity(len); for _ in 0..len { let key = match decode_cbor(bytes, cursor)? { CborValue::Text(value) => value, _ => return Err(KnoloError::InvalidPack("V5 map key is not text".into())) }; if values.iter().any(|(name, _): &(String, CborValue)| name == &key) { return Err(KnoloError::InvalidPack("duplicate V5 map key".into())); } values.push((key, decode_cbor(bytes, cursor)?)); } Ok(CborValue::Map(values)) }, 7 if ai == 20 => Ok(CborValue::Bool(false)), 7 if ai == 21 => Ok(CborValue::Bool(true)), 7 if ai == 22 => Ok(CborValue::Null), _ => Err(KnoloError::InvalidPack("unsupported V5 CBOR type".into())) }
+
+    match major {
+        0 => Ok(CborValue::UInt(length(cursor)?)),
+        1 => {
+            let value = length(cursor)?;
+            if value > i64::MAX as u64 {
+                return Err(KnoloError::InvalidPack("V5 negative integer overflow".into()));
+            }
+            Ok(CborValue::NInt(-1 - value as i64))
+        }
+        2 => {
+            let len = usize::try_from(length(cursor)?)
+                .map_err(|_| KnoloError::InvalidPack("V5 bytes length overflow".into()))?;
+            Ok(CborValue::Bytes(read_slice(bytes, cursor, len)?.to_vec()))
+        }
+        3 => {
+            let len = usize::try_from(length(cursor)?)
+                .map_err(|_| KnoloError::InvalidPack("V5 text length overflow".into()))?;
+            let value = std::str::from_utf8(read_slice(bytes, cursor, len)?)
+                .map_err(|_| KnoloError::InvalidPack("V5 text is not UTF-8".into()))?;
+            Ok(CborValue::Text(value.to_string()))
+        }
+        4 => {
+            let len = usize::try_from(length(cursor)?)
+                .map_err(|_| KnoloError::InvalidPack("V5 array length overflow".into()))?;
+
+            let remaining = bytes.len().saturating_sub(*cursor);
+            if len > remaining {
+                return Err(KnoloError::InvalidPack(
+                    "V5 array count exceeds remaining input".into(),
+                ));
+            }
+
+            let mut values = Vec::new();
+            for _ in 0..len {
+                values.try_reserve(1).map_err(|_| {
+                    KnoloError::InvalidPack("V5 array allocation failed".into())
+                })?;
+                values.push(decode_cbor(bytes, cursor)?);
+            }
+            Ok(CborValue::Array(values))
+        }
+        5 => {
+            let len = usize::try_from(length(cursor)?)
+                .map_err(|_| KnoloError::InvalidPack("V5 map length overflow".into()))?;
+
+            let remaining = bytes.len().saturating_sub(*cursor);
+            if len > remaining / 2 {
+                return Err(KnoloError::InvalidPack(
+                    "V5 map count exceeds remaining input".into(),
+                ));
+            }
+
+            let mut values: Vec<(String, CborValue)> = Vec::new();
+            for _ in 0..len {
+                let key = match decode_cbor(bytes, cursor)? {
+                    CborValue::Text(value) => value,
+                    _ => return Err(KnoloError::InvalidPack("V5 map key is not text".into())),
+                };
+
+                if values.iter().any(|(name, _)| name == &key) {
+                    return Err(KnoloError::InvalidPack("duplicate V5 map key".into()));
+                }
+
+                let value = decode_cbor(bytes, cursor)?;
+
+                values.try_reserve(1).map_err(|_| {
+                    KnoloError::InvalidPack("V5 map allocation failed".into())
+                })?;
+
+                values.push((key, value));
+            }
+            Ok(CborValue::Map(values))
+        }
+        7 if ai == 20 => Ok(CborValue::Bool(false)),
+        7 if ai == 21 => Ok(CborValue::Bool(true)),
+        7 if ai == 22 => Ok(CborValue::Null),
+        _ => Err(KnoloError::InvalidPack("unsupported V5 CBOR type".into())),
+    }
 }
 fn read_cbor_length(bytes: &[u8], cursor: &mut usize, ai: u8) -> Result<u64, KnoloError> { match ai { 0..=23 => Ok(ai as u64), 24 => Ok(read_slice(bytes, cursor, 1)?[0] as u64), 25 => Ok(u16::from_be_bytes(read_slice(bytes, cursor, 2)?.try_into().unwrap()) as u64), 26 => Ok(u32::from_be_bytes(read_slice(bytes, cursor, 4)?.try_into().unwrap()) as u64), 27 => Ok(u64::from_be_bytes(read_slice(bytes, cursor, 8)?.try_into().unwrap())), _ => Err(KnoloError::InvalidPack("indefinite V5 CBOR is not allowed".into())) } }
 
@@ -2035,4 +2118,90 @@ pub(crate) fn sha256(input: &[u8]) -> [u8; 32] {
     let mut h: [u32; 8] = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
     for chunk in data.chunks_exact(64) { let mut w = [0u32; 64]; for i in 0..16 { w[i] = u32::from_be_bytes(chunk[i*4..i*4+4].try_into().unwrap()); } for i in 16..64 { let s0 = w[i-15].rotate_right(7) ^ w[i-15].rotate_right(18) ^ (w[i-15] >> 3); let s1 = w[i-2].rotate_right(17) ^ w[i-2].rotate_right(19) ^ (w[i-2] >> 10); w[i] = w[i-16].wrapping_add(s0).wrapping_add(w[i-7]).wrapping_add(s1); } let mut a=h[0]; let mut b=h[1]; let mut c=h[2]; let mut d=h[3]; let mut e=h[4]; let mut f=h[5]; let mut g=h[6]; let mut hh=h[7]; for i in 0..64 { let s1=e.rotate_right(6)^e.rotate_right(11)^e.rotate_right(25); let ch=(e&f)^((!e)&g); let t1=hh.wrapping_add(s1).wrapping_add(ch).wrapping_add(K[i]).wrapping_add(w[i]); let s0=a.rotate_right(2)^a.rotate_right(13)^a.rotate_right(22); let maj=(a&b)^(a&c)^(b&c); let t2=s0.wrapping_add(maj); hh=g; g=f; f=e; e=d.wrapping_add(t1); d=c; c=b; b=a; a=t1.wrapping_add(t2); } h[0]=h[0].wrapping_add(a); h[1]=h[1].wrapping_add(b); h[2]=h[2].wrapping_add(c); h[3]=h[3].wrapping_add(d); h[4]=h[4].wrapping_add(e); h[5]=h[5].wrapping_add(f); h[6]=h[6].wrapping_add(g); h[7]=h[7].wrapping_add(hh); }
     let mut out = [0u8; 32]; for (i, value) in h.iter().enumerate() { out[i*4..i*4+4].copy_from_slice(&value.to_be_bytes()); } out
+}
+
+
+
+
+
+
+
+
+
+
+#[cfg(test)]
+mod cbor_decoder_security_tests {
+    use super::*;
+
+    fn image_with_commit_payload(commit_payload: &[u8]) -> Vec<u8> {
+        let empty_payload = encode_cbor(&CborValue::Array(vec![]));
+
+        let object_segment = encode_v5_segment(1, &empty_payload);
+        let event_segment = encode_v5_segment(2, &empty_payload);
+        let commit_segment = encode_v5_segment(3, commit_payload);
+
+        let commit_offset =
+            V5_DATA_START + object_segment.len() + event_segment.len();
+
+        let mut image = vec![0u8; commit_offset + commit_segment.len()];
+
+        image[0..8].copy_from_slice(KNOWLEDGE_IMAGE_V5_MAGIC);
+        image[8..10].copy_from_slice(&5u16.to_le_bytes());
+        image[12..14].copy_from_slice(&(V5_SUPERBLOCK_SIZE as u16).to_le_bytes());
+
+        let object_start = V5_DATA_START;
+        let event_start = object_start + object_segment.len();
+
+        image[object_start..event_start].copy_from_slice(&object_segment);
+        image[event_start..commit_offset].copy_from_slice(&event_segment);
+        image[commit_offset..].copy_from_slice(&commit_segment);
+
+        let commit_digest = digest_domain("commit", commit_payload);
+        let state = digest_domain("state", &digest_raw(&commit_digest));
+
+        let superblock = encode_v5_superblock(
+            1,
+            commit_offset,
+            commit_segment.len(),
+            &commit_digest,
+            &state,
+        );
+
+        image[V5_HEADER_SIZE..V5_HEADER_SIZE + V5_SUPERBLOCK_SIZE]
+            .copy_from_slice(&superblock);
+
+        image
+    }
+
+    fn assert_rejected_without_panic(payload: &[u8], label: &str) {
+        let image = image_with_commit_payload(payload);
+
+        let outcome = std::panic::catch_unwind(|| {
+            mount_knowledge_image(&image)
+        });
+
+        assert!(
+            outcome.is_ok(),
+            "{label}: mount_knowledge_image panicked"
+        );
+
+        assert!(
+            outcome.unwrap().is_err(),
+            "{label}: malformed CBOR was unexpectedly accepted"
+        );
+    }
+
+    #[test]
+    fn rejects_array_with_untrusted_maximum_length_without_panicking() {
+        let mut payload = vec![0x9b];
+        payload.extend_from_slice(&u64::MAX.to_be_bytes());
+        assert_rejected_without_panic(&payload, "CBOR array");
+    }
+
+    #[test]
+    fn rejects_map_with_untrusted_maximum_length_without_panicking() {
+        let mut payload = vec![0xbb];
+        payload.extend_from_slice(&u64::MAX.to_be_bytes());
+        assert_rejected_without_panic(&payload, "CBOR map");
+    }
 }
