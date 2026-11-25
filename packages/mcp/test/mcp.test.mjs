@@ -276,6 +276,45 @@ test('lists exactly four read-only tools and keeps caller identity in config', a
   }
 });
 
+test('search excerpts and subsequent pages preserve leading U+FEFF', async () => {
+  const firstPage = '\uFEFFAnnual refunds: ';
+  const secondPage = '\uFEFF30 days.';
+  const bytes = encoder.encode(firstPage + secondPage);
+  const pageBytes = encoder.encode(firstPage).length;
+  const { config, root } = await fixture({
+    maxExcerptBytes: pageBytes,
+    objects: [{ kind: 'chunk', bytes, meta: { namespace: 'support' } }],
+  });
+  const { client } = await connected(config);
+  try {
+    const search = await call(client, 'knolo_search', { query: 'refunds' });
+    assert.notEqual(search.isError, true);
+    assert.equal(search.structuredContent.hits.length, 1);
+    const [hit] = search.structuredContent.hits;
+    const next = await call(client, 'knolo_get', {
+      imageId: hit.imageId,
+      objectId: hit.objectId,
+      stateRoot: hit.stateRoot,
+      start: hit.end,
+    });
+    assert.notEqual(next.isError, true);
+    const page = next.structuredContent;
+    assert.deepEqual(
+      [
+        [hit.start, hit.end, hit.excerpt],
+        [page.start, page.end, page.content],
+      ],
+      [
+        [0, pageBytes, firstPage],
+        [pageBytes, bytes.length, secondPage],
+      ]
+    );
+  } finally {
+    await client.close();
+    await rm(root, { force: true, recursive: true });
+  }
+});
+
 test('startup fails closed on pin and policy mismatches', async () => {
   const wrongHash = await fixture({
     sha256: 'a'.repeat(64),
