@@ -2120,15 +2120,6 @@ pub(crate) fn sha256(input: &[u8]) -> [u8; 32] {
     let mut out = [0u8; 32]; for (i, value) in h.iter().enumerate() { out[i*4..i*4+4].copy_from_slice(&value.to_be_bytes()); } out
 }
 
-
-
-
-
-
-
-
-
-
 #[cfg(test)]
 mod cbor_decoder_security_tests {
     use super::*;
