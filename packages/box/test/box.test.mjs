@@ -760,6 +760,37 @@ test('a missing source root is stale while the pin still matches', async () => {
   }
 });
 
+test('a grokHome reached through a symlink labels sources like the real path', async () => {
+  const home = await realpath(await tempHome());
+  try {
+    const grok = path.join(home, 'grok');
+    const skillDir = path.join(grok, 'skills', 'team', 'notes');
+    await mkdir(skillDir, { recursive: true });
+    await writeFile(path.join(skillDir, 'SKILL.md'), 'linked home note\n');
+    const link = path.join(home, 'link');
+    await symlink(grok, link, 'dir');
+    const digest = (grokHome) =>
+      box.digestScopeSources({
+        scope: 'skills',
+        roots: [path.join(grokHome, 'skills', 'team')],
+        grokHome,
+      });
+    const real = await digest(grok);
+    const linked = await digest(link);
+    assert.equal(real.missingRoot, false);
+    assert.equal(linked.missingRoot, false);
+    assert.equal(linked.sourceDigest, real.sourceDigest);
+    const wrongHome = await box.digestScopeSources({
+      scope: 'skills',
+      roots: [path.join(link, 'skills', 'team')],
+      grokHome: path.join(link, 'skills'),
+    });
+    assert.notEqual(wrongHome.sourceDigest, linked.sourceDigest);
+  } finally {
+    await rm(home, { recursive: true, force: true });
+  }
+});
+
 test('an absent sibling root stays fresh until a real root changes', async () => {
   const home = await tempHome();
   try {
