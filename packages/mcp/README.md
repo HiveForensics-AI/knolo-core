@@ -180,6 +180,10 @@ Start it with `knolo-mcp --config /absolute/knolo-mcp.json` or
 
 ## Clients
 
+Pin the image and write `knolo-mcp.json` first. The file hash, the
+`stateRoot` from `knolo verify`, and a working config are in
+[llms-install.md](llms-install.md).
+
 Claude Desktop, Claude Code, and Cursor:
 
 ```json
@@ -187,17 +191,29 @@ Claude Desktop, Claude Code, and Cursor:
   "mcpServers": {
     "knolo": {
       "command": "npx",
-      "args": ["-y", "@knolo/mcp", "--config", "/absolute/knolo-mcp.json"]
+      "args": ["-y", "@knolo/mcp@0.2.4", "--config", "/absolute/knolo-mcp.json"]
     }
   }
 }
 ```
 
+Claude Desktop reads this block from `claude_desktop_config.json`:
+
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+
+Add `knolo` under the existing `mcpServers` key if the file already has one.
+Quit Claude Desktop fully and start it again. The server list is read only at
+startup.
+
 Claude Code CLI:
 
 ```sh
-claude mcp add knolo -- npx -y @knolo/mcp --config /absolute/knolo-mcp.json
+claude mcp add knolo -- npx -y @knolo/mcp@0.2.4 --config /absolute/knolo-mcp.json
 ```
+
+`claude mcp list` shows `knolo` and its connection state. Inside a session,
+`/mcp` lists the server and its tools.
 
 VS Code (`.vscode/mcp.json`):
 
@@ -209,7 +225,7 @@ VS Code (`.vscode/mcp.json`):
       "command": "npx",
       "args": [
         "-y",
-        "@knolo/mcp",
+        "@knolo/mcp@0.2.4",
         "--config",
         "${workspaceFolder}/knolo-mcp.json"
       ]
@@ -323,6 +339,53 @@ is required. Replace `/absolute/knolo-mcp.json` with the absolute path of
 not listen on a port.
 
 The package requires Node 20 or newer, `@knolo/core` `^6.2.1`, and
-`@knolo/tools` `^0.2.1`. Coverage, composition, and authoring stay outside
+`@knolo/tools` `^0.2.2`. Coverage, composition, and authoring stay outside
 this server. Verification checks integrity. It does not decide that a claim
 or an answer is true.
+
+## Troubleshooting
+
+Errors print as `CODE: message`. A startup error goes to stderr as
+`knolo-mcp: CODE: message` and the process exits 1 before MCP starts. A tool
+error is returned as the tool result.
+
+Server not listed or not connected: run the configured command by hand to see
+stderr.
+
+```sh
+npx -y @knolo/mcp@0.2.4 --config /absolute/knolo-mcp.json
+```
+
+A working server prints `knolo-mcp: serving stdio` and waits on stdin. Stop
+it with Ctrl+C. In Claude Desktop, check that `claude_desktop_config.json` is
+valid JSON and restart the app after each change.
+
+`claude mcp add` uses local scope by default, so the server is listed only in
+the directory where it was added. Add `--scope user` to list it in every
+directory.
+
+Config path errors:
+
+- `QUERY_INVALID: Set --config or KNOLO_MCP_CONFIG to an absolute config path.`
+  Neither the flag nor the variable is set.
+- `QUERY_INVALID: Knolo MCP config path must be absolute.` JSON client blocks
+  do not expand `~` or relative paths.
+- `IMAGE_UNAVAILABLE: Could not read Knolo MCP config: ...` The file is
+  missing or not readable by the client's user.
+- `IMAGE_INVALID: Knolo MCP config is invalid: ...` The message names the
+  field, for example a relative `auditDir` or a malformed `sha256`.
+
+Error codes:
+
+| Code                  | Cause                                                                                                      |
+| --------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `IMAGE_INVALID`       | Invalid config, or the image does not match its `sha256` or `stateRoot` pin, or the policy root mismatches |
+| `IMAGE_UNAVAILABLE`   | The config, image, or policy file cannot be read, or the requested image is not mounted                    |
+| `ACCESS_DENIED`       | `agentId` is not in the mount's `agents`, or the policy denies the mount's `principal`                     |
+| `AUDIT_UNAVAILABLE`   | `auditDir` is not writable. No hits are returned                                                           |
+| `STATE_ROOT_MISMATCH` | The image is no longer mounted at the requested or recorded state root                                     |
+| `NOT_FOUND`           | The requested object or receipt does not exist                                                             |
+| `QUERY_INVALID`       | Invalid command-line or tool arguments                                                                     |
+
+For a pin mismatch, hash the image and run `knolo verify` again as shown in
+[llms-install.md](llms-install.md), then update `sha256` and `stateRoot`.

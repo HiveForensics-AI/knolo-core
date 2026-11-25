@@ -248,6 +248,20 @@ curl -sS -H "Authorization: Bearer kno_…" \
 `POST /api/v1/tokens` is not a CLI login endpoint; it is dashboard/session
 token minting only.
 
+### Serve a pinned image over MCP
+
+[`@knolo/mcp`](packages/mcp/README.md) is a read-only stdio MCP server for a
+pinned V5 Knowledge Image. Pin the image and write `knolo-mcp.json` as shown
+in [llms-install.md](packages/mcp/llms-install.md), then register the server
+with Claude Code:
+
+```bash
+claude mcp add knolo -- npx -y @knolo/mcp@0.2.4 --config /absolute/knolo-mcp.json
+```
+
+`claude mcp list` shows the server. Claude Desktop, Cursor, VS Code, and other
+clients are in the [MCP package guide](packages/mcp/README.md#clients).
+
 ### Use the V5 kernel directly
 
 ```ts
@@ -416,6 +430,8 @@ packages/core-rust/  Native Rust V5 kernel and verifier (5.5.1), including publi
 packages/cli/        Knolo command-line interface, including `knolo kar`, `knolo compose`, and `knolo cortex`
 packages/core-python/ Python V5 verifier/query package (5.6.0), including public KAR V5 evaluate/verify and KITE certificate replay. No pack builder, Cortex, or composition
 packages/icp-canister/ Internet Computer compatibility package (5.5.1, no KAR or Cortex)
+packages/mcp/        `@knolo/mcp` read-only stdio MCP server for a pinned Knowledge Image (0.2.4)
+packages/reflex/     `@knolo/reflex` verifiable behavior packs (0.2.0)
 domains/             Review-required Domain Packs
 examples/kar-v6/     Redistributable KAR demos
 examples/            Framework and product integration examples
