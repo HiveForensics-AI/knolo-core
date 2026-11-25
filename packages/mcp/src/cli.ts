@@ -18,6 +18,16 @@ export async function startKnoloMcpCli(
   }
   const configPath = configPathFromArgs(argv, env);
   const opened = await openKnoloMcp(configPath);
+  if (
+    !opened.config.mounts.some((mount) =>
+      mount.agents.includes(opened.config.agentId)
+    )
+  ) {
+    throw new KnoloPluginError(
+      'IMAGE_INVALID',
+      `agentId ${opened.config.agentId} is not listed in any mount's agents array.`
+    );
+  }
   serveStdio(() => opened.server);
   console.error('knolo-mcp: serving stdio');
 }

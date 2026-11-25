@@ -19,13 +19,15 @@ Without those fields the status object stays `imageId`, `stateRoot`, `source`,
 and `status`. A stale source does not make a matching pin invalid.
 
 Caller identity is `agentId` in the config file, default `mcp`. That id must
-be listed in the mount's `agents` array. Tool arguments cannot set it. An
-optional config `sessionId` is stored on the receipt instead of the MCP
-client name when it is set. Otherwise the client's `clientInfo.name` is
-stored as `sessionId`. Neither value is used for authorization. `sessionId`
-is captured when the process starts. One shared stdio process cannot see a
-different session id for each chat. One `principal` per mount is what policy
-evaluation sees.
+be listed in at least one mount's `agents` array. The CLI exits with
+`IMAGE_INVALID` before MCP stdio starts when no mount allows it. Tool
+arguments cannot set it. An optional config `sessionId` is stored on the
+receipt instead of the MCP client name when it is set. Otherwise the client's
+`clientInfo.name` is stored as `sessionId`. Neither value is used for
+authorization. `sessionId` is captured when the process starts. One shared
+stdio process cannot see a different session id for each chat. One
+`principal` per mount is what policy evaluation sees. Runtime config reloads
+still use the startup identity.
 
 `knolo_search` lowercases the query. A quoted phrase is one contiguous whole
 phrase. Unquoted `OR` selects any remaining term. Unquoted stopwords and terms

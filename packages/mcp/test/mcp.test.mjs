@@ -510,6 +510,20 @@ test('stdio stdout is only JSON-RPC and bad config exits first', async () => {
   assert.match(karFailed.stderr, /SHA-256/);
 });
 
+test('an unlisted agentId exits before stdio starts', async () => {
+  const { root, config } = await fixture({ agents: ['other'] });
+  const configPath = path.join(root, 'unlisted-agent.json');
+  await writeFile(configPath, `${JSON.stringify(config)}\n`);
+  const failed = await runUntilExit([binPath, '--config', configPath]);
+  assert.equal(failed.stdout, '');
+  assert.notEqual(failed.code, 0);
+  assert.match(failed.stderr, /IMAGE_INVALID/);
+  assert.match(
+    failed.stderr,
+    /agentId mcp is not listed in any mount's agents array/
+  );
+});
+
 test('pinned graphs add read-only KAR and Cortex tools', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'knolo-mcp-kar-'));
   const workspace = await buildKarWorkspace(root);
