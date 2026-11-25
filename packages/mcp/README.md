@@ -322,14 +322,16 @@ listen on a port.
 
 Gemini CLI loads this server from `mcpServers.knolo` in
 [`examples/gemini/gemini-extension.json`](../../examples/gemini/gemini-extension.json).
-Antigravity CLI, the Antigravity App, and the Antigravity IDE load the same
-command from `mcpServers.knolo` in
+The gallery copy of that manifest is `gemini-extension.json` at the repository root.
+It declares `KNOLO_MCP_CONFIG` and does not pass `--config`.
+Antigravity CLI, the Antigravity App, and the Antigravity IDE load the command
+from `mcpServers.knolo` in
 [`examples/antigravity/mcp_config.json`](../../examples/antigravity/mcp_config.json).
 The integration note is
 [Gemini CLI and Antigravity CLI](../../docs/integrations/gemini-cli.md).
 Replace `/absolute/knolo-mcp.json` with the absolute path of
-`knolo-mcp.json`. A missing or invalid config fails closed. The server does
-not listen on a port.
+`knolo-mcp.json` when you paste the Antigravity command. A missing or invalid
+config fails closed. The server does not listen on a port.
 
 Zed loads this server from `context_servers.knolo` in
 [`examples/zed/settings.json`](../../examples/zed/settings.json). The
