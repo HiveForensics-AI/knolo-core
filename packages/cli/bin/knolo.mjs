@@ -105,6 +105,55 @@ function createError(message) {
   return new Error(message);
 }
 
+const USAGE_EXIT_CODE = 2;
+const TOP_LEVEL_COMMANDS = ['help', 'version', 'icp', ...SUBCOMMANDS];
+
+function editDistance(a, b) {
+  let previous = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i += 1) {
+    const current = [i];
+    for (let j = 1; j <= b.length; j += 1) {
+      current[j] = Math.min(
+        previous[j] + 1,
+        current[j - 1] + 1,
+        previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+    }
+    previous = current;
+  }
+  return previous[b.length];
+}
+
+function suggestCommand(word) {
+  const maxDistance = word.length <= 4 ? 1 : 2;
+  let best = null;
+  let bestDistance = Infinity;
+  for (const candidate of TOP_LEVEL_COMMANDS) {
+    const distance = editDistance(word.toLowerCase(), candidate);
+    if (distance < bestDistance) {
+      best = candidate;
+      bestDistance = distance;
+    }
+  }
+  return bestDistance <= maxDistance ? best : null;
+}
+
+// Direct mode treats the first argument as an input file. A bare word that is
+// not a file is almost always a mistyped command, so report it as one instead
+// of surfacing ENOENT. Arguments that look like paths keep the file error.
+function unknownCommandError(word) {
+  if (/[\\/.]/.test(word)) return null;
+  if (existsSync(path.resolve(process.cwd(), word))) return null;
+  const suggestion = suggestCommand(word);
+  const error = createError(
+    suggestion
+      ? `Unknown command "${word}". Did you mean "${suggestion}"?`
+      : `Unknown command "${word}". Run "knolo help" to list commands.`
+  );
+  error.exitCode = USAGE_EXIT_CODE;
+  return error;
+}
+
 async function tryImport(filePath) {
   try {
     if (
@@ -2029,6 +2078,8 @@ async function main() {
 
     if (command.startsWith('-'))
       throw createError(`Unknown option: ${command}`);
+    const unknownCommand = unknownCommandError(command);
+    if (unknownCommand) throw unknownCommand;
     const core = await loadCore();
     return await runDirectMode(core, command, commandArgs);
   } catch (error) {
@@ -2037,7 +2088,7 @@ async function main() {
     );
     if (global.debug && error instanceof Error && error.stack)
       console.error(error.stack);
-    process.exit(1);
+    process.exit(error?.exitCode ?? 1);
   }
 }
 
