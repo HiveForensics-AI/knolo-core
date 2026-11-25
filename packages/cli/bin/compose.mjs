@@ -9,7 +9,8 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import { loadCoreModule } from './load-core.mjs';
 import { KAR_CLI_MAX_IMAGE_BYTES, readBounded, readBoundedJson } from './kar-limits.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -688,52 +689,55 @@ function resolve(file) {
 }
 
 async function loadAuthorityRoot() {
-  const candidates = [
-    path.resolve(__dirname, '../../core/dist/knowledge_key_rotation_v5.js'),
-    '@knolo/core',
-  ];
-  for (const candidate of candidates) {
-    try {
-      const href = candidate.startsWith('@') ? candidate : pathToFileURL(candidate).href;
-      const loaded = await import(href);
-      if (loaded.authorityKeyringRootV1) return loaded.authorityKeyringRootV1;
-    } catch {
-      // Try the next candidate.
-    }
+  try {
+    const loaded = await loadCoreModule(
+      [
+        path.resolve(__dirname, '../../core/dist/knowledge_key_rotation_v5.js'),
+        '@knolo/core',
+      ],
+      (mod) => Boolean(mod?.authorityKeyringRootV1)
+    );
+    return loaded.authorityKeyringRootV1;
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Could not load authorityKeyringRootV1. Build packages/core first. (${detail})`);
   }
-  throw new Error('Could not load authorityKeyringRootV1. Build packages/core first.');
 }
 
 async function loadComposition() {
-  const candidates = [
-    path.resolve(__dirname, '../../core/dist/composition/index.js'),
-    '@knolo/core/composition',
-  ];
-  for (const candidate of candidates) {
-    try {
-      const href = candidate.startsWith('@') ? candidate : pathToFileURL(candidate).href;
-      const loaded = await import(href);
-      if (loaded.createCompositionRecord && loaded.verifyCompositionRecord && loaded.karCompositionBinder) return loaded;
-    } catch {
-      // Try the next candidate.
-    }
+  try {
+    return await loadCoreModule(
+      [
+        path.resolve(__dirname, '../../core/dist/composition/index.js'),
+        '@knolo/core/composition',
+      ],
+      (loaded) =>
+        Boolean(
+          loaded?.createCompositionRecord &&
+            loaded?.verifyCompositionRecord &&
+            loaded?.karCompositionBinder
+        )
+    );
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Could not load @knolo/core/composition. Build packages/core first. (${detail})`);
   }
-  throw new Error('Could not load @knolo/core/composition. Build packages/core first.');
 }
 
 async function loadAuthoring() {
-  const candidates = [
-    path.resolve(__dirname, '../../core/dist/experimental/kar/authoring/index.js'),
-    '@knolo/core/experimental/kar/authoring',
-  ];
-  for (const candidate of candidates) {
-    try {
-      const href = candidate.startsWith('@') ? candidate : pathToFileURL(candidate).href;
-      const loaded = await import(href);
-      if (loaded.domainPackRoot && loaded.parseAuthoringDocument && loaded.interpretDomainPack) return loaded;
-    } catch {
-      // Try the next candidate.
-    }
+  try {
+    return await loadCoreModule(
+      [
+        path.resolve(__dirname, '../../core/dist/experimental/kar/authoring/index.js'),
+        '@knolo/core/experimental/kar/authoring',
+      ],
+      (loaded) =>
+        Boolean(
+          loaded?.domainPackRoot && loaded?.parseAuthoringDocument && loaded?.interpretDomainPack
+        )
+    );
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Could not load @knolo/core/kar/authoring. Build packages/core first. (${detail})`);
   }
-  throw new Error('Could not load @knolo/core/kar/authoring. Build packages/core first.');
 }

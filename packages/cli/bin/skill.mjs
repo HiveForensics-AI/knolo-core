@@ -21,7 +21,8 @@ import {
 } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import { loadCoreModule } from './load-core.mjs';
 import { normalizeCategories } from './registry/categories.mjs';
 import {
   normalizeRegistryUrl,
@@ -904,32 +905,19 @@ function coreModuleReady(loaded) {
   );
 }
 
-async function loadCore() {
-  const fileHref = pathToFileURL(
-    path.resolve(__dirname, '../../core/dist/index.js')
-  ).href;
-  let lastError = null;
-  // A failed ESM import stays cached for that exact URL. A later attempt uses
-  // a new file URL so a transient open does not stick for the process.
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const fileUrl =
-      attempt === 0 ? fileHref : `${fileHref}?knolo-load=${attempt}`;
-    for (const specifier of [fileUrl, '@knolo/core']) {
-      try {
-        const loaded = await import(specifier);
-        if (coreModuleReady(loaded)) return loaded;
-        lastError = new Error('module did not export the Knowledge Image API');
-      } catch (error) {
-        lastError = error;
-      }
-    }
-    if (attempt < 2) {
-      await new Promise((resolve) => setTimeout(resolve, 25 * (attempt + 1)));
-    }
-  }
-  throw new Error(
-    `Could not load @knolo/core. Build packages/core first. (${coreLoadDetail(lastError)})`
-  );
+let corePromise;
+
+function loadCore() {
+  corePromise ??= loadCoreModule(
+    [path.resolve(__dirname, '../../core/dist/index.js'), '@knolo/core'],
+    coreModuleReady
+  ).catch((error) => {
+    corePromise = undefined;
+    throw new Error(
+      `Could not load @knolo/core. Build packages/core first. (${coreLoadDetail(error)})`
+    );
+  });
+  return corePromise;
 }
 
 const SKILL_ARCHIVE_FORMAT = 'knolo-skill-archive-v1';

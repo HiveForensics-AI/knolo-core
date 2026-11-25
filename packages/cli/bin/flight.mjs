@@ -8,7 +8,8 @@
 import { createHash } from 'node:crypto';
 import { createReadStream, existsSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
+import { loadCoreModule } from './load-core.mjs';
 import { KAR_CLI_MAX_IMAGE_BYTES, readBounded } from './kar-limits.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -384,20 +385,15 @@ async function inspectLog(file) {
 }
 
 async function loadImageApi() {
-  const candidates = [
-    path.resolve(__dirname, '../../core/dist/index.js'),
-    '@knolo/core',
-  ];
-  for (const candidate of candidates) {
-    try {
-      const href = candidate.startsWith('@') ? candidate : pathToFileURL(candidate).href;
-      const loaded = await import(href);
-      if (loaded.createKnowledgeImageV5) return loaded;
-    } catch {
-      // Try the next candidate.
-    }
+  try {
+    return await loadCoreModule(
+      [path.resolve(__dirname, '../../core/dist/index.js'), '@knolo/core'],
+      (loaded) => Boolean(loaded?.createKnowledgeImageV5)
+    );
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Could not load @knolo/core. Build packages/core first. (${detail})`);
   }
-  throw new Error('Could not load @knolo/core. Build packages/core first.');
 }
 
 function parseArgs(argv) {
