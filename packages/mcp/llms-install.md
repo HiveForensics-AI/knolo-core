@@ -59,6 +59,11 @@ the server can write. A hash, state-root, or policy mismatch exits before the
 server accepts a connection. An unwritable audit directory returns
 `AUDIT_UNAVAILABLE` and no hits.
 
+The policy file must match the policy committed in the image. Writing a new
+file for an existing image does not change its access rules. The format and a
+script that creates a matching pair are in
+[Policy file](README.md#policy-file).
+
 ## Register Cline
 
 Add a stdio server in Cline's MCP settings. The command is `npx`.

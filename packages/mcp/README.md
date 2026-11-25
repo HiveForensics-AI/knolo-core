@@ -113,6 +113,88 @@ Knowledge & Memory. It names this package as a local TypeScript server and
 pins `@knolo/mcp@0.2.4`. There is no badge, because Knolo is not listed there
 yet. Submitting the line is a separate pull request.
 
+## Policy file
+
+Every mount needs a `policyPath`. The file is not free-standing
+configuration. Its policy root must equal the `policyRoot` committed in the
+image, so the policy is chosen when the image is built. To change it, build a
+new image and update the `sha256` and `stateRoot` pins.
+
+This script builds a one-chunk image, writes the matching policy file, and
+prints both pins. It requires `@knolo/core`.
+
+```js
+import { createHash } from 'node:crypto';
+import { writeFileSync } from 'node:fs';
+import { createKnowledgeImageV5 } from '@knolo/core';
+
+const policy = {
+  version: 1,
+  default: 'deny',
+  rules: [
+    {
+      effect: 'allow',
+      action: 'query',
+      principal: 'mcp:reader',
+      kind: 'chunk',
+    },
+    {
+      effect: 'allow',
+      action: 'read',
+      principal: 'mcp:reader',
+      kind: 'chunk',
+    },
+  ],
+};
+
+const image = createKnowledgeImageV5({
+  policy,
+  objects: [
+    {
+      kind: 'chunk',
+      bytes: new TextEncoder().encode(
+        'Annual enterprise refunds are available within 30 days.'
+      ),
+      meta: { namespace: 'support' },
+    },
+  ],
+});
+
+writeFileSync('handbook.knolo', image.bytes);
+writeFileSync('handbook.policy.json', JSON.stringify(policy, null, 2));
+console.log('sha256', createHash('sha256').update(image.bytes).digest('hex'));
+console.log('stateRoot', image.stateRoot);
+```
+
+Use the absolute paths of the two files and the two printed values in the
+mount, and set its `principal` to `mcp:reader`.
+
+| Field       | Values                                                          |
+| ----------- | --------------------------------------------------------------- |
+| `version`   | `1`                                                             |
+| `default`   | `allow` or `deny`. Applies when no rule matches.                |
+| `rules`     | Optional array.                                                 |
+| `effect`    | `allow` or `deny`. A matching `deny` overrides every `allow`.   |
+| `action`    | `query` for `knolo_search`. `read` for `knolo_get`.             |
+| `principal` | Optional. Compared with the mount's `principal`, not `agentId`. |
+| `kind`      | Optional object kind, such as `chunk`.                          |
+
+JSON formatting and rule order do not change the policy root. A mount with a
+`kar` block also needs `query` access to `chunk` objects.
+
+An image built without a `policy` commits a default-deny root. The file
+`{ "version": 1, "default": "deny" }` matches it, but allows no access.
+
+| Result                                             | Cause                                                                                    |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `IMAGE_INVALID`, "Policy for image ... is invalid" | The file is unreadable, is not a valid policy, or does not match the image `policyRoot`. |
+| `ACCESS_DENIED` from `knolo_search`                | The file matches, and the policy denies every matched object to this `principal`.        |
+| `ACCESS_DENIED` from `knolo_get`                   | No `read` access to that object for this `principal`.                                    |
+
+A search that matches nothing returns no hits, even under a policy that allows
+no access. The format and its root are specified in
+[KIP-0008](../../spec/KIP-0008-policy-authorization-v1.md).
+
 ## Config
 
 Paths are absolute. `sha256` is 64 lowercase hex characters. `stateRoot` is
