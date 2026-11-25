@@ -2119,3 +2119,80 @@ pub(crate) fn sha256(input: &[u8]) -> [u8; 32] {
     for chunk in data.chunks_exact(64) { let mut w = [0u32; 64]; for i in 0..16 { w[i] = u32::from_be_bytes(chunk[i*4..i*4+4].try_into().unwrap()); } for i in 16..64 { let s0 = w[i-15].rotate_right(7) ^ w[i-15].rotate_right(18) ^ (w[i-15] >> 3); let s1 = w[i-2].rotate_right(17) ^ w[i-2].rotate_right(19) ^ (w[i-2] >> 10); w[i] = w[i-16].wrapping_add(s0).wrapping_add(w[i-7]).wrapping_add(s1); } let mut a=h[0]; let mut b=h[1]; let mut c=h[2]; let mut d=h[3]; let mut e=h[4]; let mut f=h[5]; let mut g=h[6]; let mut hh=h[7]; for i in 0..64 { let s1=e.rotate_right(6)^e.rotate_right(11)^e.rotate_right(25); let ch=(e&f)^((!e)&g); let t1=hh.wrapping_add(s1).wrapping_add(ch).wrapping_add(K[i]).wrapping_add(w[i]); let s0=a.rotate_right(2)^a.rotate_right(13)^a.rotate_right(22); let maj=(a&b)^(a&c)^(b&c); let t2=s0.wrapping_add(maj); hh=g; g=f; f=e; e=d.wrapping_add(t1); d=c; c=b; b=a; a=t1.wrapping_add(t2); } h[0]=h[0].wrapping_add(a); h[1]=h[1].wrapping_add(b); h[2]=h[2].wrapping_add(c); h[3]=h[3].wrapping_add(d); h[4]=h[4].wrapping_add(e); h[5]=h[5].wrapping_add(f); h[6]=h[6].wrapping_add(g); h[7]=h[7].wrapping_add(hh); }
     let mut out = [0u8; 32]; for (i, value) in h.iter().enumerate() { out[i*4..i*4+4].copy_from_slice(&value.to_be_bytes()); } out
 }
+
+#[cfg(test)]
+mod cbor_decoder_security_tests {
+    use super::*;
+
+    fn image_with_commit_payload(commit_payload: &[u8]) -> Vec<u8> {
+        let empty_payload = encode_cbor(&CborValue::Array(vec![]));
+
+        let object_segment = encode_v5_segment(1, &empty_payload);
+        let event_segment = encode_v5_segment(2, &empty_payload);
+        let commit_segment = encode_v5_segment(3, commit_payload);
+
+        let commit_offset =
+            V5_DATA_START + object_segment.len() + event_segment.len();
+
+        let mut image = vec![0u8; commit_offset + commit_segment.len()];
+
+        image[0..8].copy_from_slice(KNOWLEDGE_IMAGE_V5_MAGIC);
+        image[8..10].copy_from_slice(&5u16.to_le_bytes());
+        image[12..14].copy_from_slice(&(V5_SUPERBLOCK_SIZE as u16).to_le_bytes());
+
+        let object_start = V5_DATA_START;
+        let event_start = object_start + object_segment.len();
+
+        image[object_start..event_start].copy_from_slice(&object_segment);
+        image[event_start..commit_offset].copy_from_slice(&event_segment);
+        image[commit_offset..].copy_from_slice(&commit_segment);
+
+        let commit_digest = digest_domain("commit", commit_payload);
+        let state = digest_domain("state", &digest_raw(&commit_digest));
+
+        let superblock = encode_v5_superblock(
+            1,
+            commit_offset,
+            commit_segment.len(),
+            &commit_digest,
+            &state,
+        );
+
+        image[V5_HEADER_SIZE..V5_HEADER_SIZE + V5_SUPERBLOCK_SIZE]
+            .copy_from_slice(&superblock);
+
+        image
+    }
+
+    fn assert_rejected_without_panic(payload: &[u8], label: &str) {
+        let image = image_with_commit_payload(payload);
+
+        let outcome = std::panic::catch_unwind(|| {
+            mount_knowledge_image(&image)
+        });
+
+        assert!(
+            outcome.is_ok(),
+            "{label}: mount_knowledge_image panicked"
+        );
+
+        assert!(
+            outcome.unwrap().is_err(),
+            "{label}: malformed CBOR was unexpectedly accepted"
+        );
+    }
+
+    #[test]
+    fn rejects_array_with_untrusted_maximum_length_without_panicking() {
+        let mut payload = vec![0x9b];
+        payload.extend_from_slice(&u64::MAX.to_be_bytes());
+        assert_rejected_without_panic(&payload, "CBOR array");
+    }
+
+    #[test]
+    fn rejects_map_with_untrusted_maximum_length_without_panicking() {
+        let mut payload = vec![0xbb];
+        payload.extend_from_slice(&u64::MAX.to_be_bytes());
+        assert_rejected_without_panic(&payload, "CBOR map");
+    }
+}
