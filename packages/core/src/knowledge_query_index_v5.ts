@@ -3,11 +3,13 @@ import {
   decodeCanonicalCbor,
   digestBytes,
   digestDomain,
+  type CborValue,
+  type Digest,
+} from './cbor.js';
+import {
   mountKnowledgeImageV5,
   KNOWLEDGE_IMAGE_V5_SEGMENT_HEADER_SIZE,
   V5_OPTIONAL_SEGMENT_VQF_QUERY_INDEX,
-  type CborValue,
-  type Digest,
   type KnowledgeImageV5,
 } from './knowledge_image_v5.js';
 import {

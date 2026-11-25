@@ -3,7 +3,7 @@ import {
   decodeCanonicalCbor,
   digestDomain,
   type CborValue,
-} from '../../knowledge_image_v5.js';
+} from '../../cbor.js';
 import { VqfByteReader, checkBufferLimit } from './byte_reader.js';
 import { VqfByteWriter } from './byte_writer.js';
 import { findLowestByteOffset, VqfByteStore } from './byte_factor.js';

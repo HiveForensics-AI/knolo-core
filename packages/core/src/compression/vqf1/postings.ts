@@ -1,4 +1,4 @@
-import { digestBytes, digestDomain } from '../../knowledge_image_v5.js';
+import { digestBytes, digestDomain } from '../../cbor.js';
 import type { Pack } from '../../pack.runtime.js';
 import { VqfByteReader, checkBufferLimit } from './byte_reader.js';
 import { VqfByteWriter } from './byte_writer.js';
