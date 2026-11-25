@@ -322,6 +322,7 @@ listen on a port.
 
 Gemini CLI loads this server from `mcpServers.knolo` in
 [`examples/gemini/gemini-extension.json`](../../examples/gemini/gemini-extension.json).
+The gallery copy of that manifest is `gemini-extension.json` at the repository root.
 Antigravity CLI, the Antigravity App, and the Antigravity IDE load the same
 command from `mcpServers.knolo` in
 [`examples/antigravity/mcp_config.json`](../../examples/antigravity/mcp_config.json).

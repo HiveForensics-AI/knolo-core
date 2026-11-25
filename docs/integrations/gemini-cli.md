@@ -4,7 +4,7 @@ Gemini CLI and Antigravity CLI can launch the published Knolo MCP server over st
 
 Gemini CLI still serves API-key and Vertex users. Antigravity CLI (`agy`) is the client for individual Google accounts. Both examples use the same stdio command.
 
-The Gemini CLI extension manifest is [`examples/gemini/gemini-extension.json`](../../examples/gemini/gemini-extension.json). Install that directory with the current `gemini extensions install` command, or copy the `mcpServers.knolo` block into Gemini CLI settings. Antigravity reads the same command from [`examples/antigravity/mcp_config.json`](../../examples/antigravity/mcp_config.json). The global file is `~/.gemini/config/mcp_config.json`. A workspace file is `.agents/mcp_config.json`. The Antigravity App, IDE, and CLI read that shape. In the CLI, `/mcp` opens the MCP manager.
+The Gemini CLI extension manifest is [`examples/gemini/gemini-extension.json`](../../examples/gemini/gemini-extension.json). The gallery copy is [`gemini-extension.json`](../../gemini-extension.json) at the repository root. The GitHub topic is `gemini-cli-extension`. Install the examples directory with the current `gemini extensions install` command, or copy the `mcpServers.knolo` block into Gemini CLI settings. Antigravity reads the same command from [`examples/antigravity/mcp_config.json`](../../examples/antigravity/mcp_config.json). The global file is `~/.gemini/config/mcp_config.json`. A workspace file is `.agents/mcp_config.json`. The Antigravity App, IDE, and CLI read that shape. In the CLI, `/mcp` opens the MCP manager.
 
 ```json
 {
@@ -29,6 +29,6 @@ A receipt is an integrity check. It does not mean a claim is proven. Verificatio
 
 The server does not download images, write knowledge, or call a model. An unwritable audit directory returns `AUDIT_UNAVAILABLE` and no hits.
 
-Continuous integration starts `npx -y @knolo/mcp@0.2.4 --config` against a pinned fixture, lists the four core tools, and checks that a search returns a receipt. A missing config exits before a tool call. It does not install Gemini CLI or Antigravity CLI. A catalog submission is a separate human step.
+Continuous integration starts `npx -y @knolo/mcp@0.2.4 --config` against a pinned fixture, lists the four core tools, and checks that a search returns a receipt. A missing config exits before a tool call. It does not install Gemini CLI or Antigravity CLI. The Gemini CLI gallery reads the root manifest and the `gemini-cli-extension` topic. Antigravity Marketplace stays a partner interest form.
 
 Server configuration is documented in the [`@knolo/mcp` README](../../packages/mcp/README.md).

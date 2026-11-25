@@ -1,0 +1,11 @@
+{
+  "name": "knolo",
+  "version": "0.2.4",
+  "description": "Read-only search over a pinned local Knolo Knowledge Image.",
+  "mcpServers": {
+    "knolo": {
+      "command": "npx",
+      "args": ["-y", "@knolo/mcp@0.2.4", "--config", "/absolute/knolo-mcp.json"]
+    }
+  }
+}

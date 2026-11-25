@@ -542,6 +542,10 @@ test('gemini and antigravity configs start the published stdio server', async ()
   );
   assert.equal(gemini.name, 'knolo');
   assert.equal(gemini.version, '0.2.4');
+  const gallery = JSON.parse(
+    readFileSync(path.join(repoRoot, 'gemini-extension.json'), 'utf8')
+  );
+  assert.deepEqual(gallery, gemini);
   for (const example of [gemini, antigravity]) {
     const server = example.mcpServers.knolo;
     assert.equal(server.command, 'npx');
@@ -561,6 +565,8 @@ test('gemini and antigravity configs start the published stdio server', async ()
     'utf8'
   );
   assert.match(note, /There is no remote URL\./);
+  assert.match(note, /gemini-cli-extension/);
+  assert.match(readme, /gemini-extension\.json` at the repository root/);
   assert.match(note, /A receipt is an integrity check\./);
   assert.match(note, /A missing or invalid config fails closed\./);
 
