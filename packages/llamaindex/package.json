@@ -4,6 +4,7 @@
   "private": false,
   "type": "module",
   "main": "./src/index.js",
+  "types": "./src/index.d.ts",
   "files": [
     "src"
   ],
@@ -21,14 +22,20 @@
     "access": "public"
   },
   "exports": {
-    ".": "./src/index.js"
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    }
   },
   "scripts": {
     "build": "node -e \"console.log('llamaindex adapter uses source exports')\"",
-    "test": "node --test test/llamaindex.test.mjs"
+    "test": "node --test test/llamaindex.test.mjs && tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 test/types.mts"
   },
   "dependencies": {
     "@knolo/core": "^6.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
   },
   "description": "LlamaIndex-style retriever interface for KnoLo."
 }
