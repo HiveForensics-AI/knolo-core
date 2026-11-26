@@ -11,6 +11,7 @@ import {
   type KnoloPluginConfig,
 } from '@knolo/tools';
 import * as z from 'zod/v4';
+import { MAX_REBUILD_TIMEOUT_MS } from './auto-rebuild.js';
 
 const ID_PATTERN = /^[a-zA-Z0-9_.-]+$/;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/;
@@ -48,6 +49,12 @@ export const knoloMcpConfigSchema = z
       .object({
         command: z.string().min(1),
         args: z.array(z.string()).min(1),
+        timeoutMs: z
+          .number()
+          .int()
+          .min(1)
+          .max(MAX_REBUILD_TIMEOUT_MS)
+          .optional(),
       })
       .strict()
       .optional(),
