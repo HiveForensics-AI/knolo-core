@@ -1,7 +1,7 @@
 import { stat } from 'node:fs/promises';
 import {
+  KnoloOpenClawService,
   KnoloPluginError,
-  type KnoloOpenClawService,
   type KnoloPluginConfig,
 } from '@knolo/tools';
 import { knoloPluginConfig, type KnoloMcpConfig } from './config.js';
@@ -18,6 +18,7 @@ type FileStamp = {
 type LoadedFiles = {
   config: FileStamp;
   images: readonly FileStamp[];
+  policies: readonly FileStamp[];
   graphs: readonly FileStamp[];
 };
 
@@ -35,7 +36,10 @@ export async function createImageRefresh(options: {
   let loaded: LoadedFiles = {
     config: await stampFile(options.configPath),
     images: options.service.mountedFiles(),
-    graphs: await stampFiles(options.graphPaths),
+    policies: await stampFiles(
+      uniquePaths(options.pluginConfig.mounts.map((mount) => mount.policyPath))
+    ),
+    graphs: await stampFiles(uniquePaths(options.graphPaths)),
   };
   let tail: Promise<void> = Promise.resolve();
 
@@ -43,10 +47,12 @@ export async function createImageRefresh(options: {
     if (
       !(await filesDrifted([loaded.config])) &&
       !(await filesDrifted(loaded.images)) &&
+      !(await filesDrifted(loaded.policies)) &&
       !(await filesDrifted(loaded.graphs))
     ) {
       return;
     }
+    const configBefore = await tryStampFile(options.configPath);
     const config = await options.loadConfig();
     const next = knoloPluginConfig(config);
     const reloaded = {
@@ -58,18 +64,25 @@ export async function createImageRefresh(options: {
     } else {
       reloaded.grokHome = next.grokHome;
     }
+    const policyFiles = policyPaths(config);
+    const graphFiles = karPaths(config);
+    const policiesBefore = await tryStampFiles(policyFiles);
+    const graphsBefore = await tryStampFiles(graphFiles);
+    let pinned: Map<string, PinnedKarGraph>;
+    if (graphFiles.length > 0) {
+      const candidate = await KnoloOpenClawService.create(reloaded);
+      pinned = await pinConfiguredGraphs(config, candidate, options.agentId);
+    } else {
+      pinned = new Map();
+    }
     await options.service.reload(reloaded);
-    const pinned = await pinConfiguredGraphs(
-      config,
-      options.service,
-      options.agentId
-    );
     const images = options.service.mountedFiles();
-    const graphs = await stampFiles(karPaths(config));
-    const configStamp = await stampFile(options.configPath);
+    const policies = policiesBefore ?? (await stampFiles(policyFiles));
+    const graphs = graphsBefore ?? (await stampFiles(graphFiles));
+    const configStamp = configBefore ?? (await stampFile(options.configPath));
     options.graphs.clear();
     for (const [id, graph] of pinned) options.graphs.set(id, graph);
-    loaded = { config: configStamp, images, graphs };
+    loaded = { config: configStamp, images, policies, graphs };
   };
 
   return () => {
@@ -82,10 +95,36 @@ export async function createImageRefresh(options: {
   };
 }
 
+function uniquePaths(paths: readonly string[]): string[] {
+  return [...new Set(paths)];
+}
+
+function policyPaths(config: KnoloMcpConfig): string[] {
+  return uniquePaths(config.mounts.map((mount) => mount.policyPath));
+}
+
 function karPaths(config: KnoloMcpConfig): string[] {
-  return config.mounts.flatMap((mount) =>
-    mount.kar ? [mount.kar.graphPath] : []
+  return uniquePaths(
+    config.mounts.flatMap((mount) => (mount.kar ? [mount.kar.graphPath] : []))
   );
+}
+
+async function tryStampFile(filePath: string): Promise<FileStamp | null> {
+  try {
+    return await stampFile(filePath);
+  } catch {
+    return null;
+  }
+}
+
+async function tryStampFiles(
+  paths: readonly string[]
+): Promise<FileStamp[] | null> {
+  try {
+    return await stampFiles(paths);
+  } catch {
+    return null;
+  }
 }
 
 async function filesDrifted(files: readonly FileStamp[]): Promise<boolean> {
