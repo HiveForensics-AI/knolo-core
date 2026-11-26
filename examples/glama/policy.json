@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "default": "deny",
+  "rules": [
+    {
+      "effect": "allow",
+      "action": "query",
+      "principal": "mcp:reader",
+      "kind": "chunk"
+    },
+    {
+      "effect": "allow",
+      "action": "read",
+      "principal": "mcp:reader",
+      "kind": "chunk"
+    }
+  ]
+}

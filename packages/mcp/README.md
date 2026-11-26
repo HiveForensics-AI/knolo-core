@@ -102,6 +102,11 @@ request are separate steps. The draft catalog entry is
 [`listings/docker/server.yaml`](listings/docker/server.yaml). The integration
 note is [Docker](../../docs/integrations/docker.md).
 
+The Glama catalog check uses the pinned demo in
+[`examples/glama`](../../examples/glama/README.md). Its start command is
+`node examples/glama/start.mjs`. A start with no config still fails closed.
+The demo server does not listen on a port.
+
 [Goose](../../docs/integrations/goose.md) launches this server as a stdio
 extension. The draft is
 [`listings/goose/extension.yaml`](listings/goose/extension.yaml). Goose does
