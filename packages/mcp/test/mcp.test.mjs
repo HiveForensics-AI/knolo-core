@@ -2056,6 +2056,35 @@ test('a reloaded config uses the new grokHome for freshness', async () => {
   }
 });
 
+test('concurrent calls share one running rebuild hook', async () => {
+  const { config, root } = await fixture();
+  const marker = path.join(root, 'ran.txt');
+  const script = path.join(root, 'slow.mjs');
+  await writeFile(
+    script,
+    `import { appendFile } from 'node:fs/promises';\nawait appendFile(${JSON.stringify(marker)}, 'ran\\n');\nawait new Promise((resolve) => setTimeout(resolve, 400));\n`
+  );
+  config.autoRebuild = { command: process.execPath, args: [script] };
+  const { client } = await serveFile(config, root);
+  try {
+    const results = await Promise.all([
+      call(client, 'knolo_search', { query: 'enterprise refunds', limit: 1 }),
+      call(client, 'knolo_search', { query: 'monthly plans', limit: 1 }),
+      call(client, 'knolo_status', {}),
+    ]);
+    for (const result of results) {
+      assert.notEqual(result.isError, true, textOf(result));
+    }
+    assert.equal(await readFile(marker, 'utf8'), 'ran\n');
+    const later = await call(client, 'knolo_status', {});
+    assert.notEqual(later.isError, true, textOf(later));
+    assert.equal(await readFile(marker, 'utf8'), 'ran\nran\n');
+  } finally {
+    await client.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('search and status run a configured rebuild hook', async () => {
   const { config, root } = await fixture();
   const marker = path.join(root, 'ran.txt');
