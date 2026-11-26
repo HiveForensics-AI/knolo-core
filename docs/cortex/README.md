@@ -40,6 +40,11 @@ Answer statuses are `ANSWERED`, `PARTIAL`, and `INSUFFICIENT_EVIDENCE`.
 
 Defaults are 4 rounds, 80 candidates per round, and 12 evidence items in the answer. Hard caps are 8, 200, and 32. The caller supplies `createdAt` when it wants one. Core does not read the clock, and `createdAt` is not part of the three roots.
 
+## Reference
+
+- [API](api.md): functions, the model adapter and host retriever contracts, policy limits, trace fields, roots, and the verification order.
+- [Error codes](errors.md): the nine `CORTEX_*` codes, where each one is raised, and what to check.
+
 ## CLI
 
 `knolo cortex find`, `knolo cortex ask`, `knolo cortex explain`, and `knolo cortex verify` read local files. They do not take an API key. Pass a model only through `createCortexSession` in the host.
