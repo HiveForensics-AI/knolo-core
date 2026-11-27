@@ -57,4 +57,7 @@ const verified = await verifyCortexAnswer({ image, question: trace.question, res
 
 `verified.ok` means the roots match. The dossier field `verified: true` means the same thing. Neither one is a truth verdict.
 
+Worked demo: [`examples/cortex-v1`](../../examples/cortex-v1/README.md)
+(`find_relevant`, model-less abstention, and a tampered-trace verify failure).
+
 Public vectors: [`conformance/cortex/v1`](../../conformance/cortex/v1/README.md).

@@ -37,7 +37,7 @@ Published `@knolo/core` is `6.2.3`. This tree's core package file is `6.2.3`. `6
 
 The `description` fields in this tree name the sharing job above. npm still shows the previous descriptions until a later publish.
 
-Start with the [KAR guide](docs/kar/README.md), the [composition guide](docs/composition/README.md), the [Cortex guide](docs/cortex/README.md), the [6.2.0 release notes](docs/releases/v6.2.0.md), [`examples/kar-v6`](examples/kar-v6/README.md), [`examples/kar-coverage`](examples/kar-coverage/README.md), and [`examples/composition-v1`](examples/composition-v1/README.md).
+Start with the [KAR guide](docs/kar/README.md), the [composition guide](docs/composition/README.md), the [Cortex guide](docs/cortex/README.md), the [6.2.0 release notes](docs/releases/v6.2.0.md), [`examples/kar-v6`](examples/kar-v6/README.md), [`examples/kar-coverage`](examples/kar-coverage/README.md), [`examples/composition-v1`](examples/composition-v1/README.md), and [`examples/cortex-v1`](examples/cortex-v1/README.md).
 
 ## The opportunity
 
@@ -434,6 +434,7 @@ packages/mcp/        `@knolo/mcp` read-only stdio MCP server for a pinned Knowle
 packages/reflex/     `@knolo/reflex` verifiable behavior packs (0.2.0)
 domains/             Review-required Domain Packs
 examples/kar-v6/     Redistributable KAR demos
+examples/cortex-v1/  Cortex find / abstain / verify demo
 examples/            Framework and product integration examples
 spec/                KIP contracts, including KAR-1
 conformance/kar/v1/  Public KAR vectors
