@@ -368,7 +368,8 @@ const EVIDENCE_TOOLS = new Set<KnoloEvidenceTool>([
 const ID_PATTERN = /^[a-zA-Z0-9_.-]+$/;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/;
 const ROOT_PATTERN = /^sha256-[a-f0-9]{64}$/;
-const decoder = new TextDecoder('utf-8', { fatal: true });
+// A byte range can start at an in-band U+FEFF, which is part of the evidence.
+const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 
 export class KnoloOpenClawService {
   #config: NormalizedConfig;
