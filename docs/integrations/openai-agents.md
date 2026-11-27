@@ -1,6 +1,6 @@
 # OpenAI Agents SDK
 
-The OpenAI Agents SDK can call the published Knolo MCP server over stdio. The TypeScript example is [`examples/openai_agents_js`](../../examples/openai_agents_js/README.md). Knolo does not call a model and does not read an API key. `run()` belongs to the host.
+The OpenAI Agents SDK can call the published Knolo MCP server over stdio. The TypeScript example is [`examples/openai_agents_js`](../../examples/openai_agents_js/README.md). The Python example is [`examples/openai_agents_python`](../../examples/openai_agents_python/README.md). Knolo does not call a model and does not read an API key. `run()` belongs to the host.
 
 ```bash
 npx -y @knolo/mcp@0.2.4 --config /absolute/knolo-mcp.json
@@ -10,7 +10,7 @@ npx -y @knolo/mcp@0.2.4 --config /absolute/knolo-mcp.json
 
 ## What a search returns
 
-`knolo_search` writes an `openclaw-knolo-query-v1` receipt before it returns hits. The offline smoke lists the four tools and runs one search for `enterprise refunds` against a fixture image. Each kept term is a whole word. Unquoted stopwords and terms shorter than 3 characters are dropped. The smoke does not call a model.
+`knolo_search` writes an `openclaw-knolo-query-v1` receipt before it returns hits. The offline smokes list the four tools and run one search for `enterprise refunds` against a fixture image. Each kept term is a whole word. Unquoted stopwords and terms shorter than 3 characters are dropped. The smokes do not call a model. The Python smoke also points the server at an unwritable audit directory and checks that `knolo_search` returns `AUDIT_UNAVAILABLE`.
 
 A receipt is an integrity check. It does not mean a claim is proven. Verification checks the image bytes, the state root, and the policy root.
 
@@ -59,7 +59,22 @@ The native package does not start a server and does not open a port. The MCP exa
 
 ## Python
 
-`openai-agents-python` can start the same published server. This repository does not ship a Python example or a Python smoke for that SDK. PyPI `knolo` 5.5.1 has no KAR. This tree's `knolo` package is 5.6.0. It evaluates public KAR V5 and replays a KITE certificate.
+Python 3.12 and `openai-agents` 0.26.0:
+
+```bash
+python -m pip install -r examples/openai_agents_python/requirements.txt
+```
+
+Build a fixture from this repository, or point `KNOLO_MCP_CONFIG` at an image you already pinned:
+
+```bash
+npm run build --workspace @knolo/core
+npm run build --workspace @knolo/mcp
+config="$(node examples/google_adk_python/prepare-fixture.mjs)"
+export KNOLO_MCP_CONFIG="$config"
+```
+
+Continuous integration starts `packages/mcp/bin/knolo-mcp.mjs` with Node so the job does not depend on a registry fetch of Knolo. Set `KNOLO_MCP_COMMAND` and `KNOLO_MCP_ARGS` for that path. The default command is `npx` with `@knolo/mcp@0.2.4`. The smoke runs on Python 3.12. The Node half of that job stays on Node 20.
 
 ```python
 from agents.mcp import MCPServerStdio
@@ -74,6 +89,8 @@ server = MCPServerStdio(
 )
 ```
 
-The host lists the tools from that server. A model call, if any, stays in the host.
+Enter the server with `async with server` before `list_tools()` or `call_tool()`. The config path is absolute. The smoke calls those methods. It does not construct an `Agent` and it does not call `Runner.run`.
+
+This repository does not publish a Python native-tools package. The Python example talks to the MCP server directly. PyPI `knolo` 5.5.1 has no KAR. This tree's `knolo` package is 5.6.0. It evaluates public KAR V5 and replays a KITE certificate.
 
 Server configuration is documented in the [`@knolo/mcp` README](../../packages/mcp/README.md).

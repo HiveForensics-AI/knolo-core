@@ -98,8 +98,8 @@ operational guides for Knolo.
   a Python agent that calls published `@knolo/mcp@0.2.4` over stdio.
   A search returns a query receipt and an object id. Verification checks
   the image. `SATISFIED` means evidence requirements were met.
-- [OpenAI Agents SDK](integrations/openai-agents.md) — a TypeScript smoke
-  that calls published `@knolo/mcp@0.2.4` over stdio, and native
+- [OpenAI Agents SDK](integrations/openai-agents.md) — TypeScript and Python
+  smokes that call published `@knolo/mcp@0.2.4` over stdio, and native
   `@knolo/openai-agents` tools. Knolo does not call a model. A search returns
   a query receipt. `SATISFIED` means evidence requirements were met.
   `@knolo/openai-agents@0.1.1` is published. `@knolo/openai-agents@0.1.0` does not include the KITE host tools.
