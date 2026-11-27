@@ -46,14 +46,16 @@ stored result and does not replay the clock. Older receipts without those
 fields still verify. An unwritable `auditDir` returns `AUDIT_UNAVAILABLE` and
 no hits.
 Before each tool call, a server started from a config file stats that config,
-every mounted image, and any pinned KAR graph. An unchanged size and
-modification time keeps the loaded image. A changed file is checked against
-the pin in that config. A match replaces the loaded image. A mount removed
-from the config is no longer served, even when its image file is still on
-disk. A mismatch returns `IMAGE_INVALID` and does not serve the previous
-image. A config file that cannot be read fails that call. `agentId`,
-`sessionId`, and `maxHits` stay at the values from process start. KAR graphs
-are authorized with that same startup `agentId`.
+every mounted image, every mount's policy file, and any pinned KAR graph. An
+unchanged size and modification time keeps the loaded image. A changed file is
+checked against the pin and policy root in that config. A match replaces the
+loaded mounts atomically. A mount removed from the config is no longer served,
+even when its image file is still on disk. A mismatch on an image, policy file,
+or KAR graph returns `IMAGE_INVALID`, does not serve the previous image on that
+call, and leaves the previously loaded mounts intact if the config rolls back.
+A config file that cannot be read fails that call. `agentId`, `sessionId`, and
+`maxHits` stay at the values from process start. KAR graphs are authorized with
+that same startup `agentId`.
 
 npm `latest` is `@knolo/mcp@0.2.4`. This tree sets `server.json` and the MCP
 server version to `0.2.4`. `@knolo/mcp@0.2.3` has no KITE evaluate or verify tools. The published `0.2.1` tarball still reports

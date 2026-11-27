@@ -8,7 +8,9 @@ import {
   mkdtemp,
   readFile,
   readdir,
+  rename,
   rm,
+  unlink,
   utimes,
   writeFile,
 } from 'node:fs/promises';
@@ -1228,6 +1230,192 @@ test('a refreshed graph keeps the startup agent id', async () => {
     assert.notEqual(search.isError, true, textOf(search));
   } finally {
     await client.close();
+  }
+});
+
+test('a changed or deleted policy file fails closed until restored', async () => {
+  const { config, root, policyPath, image } = await fixture();
+  const { client } = await serveFile(config, root);
+  try {
+    const first = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+    });
+    assert.notEqual(first.isError, true, textOf(first));
+    assert.match(
+      first.structuredContent.hits[0].excerpt,
+      /Annual enterprise refunds/
+    );
+    const objectId = first.structuredContent.hits[0].objectId;
+
+    await writeFile(
+      policyPath,
+      JSON.stringify({
+        version: 1,
+        default: 'deny',
+        rules: [
+          {
+            effect: 'allow',
+            action: 'query',
+            principal: 'mcp:other',
+            kind: 'chunk',
+          },
+        ],
+      })
+    );
+    await stampFile(policyPath, 5_000);
+
+    const mismatched = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+    });
+    assert.equal(mismatched.isError, true);
+    assert.match(
+      textOf(mismatched),
+      /^IMAGE_INVALID: Policy for image support-policy is invalid:/
+    );
+    assert.equal(mismatched.structuredContent, undefined);
+    assert.doesNotMatch(textOf(mismatched), /Annual enterprise refunds/);
+
+    const got = await call(client, 'knolo_get', {
+      imageId: 'support-policy',
+      objectId,
+      stateRoot: image.stateRoot,
+    });
+    assert.equal(got.isError, true);
+    assert.match(textOf(got), /^IMAGE_INVALID: /);
+
+    await unlink(policyPath);
+    const missing = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+    });
+    assert.equal(missing.isError, true);
+    assert.match(
+      textOf(missing),
+      /^IMAGE_INVALID: Policy for image support-policy is invalid:/
+    );
+    assert.equal(missing.structuredContent, undefined);
+
+    await writeFile(policyPath, JSON.stringify(allowPolicy(), null, 2));
+    await stampFile(policyPath, 10_000);
+    const restored = await call(client, 'knolo_search', {
+      query: 'enterprise refunds',
+    });
+    assert.notEqual(restored.isError, true, textOf(restored));
+    assert.match(
+      restored.structuredContent.hits[0].excerpt,
+      /Annual enterprise refunds/
+    );
+  } finally {
+    await client.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('a failed KAR graph reload leaves the previous mounts intact', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'knolo-mcp-kar-rollback-'));
+  const workspace = await buildKarWorkspace(root, ['support']);
+  const support = workspace.cases[0];
+  const config = {
+    agentId: 'mcp',
+    auditDir: path.join(root, 'audit'),
+    mounts: workspace.mounts,
+  };
+  const { client, configPath } = await serveFile(config, root);
+  try {
+    const first = await call(client, 'knolo_search', {
+      query: 'customer cancel',
+    });
+    assert.notEqual(first.isError, true, textOf(first));
+    assert.match(
+      first.structuredContent.hits[0].excerpt,
+      /The customer may cancel\./
+    );
+    assert.equal(
+      first.structuredContent.hits[0].stateRoot,
+      support.image.stateRoot
+    );
+    const karBefore = await call(client, 'knolo_kar_evaluate', {
+      mountId: 'support',
+      proposition: support.proposition,
+      plan: support.plan,
+    });
+    assert.notEqual(karBefore.isError, true, textOf(karBefore));
+    assert.equal(karBefore.structuredContent.status, 'SATISFIED');
+
+    const v2 = imageWith(['Quarterly hardware rebates are posted on Fridays.']);
+    const v2Path = path.join(root, 'v2.v5');
+    const v2GraphPath = path.join(root, 'v2.kar.json');
+    await writeFile(v2Path, v2.bytes);
+    await writeFile(v2GraphPath, '{}\n');
+
+    const backupPath = path.join(root, 'knolo-mcp.backup.json');
+    await rename(configPath, backupPath);
+    const v2Config = {
+      ...config,
+      mounts: [
+        {
+          ...workspace.mounts[0],
+          path: v2Path,
+          sha256: hash(v2.bytes),
+          stateRoot: v2.stateRoot,
+          kar: {
+            graphPath: v2GraphPath,
+            graphSha256: 'f'.repeat(64),
+          },
+        },
+      ],
+    };
+    await writeFile(configPath, `${JSON.stringify(v2Config)}\n`);
+    await stampFile(configPath, 5_000);
+
+    const failed = await call(client, 'knolo_search', {
+      query: 'hardware rebates',
+    });
+    assert.equal(failed.isError, true);
+    assert.match(
+      textOf(failed),
+      /^IMAGE_INVALID: KAR graph for support does not match its SHA-256 pin\./
+    );
+    assert.equal(failed.structuredContent, undefined);
+
+    await rename(backupPath, configPath);
+
+    const rolledBack = await call(client, 'knolo_search', {
+      query: 'customer cancel',
+    });
+    assert.notEqual(rolledBack.isError, true, textOf(rolledBack));
+    assert.equal(rolledBack.structuredContent.hits.length, 1);
+    assert.match(
+      rolledBack.structuredContent.hits[0].excerpt,
+      /The customer may cancel\./
+    );
+    assert.equal(
+      rolledBack.structuredContent.hits[0].stateRoot,
+      support.image.stateRoot
+    );
+
+    const absent = await call(client, 'knolo_search', {
+      query: 'hardware rebates',
+    });
+    assert.notEqual(absent.isError, true, textOf(absent));
+    assert.equal(absent.structuredContent.hits.length, 0);
+
+    const verified = await call(client, 'knolo_verify', {});
+    assert.notEqual(verified.isError, true, textOf(verified));
+    assert.equal(
+      verified.structuredContent.results[0].stateRoot,
+      support.image.stateRoot
+    );
+
+    const karAfter = await call(client, 'knolo_kar_evaluate', {
+      mountId: 'support',
+      proposition: support.proposition,
+      plan: support.plan,
+    });
+    assert.notEqual(karAfter.isError, true, textOf(karAfter));
+    assert.equal(karAfter.structuredContent.status, 'SATISFIED');
+  } finally {
+    await client.close();
+    await rm(root, { recursive: true, force: true });
   }
 });
 
