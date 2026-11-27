@@ -48,12 +48,12 @@ function encodeCbor(value: CborValue, out: number[]): void {
   if (typeof value === 'string') {
     const bytes = getTextEncoder().encode(value);
     encodeLength(3, bytes.length, out);
-    out.push(...bytes);
+    appendBytes(out, bytes);
     return;
   }
   if (value instanceof Uint8Array) {
     encodeLength(2, value.length, out);
-    out.push(...value);
+    appendBytes(out, value);
     return;
   }
   if (typeof value === 'number' || typeof value === 'bigint') {
@@ -75,6 +75,12 @@ function encodeCbor(value: CborValue, out: number[]): void {
     encodeCbor(key, out);
     encodeCbor(item, out);
   }
+}
+
+// Spreading into push() passes one argument per byte and overflows the call
+// stack for large payloads.
+function appendBytes(out: number[], bytes: Uint8Array): void {
+  for (let i = 0; i < bytes.length; i++) out.push(bytes[i]);
 }
 
 function encodeLength(
