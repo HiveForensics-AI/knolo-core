@@ -118,6 +118,12 @@ Knowledge & Memory. It names this package as a local TypeScript server and
 pins `@knolo/mcp@0.2.4`. There is no badge, because Knolo is not listed there
 yet. Submitting the line is a separate pull request.
 
+Smithery, Glama, PulseMCP, and mcp.so drafts are in
+[`listings/directories.md`](listings/directories.md). Each submission is a
+separate account step. PulseMCP reads the official MCP Registry, so it may
+list this server without a submission. Live listing URLs are recorded in
+that file.
+
 ## Config
 
 Paths are absolute. `sha256` is 64 lowercase hex characters. `stateRoot` is
