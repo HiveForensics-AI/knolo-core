@@ -548,6 +548,28 @@ test('hub commands are registered without loading the core runtime for help', ()
   assert.match(runCli(['yank', '--help'], cwd), /Authorization: Bearer kno_/);
 });
 
+test('root help lists every registered subcommand', () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), 'knolo-cli-root-help-'));
+  const source = readFileSync(cliPath, 'utf8');
+  const block = source.match(/const SUBCOMMANDS = new Set\(\[([\s\S]*?)\]\);/);
+  assert.ok(block, 'SUBCOMMANDS set not found in bin/knolo.mjs');
+  const subcommands = [...block[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  assert.ok(subcommands.length > 0);
+  const help = runCli(['help'], cwd);
+  const listed = new Set(
+    help
+      .split('\n')
+      .map((line) => line.match(/^  (\S+)/)?.[1])
+      .filter(Boolean)
+  );
+  const missing = subcommands.filter((name) => !listed.has(name));
+  assert.deepEqual(
+    missing,
+    [],
+    `missing from root help: ${missing.join(', ')}`
+  );
+});
+
 test('hub credentials are local, restrictive, and offline', async () => {
   const { runHubLogin, runHubLogout, runHubWhoami } = await import(
     pathToFileURL(path.resolve(process.cwd(), 'bin/registry/commands.mjs')).href
