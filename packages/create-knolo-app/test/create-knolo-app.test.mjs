@@ -1,8 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  mkdtempSync,
+  mkdirSync,
+  existsSync,
+  readFileSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
 const npmCache = mkdtempSync(path.join(tmpdir(), 'knolo-npm-cache-'));
@@ -171,3 +178,37 @@ test(
     assert.ok(existsSync(path.join(target, 'dist', 'knowledge.knolo')));
   }
 );
+
+test('scaffolded chat route answers from a pack on disk', async () => {
+  const { buildPack } = await import('@knolo/core');
+  const cwd = mkdtempSync(path.join(tmpdir(), 'create-knolo-route-'));
+  mkdirSync(path.join(cwd, 'dist'));
+  const bytes = await buildPack([
+    { id: 'citations.md', text: 'Citations show where an answer came from.' },
+  ]);
+  writeFileSync(path.join(cwd, 'dist', 'knowledge.knolo'), bytes);
+
+  const routeUrl = pathToFileURL(
+    path.resolve(
+      path.dirname(fileURLToPath(import.meta.url)),
+      '../template/app/api/chat/route.js'
+    )
+  ).href;
+  const previousCwd = process.cwd();
+  process.chdir(cwd);
+  try {
+    const { POST } = await import(routeUrl);
+    const response = await POST(
+      new Request('http://localhost/api/chat', {
+        method: 'POST',
+        body: JSON.stringify({ message: 'citations' }),
+      })
+    );
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.ok(payload.hits.length > 0);
+    assert.match(payload.hits[0].snippet, /Citations/);
+  } finally {
+    process.chdir(previousCwd);
+  }
+});

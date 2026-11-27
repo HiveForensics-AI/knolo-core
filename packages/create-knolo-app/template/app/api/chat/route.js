@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { mountPack, query } from '@knolo/core';
+import { query } from '@knolo/core';
+import { mountPack } from '@knolo/core/node';
 
 const PACK_PATH = path.resolve(process.cwd(), 'dist/knowledge.knolo');
 
