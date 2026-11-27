@@ -120,6 +120,23 @@ That does not mean the claim is true.
 Each kept search term must appear as a whole word. An EQL `SEARCH` string
 is a different matcher: every term is a substring.
 
+### Can the second agent check a quote?
+
+Suppose the first agent quotes “Annual enterprise refunds are available
+within 30 days.” Send the hit's `excerpt` along with its `imageId`,
+`objectId`, `stateRoot`, `start`, and `end`. The last two fields are byte
+offsets. Copy them from the hit (`end` is exclusive).
+
+The receiver needs read access to the same pinned image. Using the same
+mount ID on both sides, it calls `knolo_verify` for that image, then passes
+the five location fields to `knolo_get` and compares the returned `content`
+with the quote. If “30 days” becomes “14 days”, the image still verifies
+and the text comparison catches the edit. The receiver can do this without
+the sender's local receipt file.
+
+The [runnable TypeScript example](../../examples/openai_agents_js/README.md#run-the-offline-smoke)
+checks both quotes in a second MCP session using the local refund fixture.
+
 ## 5. Hand a private image to one peer
 
 Hub is the public catalog. A private image can move from one agent to

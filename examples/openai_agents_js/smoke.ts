@@ -1,8 +1,9 @@
 /**
- * List Knolo tools through the OpenAI Agents SDK and run one search.
+ * Search a pinned image and check a handed-off quote in a second MCP session.
  * No model call.
  */
 
+import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { setTracingDisabled } from '@openai/agents';
@@ -21,9 +22,9 @@ const GRAPH_TOOLS = [
   'knolo_kar_verify',
 ];
 
-function searchBody(result: unknown): Record<string, unknown> {
+function toolBody(result: unknown): Record<string, unknown> {
   if (result === null || typeof result !== 'object') {
-    throw new Error(`search returned ${typeof result}`);
+    throw new Error(`tool returned ${typeof result}`);
   }
   const record = result as Record<string, unknown>;
   if (record.isError) throw new Error(JSON.stringify(result));
@@ -48,9 +49,56 @@ function searchBody(result: unknown): Record<string, unknown> {
     }
   }
   if (body === null || typeof body !== 'object' || Array.isArray(body)) {
-    throw new Error('search result has no structured body');
+    throw new Error('tool result has no structured body');
   }
   return body as Record<string, unknown>;
+}
+
+type Passage = {
+  imageId: string;
+  stateRoot: string;
+  objectId: string;
+  start: number;
+  end: number;
+};
+
+async function checkQuotes(
+  configPath: string,
+  passage: Passage,
+  quote: string
+) {
+  const receiver = knoloServer(configPath);
+  try {
+    await receiver.connect();
+    const verified = toolBody(
+      await receiver.callToolResult('knolo_verify', {
+        imageId: passage.imageId,
+      })
+    );
+    assert.ok(Array.isArray(verified.results) && verified.results.length === 1);
+    const image = verified.results[0];
+    assert.equal(image.valid, true);
+    assert.equal(image.stateRoot, passage.stateRoot);
+
+    const source = toolBody(
+      await receiver.callToolResult('knolo_get', passage)
+    );
+    assert.equal(source.start, passage.start);
+    assert.equal(source.end, passage.end);
+    const editedQuote = quote.replace('30 days', '14 days');
+    const originalMatches = source.content === quote;
+    const editedMatches = source.content === editedQuote;
+    assert.equal(originalMatches, true, 'expected an exact quote');
+    assert.equal(editedMatches, false, 'expected the edited quote to differ');
+    return {
+      imageVerified: image.valid,
+      originalMatches,
+      editedQuote,
+      editedMatches,
+    };
+  } finally {
+    await receiver.close();
+  }
 }
 
 setTracingDisabled(true);
@@ -77,13 +125,13 @@ try {
     query: 'enterprise refunds',
     limit: 4,
   });
-  const body = searchBody(result);
+  const body = toolBody(result);
   const hits = body.hits;
   const receipts = body.receipts;
   if (!Array.isArray(hits) || hits.length !== 1) {
     throw new Error(`hits ${JSON.stringify(hits)}`);
   }
-  const hit = hits[0] as { excerpt?: unknown };
+  const hit = hits[0] as Passage & { excerpt?: unknown };
   const excerpt = String(hit.excerpt ?? '');
   if (!excerpt.includes('Annual enterprise refunds')) {
     throw new Error(`excerpt ${JSON.stringify(excerpt)}`);
@@ -105,11 +153,18 @@ try {
   if (receipt.version !== 'openclaw-knolo-query-v1') {
     throw new Error(`receipt version ${JSON.stringify(receipt.version)}`);
   }
+  const { imageId, objectId, stateRoot, start, end } = hit;
+  const quoteCheck = await checkQuotes(
+    configPath,
+    { imageId, objectId, stateRoot, start, end },
+    excerpt
+  );
   process.stdout.write(
     `${JSON.stringify({
       tools: names,
       excerpt,
       receiptId,
+      quoteCheck,
       modelCalled: false,
     })}\n`
   );

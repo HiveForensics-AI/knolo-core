@@ -27,7 +27,9 @@ node --experimental-strip-types examples/openai_agents_js/smoke.ts
 npx -y @knolo/mcp@0.2.4 --config "$KNOLO_MCP_CONFIG"
 ```
 
-The smoke lists the four tools, checks that the graph tools are absent, then searches for `enterprise refunds`. It expects the refunds excerpt and a `qr_` receipt id. It does not call `run()` and it does not construct an `Agent`.
+The smoke lists the four tools, checks that the graph tools are absent, then searches for `enterprise refunds`. It expects the refunds excerpt and a `qr_` receipt id.
+
+A second MCP session uses the same fixture config to play the receiving agent. It verifies the image and reads the cited byte range with `knolo_get`. In the output, `quoteCheck.imageVerified` and `quoteCheck.originalMatches` are `true`. Editing “30 days” to “14 days” makes `quoteCheck.editedMatches` `false`. Both sessions call tools directly without a model.
 
 A host that does call a model passes the same server on `mcpServers`. That call stays outside this repository.
 
