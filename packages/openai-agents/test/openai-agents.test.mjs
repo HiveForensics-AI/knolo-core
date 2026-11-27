@@ -7,6 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { createKnowledgeImageV5 } from '@knolo/core';
+import { askCortex, createCortexSession } from '@knolo/core/cortex';
 import {
   cegNodeId,
   compileCegSource,
@@ -226,6 +227,8 @@ async function graphFixture() {
   ];
   return {
     root,
+    supportImage,
+    graph: compiled.sidecar,
     config: {
       agentId: 'mcp',
       auditDir: path.join(root, 'audit'),
@@ -375,6 +378,24 @@ test('KAR tools appear only with a pinned graph', async () => {
     'SATISFIED means evidence requirements were met. It does not mean a claim is proven.'
   );
   assert.match(evaluated.receiptId, /^er_/);
+
+  // A bound graph puts knowledgeRoot in the trace image identity, even
+  // when the mode runs no KAR evaluation. The pinned graph must be used.
+  const boundSession = await createCortexSession({
+    image: workspace.supportImage.bytes,
+    graph: workspace.graph,
+  });
+  const bound = await askCortex(boundSession, {
+    question: workspace.proposition,
+    mode: 'find_relevant',
+  });
+  assert.equal(bound.karEvaluations, undefined);
+  const boundVerdict = await tools.knolo_cortex_verify.invoke(
+    {},
+    JSON.stringify({ mountId: 'support', answer: bound })
+  );
+  assert.equal(boundVerdict.ok, true, JSON.stringify(boundVerdict));
+  assert.equal(boundVerdict.traceRoot, bound.receipt.traceRoot);
 
   const plain = await fixture();
   const plainTools = await knoloTools(plain.config);

@@ -160,8 +160,9 @@ parsed by the KAR plan parser. Domain Pack template names are not accepted.
 `knolo_kar_verify` takes the same mount, proposition, and plan, plus exactly
 one of `result` or `dossier`. `knolo_cortex_verify` takes `mountId`, an
 `answer` trace, and an optional `question`. It uses the pinned graph when the
-trace references KAR. These tools do not call a model and do not run
-`askCortex`.
+trace references KAR or its image identity has a `knowledgeRoot`. A Cortex
+session with a bound graph records that root even when no KAR evaluation ran.
+These tools do not call a model and do not run `askCortex`.
 
 `kite` is an empty object. It does not pin a file. `knolo_kite_evaluate`
 takes `mountId`, an inline `knolo-kite-contract-1` contract, and inline
