@@ -104,12 +104,20 @@ export function isUnreadableSource(error: unknown): boolean {
 export async function collectCorpora(
   config: BoxConfig
 ): Promise<ScopeCorpus[]> {
+  // Scope roots are walked through realpath, so file paths are always
+  // resolved. Resolve grokHome the same way, or a grokHome reached through a
+  // symlink (macOS /var -> /private/var, a symlinked home) never contains
+  // those paths and every source label falls back to the scope-root form.
+  const resolved: BoxConfig = {
+    ...config,
+    grokHome: await realpathOrSelf(config.grokHome),
+  };
   const corpora: ScopeCorpus[] = [];
   for (const scope of ['skills', 'files', 'memory', 'transcripts'] as const) {
     const corpus =
       scope === 'transcripts'
-        ? await collectTranscripts(config)
-        : await collectFiles(config, scope);
+        ? await collectTranscripts(resolved)
+        : await collectFiles(resolved, scope);
     assertNoSecrets(corpus.chunks);
     corpora.push(corpus);
   }
@@ -525,6 +533,14 @@ async function walk(
 function deniedResolvedPath(root: string, target: string): boolean {
   const relative = path.relative(root, target);
   return relative !== '' && isDeniedPath(relative);
+}
+
+async function realpathOrSelf(target: string): Promise<string> {
+  try {
+    return await realpath(target);
+  } catch {
+    return target;
+  }
 }
 
 function displayPath(
