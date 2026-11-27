@@ -171,6 +171,25 @@ test('cline install docs keep the published pins', () => {
   );
 });
 
+test('install docs name every tool the server registers', () => {
+  const sources = ['tools.ts', 'kar-tools.ts', 'kite-tools.ts'].map((file) =>
+    readFileSync(path.join(packageRoot, 'src', file), 'utf8')
+  );
+  const registered = sources.flatMap((source) =>
+    [...source.matchAll(/registerTool\(\s*'(knolo_[a-z_]+)'/g)].map(
+      (match) => match[1]
+    )
+  );
+  assert.equal(registered.length, 9);
+  for (const name of registered) {
+    const mention = new RegExp(`\`${name}\``);
+    assert.match(installDoc, mention, `llms-install.md omits ${name}`);
+    assert.match(readme, mention, `README.md omits ${name}`);
+  }
+  assert.match(installDoc, /"graphSha256": /);
+  assert.match(installDoc, /kar graph validate --image /);
+});
+
 test('opencode config starts the published stdio server', async () => {
   const repoRoot = path.resolve(packageRoot, '../..');
   const example = JSON.parse(
