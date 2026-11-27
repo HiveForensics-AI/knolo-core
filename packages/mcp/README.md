@@ -10,9 +10,11 @@ includes a `kar` block, the server also exposes `knolo_kar_evaluate`,
 block also exposes `knolo_kite_evaluate` and `knolo_kite_verify`.
 
 The server speaks stdio only. It does not download images, open a runtime
-network connection, write or compile knowledge, or expose MCP resources or
-prompts. Install and pin each image before starting it. A hash, state-root,
-or policy-root mismatch exits non-zero before the MCP connection starts.
+network connection, or expose MCP resources or prompts. It reads installed
+images; an optional local `autoRebuild` hook can rebuild them before search
+or status calls. Install and pin each image before starting it. A hash,
+state-root, or policy-root mismatch exits non-zero before the MCP connection
+starts.
 Optional mount fields `builtAt`, `sourceDigest`, and `sourceRoots`, plus
 `grokHome`, let `knolo_status` and `knolo_verify` report a stale source tree.
 Without those fields the status object stays `imageId`, `stateRoot`, `source`,
@@ -182,6 +184,44 @@ unwritable audit directory returns `AUDIT_UNAVAILABLE` and no result.
 
 Start it with `knolo-mcp --config /absolute/knolo-mcp.json` or
 `KNOLO_MCP_CONFIG`. Logs go to stderr. Stdout is JSON-RPC only.
+
+### Optional rebuild hook
+
+A server started from a config file can run a local command before each
+`knolo_search` and `knolo_status` call. Add `autoRebuild` at the top level of
+`knolo-mcp.json`, alongside `mounts` and `auditDir`:
+
+```json
+{
+  "autoRebuild": {
+    "command": "/usr/bin/node",
+    "args": ["/opt/knolo/rebuild.mjs", "--config", "/opt/knolo/build.json"]
+  }
+}
+```
+
+This is a config fragment. Replace the executable, script, and config paths
+with your local rebuild command. `command` is a nonempty executable name or
+path, and `args` is a nonempty array of strings. Arguments are passed
+directly to the executable, without a shell. The hook is omitted by default.
+`knolo_get` and `knolo_verify` refresh installed files without running it.
+The in-memory `createKnoloMcp()` API does not run this hook.
+
+The server waits for the command to exit, then refreshes the installed image
+and config using the same pin checks described above. The command must
+update the image and its matching pins in the MCP config. Its stdout and
+stderr are discarded. A spawn error or nonzero exit does not itself fail
+the tool call: if the files are unchanged, the previous valid image remains
+available. Changed files still have to pass pin validation. The MCP hook
+has no timeout or source-change check, so the command must finish promptly
+and decide whether rebuilding is needed.
+
+For [knolo-box](../../docs/box/README.md), set `autoRebuild: true` in
+`box.config.json` and run `knolo-box build --config /absolute/box.config.json`.
+That build writes the command-and-arguments hook into the generated MCP
+config. The box command checks source fingerprints and applies its own
+2 second rebuild interval. The boolean belongs in the box config; the MCP
+config expects the object shown above.
 
 ## Clients
 
