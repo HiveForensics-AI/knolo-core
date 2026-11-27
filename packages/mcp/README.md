@@ -55,6 +55,13 @@ image. A config file that cannot be read fails that call. `agentId`,
 `sessionId`, and `maxHits` stay at the values from process start. KAR graphs
 are authorized with that same startup `agentId`.
 
+An optional top-level `autoRebuild` object, `{ "command", "args" }`, runs a
+local command without a shell before `knolo_search` and `knolo_status`. A run
+is killed after `timeoutMs`, default 60000 and at most 600000, together with
+the processes it started. A spawn error, a nonzero exit, or a timeout does not
+fail the call. The installed files are then checked against their pins as
+above.
+
 npm `latest` is `@knolo/mcp@0.2.4`. This tree sets `server.json` and the MCP
 server version to `0.2.4`. `@knolo/mcp@0.2.3` has no KITE evaluate or verify tools. The published `0.2.1` tarball still reports
 `0.2.0` in those two fields. A mount without a `kar` block exposes

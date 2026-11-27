@@ -2126,6 +2126,91 @@ test('search and status run a configured rebuild hook', async () => {
   }
 });
 
+function processAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// The hook spawns a copy of itself and both hang, the way npm run or npx
+// leave a child behind. A timeout has to kill the whole tree.
+test(
+  'a hung rebuild hook and the processes it started are killed at its timeout',
+  { skip: process.platform === 'win32' },
+  async () => {
+    const { config, root } = await fixture();
+    const script = path.join(root, 'hang.mjs');
+    const pidFile = (role) => path.join(root, `${role}.pid`);
+    await writeFile(
+      script,
+      `import { spawn } from 'node:child_process';\nimport { writeFileSync } from 'node:fs';\nconst role = process.argv[2] ?? 'hook';\nwriteFileSync(${JSON.stringify(root)} + '/' + role + '.pid', String(process.pid));\nif (role === 'hook') spawn(process.execPath, [process.argv[1], 'grandchild'], { stdio: 'ignore' });\nsetInterval(() => {}, 1000);\n`
+    );
+    config.autoRebuild = {
+      command: process.execPath,
+      args: [script],
+      timeoutMs: 1000,
+    };
+    const { client } = await serveFile(config, root);
+    const pids = [];
+    try {
+      const started = Date.now();
+      const search = await call(client, 'knolo_search', {
+        query: 'enterprise refunds',
+        limit: 1,
+      });
+      assert.notEqual(search.isError, true, textOf(search));
+      assert.match(
+        search.structuredContent.hits[0].excerpt,
+        /Annual enterprise refunds/
+      );
+      assert.ok(Date.now() - started < 8000, 'search waited past the timeout');
+      for (const role of ['hook', 'grandchild']) {
+        pids.push(Number(await readFile(pidFile(role), 'utf8')));
+      }
+      const deadline = Date.now() + 5000;
+      while (pids.some(processAlive) && Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      assert.equal(processAlive(pids[0]), false, 'the hook is still running');
+      assert.equal(processAlive(pids[1]), false, 'its child is still running');
+    } finally {
+      for (const pid of pids)
+        if (processAlive(pid)) process.kill(pid, 'SIGKILL');
+      await client.close();
+      await rm(root, { recursive: true, force: true });
+    }
+  }
+);
+
+test('rebuild hook timeoutMs is a bounded positive integer', async () => {
+  const { config, root } = await fixture();
+  try {
+    for (const timeoutMs of [0, 1.5, 600_001]) {
+      assert.throws(
+        () =>
+          mcp.parseKnoloMcpConfig({
+            ...config,
+            autoRebuild: { command: 'node', args: ['x.mjs'], timeoutMs },
+          }),
+        (error) =>
+          error instanceof KnoloPluginError &&
+          error.code === 'IMAGE_INVALID' &&
+          /autoRebuild\.timeoutMs/.test(error.message)
+      );
+    }
+    const parsed = mcp.parseKnoloMcpConfig({
+      ...config,
+      autoRebuild: { command: 'node', args: ['x.mjs'], timeoutMs: 600_000 },
+    });
+    assert.equal(parsed.autoRebuild.timeoutMs, 600_000);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 function kiteObjects() {
   return [
     {
