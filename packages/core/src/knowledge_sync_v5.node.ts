@@ -1,5 +1,6 @@
-import { closeSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { closeSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { writeFileDurablySync } from './durable_write.node.js';
 import {
   deserializeKnowledgeSyncReplayStateV1,
   KnowledgeSyncReplayCacheV1,
@@ -22,13 +23,13 @@ export class DurableKnowledgeSyncReplayStoreV5 {
     try {
       const state = deserializeKnowledgeSyncReplayStateV1(new Uint8Array(readFileSync(filePath)));
       if (options.maxEntries !== undefined && options.maxEntries !== state.maxEntries) throw new Error('V5 durable sync replay capacity mismatch.');
-      const cache = KnowledgeSyncReplayCacheV1.fromState(state, { onChange: (next) => atomicWrite(filePath, serializeKnowledgeSyncReplayStateV1(next)) });
+      const cache = KnowledgeSyncReplayCacheV1.fromState(state, { onChange: (next) => writeFileDurablySync(filePath, serializeKnowledgeSyncReplayStateV1(next)) });
       return new DurableKnowledgeSyncReplayStoreV5(filePath, cache);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') { rmSync(lockPath, { force: true }); throw error; }
       const maxEntries = options.maxEntries ?? 1024;
-      const cache = new KnowledgeSyncReplayCacheV1({ maxEntries, onChange: (next) => atomicWrite(filePath, serializeKnowledgeSyncReplayStateV1(next)) });
-      try { atomicWrite(filePath, serializeKnowledgeSyncReplayStateV1(cache.snapshot())); return new DurableKnowledgeSyncReplayStoreV5(filePath, cache); } catch (initialError) { rmSync(lockPath, { force: true }); throw initialError; }
+      const cache = new KnowledgeSyncReplayCacheV1({ maxEntries, onChange: (next) => writeFileDurablySync(filePath, serializeKnowledgeSyncReplayStateV1(next)) });
+      try { writeFileDurablySync(filePath, serializeKnowledgeSyncReplayStateV1(cache.snapshot())); return new DurableKnowledgeSyncReplayStoreV5(filePath, cache); } catch (initialError) { rmSync(lockPath, { force: true }); throw initialError; }
     }
   }
 
@@ -44,17 +45,4 @@ function acquireLock(filePath: string): string {
   let fd: number;
   try { fd = openSync(lockPath, 'wx'); writeFileSync(fd, `${process.pid}\n`, 'utf8'); closeSync(fd); } catch (error) { if ((error as NodeJS.ErrnoException).code === 'EEXIST') throw new Error(`V5 sync replay store is already locked: ${filePath}.`); rmSync(lockPath, { force: true }); throw error; }
   return lockPath;
-}
-
-function atomicWrite(filePath: string, bytes: Uint8Array): void {
-  const tempPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
-  mkdirSync(dirname(filePath), { recursive: true });
-  try {
-    writeFileSync(tempPath, bytes);
-    const fd = openSync(tempPath, 'r');
-    try { fsyncSync(fd); } finally { closeSync(fd); }
-    renameSync(tempPath, filePath);
-    const dirFd = openSync(dirname(filePath), 'r');
-    try { fsyncSync(dirFd); } finally { closeSync(dirFd); }
-  } catch (error) { rmSync(tempPath, { force: true }); throw error; }
 }
