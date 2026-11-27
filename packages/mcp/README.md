@@ -180,6 +180,44 @@ Query receipts stay `openclaw-knolo-query-v1`. KAR and Cortex tools write
 `knolo-mcp-evidence-receipt-v1` in `auditDir` before they return a result. An
 unwritable audit directory returns `AUDIT_UNAVAILABLE` and no result.
 
+### Limits
+
+Six optional top-level fields bound what one server reads, returns, and
+keeps. Each is a positive integer. A value above its maximum is
+`IMAGE_INVALID` at startup.
+
+| Field             | Default               | Maximum               | Bounds                                         |
+| ----------------- | --------------------- | --------------------- | ---------------------------------------------- |
+| `maxHits`         | `8`                   | `1000`                | Hits returned by one `knolo_search`            |
+| `maxExcerptBytes` | `1600`                | `65536`               | UTF-8 bytes of one search excerpt or one `get` |
+| `maxQueryBytes`   | `4096`                | `16384`               | UTF-8 bytes of one `knolo_search` query        |
+| `maxImageBytes`   | `262144000` (250 MiB) | `536870912` (512 MiB) | Size of each mounted image file                |
+| `maxAuditRecords` | `10000`               | `1000000`             | Receipt files kept in `auditDir`               |
+| `maxAuditBytes`   | `268435456` (256 MiB) | `1073741824` (1 GiB)  | Total bytes of receipt files in `auditDir`     |
+
+A `knolo_search` `limit` above `maxHits` is lowered to `maxHits`. It is not
+an error. Without `limit`, a search returns up to `maxHits` hits. The query
+is measured after NFKC normalization and whitespace collapsing. A longer
+query is `QUERY_INVALID`.
+
+`knolo_get` returns at most `maxExcerptBytes` from `start`. The result `end`
+is where the excerpt stopped. It can be less than the requested `end`, and
+it never splits a UTF-8 character. Call `knolo_get` again with `start` set to
+that `end` to read the rest.
+
+An image file larger than `maxImageBytes` is `IMAGE_UNAVAILABLE`. At startup
+the process exits. When a rebuilt image grows past the limit, the next tool
+call that reloads it returns `IMAGE_UNAVAILABLE`.
+
+Receipt retention deletes receipts. Before each receipt is written, the
+server removes the oldest receipt files in `auditDir`, by modification time,
+until the new one fits under both `maxAuditRecords` and `maxAuditBytes`.
+Query receipts (`qr_`) and KAR, Cortex, and KITE evidence receipts (`er_`)
+share that one budget. A removed receipt can no longer be verified and
+returns `NOT_FOUND`. Copy receipts out of `auditDir` before they age out if
+they must stay verifiable. A single receipt larger than `maxAuditBytes`
+returns `AUDIT_UNAVAILABLE` and no result.
+
 Start it with `knolo-mcp --config /absolute/knolo-mcp.json` or
 `KNOLO_MCP_CONFIG`. Logs go to stderr. Stdout is JSON-RPC only.
 

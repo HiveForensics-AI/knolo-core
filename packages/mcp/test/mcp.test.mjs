@@ -425,6 +425,54 @@ test('an unwritable audit directory returns no hits', async () => {
   }
 });
 
+test('audit retention removes the oldest receipt and it no longer verifies', async () => {
+  const { root, config } = await fixture({ maxAuditRecords: 2 });
+  const { client, service } = await connected(config);
+  const auditDir = path.join(root, 'audit');
+  const receiptIds = [];
+  try {
+    for (let index = 0; index < 3; index += 1) {
+      const search = await call(client, 'knolo_search', { query: 'refunds' });
+      assert.notEqual(search.isError, true);
+      const receiptId = search.structuredContent.receipts[0].receiptId;
+      receiptIds.push(receiptId);
+      await stampFile(
+        path.join(auditDir, `${receiptId}.json`),
+        (index - 3) * 60_000
+      );
+    }
+    const kept = (await readdir(auditDir)).filter((name) =>
+      name.endsWith('.json')
+    );
+    assert.deepEqual(
+      kept.sort(),
+      receiptIds
+        .slice(1)
+        .map((id) => `${id}.json`)
+        .sort()
+    );
+    await assert.rejects(
+      () => service.verifyReceipt(receiptIds[0]),
+      (error) => error instanceof KnoloPluginError && error.code === 'NOT_FOUND'
+    );
+    await service.verifyReceipt(receiptIds[2]);
+  } finally {
+    await client.close();
+  }
+
+  const tiny = await fixture({ maxAuditBytes: 16 });
+  const tinyClient = await connected(tiny.config);
+  try {
+    const failed = await call(tinyClient.client, 'knolo_search', {
+      query: 'refunds',
+    });
+    assert.match(textOf(failed), /^AUDIT_UNAVAILABLE: /);
+    assert.equal(failed.structuredContent, undefined);
+  } finally {
+    await tinyClient.client.close();
+  }
+});
+
 test('stdio stdout is only JSON-RPC and bad config exits first', async () => {
   const { config } = await fixture();
   const configPath = path.join(path.dirname(config.auditDir), 'mcp.json');
