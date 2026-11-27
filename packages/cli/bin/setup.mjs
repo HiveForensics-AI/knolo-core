@@ -138,7 +138,8 @@ export async function findOnPath(name, pathEnv) {
     const candidate = path.join(dir, name);
     try {
       await access(candidate, constants.X_OK);
-      return candidate;
+      // A directory passes X_OK, and spawning it fails with EACCES.
+      if ((await stat(candidate)).isFile()) return candidate;
     } catch {
       // Try the next directory.
     }

@@ -401,3 +401,42 @@ test('setup errors stay on one line unless --debug is set', () => {
   assert.match(debug.stderr, /\n {4}at /);
   rmSync(root, { recursive: true, force: true });
 });
+
+test('setup skips a directory named knolo-box on PATH', () => {
+  const root = tempDir();
+  const home = path.join(root, 'home');
+  const shadow = path.join(root, 'shadow');
+  const bin = path.join(root, 'bin');
+  const log = path.join(root, 'box.log');
+  mkdirSync(home, { recursive: true });
+  // A checkout or build folder called knolo-box passes an X_OK check.
+  mkdirSync(path.join(shadow, 'knolo-box'), { recursive: true });
+  mkdirSync(bin);
+  writeBox(
+    bin,
+    `#!/bin/sh
+printf '%s\\n' "$*" >> "$KNOLO_BOX_LOG"
+exit 0
+`
+  );
+
+  const onlyDirectory = runSetup(['--registry', 'https://hub.example.test'], {
+    PATH: shadow,
+    HOME: home,
+    KNOLO_BOX_LOG: log,
+  });
+  assert.equal(onlyDirectory.status, 0, onlyDirectory.stderr);
+  assert.match(onlyDirectory.stderr, /knolo-box is not on PATH/);
+  assert.equal(existsSync(log), false);
+
+  const shadowed = runSetup(['--registry', 'https://hub.example.test'], {
+    PATH: [shadow, bin].join(path.delimiter),
+    HOME: home,
+    KNOLO_BOX_LOG: log,
+  });
+  assert.equal(shadowed.status, 0, shadowed.stderr);
+  const lines = readFileSync(log, 'utf8').trim().split('\n');
+  assert.match(lines[0], /^init /);
+  assert.match(lines[1], /^build --config /);
+  rmSync(root, { recursive: true, force: true });
+});
