@@ -10,6 +10,7 @@ import {
   mkdtempSync,
   readFileSync,
   readdirSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -1092,6 +1093,58 @@ exit 0
     true
   );
   assert.match(readFileSync(log, 'utf8'), /build --config /);
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('skill install writes the hub skills root as HOME spells it', async () => {
+  const root = tempDir();
+  const realHome = path.join(root, 'real-home');
+  const home = path.join(root, 'home');
+  const bin = path.join(root, 'bin');
+  mkdirSync(realHome);
+  symlinkSync(realHome, home, 'dir');
+  assert.equal(run(['skill', 'init', 'refund-policy'], root).status, 0);
+  const packed = run(
+    ['skill', 'pack', path.join(root, 'refund-policy'), '--out', 'pack', '--json'],
+    root
+  );
+  assert.equal(packed.status, 0, packed.stderr);
+  const configPath = path.join(home, '.knolo', 'box', 'box.config.json');
+  mkdirSync(path.dirname(configPath), { recursive: true });
+  writeFileSync(
+    configPath,
+    `${JSON.stringify({ scopes: { skills: { roots: ['/keep-me'] } } })}\n`
+  );
+  mkdirSync(bin);
+  const box = path.join(bin, 'knolo-box');
+  writeFileSync(box, '#!/bin/sh\nexit 0\n');
+  chmodSync(box, 0o755);
+  const errors = [];
+  const install = (dir) =>
+    installSkill(undefined, {
+      pack: path.join(root, 'pack'),
+      dir,
+      env: { HOME: home, PATH: bin },
+      print() {},
+      printError(message) {
+        errors.push(message);
+      },
+    });
+
+  await install();
+  const hubSkills = path.join(home, '.knolo', 'skills');
+  const resolved = realpathSync(hubSkills);
+  assert.notEqual(resolved, hubSkills);
+  let roots = JSON.parse(readFileSync(configPath, 'utf8')).scopes.skills.roots;
+  assert.deepEqual(roots, ['/keep-me', hubSkills]);
+  assert.deepEqual(errors, []);
+
+  // A second install through the resolved path is the same root.
+  rmSync(path.join(resolved, 'refund-policy'), { recursive: true });
+  await install(resolved);
+  roots = JSON.parse(readFileSync(configPath, 'utf8')).scopes.skills.roots;
+  assert.deepEqual(roots, ['/keep-me', hubSkills]);
+  assert.deepEqual(errors, []);
   rmSync(root, { recursive: true, force: true });
 });
 

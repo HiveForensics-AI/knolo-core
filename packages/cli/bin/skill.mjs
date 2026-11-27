@@ -364,7 +364,14 @@ async function indexInstalledSkill(destRoot, flags) {
   const dest = await canonicalDir(destRoot);
   const hubSkills = path.resolve(path.join(home, '.knolo', 'skills'));
   if (config && (await canonicalDir(hubSkills)) === dest) {
-    const added = await ensureHubSkillsRoot(configPath, config, dest, env, home);
+    const added = await ensureHubSkillsRoot(
+      configPath,
+      config,
+      dest,
+      hubSkills,
+      env,
+      home
+    );
     if (added) {
       try {
         config = JSON.parse(await readFile(configPath, 'utf8'));
@@ -401,7 +408,10 @@ async function indexInstalledSkill(destRoot, flags) {
   }
 }
 
-async function ensureHubSkillsRoot(configPath, config, dest, env, home) {
+// `dest` is the realpath of the hub skills folder and is only used to compare
+// roots. `entry` is the path as the user's HOME spells it, and is what gets
+// written, so the config does not pin a symlink's current target.
+async function ensureHubSkillsRoot(configPath, config, dest, entry, env, home) {
   const roots = skillRootsFromConfig(config, env, home);
   for (const root of roots) {
     if ((await canonicalDir(root)) === dest) return false;
@@ -419,7 +429,7 @@ async function ensureHubSkillsRoot(configPath, config, dest, env, home) {
   const prior = hadRoots
     ? skills.roots.filter((item) => typeof item === 'string' && item.length > 0)
     : roots;
-  skills.roots = [...prior, dest];
+  skills.roots = [...prior, entry];
   scopes.skills = skills;
   next.scopes = scopes;
   await mkdir(path.dirname(configPath), { recursive: true, mode: 0o700 });
