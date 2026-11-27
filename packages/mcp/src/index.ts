@@ -7,7 +7,7 @@ import {
   parseKnoloMcpConfig,
 } from './config.js';
 import { pinConfiguredGraphs, type PinnedKarGraph } from './graphs.js';
-import { runConfiguredRebuild } from './auto-rebuild.js';
+import { createRebuildRunner } from './rebuild-runner.js';
 import { createImageRefresh, type ImageRefresh } from './refresh.js';
 import { registerKnoloTools } from './tools.js';
 
@@ -72,11 +72,12 @@ export async function openKnoloMcp(configPath: string): Promise<{
       mount.kar ? [mount.kar.graphPath] : []
     ),
   });
+  const rebuild = createRebuildRunner();
   const beforeRead = async (): Promise<void> => {
     try {
       const current = await loadKnoloMcpConfigFile(configPath);
       if (current.autoRebuild) {
-        await runConfiguredRebuild(current.autoRebuild);
+        await rebuild(current.autoRebuild);
       }
     } catch {
       // A hook that cannot be read leaves the loaded image in place.
